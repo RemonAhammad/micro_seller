@@ -17,7 +17,6 @@ class CategoryNotifier extends _$CategoryNotifier {
   FutureOr<void> build() {}
 
   Future<void> addCategory(Category category) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async =>
@@ -26,7 +25,6 @@ class CategoryNotifier extends _$CategoryNotifier {
   }
 
   Future<void> updateCategory(Category category) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.categories.put(category));
@@ -34,7 +32,6 @@ class CategoryNotifier extends _$CategoryNotifier {
   }
 
   Future<void> deleteCategory(int id) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.categories.delete(id));

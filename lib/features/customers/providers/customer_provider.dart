@@ -17,7 +17,6 @@ class CustomerNotifier extends _$CustomerNotifier {
   FutureOr<void> build() {}
 
   Future<void> addCustomer(Customer customer) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       final now = DateTime.now();
@@ -27,7 +26,6 @@ class CustomerNotifier extends _$CustomerNotifier {
   }
 
   Future<void> updateCustomer(Customer customer) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.customers.put(customer));
@@ -35,7 +33,6 @@ class CustomerNotifier extends _$CustomerNotifier {
   }
 
   Future<void> deleteCustomer(int id) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.customers.delete(id));

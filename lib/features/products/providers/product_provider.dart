@@ -41,7 +41,6 @@ class ProductNotifier extends _$ProductNotifier {
   FutureOr<void> build() {}
 
   Future<void> addProduct(Product product) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       final now = DateTime.now();
@@ -51,7 +50,6 @@ class ProductNotifier extends _$ProductNotifier {
   }
 
   Future<void> updateProduct(Product product) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       final p = product.copyWith(updatedAt: DateTime.now());
@@ -60,7 +58,6 @@ class ProductNotifier extends _$ProductNotifier {
   }
 
   Future<void> deleteProduct(int id) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.products.delete(id));
@@ -69,7 +66,6 @@ class ProductNotifier extends _$ProductNotifier {
 
   Future<void> adjustStock(
       int productId, int delta, String reason, StockMovementType type) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {

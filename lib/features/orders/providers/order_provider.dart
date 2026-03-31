@@ -52,7 +52,6 @@ class OrderNotifier extends _$OrderNotifier {
   }
 
   Future<void> createOrder(Order order) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
@@ -98,7 +97,6 @@ class OrderNotifier extends _$OrderNotifier {
   }
 
   Future<void> updateOrder(Order order) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(
@@ -107,7 +105,6 @@ class OrderNotifier extends _$OrderNotifier {
   }
 
   Future<void> updateStatus(int orderId, OrderStatus status) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
@@ -146,7 +143,6 @@ class OrderNotifier extends _$OrderNotifier {
   }
 
   Future<void> recordPayment(int orderId, double paymentAmount) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
@@ -179,7 +175,6 @@ class OrderNotifier extends _$OrderNotifier {
   }
 
   Future<void> deleteOrder(int id) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.orders.delete(id));

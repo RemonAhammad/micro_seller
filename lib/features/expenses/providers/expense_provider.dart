@@ -20,7 +20,6 @@ class ExpenseNotifier extends _$ExpenseNotifier {
   FutureOr<void> build() {}
 
   Future<void> addExpense(Expense expense) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       final now = DateTime.now();
@@ -30,7 +29,6 @@ class ExpenseNotifier extends _$ExpenseNotifier {
   }
 
   Future<void> updateExpense(Expense expense) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.expenses.put(expense));
@@ -38,7 +36,6 @@ class ExpenseNotifier extends _$ExpenseNotifier {
   }
 
   Future<void> deleteExpense(int id) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async => isar.expenses.delete(id));
