@@ -13,7 +13,6 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
-import '../../../shared/widgets/drawer_menu_button.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -162,14 +161,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const DrawerMenuButton(),
         title: const Text(AppStrings.settings),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Shop
-          _SectionHeader('Shop'),
+          const _SectionHeader('Shop'),
           _SettingsCard(children: [
             _EditableTile(
               icon: Icons.store_rounded,
@@ -207,7 +205,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Google Drive
-          _SectionHeader('Google Drive Backup'),
+          const _SectionHeader('Google Drive Backup'),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -220,7 +218,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: const Icon(Icons.account_circle_rounded,
                     color: AppColors.primary),
               ),
-              title: Text(AppStrings.googleAccount),
+              title: const Text(AppStrings.googleAccount),
               subtitle: Text(
                 _googleAccountEmail ?? 'Not signed in',
                 style: TextStyle(
@@ -292,7 +290,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // About
-          _SectionHeader('About'),
+          const _SectionHeader('About'),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -317,7 +315,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Danger zone
-          _SectionHeader('Danger Zone'),
+          const _SectionHeader('Danger Zone'),
           _SettingsCard(children: [
             ListTile(
               leading: Container(

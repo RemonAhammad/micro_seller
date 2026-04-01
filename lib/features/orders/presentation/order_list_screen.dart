@@ -5,7 +5,6 @@ import '../providers/order_provider.dart';
 import '../../../data/models/order.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
-import '../../../shared/widgets/drawer_menu_button.dart';
 import 'widgets/order_card.dart';
 
 class OrderListScreen extends ConsumerStatefulWidget {
@@ -38,7 +37,6 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
 
     return Scaffold(
       appBar: AppBar(
-        leading: const DrawerMenuButton(),
         title: const Text(AppStrings.orders),
         bottom: TabBar(
           controller: _tabController,
@@ -91,7 +89,7 @@ class _OrderList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (orders.isEmpty) {
-      return EmptyState(
+      return const EmptyState(
         icon: Icons.receipt_long_rounded,
         title: AppStrings.noDataFound,
         subtitle: AppStrings.addFirstOrder,

@@ -7,7 +7,6 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
-import '../../../shared/widgets/drawer_menu_button.dart';
 import 'widgets/expense_card.dart';
 
 class ExpenseListScreen extends ConsumerWidget {
@@ -19,7 +18,6 @@ class ExpenseListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const DrawerMenuButton(),
         title: const Text(AppStrings.expenses),
       ),
       body: expensesAsync.when(

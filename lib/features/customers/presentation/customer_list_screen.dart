@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../providers/customer_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
-import '../../../shared/widgets/drawer_menu_button.dart';
 import 'widgets/customer_card.dart';
 
 class CustomerListScreen extends ConsumerStatefulWidget {
@@ -31,7 +30,6 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const DrawerMenuButton(),
         title: const Text(AppStrings.customers),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),

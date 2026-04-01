@@ -16,16 +16,13 @@ import '../../features/inventory/presentation/stock_adjustment_screen.dart';
 import '../../features/expenses/presentation/expense_list_screen.dart';
 import '../../features/expenses/presentation/expense_form_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
-import '../../shared/widgets/drawer_menu_button.dart';
+import '../constants/app_strings.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
     StatefulShellRoute.indexedStack(
-      builder: (context, state, navigationShell) =>
-          _NavigationShell(navigationShell: navigationShell),
+      builder: (context, state, navigationShell) => _NavigationShell(navigationShell: navigationShell),
       branches: [
         StatefulShellBranch(routes: [
           GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
@@ -41,13 +38,11 @@ final appRouter = GoRouter(
               ),
               GoRoute(
                 path: ':id',
-                builder: (_, s) => ProductDetailScreen(
-                    productId: int.parse(s.pathParameters['id']!)),
+                builder: (_, s) => ProductDetailScreen(productId: int.parse(s.pathParameters['id']!)),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    builder: (_, s) => ProductFormScreen(
-                        productId: int.parse(s.pathParameters['id']!)),
+                    builder: (_, s) => ProductFormScreen(productId: int.parse(s.pathParameters['id']!)),
                   ),
                 ],
               ),
@@ -59,12 +54,10 @@ final appRouter = GoRouter(
             path: '/orders',
             builder: (_, __) => const OrderListScreen(),
             routes: [
-              GoRoute(
-                  path: 'add', builder: (_, __) => const OrderFormScreen()),
+              GoRoute(path: 'add', builder: (_, __) => const OrderFormScreen()),
               GoRoute(
                 path: ':id',
-                builder: (_, s) => OrderDetailScreen(
-                    orderId: int.parse(s.pathParameters['id']!)),
+                builder: (_, s) => OrderDetailScreen(orderId: int.parse(s.pathParameters['id']!)),
               ),
             ],
           ),
@@ -76,18 +69,15 @@ final appRouter = GoRouter(
             routes: [
               GoRoute(
                 path: 'add',
-                builder: (_, __) =>
-                    const CustomerFormScreen(customer: null),
+                builder: (_, __) => const CustomerFormScreen(customer: null),
               ),
               GoRoute(
                 path: ':id',
-                builder: (_, s) => CustomerDetailScreen(
-                    customerId: int.parse(s.pathParameters['id']!)),
+                builder: (_, s) => CustomerDetailScreen(customerId: int.parse(s.pathParameters['id']!)),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    builder: (_, s) => CustomerFormScreen(
-                        customerId: int.parse(s.pathParameters['id']!)),
+                    builder: (_, s) => CustomerFormScreen(customerId: int.parse(s.pathParameters['id']!)),
                   ),
                 ],
               ),
@@ -101,289 +91,192 @@ final appRouter = GoRouter(
             routes: [
               GoRoute(
                 path: 'adjust/:id',
-                builder: (_, s) => StockAdjustmentScreen(
-                    productId: int.parse(s.pathParameters['id']!)),
+                builder: (_, s) => StockAdjustmentScreen(productId: int.parse(s.pathParameters['id']!)),
               ),
             ],
           ),
         ]),
+        StatefulShellBranch(routes: [
+          GoRoute(
+            path: '/expenses',
+            builder: (_, __) => const ExpenseListScreen(),
+            routes: [
+              GoRoute(path: 'add', builder: (_, __) => const ExpenseFormScreen(expense: null)),
+              GoRoute(
+                path: ':id/edit',
+                builder: (_, s) => ExpenseFormScreen(expenseId: int.parse(s.pathParameters['id']!)),
+              ),
+            ],
+          ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/categories', builder: (_, __) => const CategoryScreen()),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+        ]),
       ],
-    ),
-    GoRoute(
-      path: '/categories',
-      builder: (_, __) => const CategoryScreen(),
-    ),
-    GoRoute(
-      path: '/expenses',
-      builder: (_, __) => const ExpenseListScreen(),
-      routes: [
-        GoRoute(
-            path: 'add',
-            builder: (_, __) => const ExpenseFormScreen(expense: null)),
-        GoRoute(
-          path: ':id/edit',
-          builder: (_, s) => ExpenseFormScreen(
-              expenseId: int.parse(s.pathParameters['id']!)),
-        ),
-      ],
-    ),
-    GoRoute(
-      path: '/settings',
-      builder: (_, __) => const SettingsScreen(),
     ),
   ],
 );
 
-// ─── Shell ───────────────────────────────────────────────────────────────────
+// ─── Shell ────────────────────────────────────────────────────────────────────
 
 class _NavigationShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   const _NavigationShell({required this.navigationShell});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      key: shellScaffoldKey,
-      drawer: _AppDrawer(navigationShell: navigationShell),
-      body: navigationShell,
+  void _navigate(int branch) {
+    navigationShell.goBranch(
+      branch,
+      initialLocation: branch == navigationShell.currentIndex,
     );
   }
-}
-
-// ─── Drawer ───────────────────────────────────────────────────────────────────
-
-class _AppDrawer extends StatelessWidget {
-  final StatefulNavigationShell navigationShell;
-  const _AppDrawer({required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final idx = navigationShell.currentIndex;
+    final width = MediaQuery.sizeOf(context).width;
+    final expanded = width >= 600;
 
-    return Drawer(
-      child: Column(
+    return Scaffold(
+      body: Row(
         children: [
-          // ── Header ──────────────────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(
-                20, MediaQuery.of(context).padding.top + 20, 20, 20),
-            decoration: const BoxDecoration(
-              gradient: AppColors.dashboardGradient,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.store_rounded,
-                      color: Colors.white, size: 30),
-                ),
-                const SizedBox(height: 14),
-                const Text('SellerBook',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800)),
-                const Text('Inventory Manager',
-                    style: TextStyle(color: Colors.white70, fontSize: 13)),
-              ],
-            ),
+          _Sidebar(
+            expanded: expanded,
+            currentIndex: navigationShell.currentIndex,
+            onNavigate: _navigate,
           ),
-          // ── Nav items ────────────────────────────────────────────────────
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                _NavItem(
-                  icon: Icons.dashboard_rounded,
-                  label: AppStrings.navDashboard,
-                  selected: idx == 0,
-                  onTap: () => _go(context, 0),
-                ),
-                // Products (expandable)
-                _ExpandableNavItem(
-                  icon: Icons.inventory_2_rounded,
-                  label: AppStrings.navProducts,
-                  initiallyExpanded: idx == 1,
-                  children: [
-                    _SubNavItem(
-                      icon: Icons.list_alt_rounded,
-                      label: 'All Products',
-                      onTap: () => _go(context, 1),
-                    ),
-                    _SubNavItem(
-                      icon: Icons.category_rounded,
-                      label: 'Categories',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push('/categories');
-                      },
-                    ),
-                  ],
-                ),
-                _NavItem(
-                  icon: Icons.receipt_long_rounded,
-                  label: AppStrings.navOrders,
-                  selected: idx == 2,
-                  onTap: () => _go(context, 2),
-                ),
-                _NavItem(
-                  icon: Icons.people_rounded,
-                  label: AppStrings.navCustomers,
-                  selected: idx == 3,
-                  onTap: () => _go(context, 3),
-                ),
-                Divider(
-                    indent: 16,
-                    endIndent: 16,
-                    color: theme.dividerColor),
-                // More (expandable)
-                _ExpandableNavItem(
-                  icon: Icons.grid_view_rounded,
-                  label: 'More',
-                  initiallyExpanded: idx == 4,
-                  children: [
-                    _SubNavItem(
-                      icon: Icons.warehouse_rounded,
-                      label: AppStrings.navInventory,
-                      onTap: () => _go(context, 4),
-                    ),
-                    _SubNavItem(
-                      icon: Icons.account_balance_wallet_rounded,
-                      label: AppStrings.navExpenses,
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.go('/expenses');
-                      },
-                    ),
-                    _SubNavItem(
-                      icon: Icons.settings_rounded,
-                      label: AppStrings.navSettings,
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.go('/settings');
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          Expanded(child: navigationShell),
         ],
       ),
     );
   }
-
-  void _go(BuildContext context, int branch) {
-    Navigator.pop(context);
-    navigationShell.goBranch(branch,
-        initialLocation: branch == navigationShell.currentIndex);
-  }
 }
 
-// ─── Drawer item widgets ──────────────────────────────────────────────────────
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+class _Sidebar extends StatelessWidget {
+  final bool expanded;
+  final int currentIndex;
+  final void Function(int) onNavigate;
 
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
+  const _Sidebar({
+    required this.expanded,
+    required this.currentIndex,
+    required this.onNavigate,
   });
+
+  static const _items = <({IconData icon, IconData selectedIcon, String label})>[
+    (icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard, label: AppStrings.navDashboard),
+    (icon: Icons.inventory_2_outlined, selectedIcon: Icons.inventory_2, label: AppStrings.navProducts),
+    (icon: Icons.receipt_long_outlined, selectedIcon: Icons.receipt_long, label: AppStrings.navOrders),
+    (icon: Icons.people_outline, selectedIcon: Icons.people, label: AppStrings.navCustomers),
+    (icon: Icons.warehouse_outlined, selectedIcon: Icons.warehouse, label: AppStrings.navInventory),
+    (icon: Icons.account_balance_wallet_outlined, selectedIcon: Icons.account_balance_wallet, label: AppStrings.navExpenses),
+    (icon: Icons.category_outlined, selectedIcon: Icons.category, label: 'Categories'),
+    (icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: AppStrings.navSettings),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: selected
-            ? theme.colorScheme.primary
-            : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-          color: selected ? theme.colorScheme.primary : null,
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? colorScheme.surfaceContainerHigh : colorScheme.surfaceContainerLow;
+    final selectedColor = colorScheme.primary;
+    final unselectedColor = colorScheme.onSurfaceVariant;
+
+    return Container(
+      width: expanded ? 200 : 56,
+      color: bgColor,
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            for (int i = 0; i < 5; i++)
+              _tile(i, _items[i], selectedColor, unselectedColor),
+            Divider(
+              indent: 12,
+              endIndent: 12,
+              height: 16,
+              color: unselectedColor.withValues(alpha: 0.2),
+            ),
+            for (int i = 5; i < 7; i++)
+              _tile(i, _items[i], selectedColor, unselectedColor),
+            const Spacer(),
+            _tile(7, _items[7], selectedColor, unselectedColor),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
-      selected: selected,
-      selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      onTap: onTap,
     );
   }
-}
 
-class _ExpandableNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool initiallyExpanded;
-  final List<Widget> children;
-
-  const _ExpandableNavItem({
-    required this.icon,
-    required this.label,
-    required this.initiallyExpanded,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ExpansionTile(
-      leading: Icon(icon,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-      title: Text(label,
-          style: const TextStyle(fontWeight: FontWeight.w500)),
-      initiallyExpanded: initiallyExpanded,
-      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-      childrenPadding: const EdgeInsets.only(left: 16),
-      shape: const Border(),
-      collapsedShape: const Border(),
-      children: children,
+  Widget _tile(
+    int index,
+    ({IconData icon, IconData selectedIcon, String label}) item,
+    Color selectedColor,
+    Color unselectedColor,
+  ) {
+    final selected = currentIndex == index;
+    final icon = Icon(
+      selected ? item.selectedIcon : item.icon,
+      size: 22,
+      color: selected ? selectedColor : unselectedColor,
     );
-  }
-}
+    final bg = selected ? selectedColor.withValues(alpha: 0.12) : Colors.transparent;
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
 
-class _SubNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
+    if (expanded) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: Material(
+          color: bg,
+          shape: shape,
+          child: InkWell(
+            onTap: () => onNavigate(index),
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 44,
+              child: Row(
+                children: [
+                  const SizedBox(width: 12),
+                  icon,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      item.label,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                        color: selected ? selectedColor : unselectedColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
-  const _SubNavItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon,
-          size: 20,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.55)),
-      title: Text(label,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      dense: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      onTap: onTap,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Tooltip(
+        message: item.label,
+        preferBelow: false,
+        waitDuration: const Duration(milliseconds: 400),
+        child: IconButton(
+          onPressed: () => onNavigate(index),
+          icon: icon,
+          style: IconButton.styleFrom(
+            backgroundColor: bg,
+            shape: shape,
+            fixedSize: const Size(44, 44),
+          ),
+        ),
+      ),
     );
   }
 }

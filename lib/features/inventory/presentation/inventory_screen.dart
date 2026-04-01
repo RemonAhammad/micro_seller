@@ -5,7 +5,6 @@ import '../providers/inventory_provider.dart';
 import '../../../features/products/providers/product_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
-import '../../../shared/widgets/drawer_menu_button.dart';
 import 'widgets/stock_movement_tile.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
@@ -39,7 +38,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
     return Scaffold(
       appBar: AppBar(
-        leading: const DrawerMenuButton(),
         title: const Text(AppStrings.inventory),
         bottom: TabBar(
           controller: _tabController,

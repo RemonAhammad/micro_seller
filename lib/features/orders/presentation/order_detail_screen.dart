@@ -128,7 +128,7 @@ class _OrderDetailBody extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 // Items
-                _SectionLabel('Order Items'),
+                const _SectionLabel('Order Items'),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),

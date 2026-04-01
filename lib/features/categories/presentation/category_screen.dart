@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/category.dart';
 import '../providers/category_provider.dart';
-import '../../../shared/widgets/drawer_menu_button.dart';
 import '../../../shared/widgets/empty_state.dart';
 
 class CategoryScreen extends ConsumerWidget {
@@ -14,7 +13,6 @@ class CategoryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const DrawerMenuButton(),
         title: const Text('Categories'),
       ),
       body: categoriesAsync.when(

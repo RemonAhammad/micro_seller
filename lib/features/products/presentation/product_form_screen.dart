@@ -7,6 +7,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:isar/isar.dart';
 import '../../../data/models/product.dart';
 import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
@@ -192,7 +193,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final existing = _existingProduct ?? widget.product;
 
       final product = Product(
-        id: existing?.id ?? 0,
+        id: existing?.id ?? Isar.autoIncrement,
         name: _nameCtrl.text.trim(),
         sku: _skuCtrl.text.trim(),
         description: _descCtrl.text.trim(),
@@ -304,7 +305,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const SizedBox(height: 24),
 
               // ── Basic Info ─────────────────────────────────────────────────
-              _SectionLabel('Basic Info'),
+              const _SectionLabel('Basic Info'),
               const SizedBox(height: 12),
               AppTextField(
                 label: AppStrings.productName,
@@ -386,7 +387,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const SizedBox(height: 20),
 
               // ── Pricing ────────────────────────────────────────────────────
-              _SectionLabel('Pricing'),
+              const _SectionLabel('Pricing'),
               const SizedBox(height: 12),
               AppTextField(
                 label: AppStrings.sellingPrice,
@@ -405,7 +406,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const SizedBox(height: 20),
 
               // ── Inventory ──────────────────────────────────────────────────
-              _SectionLabel('Inventory'),
+              const _SectionLabel('Inventory'),
               const SizedBox(height: 12),
               Row(
                 children: [

@@ -8,7 +8,6 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/loading_overlay.dart';
-import '../../../shared/widgets/drawer_menu_button.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/sales_chart.dart';
 import 'widgets/low_stock_list.dart';
@@ -35,7 +34,6 @@ class DashboardScreen extends ConsumerWidget {
               pinned: true,
               stretch: true,
               backgroundColor: AppColors.primary,
-              leading: const DrawerMenuButton(),
               foregroundColor: Colors.white,
               flexibleSpace: FlexibleSpaceBar(
                 stretchModes: const [

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/product.dart';
@@ -16,12 +17,19 @@ ProductRepository productRepository(ProductRepositoryRef ref) {
 @riverpod
 Stream<List<Product>> products(ProductsRef ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.products
+  // Debug: print raw DB count
+  final allCount = await isar.products.count();
+  final activeCount = await isar.products.filter().isActiveEqualTo(true).count();
+  debugPrint('[ProductProvider] DB total: $allCount, active: $activeCount');
+  await for (final list in isar.products
       .where()
       .filter()
       .isActiveEqualTo(true)
       .sortByName()
-      .watch(fireImmediately: true);
+      .watch(fireImmediately: true)) {
+    debugPrint('[ProductProvider] Stream emitted ${list.length} products: ${list.map((p) => '${p.id}:${p.name}').join(', ')}');
+    yield list;
+  }
 }
 
 @riverpod
