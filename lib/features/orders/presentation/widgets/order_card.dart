@@ -90,6 +90,7 @@ class OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final isWide = MediaQuery.sizeOf(context).width >= 600;
 
     return GestureDetector(
       onTap: () => context.push('/orders/${order.id}'),
@@ -97,7 +98,7 @@ class OrderCard extends StatelessWidget {
           ? (details) => _showStatusMenu(context, details.globalPosition)
           : null,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(16),
@@ -109,79 +110,158 @@ class OrderCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  order.orderNumber,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const Spacer(),
-                OrderStatusBadge(status: order.orderStatus),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (order.customerName.isNotEmpty)
-              Row(
-                children: [
-                  Icon(
-                    Icons.person_outline_rounded,
-                    size: 14,
-                    color: cs.onSurface.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    order.customerName,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
+        child: isWide ? _buildWideLayout(theme, cs) : _buildCompactLayout(theme, cs),
+      ),
+    );
+  }
+
+  Widget _buildWideLayout(ThemeData theme, ColorScheme cs) {
+    final muted = cs.onSurface.withValues(alpha: 0.5);
+    return Row(
+      children: [
+        // Order number + customer
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                order.orderNumber,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 14,
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 4),
+              if (order.customerName.isNotEmpty)
                 Text(
-                  '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
+                  order.customerName,
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+
+        // Items + date
+        Expanded(
+          flex: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                DateFormatter.format(order.createdAt),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: cs.onSurface.withValues(alpha: 0.4), fontSize: 11),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+
+        // Status badges
+        Expanded(
+          flex: 3,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(child: OrderStatusBadge(status: order.orderStatus)),
+              const SizedBox(width: 6),
+              Flexible(child: PaymentStatusBadge(status: order.paymentStatus)),
+            ],
+          ),
+        ),
+
+        // Amount
+        Flexible(
+          child: Text(
+            CurrencyFormatter.format(order.totalAmount),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: cs.primary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactLayout(ThemeData theme, ColorScheme cs) {
+    final muted = cs.onSurface.withValues(alpha: 0.5);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                order.orderNumber,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (order.customerName.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Icon(Icons.person_outline_rounded, size: 13, color: muted),
+              const SizedBox(width: 3),
+              Flexible(
+                child: Text(
+                  order.customerName,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.6),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const Spacer(),
-                Text(
-                  DateFormatter.format(order.createdAt),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
+              ),
+            ],
+            const Spacer(),
+            Text(
+              '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.5),
+                fontSize: 11,
+              ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                PaymentStatusBadge(status: order.paymentStatus),
-                Text(
-                  CurrencyFormatter.format(order.totalAmount),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: cs.primary,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 8),
+            Text(
+              DateFormatter.format(order.createdAt),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: cs.onSurface.withValues(alpha: 0.4), fontSize: 11),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Flexible(child: OrderStatusBadge(status: order.orderStatus)),
+            const SizedBox(width: 6),
+            Flexible(child: PaymentStatusBadge(status: order.paymentStatus)),
+            const Spacer(),
+            Text(
+              CurrencyFormatter.format(order.totalAmount),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: cs.primary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

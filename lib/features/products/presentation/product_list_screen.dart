@@ -134,16 +134,21 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           }
 
           if (_showGrid) {
-            return GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.78,
-              ),
-              itemCount: products.length,
-              itemBuilder: (ctx, i) => ProductCard(product: products[i]),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final cols = (constraints.maxWidth / 180).floor().clamp(2, 6);
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.78,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (ctx, i) => ProductCard(product: products[i]),
+                );
+              },
             );
           }
 

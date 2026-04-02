@@ -153,13 +153,9 @@ class _StockAdjustmentScreenState
                       )),
                   const SizedBox(height: 12),
 
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 2.5,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: StockMovementType.values.map((type) {
                       final (icon, label, color) = switch (type) {
                         StockMovementType.restock => (
@@ -189,27 +185,41 @@ class _StockAdjustmentScreenState
                         onTap: () => setState(() => _type = type),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? color.withOpacity(0.15)
-                                : theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(10),
+                                ? color.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isSelected
                                   ? color
-                                  : theme.colorScheme.outline.withOpacity(0.2),
-                              width: isSelected ? 2 : 1,
+                                  : theme.colorScheme.outline
+                                      .withValues(alpha: 0.25),
+                              width: isSelected ? 1.5 : 1,
                             ),
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(icon, color: color, size: 18),
-                              const SizedBox(width: 8),
+                              Icon(icon,
+                                  color: isSelected
+                                      ? color
+                                      : theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.5),
+                                  size: 16),
+                              const SizedBox(width: 6),
                               Text(label,
                                   style: TextStyle(
-                                    color: color,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    color: isSelected
+                                        ? color
+                                        : theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.6),
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
                                   )),
                             ],
                           ),

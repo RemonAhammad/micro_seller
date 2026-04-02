@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/inventory_provider.dart';
 import '../../../features/products/providers/product_provider.dart';
+import '../../../features/categories/providers/category_provider.dart';
 import '../../../data/models/product.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -21,6 +22,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   _StockSort _sort = _StockSort.lowStock;
+  String? _categoryFilter;
 
   @override
   void initState() {
@@ -59,6 +61,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   Widget build(BuildContext context) {
     final movementsAsync = ref.watch(stockMovementsProvider);
     final productsAsync = ref.watch(productsProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -87,22 +90,151 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 );
               }
 
-              final sorted = _sorted(products);
+              // Collect unique categories from products
+              final categoryNames = categoriesAsync.whenOrNull(
+                    data: (cats) => cats.map((c) => c.name).toList(),
+                  ) ??
+                  <String>[];
+
+              final filtered = _categoryFilter == null
+                  ? products
+                  : products
+                      .where((p) => p.category == _categoryFilter)
+                      .toList();
+              final sorted = _sorted(filtered);
 
               return Column(
                 children: [
-                  // Sort bar
+                  // Filter & sort bar
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                     child: Row(
                       children: [
+                        // Category filter
+                        PopupMenuButton<String?>(
+                          initialValue: _categoryFilter,
+                          onSelected: (v) =>
+                              setState(() => _categoryFilter = v),
+                          tooltip: 'Filter by category',
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _categoryFilter != null
+                                  ? cs.primary.withValues(alpha: 0.08)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _categoryFilter != null
+                                    ? cs.primary.withValues(alpha: 0.3)
+                                    : cs.outline.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.filter_list,
+                                    size: 15,
+                                    color: _categoryFilter != null
+                                        ? cs.primary
+                                        : cs.onSurface
+                                            .withValues(alpha: 0.6)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _categoryFilter ?? 'All',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _categoryFilter != null
+                                        ? cs.primary
+                                        : cs.onSurface
+                                            .withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                Icon(Icons.arrow_drop_down,
+                                    size: 16,
+                                    color: _categoryFilter != null
+                                        ? cs.primary
+                                        : cs.onSurface
+                                            .withValues(alpha: 0.5)),
+                              ],
+                            ),
+                          ),
+                          itemBuilder: (_) => [
+                            PopupMenuItem<String?>(
+                              value: null,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.clear_all,
+                                      size: 18,
+                                      color: _categoryFilter == null
+                                          ? cs.primary
+                                          : cs.onSurface
+                                              .withValues(alpha: 0.6)),
+                                  const SizedBox(width: 10),
+                                  Text('All Categories',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: _categoryFilter == null
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                        color: _categoryFilter == null
+                                            ? cs.primary
+                                            : null,
+                                      )),
+                                  if (_categoryFilter == null) ...[
+                                    const Spacer(),
+                                    Icon(Icons.check,
+                                        size: 16, color: cs.primary),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            ...categoryNames.map((name) => PopupMenuItem<String?>(
+                                  value: name,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.label_outline,
+                                          size: 18,
+                                          color: _categoryFilter == name
+                                              ? cs.primary
+                                              : cs.onSurface
+                                                  .withValues(alpha: 0.6)),
+                                      const SizedBox(width: 10),
+                                      Text(name,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight:
+                                                _categoryFilter == name
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w400,
+                                            color: _categoryFilter == name
+                                                ? cs.primary
+                                                : null,
+                                          )),
+                                      if (_categoryFilter == name) ...[
+                                        const Spacer(),
+                                        Icon(Icons.check,
+                                            size: 16, color: cs.primary),
+                                      ],
+                                    ],
+                                  ),
+                                )),
+                          ],
+                        ),
+
+                        const SizedBox(width: 6),
                         Text(
-                          '${products.length} products',
+                          '${filtered.length}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.5),
+                            color: cs.onSurface.withValues(alpha: 0.4),
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+
                         const Spacer(),
+
+                        // Sort
                         PopupMenuButton<_StockSort>(
                           initialValue: _sort,
                           onSelected: (v) => setState(() => _sort = v),
@@ -120,14 +252,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                   color: cs.primary,
                                 ),
                               ),
-                              Icon(Icons.arrow_drop_down, size: 18, color: cs.primary),
+                              Icon(Icons.arrow_drop_down,
+                                  size: 18, color: cs.primary),
                             ],
                           ),
                           itemBuilder: (_) => [
-                            _sortItem(_StockSort.lowStock, 'Low Stock First', Icons.warning_amber_rounded),
-                            _sortItem(_StockSort.name, 'Name', Icons.sort_by_alpha),
-                            _sortItem(_StockSort.stockAsc, 'Stock: Low → High', Icons.arrow_upward),
-                            _sortItem(_StockSort.stockDesc, 'Stock: High → Low', Icons.arrow_downward),
+                            _sortItem(_StockSort.lowStock, 'Low Stock First',
+                                Icons.warning_amber_rounded),
+                            _sortItem(_StockSort.name, 'Name',
+                                Icons.sort_by_alpha),
+                            _sortItem(_StockSort.stockAsc,
+                                'Stock: Low → High', Icons.arrow_upward),
+                            _sortItem(_StockSort.stockDesc,
+                                'Stock: High → Low', Icons.arrow_downward),
                           ],
                         ),
                       ],
