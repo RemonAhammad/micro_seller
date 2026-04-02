@@ -901,7 +901,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Customer Picker — search, pick, or create inline
+// Customer Picker — search, pick, or create via inline form
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _CustomerPickerSheet extends StatefulWidget {
@@ -917,11 +917,20 @@ class _CustomerPickerSheet extends StatefulWidget {
 class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   final _searchCtrl = TextEditingController();
   String _query = '';
-  bool _creating = false;
+
+  // Inline form state
+  bool _showForm = false;
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  bool _saving = false;
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -933,29 +942,41 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
               c.phone.contains(_query))
           .toList();
 
-  bool get _isPhoneQuery => RegExp(r'^\d{3,}$').hasMatch(_query.trim());
-
-  bool get _hasExactMatch {
-    final q = _query.trim().toLowerCase();
-    return widget.customers.any((c) =>
-        c.name.toLowerCase() == q || c.phone == q);
+  void _openForm() {
+    // Pre-fill from search query
+    final q = _searchCtrl.text.trim();
+    final isPhone = RegExp(r'^\d{3,}$').hasMatch(q);
+    setState(() {
+      _showForm = true;
+      if (isPhone) {
+        _phoneCtrl.text = q;
+      } else if (q.isNotEmpty) {
+        _nameCtrl.text = q;
+      }
+    });
   }
 
-  Future<void> _createAndReturn() async {
-    final input = _searchCtrl.text.trim();
-    if (input.isEmpty) return;
+  Future<void> _saveCustomer() async {
+    final name = _nameCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
 
-    setState(() => _creating = true);
+    if (name.isEmpty && phone.isEmpty) return;
+
+    // If only phone provided, use phone as name placeholder
+    final customerName = name.isNotEmpty ? name : phone;
+
+    setState(() => _saving = true);
 
     try {
-      final isPhone = _isPhoneQuery;
       final customer = Customer(
-        name: isPhone ? input : input,
-        phone: isPhone ? input : '',
+        name: customerName,
+        phone: phone,
+        address: _addressCtrl.text.trim(),
         createdAt: DateTime.now(),
       );
 
-      await widget.isar.writeTxn(() async => widget.isar.customers.put(customer));
+      await widget.isar
+          .writeTxn(() async => widget.isar.customers.put(customer));
       final saved = await widget.isar.customers.get(customer.id);
       if (mounted) Navigator.pop(context, saved ?? customer);
     } catch (_) {
@@ -963,7 +984,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to create customer')),
         );
-        setState(() => _creating = false);
+        setState(() => _saving = false);
       }
     }
   }
@@ -972,11 +993,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final filtered = _filtered;
-    final showCreate = _query.trim().isNotEmpty && !_hasExactMatch;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
+      initialChildSize: _showForm ? 0.55 : 0.6,
       maxChildSize: 0.95,
       minChildSize: 0.3,
       expand: false,
@@ -992,45 +1011,121 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             ),
           ),
 
+          // Title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Select Customer',
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
-          ),
-
-          // Search
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-            child: TextField(
-              controller: _searchCtrl,
-              autofocus: true,
-              onChanged: (v) => setState(() => _query = v.toLowerCase()),
-              decoration: InputDecoration(
-                hintText: 'Search by name or phone...',
-                prefixIcon: const Icon(Icons.search, size: 20),
-                suffixIcon: _query.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () {
-                          _searchCtrl.clear();
-                          setState(() => _query = '');
-                        },
-                      )
-                    : null,
-                isDense: true,
-              ),
+            child: Row(
+              children: [
+                if (_showForm)
+                  GestureDetector(
+                    onTap: () => setState(() => _showForm = false),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Icon(Icons.arrow_back, size: 20, color: cs.onSurface),
+                    ),
+                  ),
+                Text(
+                  _showForm ? 'New Customer' : 'Select Customer',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
             ),
           ),
 
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
 
-          // Create new customer option
-          if (showCreate)
+          if (_showForm)
+            // ── Inline create form ──
+            Expanded(
+              child: ListView(
+                controller: ctrl,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: _nameCtrl,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      prefixIcon: Icon(Icons.person_outline, size: 20),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]')),
+                    ],
+                    decoration: const InputDecoration(
+                      labelText: 'Phone',
+                      prefixIcon: Icon(Icons.phone_outlined, size: 20),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _addressCtrl,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Address (optional)',
+                      prefixIcon: Icon(Icons.location_on_outlined, size: 20),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _saveCustomer,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.check, size: 18),
+                    label: Text(_saving ? 'Saving...' : 'Add & Select'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(46),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            // ── Search ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Search by name or phone...',
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  suffixIcon: _query.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            setState(() => _query = '');
+                          },
+                        )
+                      : null,
+                  isDense: true,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 6),
+
+            // ── Always-visible create button ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: InkWell(
-                onTap: _creating ? null : _createAndReturn,
+                onTap: _openForm,
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1044,81 +1139,72 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                       Icon(Icons.person_add_outlined,
                           size: 20, color: cs.primary),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isPhoneQuery
-                                  ? 'Create customer with phone "${_searchCtrl.text.trim()}"'
-                                  : 'Create customer "${_searchCtrl.text.trim()}"',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                                color: cs.primary,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        'Create New Customer',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: cs.primary,
                         ),
                       ),
-                      if (_creating)
-                        SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: cs.primary),
-                        )
-                      else
-                        Icon(Icons.arrow_forward, size: 18, color: cs.primary),
+                      const Spacer(),
+                      Icon(Icons.arrow_forward_ios,
+                          size: 14, color: cs.primary.withValues(alpha: 0.6)),
                     ],
                   ),
                 ),
               ),
             ),
 
-          // Customer list
-          Expanded(
-            child: filtered.isEmpty && !showCreate
-                ? Center(
-                    child: Text('No customers found',
-                        style: TextStyle(
-                            color: cs.onSurface.withValues(alpha: 0.4))))
-                : ListView.separated(
-                    controller: ctrl,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) =>
-                        Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
-                    itemBuilder: (_, i) {
-                      final c = filtered[i];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        onTap: () => Navigator.pop(ctx, c),
-                        leading: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: cs.primary.withValues(alpha: 0.1),
-                          child: Text(
-                            c.name[0].toUpperCase(),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: cs.primary,
-                                fontSize: 14),
+            const SizedBox(height: 2),
+
+            // ── Customer list ──
+            Expanded(
+              child: _filtered.isEmpty
+                  ? Center(
+                      child: Text('No customers found',
+                          style: TextStyle(
+                              color: cs.onSurface.withValues(alpha: 0.4))))
+                  : ListView.separated(
+                      controller: ctrl,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filtered.length,
+                      separatorBuilder: (_, __) => Divider(
+                          height: 1,
+                          color: cs.outline.withValues(alpha: 0.1)),
+                      itemBuilder: (_, i) {
+                        final c = _filtered[i];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          onTap: () => Navigator.pop(ctx, c),
+                          leading: CircleAvatar(
+                            radius: 18,
+                            backgroundColor:
+                                cs.primary.withValues(alpha: 0.1),
+                            child: Text(
+                              c.name[0].toUpperCase(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.primary,
+                                  fontSize: 14),
+                            ),
                           ),
-                        ),
-                        title: Text(c.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500, fontSize: 14)),
-                        subtitle: c.phone.isNotEmpty
-                            ? Text(c.phone,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: cs.onSurface.withValues(alpha: 0.5)))
-                            : null,
-                        dense: true,
-                      );
-                    },
-                  ),
-          ),
+                          title: Text(c.name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w500, fontSize: 14)),
+                          subtitle: c.phone.isNotEmpty
+                              ? Text(c.phone,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: cs.onSurface
+                                          .withValues(alpha: 0.5)))
+                              : null,
+                          dense: true,
+                        );
+                      },
+                    ),
+            ),
+          ],
         ],
       ),
     );

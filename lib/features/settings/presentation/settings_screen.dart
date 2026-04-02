@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/settings_provider.dart';
 import '../../../data/models/category.dart';
@@ -200,6 +201,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 }
               },
               keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
           ]),
           const SizedBox(height: 16),
@@ -394,6 +396,7 @@ class _EditableTile extends StatelessWidget {
   final void Function(String) onEdit;
   final int? maxLength;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _EditableTile({
     required this.icon,
@@ -402,6 +405,7 @@ class _EditableTile extends StatelessWidget {
     required this.onEdit,
     this.maxLength,
     this.keyboardType,
+    this.inputFormatters,
   });
 
   @override
@@ -432,6 +436,7 @@ class _EditableTile extends StatelessWidget {
               autofocus: true,
               maxLength: maxLength,
               keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
               decoration: InputDecoration(labelText: label),
             ),
             actions: [

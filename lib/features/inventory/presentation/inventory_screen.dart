@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/inventory_provider.dart';
 import '../../../features/products/providers/product_provider.dart';
+import '../../../data/models/product.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
 import 'widgets/stock_movement_tile.dart';
+
+enum _StockSort { lowStock, name, stockAsc, stockDesc }
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -17,6 +20,7 @@ class InventoryScreen extends ConsumerStatefulWidget {
 class _InventoryScreenState extends ConsumerState<InventoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  _StockSort _sort = _StockSort.lowStock;
 
   @override
   void initState() {
@@ -30,11 +34,33 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     super.dispose();
   }
 
+  List<Product> _sorted(List<Product> products) {
+    final list = [...products];
+    switch (_sort) {
+      case _StockSort.lowStock:
+        list.sort((a, b) {
+          // Score: how urgently stock is needed (lower = more urgent)
+          // Out of stock → negative, low stock → small positive, healthy → large
+          final aDiff = a.stockQty - a.lowStockThreshold;
+          final bDiff = b.stockQty - b.lowStockThreshold;
+          return aDiff.compareTo(bDiff);
+        });
+      case _StockSort.name:
+        list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      case _StockSort.stockAsc:
+        list.sort((a, b) => a.stockQty.compareTo(b.stockQty));
+      case _StockSort.stockDesc:
+        list.sort((a, b) => b.stockQty.compareTo(a.stockQty));
+    }
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final movementsAsync = ref.watch(stockMovementsProvider);
     final productsAsync = ref.watch(productsProvider);
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -50,7 +76,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          // Stock levels tab
+          // ── Stock levels tab ──
           productsAsync.when(
             data: (products) {
               if (products.isEmpty) {
@@ -61,107 +87,71 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 );
               }
 
-              // Sort: out of stock first, then low stock, then in stock
-              final sorted = [...products]
-                ..sort((a, b) {
-                  final aScore = a.isOutOfStock
-                      ? 0
-                      : a.isLowStock
-                          ? 1
-                          : 2;
-                  final bScore = b.isOutOfStock
-                      ? 0
-                      : b.isLowStock
-                          ? 1
-                          : 2;
-                  return aScore.compareTo(bScore);
-                });
+              final sorted = _sorted(products);
 
-              return ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: sorted.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (ctx, i) {
-                  final product = sorted[i];
-                  final isOut = product.isOutOfStock;
-                  final isLow = product.isLowStock;
-                  final color = isOut
-                      ? Colors.red
-                      : isLow
-                          ? Colors.orange
-                          : Colors.green;
-
-                  return Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 6)
-                      ],
-                    ),
+              return Column(
+                children: [
+                  // Sort bar
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        Text(
+                          '${products.length} products',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const Spacer(),
+                        PopupMenuButton<_StockSort>(
+                          initialValue: _sort,
+                          onSelected: (v) => setState(() => _sort = v),
+                          tooltip: 'Sort',
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(product.name,
-                                  style: theme.textTheme.bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600)),
-                              Text(product.sku,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withOpacity(0.5),
-                                  )),
+                              Icon(Icons.sort, size: 16, color: cs.primary),
+                              const SizedBox(width: 4),
+                              Text(
+                                _sortLabel(_sort),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.primary,
+                                ),
+                              ),
+                              Icon(Icons.arrow_drop_down, size: 18, color: cs.primary),
                             ],
                           ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${product.stockQty}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 18,
-                                color: color,
-                              ),
-                            ),
-                            Text(
-                              'of ${product.lowStockThreshold} threshold',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: theme.colorScheme.onSurface
-                                    .withOpacity(0.4),
-                              ),
-                            ),
+                          itemBuilder: (_) => [
+                            _sortItem(_StockSort.lowStock, 'Low Stock First', Icons.warning_amber_rounded),
+                            _sortItem(_StockSort.name, 'Name', Icons.sort_by_alpha),
+                            _sortItem(_StockSort.stockAsc, 'Stock: Low → High', Icons.arrow_upward),
+                            _sortItem(_StockSort.stockDesc, 'Stock: High → Low', Icons.arrow_downward),
                           ],
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.tune_rounded),
-                          onPressed: () =>
-                              context.push('/inventory/adjust/${product.id}'),
-                          style: IconButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary
-                                .withOpacity(0.1),
-                            foregroundColor: theme.colorScheme.primary,
-                          ),
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+
+                  // Product list
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      itemCount: sorted.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (ctx, i) =>
+                          _StockTile(product: sorted[i], theme: theme, cs: cs),
+                    ),
+                  ),
+                ],
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('$e')),
           ),
 
-          // Movements tab
+          // ── Movements tab ──
           movementsAsync.when(
             data: (movements) {
               if (movements.isEmpty) {
@@ -179,6 +169,122 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('$e')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _sortLabel(_StockSort sort) => switch (sort) {
+        _StockSort.lowStock => 'Low Stock',
+        _StockSort.name => 'Name',
+        _StockSort.stockAsc => 'Stock ↑',
+        _StockSort.stockDesc => 'Stock ↓',
+      };
+
+  PopupMenuItem<_StockSort> _sortItem(
+      _StockSort value, String label, IconData icon) {
+    final selected = _sort == value;
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18,
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(width: 10),
+          Text(label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected ? Theme.of(context).colorScheme.primary : null,
+              )),
+          if (selected) ...[
+            const Spacer(),
+            Icon(Icons.check, size: 16, color: Theme.of(context).colorScheme.primary),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StockTile extends StatelessWidget {
+  final Product product;
+  final ThemeData theme;
+  final ColorScheme cs;
+
+  const _StockTile({
+    required this.product,
+    required this.theme,
+    required this.cs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isOut = product.isOutOfStock;
+    final isLow = product.isLowStock;
+    final color = isOut
+        ? Colors.red
+        : isLow
+            ? Colors.orange
+            : Colors.green;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(product.name,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(product.sku,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    )),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${product.stockQty}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: color,
+                ),
+              ),
+              Text(
+                'of ${product.lowStockThreshold} threshold',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: cs.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: () =>
+                context.push('/inventory/adjust/${product.id}'),
+            style: IconButton.styleFrom(
+              backgroundColor: cs.primary.withValues(alpha: 0.1),
+              foregroundColor: cs.primary,
+            ),
           ),
         ],
       ),

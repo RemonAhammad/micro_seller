@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/customer.dart';
@@ -140,6 +141,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 label: AppStrings.phone,
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]')),
+                ],
                 validator: Validators.phone,
                 textInputAction: TextInputAction.next,
                 prefixIcon: const Icon(Icons.phone_outlined),

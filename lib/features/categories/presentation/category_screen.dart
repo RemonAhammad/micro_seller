@@ -37,10 +37,10 @@ class CategoryScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showDialog(context, ref),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Category'),
+        tooltip: 'Add Category',
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -111,17 +111,44 @@ class OrderNotifier extends _$OrderNotifier {
         final order = await isar.orders.get(orderId);
         if (order == null) return;
 
-        // If transitioning to confirmed, deduct stock
-        if (status == OrderStatus.confirmed &&
-            order.orderStatus == OrderStatus.pending) {
+        final oldStatus = order.orderStatus;
+        if (oldStatus == status) return;
+
+        final wasStockDeducted = oldStatus != OrderStatus.pending &&
+            oldStatus != OrderStatus.cancelled;
+        final shouldDeductStock =
+            status != OrderStatus.pending && status != OrderStatus.cancelled;
+
+        // Restore stock when rolling back to pending/cancelled
+        if (wasStockDeducted && !shouldDeductStock) {
           for (final item in order.items) {
             final product = await isar.products.get(item.productId);
             if (product != null) {
-              final updated = product.copyWith(
+              await isar.products.put(product.copyWith(
+                stockQty: product.stockQty + item.qty,
+                updatedAt: DateTime.now(),
+              ));
+              await isar.stockMovements.put(StockMovement(
+                productId: item.productId,
+                productName: item.productName,
+                type: StockMovementType.adjustment,
+                qty: item.qty,
+                reason: 'Rollback ${order.orderNumber} → ${status.name}',
+                createdAt: DateTime.now(),
+              ));
+            }
+          }
+        }
+
+        // Deduct stock when moving from pending/cancelled to active status
+        if (!wasStockDeducted && shouldDeductStock) {
+          for (final item in order.items) {
+            final product = await isar.products.get(item.productId);
+            if (product != null) {
+              await isar.products.put(product.copyWith(
                 stockQty: product.stockQty - item.qty,
                 updatedAt: DateTime.now(),
-              );
-              await isar.products.put(updated);
+              ));
               await isar.stockMovements.put(StockMovement(
                 productId: item.productId,
                 productName: item.productName,

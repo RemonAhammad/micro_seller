@@ -85,10 +85,10 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/customers/add'),
-        icon: const Icon(Icons.person_add_rounded),
-        label: const Text(AppStrings.addCustomer),
+        tooltip: AppStrings.addCustomer,
+        child: const Icon(Icons.add),
       ),
     );
   }

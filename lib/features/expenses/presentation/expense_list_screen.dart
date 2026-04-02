@@ -126,10 +126,10 @@ class ExpenseListScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/expenses/add'),
-        icon: const Icon(Icons.add),
-        label: const Text(AppStrings.addExpense),
+        tooltip: AppStrings.addExpense,
+        child: const Icon(Icons.add),
       ),
     );
   }

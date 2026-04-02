@@ -160,10 +160,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/products/add'),
-        icon: const Icon(Icons.add),
-        label: const Text(AppStrings.addProduct),
+        tooltip: AppStrings.addProduct,
+        child: const Icon(Icons.add),
       ),
     );
   }

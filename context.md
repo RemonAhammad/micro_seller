@@ -91,7 +91,7 @@ lib/
 │   ├── orders/
 │   │   ├── presentation/
 │   │   │   ├── order_list_screen.dart              # 5 tabs: All/Pending/Active/Completed/Cancelled
-│   │   │   ├── order_form_screen.dart              # Customer picker, product picker, pricing
+│   │   │   ├── order_form_screen.dart              # Full order creation (see Order Form UX below)
 │   │   │   ├── order_detail_screen.dart            # Status actions, payment, share/print/PDF
 │   │   │   └── widgets/
 │   │   │       ├── order_card.dart
@@ -136,12 +136,46 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 | **StockMovement** | productId, productName, type (sale/restock/adjustment/damage), qty, reason | isIncoming |
 | **Category** | name | — |
 
+## Order Form UX (order_form_screen.dart)
+
+The order creation screen is designed for fast, frictionless use:
+
+- **Customer picker (bottom sheet):**
+  - Search by name or phone with autofocus
+  - Select existing customer from filtered list
+  - **Inline customer creation**: if no exact match, a "Create customer" row appears at top
+    - If query is digits (3+) → creates customer with that value as phone number
+    - Otherwise → creates customer with that value as name
+    - Customer is saved to Isar directly from the sheet, returned immediately
+  - Selected customer shows with an X button to clear
+
+- **Product picker (bottom sheet, stays open for multi-add):**
+  - Search by name or SKU
+  - Inline +/- qty controls per product (no close-reopen cycle)
+  - Out-of-stock products are dimmed with disabled button
+  - Item count badge, "Done" button to close
+  - Changes are pushed to parent via `onChanged` callback in real time
+
+- **Item list (main screen):**
+  - Each item has +/- qty buttons and an X delete button (no hidden swipe)
+  - Item count badge in section header
+  - Tapping empty state opens product picker
+
+- **Pricing:**
+  - Discount + delivery fee fields
+  - Amount paid field with "Pay Full" quick button (fills total)
+
+- **Order status:** ChoiceChips (Pending / Confirmed) — not a dropdown
+
+- **Sticky footer:** Live subtotal/discount/delivery/total summary + "Create Order" button
+
 ## Key Business Flows
 
 ### Order Creation (transactional)
-1. Save order to DB
-2. If status == confirmed: deduct stock per item + create StockMovement records
-3. If customerId > 0: update customer totalOrders, totalSpent, outstandingBalance
+1. If customer was created inline during order form, they already exist in DB
+2. Save order to DB
+3. If status == confirmed: deduct stock per item + create StockMovement records
+4. If customerId > 0: update customer totalOrders, totalSpent, outstandingBalance
 
 ### Payment Recording (transactional)
 1. Update order.amountPaid, determine paymentStatus (paid/partial)
@@ -158,7 +192,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 
 ## Navigation (GoRouter)
 
-8 branches via `StatefulShellRoute` with persistent sidebar:
+8 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed:
 
 | Branch | Path | Sub-routes |
 |--------|------|------------|
@@ -183,7 +217,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 ## UI Design
 
 - Material 3, teal primary (#00897B), light/dark theme support
-- Sidebar navigation (collapsible, gradient teal-to-dark)
+- **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons. Simple StatelessWidget, no animations. Uses theme colors (surfaceContainerLow bg, primary highlight).
 - Cards with 12px radius, subtle shadows
 - Color-coded status badges (order status, payment status, stock level)
 - Shimmer loading, empty states, confirm dialogs

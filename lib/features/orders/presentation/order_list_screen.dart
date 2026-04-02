@@ -17,7 +17,24 @@ class OrderListScreen extends ConsumerStatefulWidget {
 class _OrderListScreenState extends ConsumerState<OrderListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final _tabs = ['All', 'Pending', 'Active', 'Completed', 'Cancelled'];
+  static const _tabs = ['All', 'Pending', 'Active', 'Completed', 'Cancelled'];
+
+  List<int> _getCounts(List<Order> orders) {
+    int pending = 0, active = 0, completed = 0, cancelled = 0;
+    for (final o in orders) {
+      switch (o.orderStatus) {
+        case OrderStatus.pending:
+          pending++;
+        case OrderStatus.confirmed || OrderStatus.shipped:
+          active++;
+        case OrderStatus.completed:
+          completed++;
+        case OrderStatus.cancelled:
+          cancelled++;
+      }
+    }
+    return [orders.length, pending, active, completed, cancelled];
+  }
 
   @override
   void initState() {
@@ -38,7 +55,21 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.orders),
-        bottom: TabBar(
+        bottom: ordersAsync.whenOrNull(
+          data: (allOrders) {
+            final counts = _getCounts(allOrders);
+            return TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              tabs: [
+                for (int i = 0; i < _tabs.length; i++)
+                  Tab(child: _TabLabel(label: _tabs[i], count: counts[i])),
+              ],
+            );
+          },
+        ) ?? TabBar(
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
@@ -48,46 +79,86 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
       ),
       body: ordersAsync.when(
         data: (allOrders) {
+          final pending = allOrders
+              .where((o) => o.orderStatus == OrderStatus.pending)
+              .toList();
+          final active = allOrders
+              .where((o) =>
+                  o.orderStatus == OrderStatus.confirmed ||
+                  o.orderStatus == OrderStatus.shipped)
+              .toList();
+          final completed = allOrders
+              .where((o) => o.orderStatus == OrderStatus.completed)
+              .toList();
+          final cancelled = allOrders
+              .where((o) => o.orderStatus == OrderStatus.cancelled)
+              .toList();
+
           return TabBarView(
             controller: _tabController,
             children: [
               _OrderList(orders: allOrders),
-              _OrderList(orders: allOrders
-                  .where((o) => o.orderStatus == OrderStatus.pending)
-                  .toList()),
-              _OrderList(orders: allOrders
-                  .where((o) =>
-                      o.orderStatus == OrderStatus.confirmed ||
-                      o.orderStatus == OrderStatus.shipped)
-                  .toList()),
-              _OrderList(orders: allOrders
-                  .where((o) => o.orderStatus == OrderStatus.completed)
-                  .toList()),
-              _OrderList(orders: allOrders
-                  .where((o) => o.orderStatus == OrderStatus.cancelled)
-                  .toList()),
+              _OrderList(orders: pending),
+              _OrderList(orders: active),
+              _OrderList(orders: completed),
+              _OrderList(orders: cancelled),
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/orders/add'),
-        icon: const Icon(Icons.add),
-        label: const Text(AppStrings.addOrder),
+        tooltip: AppStrings.addOrder,
+        child: const Icon(Icons.add),
       ),
     );
   }
 }
 
-class _OrderList extends StatelessWidget {
+class _TabLabel extends StatelessWidget {
+  final String label;
+  final int count;
+
+  const _TabLabel({required this.label, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label),
+        if (count > 0) ...[
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _OrderList extends ConsumerWidget {
   final List<Order> orders;
 
   const _OrderList({required this.orders});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (orders.isEmpty) {
       return const EmptyState(
         icon: Icons.receipt_long_rounded,
@@ -100,7 +171,15 @@ class _OrderList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: orders.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (ctx, i) => OrderCard(order: orders[i]),
+      itemBuilder: (ctx, i) {
+        final order = orders[i];
+        return OrderCard(
+          order: order,
+          onStatusChange: (status) {
+            ref.read(orderNotifierProvider.notifier).updateStatus(order.id, status);
+          },
+        );
+      },
     );
   }
 }
