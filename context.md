@@ -69,13 +69,13 @@ lib/
 │   │   └── providers/customer_provider.dart
 │   ├── dashboard/
 │   │   ├── presentation/
-│   │   │   ├── dashboard_screen.dart               # Revenue, stats, chart, low stock, unpaid
+│   │   │   ├── dashboard_screen.dart               # Responsive dashboard (see Dashboard below)
 │   │   │   └── widgets/
-│   │   │       ├── stat_card.dart
-│   │   │       ├── sales_chart.dart                # 7-day bar chart with revenue/profit toggle
+│   │   │       ├── stat_card.dart                  # Compact card with icon, value, label
+│   │   │       ├── sales_chart.dart                # SalesChart (bar), OrderStatusChart (pie), RevenueExpenseChart (line)
 │   │   │       ├── low_stock_list.dart
 │   │   │       └── unpaid_orders_widget.dart
-│   │   └── providers/dashboard_provider.dart       # Aggregates stats from all collections
+│   │   └── providers/dashboard_provider.dart       # Aggregates stats; profit uses stored costPrice
 │   ├── expenses/
 │   │   ├── presentation/
 │   │   │   ├── expense_list_screen.dart            # Month summary banner + list
@@ -84,24 +84,24 @@ lib/
 │   │   └── providers/expense_provider.dart
 │   ├── inventory/
 │   │   ├── presentation/
-│   │   │   ├── inventory_screen.dart               # 2 tabs: Stock Levels, Movements
-│   │   │   ├── stock_adjustment_screen.dart        # Type selector, qty, reason
+│   │   │   ├── inventory_screen.dart               # 2 tabs; category filter + sort (low stock/name/qty)
+│   │   │   ├── stock_adjustment_screen.dart        # Pill-chip type selector, qty, reason
 │   │   │   └── widgets/stock_movement_tile.dart
 │   │   └── providers/inventory_provider.dart
 │   ├── orders/
 │   │   ├── presentation/
-│   │   │   ├── order_list_screen.dart              # 5 tabs: All/Pending/Active/Completed/Cancelled
+│   │   │   ├── order_list_screen.dart              # 5 tabs with count badges, long-press status change
 │   │   │   ├── order_form_screen.dart              # Full order creation (see Order Form UX below)
 │   │   │   ├── order_detail_screen.dart            # Status actions, payment, share/print/PDF
 │   │   │   └── widgets/
-│   │   │       ├── order_card.dart
+│   │   │       ├── order_card.dart                 # Responsive: compact on phone, row on tablet
 │   │   │       ├── order_item_row.dart
-│   │   │       └── order_status_badge.dart         # Also PaymentStatusBadge
-│   │   └── providers/order_provider.dart           # Complex: stock deduction, customer stats
+│   │   │       └── order_status_badge.dart         # Text-only badges (no icons), PaymentStatusBadge
+│   │   └── providers/order_provider.dart           # Stock deduction, rollback, customer stats
 │   ├── products/
 │   │   ├── presentation/
-│   │   │   ├── product_list_screen.dart            # Search, category chips, grid/list toggle
-│   │   │   ├── product_form_screen.dart            # Image picker, QR scanner, category chips
+│   │   │   ├── product_list_screen.dart            # Search, category chips, responsive grid/list
+│   │   │   ├── product_form_screen.dart            # Image, QR, category, selling+cost price side by side
 │   │   │   ├── product_detail_screen.dart          # Full info, adjust stock
 │   │   │   └── widgets/
 │   │   │       ├── product_card.dart
@@ -130,7 +130,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 |-------|-----------|----------------|
 | **Product** | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive | profitMargin, isLowStock, isOutOfStock |
 | **Order** | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, totalAmount, amountPaid, paymentStatus, orderStatus | balanceDue, isFullyPaid, totalItems |
-| **OrderItem** | @embedded: productId, productName, productSku, qty, unitPrice, totalPrice | — |
+| **OrderItem** | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice | — |
 | **Customer** | name, phone, address, notes, tag (new/regular/vip), totalOrders, totalSpent, outstandingBalance | hasOutstanding |
 | **Expense** | title, amount, category (logistics/packaging/marketing/supplies/other), date, notes | — |
 | **StockMovement** | productId, productName, type (sale/restock/adjustment/damage), qty, reason | isIncoming |
@@ -143,10 +143,11 @@ The order creation screen is designed for fast, frictionless use:
 - **Customer picker (bottom sheet):**
   - Search by name or phone with autofocus
   - Select existing customer from filtered list
-  - **Inline customer creation**: if no exact match, a "Create customer" row appears at top
-    - If query is digits (3+) → creates customer with that value as phone number
-    - Otherwise → creates customer with that value as name
-    - Customer is saved to Isar directly from the sheet, returned immediately
+  - **Always-visible "Create New Customer" button** at top of the sheet
+    - Tapping opens an inline form (Name, Phone, Address) within the same sheet
+    - Pre-fills from search query (digits → phone field, text → name field)
+    - "Add & Select" saves to Isar and returns as selected customer
+    - Back arrow returns to search/list view
   - Selected customer shows with an X button to clear
 
 - **Product picker (bottom sheet, stays open for multi-add):**
@@ -173,9 +174,20 @@ The order creation screen is designed for fast, frictionless use:
 
 ### Order Creation (transactional)
 1. If customer was created inline during order form, they already exist in DB
-2. Save order to DB
+2. Save order to DB — each OrderItem stores `costPrice` from the product at time of order (frozen for accurate profit)
 3. If status == confirmed: deduct stock per item + create StockMovement records
 4. If customerId > 0: update customer totalOrders, totalSpent, outstandingBalance
+
+### Order Status Change (rollbackable)
+- **Forward** (pending → confirmed/shipped/completed): deducts stock, creates sale StockMovements
+- **Rollback** (confirmed/shipped/completed → pending/cancelled): **restores stock**, creates adjustment StockMovements with "Rollback" reason
+- Logic: pending/cancelled = stock not deducted; confirmed/shipped/completed = stock deducted
+- Long-press any order card in the list to change status via popup menu
+
+### Profit Calculation
+- `profit = (unitPrice - costPrice) × qty` per order item
+- Uses `costPrice` stored on OrderItem (frozen at order time); falls back to product lookup for old orders without it
+- Dashboard shows: month profit, weekly profit chart, revenue vs expenses line chart
 
 ### Payment Recording (transactional)
 1. Update order.amountPaid, determine paymentStatus (paid/partial)
@@ -217,10 +229,18 @@ The order creation screen is designed for fast, frictionless use:
 ## UI Design
 
 - Material 3, teal primary (#00897B), light/dark theme support
-- **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons. Simple StatelessWidget, no animations. Uses theme colors (surfaceContainerLow bg, primary highlight).
-- Cards with 12px radius, subtle shadows
-- Color-coded status badges (order status, payment status, stock level)
+- **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons.
+- **Responsive layouts throughout**:
+  - Dashboard: stat cards via `Wrap` + `LayoutBuilder` (2-6 cols based on `width/170`); charts side-by-side on wide screens
+  - Product grid: responsive columns via `LayoutBuilder` (`width/180`, clamp 2-6)
+  - Order card: compact column on phone, single-row layout on tablet (>=600px)
+  - Inventory: category filter + sort dropdown bar
+- **Dashboard charts**: Weekly sales bar chart, order status pie chart, revenue vs expenses line chart
+- **FABs**: Icon-only `+` with tooltip, rounded-square shape (16px radius)
+- Cards with 14px radius, subtle shadows
+- Color-coded text-only status badges (no icons in badges)
 - Shimmer loading, empty states, confirm dialogs
+- All number inputs have `inputFormatters` (digits, decimal, or phone pattern)
 - Currency: Bangladeshi Taka (৳) by default
 
 ## Code Generation

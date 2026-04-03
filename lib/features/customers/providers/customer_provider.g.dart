@@ -20,7 +20,7 @@ final customersProvider = AutoDisposeStreamProvider<List<Customer>>.internal(
 );
 
 typedef CustomersRef = AutoDisposeStreamProviderRef<List<Customer>>;
-String _$customerNotifierHash() => r'cd7ed186b398f0974e8c4ad8b9ee289139de61c1';
+String _$customerNotifierHash() => r'8df693128093f081747161608350797a5702c990';
 
 /// See also [CustomerNotifier].
 @ProviderFor(CustomerNotifier)

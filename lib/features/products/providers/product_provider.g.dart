@@ -22,7 +22,7 @@ final productRepositoryProvider =
 );
 
 typedef ProductRepositoryRef = AutoDisposeProviderRef<ProductRepository>;
-String _$productsHash() => r'5e3617504f25c5d6a4bfb42e108de6fc7ef1ccb9';
+String _$productsHash() => r'662bae39b4d61acf0c9b6240ef1cf5873bc8ccfc';
 
 /// See also [products].
 @ProviderFor(products)
@@ -52,7 +52,7 @@ final lowStockProductsProvider =
 );
 
 typedef LowStockProductsRef = AutoDisposeStreamProviderRef<List<Product>>;
-String _$productNotifierHash() => r'd32d098e96cf1734d6d9f9164f28949496a174ad';
+String _$productNotifierHash() => r'73f37262e87bdc0eea623580af604d4ab6b44bb6';
 
 /// See also [ProductNotifier].
 @ProviderFor(ProductNotifier)

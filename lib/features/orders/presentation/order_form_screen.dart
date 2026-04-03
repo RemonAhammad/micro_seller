@@ -680,6 +680,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           productSku: product.sku,
           qty: qty,
           unitPrice: product.sellingPrice,
+          costPrice: product.costPrice,
           totalPrice: product.sellingPrice * qty,
         ));
       }

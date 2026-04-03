@@ -13,33 +13,38 @@ const OrderItemSchema = Schema(
   name: r'OrderItem',
   id: -5113141332666578860,
   properties: {
-    r'productId': PropertySchema(
+    r'costPrice': PropertySchema(
       id: 0,
+      name: r'costPrice',
+      type: IsarType.double,
+    ),
+    r'productId': PropertySchema(
+      id: 1,
       name: r'productId',
       type: IsarType.long,
     ),
     r'productName': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'productName',
       type: IsarType.string,
     ),
     r'productSku': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'productSku',
       type: IsarType.string,
     ),
     r'qty': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'qty',
       type: IsarType.long,
     ),
     r'totalPrice': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'totalPrice',
       type: IsarType.double,
     ),
     r'unitPrice': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'unitPrice',
       type: IsarType.double,
     )
@@ -67,12 +72,13 @@ void _orderItemSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.productId);
-  writer.writeString(offsets[1], object.productName);
-  writer.writeString(offsets[2], object.productSku);
-  writer.writeLong(offsets[3], object.qty);
-  writer.writeDouble(offsets[4], object.totalPrice);
-  writer.writeDouble(offsets[5], object.unitPrice);
+  writer.writeDouble(offsets[0], object.costPrice);
+  writer.writeLong(offsets[1], object.productId);
+  writer.writeString(offsets[2], object.productName);
+  writer.writeString(offsets[3], object.productSku);
+  writer.writeLong(offsets[4], object.qty);
+  writer.writeDouble(offsets[5], object.totalPrice);
+  writer.writeDouble(offsets[6], object.unitPrice);
 }
 
 OrderItem _orderItemDeserialize(
@@ -82,12 +88,13 @@ OrderItem _orderItemDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = OrderItem(
-    productId: reader.readLongOrNull(offsets[0]) ?? 0,
-    productName: reader.readStringOrNull(offsets[1]) ?? '',
-    productSku: reader.readStringOrNull(offsets[2]) ?? '',
-    qty: reader.readLongOrNull(offsets[3]) ?? 1,
-    totalPrice: reader.readDoubleOrNull(offsets[4]) ?? 0.0,
-    unitPrice: reader.readDoubleOrNull(offsets[5]) ?? 0.0,
+    costPrice: reader.readDoubleOrNull(offsets[0]) ?? 0.0,
+    productId: reader.readLongOrNull(offsets[1]) ?? 0,
+    productName: reader.readStringOrNull(offsets[2]) ?? '',
+    productSku: reader.readStringOrNull(offsets[3]) ?? '',
+    qty: reader.readLongOrNull(offsets[4]) ?? 1,
+    totalPrice: reader.readDoubleOrNull(offsets[5]) ?? 0.0,
+    unitPrice: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
   );
   return object;
 }
@@ -100,16 +107,18 @@ P _orderItemDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 1:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 2:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 3:
-      return (reader.readLongOrNull(offset) ?? 1) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 4:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readLongOrNull(offset) ?? 1) as P;
     case 5:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 6:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -118,6 +127,69 @@ P _orderItemDeserializeProp<P>(
 
 extension OrderItemQueryFilter
     on QueryBuilder<OrderItem, OrderItem, QFilterCondition> {
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> costPriceEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'costPrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      costPriceGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'costPrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> costPriceLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'costPrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> costPriceBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'costPrice',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> productIdEqualTo(
       int value) {
     return QueryBuilder.apply(this, (query) {
@@ -633,6 +705,7 @@ OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => OrderItem(
       productSku: json['productSku'] as String? ?? '',
       qty: (json['qty'] as num?)?.toInt() ?? 1,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0.0,
+      costPrice: (json['costPrice'] as num?)?.toDouble() ?? 0.0,
       totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
     );
 
@@ -642,5 +715,6 @@ Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
       'productSku': instance.productSku,
       'qty': instance.qty,
       'unitPrice': instance.unitPrice,
+      'costPrice': instance.costPrice,
       'totalPrice': instance.totalPrice,
     };

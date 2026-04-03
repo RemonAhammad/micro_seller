@@ -12,6 +12,7 @@ class OrderItem {
     this.productSku = '',
     this.qty = 1,
     this.unitPrice = 0.0,
+    this.costPrice = 0.0,
     this.totalPrice = 0.0,
   });
 
@@ -20,6 +21,7 @@ class OrderItem {
   String productSku;
   int qty;
   double unitPrice;
+  double costPrice;
   double totalPrice;
 
   OrderItem copyWith({
@@ -28,6 +30,7 @@ class OrderItem {
     String? productSku,
     int? qty,
     double? unitPrice,
+    double? costPrice,
     double? totalPrice,
   }) =>
       OrderItem(
@@ -36,6 +39,7 @@ class OrderItem {
         productSku: productSku ?? this.productSku,
         qty: qty ?? this.qty,
         unitPrice: unitPrice ?? this.unitPrice,
+        costPrice: costPrice ?? this.costPrice,
         totalPrice: totalPrice ?? this.totalPrice,
       );
 

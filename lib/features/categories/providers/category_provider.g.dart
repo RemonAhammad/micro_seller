@@ -20,7 +20,7 @@ final categoriesProvider = AutoDisposeStreamProvider<List<Category>>.internal(
 );
 
 typedef CategoriesRef = AutoDisposeStreamProviderRef<List<Category>>;
-String _$categoryNotifierHash() => r'0bc304c92937f99ebdc0c3b8a005010f7a01ed08';
+String _$categoryNotifierHash() => r'806e3fb1d85262e83cfdc2c1b19912190ea47d1b';
 
 /// See also [CategoryNotifier].
 @ProviderFor(CategoryNotifier)

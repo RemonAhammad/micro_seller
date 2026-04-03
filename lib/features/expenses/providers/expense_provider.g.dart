@@ -20,7 +20,7 @@ final expensesProvider = AutoDisposeStreamProvider<List<Expense>>.internal(
 );
 
 typedef ExpensesRef = AutoDisposeStreamProviderRef<List<Expense>>;
-String _$expenseNotifierHash() => r'5c6e84bed2df47f4aeae50551525dae815522a16';
+String _$expenseNotifierHash() => r'251dd3d164876e95aecfe08ad728a33261868ecd';
 
 /// See also [ExpenseNotifier].
 @ProviderFor(ExpenseNotifier)

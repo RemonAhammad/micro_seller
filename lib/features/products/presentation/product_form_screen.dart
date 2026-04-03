@@ -34,6 +34,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _skuCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _sellingPriceCtrl = TextEditingController();
+  final _costPriceCtrl = TextEditingController();
   final _stockCtrl = TextEditingController();
   final _thresholdCtrl = TextEditingController();
   final _categoryCtrl = TextEditingController();
@@ -68,6 +69,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _descCtrl.text = product.description;
     _sellingPriceCtrl.text =
         product.sellingPrice > 0 ? product.sellingPrice.toString() : '';
+    _costPriceCtrl.text =
+        product.costPrice > 0 ? product.costPrice.toString() : '';
     _stockCtrl.text = product.stockQty.toString();
     _thresholdCtrl.text =
         product.lowStockThreshold > 0 ? product.lowStockThreshold.toString() : '';
@@ -82,6 +85,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _skuCtrl.dispose();
     _descCtrl.dispose();
     _sellingPriceCtrl.dispose();
+    _costPriceCtrl.dispose();
     _stockCtrl.dispose();
     _thresholdCtrl.dispose();
     _categoryCtrl.dispose();
@@ -199,7 +203,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         description: _descCtrl.text.trim(),
         imagePath: _imagePath ?? '',
         sellingPrice: double.parse(_sellingPriceCtrl.text),
-        costPrice: existing?.costPrice ?? 0.0,
+        costPrice: double.tryParse(_costPriceCtrl.text) ?? 0.0,
         stockQty: int.parse(_stockCtrl.text),
         lowStockThreshold: int.tryParse(_thresholdCtrl.text) ?? 10,
         category: categoryName,
@@ -389,19 +393,36 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               // ── Pricing ────────────────────────────────────────────────────
               const _SectionLabel('Pricing'),
               const SizedBox(height: 12),
-              AppTextField(
-                label: AppStrings.sellingPrice,
-                controller: _sellingPriceCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      label: AppStrings.sellingPrice,
+                      controller: _sellingPriceCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                      ],
+                      validator: (v) =>
+                          Validators.positiveNumber(v, 'Selling price'),
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppTextField(
+                      label: AppStrings.costPrice,
+                      controller: _costPriceCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                      ],
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ),
                 ],
-                validator: (v) =>
-                    Validators.positiveNumber(v, 'Selling price'),
-                prefixIcon:
-                    const Icon(Icons.monetization_on_outlined, size: 18),
-                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 20),
 

@@ -53,14 +53,17 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
       o.orderStatus != OrderStatus.cancelled).toList();
   final thisMonthRevenue = monthOrders.fold(0.0, (s, o) => s + o.totalAmount);
 
-  // Profit = revenue - cost of goods sold
+  // Profit = revenue - cost of goods sold (uses stored costPrice from order items)
   double thisMonthProfit = 0;
   for (final order in monthOrders) {
     for (final item in order.items) {
-      final product = await isar.products.get(item.productId);
-      final costPrice = product?.costPrice ?? 0;
-      thisMonthProfit +=
-          (item.unitPrice - costPrice) * item.qty;
+      // Use costPrice stored on the order item; fall back to product lookup for old orders
+      double costPrice = item.costPrice;
+      if (costPrice == 0) {
+        final product = await isar.products.get(item.productId);
+        costPrice = product?.costPrice ?? 0;
+      }
+      thisMonthProfit += (item.unitPrice - costPrice) * item.qty;
     }
   }
 
@@ -99,8 +102,11 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
     double profit = 0;
     for (final order in dayOrders) {
       for (final item in order.items) {
-        final product = await isar.products.get(item.productId);
-        final costPrice = product?.costPrice ?? 0;
+        double costPrice = item.costPrice;
+        if (costPrice == 0) {
+          final product = await isar.products.get(item.productId);
+          costPrice = product?.costPrice ?? 0;
+        }
         profit += (item.unitPrice - costPrice) * item.qty;
       }
     }
