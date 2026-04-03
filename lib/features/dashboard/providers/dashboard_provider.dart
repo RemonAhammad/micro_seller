@@ -31,6 +31,16 @@ class DashboardStats with _$DashboardStats {
   }) = _DashboardStats;
 }
 
+double _calcProfit(List<Order> orders) {
+  double profit = 0;
+  for (final order in orders) {
+    for (final item in order.items) {
+      profit += (item.unitPrice - item.costPrice) * item.qty;
+    }
+  }
+  return profit;
+}
+
 @riverpod
 Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
   final isar = await ref.watch(isarProvider.future);
@@ -38,78 +48,71 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
   final now = DateTime.now();
   final todayStart = DateTime(now.year, now.month, now.day);
   final monthStart = DateTime(now.year, now.month, 1);
-  final allOrders = await isar.orders.where().findAll();
-  final products = await isar.products.where().filter().isActiveEqualTo(true).findAll();
+  final weekStart = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
 
-  // Today's revenue
-  final todayOrders = allOrders.where((o) =>
-      o.createdAt != null && o.createdAt!.isAfter(todayStart) &&
-      o.orderStatus != OrderStatus.cancelled).toList();
+  // Use targeted Isar queries instead of loading ALL orders
+  final totalOrders = await isar.orders.count();
+
+  final nonCancelledFilter = isar.orders.filter().not().orderStatusEqualTo(OrderStatus.cancelled);
+
+  // Today's orders (non-cancelled, created today)
+  final todayOrders = await nonCancelledFilter
+      .createdAtGreaterThan(todayStart)
+      .findAll();
   final todayRevenue = todayOrders.fold(0.0, (s, o) => s + o.totalAmount);
 
-  // Month's data
-  final monthOrders = allOrders.where((o) =>
-      o.createdAt != null && o.createdAt!.isAfter(monthStart) &&
-      o.orderStatus != OrderStatus.cancelled).toList();
+  // Month's orders (non-cancelled, created this month)
+  final monthOrders = await nonCancelledFilter
+      .createdAtGreaterThan(monthStart)
+      .findAll();
   final thisMonthRevenue = monthOrders.fold(0.0, (s, o) => s + o.totalAmount);
+  final thisMonthProfit = _calcProfit(monthOrders);
 
-  // Profit = revenue - cost of goods sold (uses stored costPrice from order items)
-  double thisMonthProfit = 0;
-  for (final order in monthOrders) {
-    for (final item in order.items) {
-      // Use costPrice stored on the order item; fall back to product lookup for old orders
-      double costPrice = item.costPrice;
-      if (costPrice == 0) {
-        final product = await isar.products.get(item.productId);
-        costPrice = product?.costPrice ?? 0;
-      }
-      thisMonthProfit += (item.unitPrice - costPrice) * item.qty;
-    }
-  }
-
-  // Pending orders
-  final pendingOrders = allOrders.where((o) =>
-      o.orderStatus == OrderStatus.pending ||
-      o.orderStatus == OrderStatus.confirmed).length;
+  // Pending orders count
+  final pendingOrders = await isar.orders
+      .filter()
+      .orderStatusEqualTo(OrderStatus.pending)
+      .or()
+      .orderStatusEqualTo(OrderStatus.confirmed)
+      .count();
 
   // Unpaid total
-  final unpaidTotal = allOrders
-      .where((o) =>
-          o.paymentStatus != PaymentStatus.paid &&
-          o.orderStatus != OrderStatus.cancelled)
-      .fold(0.0, (s, o) => s + o.balanceDue);
+  final unpaidOrders = await isar.orders
+      .filter()
+      .not()
+      .paymentStatusEqualTo(PaymentStatus.paid)
+      .not()
+      .orderStatusEqualTo(OrderStatus.cancelled)
+      .findAll();
+  final unpaidTotal = unpaidOrders.fold(0.0, (s, o) => s + o.balanceDue);
 
-  // Low stock
-  final lowStockProducts = products
-      .where((p) => p.isLowStock || p.isOutOfStock)
-      .toList();
+  // Low stock products
+  final products = await isar.products
+      .where()
+      .filter()
+      .isActiveEqualTo(true)
+      .findAll();
+  final lowStockProducts =
+      products.where((p) => p.isLowStock || p.isOutOfStock).toList();
 
-  // Weekly sales (last 7 days)
+  // Weekly sales — fetch once, bucket locally
+  final weekOrders = await nonCancelledFilter
+      .createdAtGreaterThan(weekStart)
+      .findAll();
+
   final weeklySales = <DailySales>[];
   for (int i = 6; i >= 0; i--) {
     final day = now.subtract(Duration(days: i));
     final dayStart = DateTime(day.year, day.month, day.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
 
-    final dayOrders = allOrders.where((o) =>
+    final dayOrders = weekOrders.where((o) =>
         o.createdAt != null &&
-        o.createdAt!.isAfter(dayStart) &&
-        o.createdAt!.isBefore(dayEnd) &&
-        o.orderStatus != OrderStatus.cancelled).toList();
+        !o.createdAt!.isBefore(dayStart) &&
+        o.createdAt!.isBefore(dayEnd)).toList();
 
     final revenue = dayOrders.fold(0.0, (s, o) => s + o.totalAmount);
-
-    double profit = 0;
-    for (final order in dayOrders) {
-      for (final item in order.items) {
-        double costPrice = item.costPrice;
-        if (costPrice == 0) {
-          final product = await isar.products.get(item.productId);
-          costPrice = product?.costPrice ?? 0;
-        }
-        profit += (item.unitPrice - costPrice) * item.qty;
-      }
-    }
+    final profit = _calcProfit(dayOrders);
 
     weeklySales.add(DailySales(date: dayStart, revenue: revenue, profit: profit));
   }
@@ -118,7 +121,7 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
     todayRevenue: todayRevenue,
     thisMonthRevenue: thisMonthRevenue,
     thisMonthProfit: thisMonthProfit,
-    totalOrders: allOrders.length,
+    totalOrders: totalOrders,
     pendingOrders: pendingOrders,
     unpaidTotal: unpaidTotal,
     lowStockProducts: lowStockProducts,

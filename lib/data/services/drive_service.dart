@@ -84,26 +84,9 @@ class DriveService {
 
   Future<void> backupToDrive(Isar isar) async {
     final driveApi = await _getDriveApi();
-    if (driveApi == null) throw Exception('Not authenticated');
+    if (driveApi == null) throw Exception('Not authenticated. Please sign in first.');
 
-    // Collect all data
-    final products = await isar.products.where().findAll();
-    final orders = await isar.orders.where().findAll();
-    final customers = await isar.customers.where().findAll();
-    final expenses = await isar.expenses.where().findAll();
-    final movements = await isar.stockMovements.where().findAll();
-
-    final backup = {
-      'version': 1,
-      'timestamp': DateTime.now().toIso8601String(),
-      'products': products.map((p) => p.toJson()).toList(),
-      'orders': orders.map((o) => o.toJson()).toList(),
-      'customers': customers.map((c) => c.toJson()).toList(),
-      'expenses': expenses.map((e) => e.toJson()).toList(),
-      'stockMovements': movements.map((m) => m.toJson()).toList(),
-    };
-
-    final jsonStr = jsonEncode(backup);
+    final jsonStr = await _createLocalBackup(isar);
     final fileName =
         'sellerbook_backup_${DateFormatter.formatForBackup(DateTime.now())}.json';
     final bytes = utf8.encode(jsonStr);
@@ -117,8 +100,12 @@ class DriveService {
       uploadMedia: drive.Media(Stream.value(bytes), bytes.length),
     );
 
-    // Cleanup old backups
-    await _cleanupOldBackups(driveApi);
+    // Cleanup old backups (don't let cleanup failure break the backup)
+    try {
+      await _cleanupOldBackups(driveApi);
+    } catch (e) {
+      debugPrint('Old backup cleanup failed (non-critical): $e');
+    }
   }
 
   Future<void> _cleanupOldBackups(drive.DriveApi driveApi) async {
@@ -160,23 +147,27 @@ class DriveService {
         .toList();
   }
 
-  Future<void> restoreFromDrive(Isar isar, String fileId) async {
-    final driveApi = await _getDriveApi();
-    if (driveApi == null) throw Exception('Not authenticated');
+  /// Creates a local safety backup of all data, returns the JSON string.
+  Future<String> _createLocalBackup(Isar isar) async {
+    final products = await isar.products.where().findAll();
+    final orders = await isar.orders.where().findAll();
+    final customers = await isar.customers.where().findAll();
+    final expenses = await isar.expenses.where().findAll();
+    final movements = await isar.stockMovements.where().findAll();
 
-    final response = await driveApi.files.get(
-      fileId,
-      downloadOptions: drive.DownloadOptions.fullMedia,
-    ) as drive.Media;
+    return jsonEncode({
+      'version': 1,
+      'timestamp': DateTime.now().toIso8601String(),
+      'products': products.map((p) => p.toJson()).toList(),
+      'orders': orders.map((o) => o.toJson()).toList(),
+      'customers': customers.map((c) => c.toJson()).toList(),
+      'expenses': expenses.map((e) => e.toJson()).toList(),
+      'stockMovements': movements.map((m) => m.toJson()).toList(),
+    });
+  }
 
-    final chunks = <int>[];
-    await for (final chunk in response.stream) {
-      chunks.addAll(chunk);
-    }
-
-    final jsonStr = utf8.decode(chunks);
-    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-
+  /// Restores data from a JSON map into the database.
+  Future<void> _importData(Isar isar, Map<String, dynamic> data) async {
     await isar.writeTxn(() async {
       await isar.products.clear();
       await isar.orders.clear();
@@ -219,5 +210,47 @@ class DriveService {
         await isar.stockMovements.putAll(movements);
       }
     });
+  }
+
+  Future<void> restoreFromDrive(Isar isar, String fileId) async {
+    final driveApi = await _getDriveApi();
+    if (driveApi == null) throw Exception('Not authenticated. Please sign in first.');
+
+    // Download and validate backup data before touching local DB
+    final response = await driveApi.files.get(
+      fileId,
+      downloadOptions: drive.DownloadOptions.fullMedia,
+    ) as drive.Media;
+
+    final chunks = <int>[];
+    await for (final chunk in response.stream) {
+      chunks.addAll(chunk);
+    }
+
+    final jsonStr = utf8.decode(chunks);
+    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+
+    // Validate backup structure
+    if (!data.containsKey('version') || !data.containsKey('timestamp')) {
+      throw Exception('Invalid backup file: missing required fields.');
+    }
+
+    // Create local safety backup before clearing
+    final safetyBackup = await _createLocalBackup(isar);
+
+    try {
+      await _importData(isar, data);
+    } catch (e) {
+      // Restore from safety backup if import fails
+      debugPrint('Restore failed, rolling back: $e');
+      try {
+        final safetyData =
+            jsonDecode(safetyBackup) as Map<String, dynamic>;
+        await _importData(isar, safetyData);
+      } catch (rollbackError) {
+        debugPrint('Rollback also failed: $rollbackError');
+      }
+      throw Exception('Restore failed. Your previous data has been preserved.');
+    }
   }
 }

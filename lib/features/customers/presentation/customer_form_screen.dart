@@ -104,7 +104,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to save customer. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

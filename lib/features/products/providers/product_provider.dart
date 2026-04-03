@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/repositories/product_repository.dart';
@@ -68,7 +69,30 @@ class ProductNotifier extends _$ProductNotifier {
   Future<void> deleteProduct(int id) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
-      await isar.writeTxn(() async => isar.products.delete(id));
+
+      // Check if product is referenced in any orders
+      final orders = await isar.orders.where().findAll();
+      final inUse = orders.any(
+          (o) => o.items.any((item) => item.productId == id));
+      if (inUse) {
+        // Soft-delete: mark inactive instead of removing
+        final product = await isar.products.get(id);
+        if (product != null) {
+          await isar.writeTxn(() async => isar.products.put(
+                product.copyWith(isActive: false, updatedAt: DateTime.now()),
+              ));
+        }
+        return;
+      }
+
+      await isar.writeTxn(() async {
+        // Also clean up stock movements
+        await isar.stockMovements
+            .filter()
+            .productIdEqualTo(id)
+            .deleteAll();
+        await isar.products.delete(id);
+      });
     });
   }
 
@@ -79,8 +103,9 @@ class ProductNotifier extends _$ProductNotifier {
       await isar.writeTxn(() async {
         final product = await isar.products.get(productId);
         if (product == null) return;
+        final newQty = (product.stockQty + delta).clamp(0, 999999);
         final updated = product.copyWith(
-          stockQty: product.stockQty + delta,
+          stockQty: newQty,
           updatedAt: DateTime.now(),
         );
         await isar.products.put(updated);

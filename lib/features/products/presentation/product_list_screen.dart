@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
 import 'widgets/product_card.dart';
 
@@ -16,6 +17,7 @@ class ProductListScreen extends ConsumerStatefulWidget {
 
 class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   final _searchCtrl = TextEditingController();
+  final _debouncer = Debouncer();
   String _query = '';
   String? _selectedCategory;
   bool _showGrid = true;
@@ -23,6 +25,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _debouncer.dispose();
     super.dispose();
   }
 
@@ -49,7 +52,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: TextField(
                   controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                  onChanged: (v) => _debouncer.run(
+                      () => setState(() => _query = v.toLowerCase())),
                   decoration: InputDecoration(
                     hintText: 'Search products...',
                     prefixIcon: const Icon(Icons.search_rounded, size: 20),

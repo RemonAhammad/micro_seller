@@ -58,10 +58,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final msg = e.toString().contains('Not authenticated')
+            ? 'Please sign in to Google first.'
+            : 'Backup failed. Check your internet connection and try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Backup failed: $e'),
-              backgroundColor: Colors.red),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -116,10 +117,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final msg = e.toString().contains('Not authenticated')
+            ? 'Please sign in to Google first.'
+            : e.toString().contains('preserved')
+                ? 'Restore failed. Your previous data has been preserved.'
+                : 'Restore failed. Check your internet connection and try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Restore failed: $e'),
-              backgroundColor: Colors.red),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
         );
       }
     } finally {

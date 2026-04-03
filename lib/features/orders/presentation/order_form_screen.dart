@@ -115,6 +115,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   // ─── Submit ──────────────────────────────────────────────────────────
 
   Future<void> _submit() async {
+    if (_selectedCustomer == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a customer')),
+      );
+      return;
+    }
+
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Add at least one product')),
@@ -167,7 +174,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to create order. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

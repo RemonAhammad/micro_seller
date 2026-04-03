@@ -22,7 +22,8 @@ class Validators {
     return null;
   }
 
-  static String? nonNegativeInt(String? value, [String fieldName = 'Quantity']) {
+  static String? nonNegativeInt(String? value,
+      [String fieldName = 'Quantity']) {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName is required';
     }
@@ -42,6 +43,9 @@ class Validators {
     if (cleaned.length < 7 || cleaned.length > 15) {
       return 'Please enter a valid phone number';
     }
+    if (!RegExp(r'^[+]?\d+$').hasMatch(cleaned)) {
+      return 'Phone number can only contain digits, +, -, spaces';
+    }
     return null;
   }
 
@@ -51,6 +55,19 @@ class Validators {
     }
     if (value.trim().length < 2) {
       return 'SKU must be at least 2 characters';
+    }
+    return null;
+  }
+
+  /// Validates that cost price is not greater than selling price.
+  static String? costPriceNotExceedingSelling(
+      String? costValue, String? sellingValue) {
+    if (costValue == null || costValue.trim().isEmpty) return null;
+    final cost = double.tryParse(costValue.replaceAll(',', ''));
+    final selling = double.tryParse(sellingValue?.replaceAll(',', '') ?? '');
+    if (cost == null || selling == null) return null;
+    if (cost > selling) {
+      return 'Cost price exceeds selling price';
     }
     return null;
   }

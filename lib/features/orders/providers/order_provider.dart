@@ -204,7 +204,51 @@ class OrderNotifier extends _$OrderNotifier {
   Future<void> deleteOrder(int id) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
-      await isar.writeTxn(() async => isar.orders.delete(id));
+      await isar.writeTxn(() async {
+        final order = await isar.orders.get(id);
+        if (order == null) return;
+
+        // Restore stock if order had stock deducted
+        final wasStockDeducted =
+            order.orderStatus != OrderStatus.pending &&
+            order.orderStatus != OrderStatus.cancelled;
+        if (wasStockDeducted) {
+          for (final item in order.items) {
+            final product = await isar.products.get(item.productId);
+            if (product != null) {
+              await isar.products.put(product.copyWith(
+                stockQty: product.stockQty + item.qty,
+                updatedAt: DateTime.now(),
+              ));
+              await isar.stockMovements.put(StockMovement(
+                productId: item.productId,
+                productName: item.productName,
+                type: StockMovementType.adjustment,
+                qty: item.qty,
+                reason: 'Deleted order ${order.orderNumber}',
+                createdAt: DateTime.now(),
+              ));
+            }
+          }
+        }
+
+        // Restore customer stats
+        if (order.customerId > 0) {
+          final customer = await isar.customers.get(order.customerId);
+          if (customer != null) {
+            await isar.customers.put(customer.copyWith(
+              totalOrders: (customer.totalOrders - 1).clamp(0, 999999),
+              totalSpent: (customer.totalSpent - order.totalAmount)
+                  .clamp(0, double.infinity),
+              outstandingBalance:
+                  (customer.outstandingBalance - order.balanceDue)
+                      .clamp(0, double.infinity),
+            ));
+          }
+        }
+
+        await isar.orders.delete(id);
+      });
     });
   }
 }

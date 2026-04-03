@@ -232,8 +232,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Error: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to save product. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -419,6 +421,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
                       ],
+                      validator: (v) => Validators.costPriceNotExceedingSelling(
+                          v, _sellingPriceCtrl.text),
                       textInputAction: TextInputAction.next,
                     ),
                   ),

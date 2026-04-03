@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/customer_provider.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
 import 'widgets/customer_card.dart';
 
@@ -16,11 +17,13 @@ class CustomerListScreen extends ConsumerStatefulWidget {
 
 class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
   final _searchCtrl = TextEditingController();
+  final _debouncer = Debouncer();
   String _query = '';
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _debouncer.dispose();
     super.dispose();
   }
 
@@ -37,7 +40,8 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: TextField(
               controller: _searchCtrl,
-              onChanged: (v) => setState(() => _query = v.toLowerCase()),
+              onChanged: (v) => _debouncer.run(
+                  () => setState(() => _query = v.toLowerCase())),
               decoration: InputDecoration(
                 hintText: 'Search customers...',
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
