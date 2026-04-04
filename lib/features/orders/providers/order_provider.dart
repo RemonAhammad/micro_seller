@@ -45,6 +45,19 @@ class OrderNotifier extends _$OrderNotifier {
   @override
   FutureOr<void> build() {}
 
+  /// Update variant stockQty within a product's variants list.
+  /// Returns the updated product (not yet persisted).
+  Product _adjustVariantStock(Product product, OrderItem item, int delta) {
+    if (!item.hasVariant) return product;
+    final updatedVariants = product.variants.map((v) {
+      if (v.name == item.variantName && v.value == item.variantValue) {
+        return v.copyWith(stockQty: (v.stockQty + delta).clamp(0, 999999));
+      }
+      return v;
+    }).toList();
+    return product.copyWith(variants: updatedVariants);
+  }
+
   Future<String> generateOrderNumber() async {
     final isar = await ref.read(isarProvider.future);
     final count = await isar.orders.count();
@@ -63,10 +76,11 @@ class OrderNotifier extends _$OrderNotifier {
           for (final item in order.items) {
             final product = await isar.products.get(item.productId);
             if (product != null) {
-              final updated = product.copyWith(
+              var updated = product.copyWith(
                 stockQty: product.stockQty - item.qty,
                 updatedAt: DateTime.now(),
               );
+              updated = _adjustVariantStock(updated, item, -item.qty);
               await isar.products.put(updated);
               await isar.stockMovements.put(StockMovement(
                 productId: item.productId,
@@ -125,10 +139,12 @@ class OrderNotifier extends _$OrderNotifier {
           for (final item in order.items) {
             final product = await isar.products.get(item.productId);
             if (product != null) {
-              await isar.products.put(product.copyWith(
+              var updated = product.copyWith(
                 stockQty: product.stockQty + item.qty,
                 updatedAt: DateTime.now(),
-              ));
+              );
+              updated = _adjustVariantStock(updated, item, item.qty);
+              await isar.products.put(updated);
               await isar.stockMovements.put(StockMovement(
                 productId: item.productId,
                 productName: item.productName,
@@ -146,10 +162,12 @@ class OrderNotifier extends _$OrderNotifier {
           for (final item in order.items) {
             final product = await isar.products.get(item.productId);
             if (product != null) {
-              await isar.products.put(product.copyWith(
+              var updated = product.copyWith(
                 stockQty: product.stockQty - item.qty,
                 updatedAt: DateTime.now(),
-              ));
+              );
+              updated = _adjustVariantStock(updated, item, -item.qty);
+              await isar.products.put(updated);
               await isar.stockMovements.put(StockMovement(
                 productId: item.productId,
                 productName: item.productName,
@@ -275,10 +293,12 @@ class OrderNotifier extends _$OrderNotifier {
         for (final item in returnOrder.items) {
           final product = await isar.products.get(item.productId);
           if (product != null) {
-            await isar.products.put(product.copyWith(
+            var updated = product.copyWith(
               stockQty: product.stockQty + item.qty,
               updatedAt: DateTime.now(),
-            ));
+            );
+            updated = _adjustVariantStock(updated, item, item.qty);
+            await isar.products.put(updated);
             await isar.stockMovements.put(StockMovement(
               productId: item.productId,
               productName: item.productName,
@@ -455,10 +475,12 @@ class OrderNotifier extends _$OrderNotifier {
           for (final item in order.items) {
             final product = await isar.products.get(item.productId);
             if (product != null) {
-              await isar.products.put(product.copyWith(
+              var updated = product.copyWith(
                 stockQty: product.stockQty + item.qty,
                 updatedAt: DateTime.now(),
-              ));
+              );
+              updated = _adjustVariantStock(updated, item, item.qty);
+              await isar.products.put(updated);
               await isar.stockMovements.put(StockMovement(
                 productId: item.productId,
                 productName: item.productName,

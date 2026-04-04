@@ -15,7 +15,6 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../settings/providers/settings_provider.dart';
-
 class OrderFormScreen extends ConsumerStatefulWidget {
   final Order? order;
   final int? orderId;
@@ -32,6 +31,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   final _deliveryCtrl = TextEditingController(text: '0');
   final _amountPaidCtrl = TextEditingController();
   final _deliveryAddressCtrl = TextEditingController();
+  final _taxRateCtrl = TextEditingController();
 
   Customer? _selectedCustomer;
   final List<OrderItem> _items = [];
@@ -53,6 +53,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   }
 
   Future<void> _initForm() async {
+    // Default tax rate from settings
+    try {
+      final settingsTaxRate = ref.read(settingsProvider.notifier).taxRate;
+      if (settingsTaxRate > 0) {
+        _taxRateCtrl.text = settingsTaxRate.toStringAsFixed(
+            settingsTaxRate == settingsTaxRate.roundToDouble() ? 0 : 2);
+      }
+    } catch (_) {}
+
     if (widget.order != null) {
       _populateForm(widget.order!);
     } else if (widget.orderId != null) {
@@ -86,6 +95,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         ? order.amountPaid.toStringAsFixed(
             order.amountPaid == order.amountPaid.roundToDouble() ? 0 : 2)
         : '';
+    // Back-calculate tax rate from stored taxAmount
+    if (order.taxAmount > 0) {
+      final taxableAmount = order.subtotal - order.discountAmount;
+      if (taxableAmount > 0) {
+        final rate = order.taxAmount / taxableAmount * 100;
+        _taxRateCtrl.text = rate.toStringAsFixed(
+            rate == rate.roundToDouble() ? 0 : 2);
+      }
+    }
     _notesCtrl.text = order.notes;
     _deliveryAddressCtrl.text = order.deliveryAddress;
     _estimatedDeliveryDate = order.estimatedDeliveryDate;
@@ -103,6 +121,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _deliveryCtrl.dispose();
     _amountPaidCtrl.dispose();
     _deliveryAddressCtrl.dispose();
+    _taxRateCtrl.dispose();
     super.dispose();
   }
 
@@ -111,13 +130,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   double get _discount => double.tryParse(_discountCtrl.text) ?? 0;
   double get _delivery => double.tryParse(_deliveryCtrl.text) ?? 0;
 
-  double get _taxRate {
-    try {
-      return ref.read(settingsProvider.notifier).taxRate;
-    } catch (_) {
-      return 0.0;
-    }
-  }
+  double get _taxRate => double.tryParse(_taxRateCtrl.text) ?? 0;
 
   double get _taxAmount =>
       _taxRate > 0 ? (_subtotal - _discount).clamp(0, double.infinity) * _taxRate / 100 : 0;
@@ -718,6 +731,21 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          label: 'Tax / VAT (%)',
+          controller: _taxRateCtrl,
+          keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
+          ],
+          onChanged: (_) => setState(() {}),
+          prefixIcon: const Icon(Icons.percent, size: 18),
+          helperText: _taxAmount > 0
+              ? 'Tax: ${CurrencyFormatter.format(_taxAmount)}'
+              : null,
         ),
         const SizedBox(height: 12),
         Row(

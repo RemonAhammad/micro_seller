@@ -55,8 +55,12 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
     return total;
   }
 
-  void _updateRefundAmount() =>
-      _refundCtrl.text = _returnTotal.toStringAsFixed(2);
+  double get _maxRefundable => widget.originalOrder.amountPaid;
+
+  void _updateRefundAmount() {
+    final capped = _returnTotal.clamp(0.0, _maxRefundable);
+    _refundCtrl.text = capped.toStringAsFixed(2);
+  }
 
   Future<void> _submit() async {
     if (!_returnQtys.any((q) => q > 0)) {
@@ -66,11 +70,10 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
       return;
     }
     final refund = double.tryParse(_refundCtrl.text) ?? 0;
-    final maxRefund = widget.originalOrder.amountPaid;
-    if (refund < 0 || refund > maxRefund) {
+    if (refund < 0 || refund > _maxRefundable) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(
-            'Refund must be between 0 and ${CurrencyFormatter.format(maxRefund)}'),
+            'Refund must be between 0 and ${CurrencyFormatter.format(_maxRefundable)}'),
       ));
       return;
     }
@@ -229,7 +232,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Max refundable: ${CurrencyFormatter.format(order.amountPaid)} (amount paid on original order)',
+            'Max refundable: ${CurrencyFormatter.format(_maxRefundable)} (amount paid on original order)',
             style:
                 theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),

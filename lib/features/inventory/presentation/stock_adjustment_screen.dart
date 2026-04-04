@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/product_variant.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../features/products/providers/product_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -26,6 +27,7 @@ class _StockAdjustmentScreenState
   final _reasonCtrl = TextEditingController();
   StockMovementType _type = StockMovementType.restock;
   bool _isLoading = false;
+  ProductVariant? _selectedVariant;
 
   @override
   void dispose() {
@@ -56,6 +58,8 @@ class _StockAdjustmentScreenState
             delta,
             _reasonCtrl.text.trim(),
             _type,
+            variantName: _selectedVariant?.name ?? '',
+            variantValue: _selectedVariant?.value ?? '',
           );
 
       if (mounted) {
@@ -82,12 +86,14 @@ class _StockAdjustmentScreenState
   Widget build(BuildContext context) {
     final isarAsync = ref.watch(isarProvider);
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.stockAdjustment)),
       body: isarAsync.when(
-        data: (isar) => FutureBuilder(
-          future: isar.products.get(widget.productId),
+        data: (isar) => StreamBuilder<Product?>(
+          stream: isar.products
+              .watchObject(widget.productId, fireImmediately: true),
           builder: (ctx, snap) {
             final product = snap.data;
             return SingleChildScrollView(
@@ -96,10 +102,11 @@ class _StockAdjustmentScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (product != null) ...[
+                    // Product header
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.08),
+                        color: cs.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -108,11 +115,11 @@ class _StockAdjustmentScreenState
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.15),
+                              color: cs.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(Icons.inventory_2_rounded,
-                                color: theme.colorScheme.primary),
+                                color: cs.primary),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -142,6 +149,62 @@ class _StockAdjustmentScreenState
                         ],
                       ),
                     ),
+
+                    // Variant selector
+                    if (product.hasVariants) ...[
+                      const SizedBox(height: 16),
+                      Text('Select Variant',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: cs.primary,
+                          )),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          // "All / Base" option
+                          ChoiceChip(
+                            label: Text('Base stock (${product.stockQty})'),
+                            selected: _selectedVariant == null,
+                            onSelected: (_) =>
+                                setState(() => _selectedVariant = null),
+                            selectedColor: cs.primary.withValues(alpha: 0.15),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              color: _selectedVariant == null
+                                  ? cs.primary
+                                  : cs.onSurface,
+                              fontWeight: _selectedVariant == null
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                            ),
+                          ),
+                          ...product.variants.map((v) {
+                            final selected = _selectedVariant?.name == v.name &&
+                                _selectedVariant?.value == v.value;
+                            return ChoiceChip(
+                              label:
+                                  Text('${v.name}: ${v.value} (${v.stockQty})'),
+                              selected: selected,
+                              onSelected: (_) =>
+                                  setState(() => _selectedVariant = v),
+                              selectedColor:
+                                  cs.primary.withValues(alpha: 0.15),
+                              labelStyle: TextStyle(
+                                fontSize: 12,
+                                color: selected ? cs.primary : cs.onSurface,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ],
+
                     const SizedBox(height: 24),
                   ],
 
@@ -149,7 +212,7 @@ class _StockAdjustmentScreenState
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.primary,
+                        color: cs.primary,
                       )),
                   const SizedBox(height: 12),
 
@@ -195,8 +258,7 @@ class _StockAdjustmentScreenState
                             border: Border.all(
                               color: isSelected
                                   ? color
-                                  : theme.colorScheme.outline
-                                      .withValues(alpha: 0.25),
+                                  : cs.outline.withValues(alpha: 0.25),
                               width: isSelected ? 1.5 : 1,
                             ),
                           ),
@@ -206,8 +268,7 @@ class _StockAdjustmentScreenState
                               Icon(icon,
                                   color: isSelected
                                       ? color
-                                      : theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.5),
+                                      : cs.onSurface.withValues(alpha: 0.5),
                                   size: 16),
                               const SizedBox(width: 6),
                               Text(label,
@@ -215,8 +276,7 @@ class _StockAdjustmentScreenState
                                     fontSize: 13,
                                     color: isSelected
                                         ? color
-                                        : theme.colorScheme.onSurface
-                                            .withValues(alpha: 0.6),
+                                        : cs.onSurface.withValues(alpha: 0.6),
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w500,

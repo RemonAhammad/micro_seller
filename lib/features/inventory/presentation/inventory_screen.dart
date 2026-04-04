@@ -377,52 +377,92 @@ class _StockTile extends StatelessWidget {
           BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.name,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                Text(product.sku,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.5),
-                    )),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
             children: [
-              Text(
-                '${product.stockQty}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                  color: color,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(product.name,
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(product.sku,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.5),
+                        )),
+                  ],
                 ),
               ),
-              Text(
-                'of ${product.lowStockThreshold} threshold',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: cs.onSurface.withValues(alpha: 0.4),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${product.stockQty}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    'of ${product.lowStockThreshold} threshold',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.tune_rounded),
+                onPressed: () =>
+                    context.push('/inventory/adjust/${product.id}'),
+                style: IconButton.styleFrom(
+                  backgroundColor: cs.primary.withValues(alpha: 0.1),
+                  foregroundColor: cs.primary,
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.tune_rounded),
-            onPressed: () =>
-                context.push('/inventory/adjust/${product.id}'),
-            style: IconButton.styleFrom(
-              backgroundColor: cs.primary.withValues(alpha: 0.1),
-              foregroundColor: cs.primary,
-            ),
-          ),
+          if (product.hasVariants) ...[
+            const SizedBox(height: 8),
+            ...product.variants.map((v) {
+              final vColor = v.stockQty <= 0
+                  ? Colors.red
+                  : v.stockQty <= product.lowStockThreshold
+                      ? Colors.orange
+                      : cs.onSurface.withValues(alpha: 0.7);
+              return Padding(
+                padding: const EdgeInsets.only(left: 12, top: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.subdirectory_arrow_right,
+                        size: 14, color: cs.onSurface.withValues(alpha: 0.3)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${v.name}: ${v.value}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${v.stockQty}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: vColor,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );

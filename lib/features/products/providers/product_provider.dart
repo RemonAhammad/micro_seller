@@ -97,21 +97,37 @@ class ProductNotifier extends _$ProductNotifier {
   }
 
   Future<void> adjustStock(
-      int productId, int delta, String reason, StockMovementType type) async {
+      int productId, int delta, String reason, StockMovementType type,
+      {String variantName = '', String variantValue = ''}) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
         final product = await isar.products.get(productId);
         if (product == null) return;
-        final newQty = (product.stockQty + delta).clamp(0, 999999);
-        final updated = product.copyWith(
-          stockQty: newQty,
+        final hasVariant = variantName.isNotEmpty && variantValue.isNotEmpty;
+
+        var updated = product.copyWith(
+          stockQty: (product.stockQty + delta).clamp(0, 999999),
           updatedAt: DateTime.now(),
         );
+
+        if (hasVariant) {
+          final updatedVariants = updated.variants.map((v) {
+            if (v.name == variantName && v.value == variantValue) {
+              return v.copyWith(stockQty: (v.stockQty + delta).clamp(0, 999999));
+            }
+            return v;
+          }).toList();
+          updated = updated.copyWith(variants: updatedVariants);
+        }
+
         await isar.products.put(updated);
+        final movementName = hasVariant
+            ? '${product.name} ($variantName: $variantValue)'
+            : product.name;
         await isar.stockMovements.put(StockMovement(
           productId: productId,
-          productName: product.name,
+          productName: movementName,
           type: type,
           qty: delta,
           reason: reason,

@@ -106,6 +106,17 @@ class _OrderDetailBody extends ConsumerWidget {
                           title: Text('Create Return'),
                           contentPadding: EdgeInsets.zero,
                         )),
+                  if (order.orderStatus != OrderStatus.cancelled) ...[
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                        value: 'cancel',
+                        child: ListTile(
+                          leading: Icon(Icons.cancel_rounded, color: Colors.orange),
+                          title: Text('Cancel Order',
+                              style: TextStyle(color: Colors.orange)),
+                          contentPadding: EdgeInsets.zero,
+                        )),
+                  ],
                   const PopupMenuDivider(),
                   const PopupMenuItem(
                       value: 'delete',
@@ -165,7 +176,7 @@ class _OrderDetailBody extends ConsumerWidget {
                     ),
                   ],
                 ),
-                if (order.orderStatus != OrderStatus.cancelled) ...[
+                if (order.orderStatus != OrderStatus.cancelled && !order.isReturn) ...[
                   const SizedBox(height: 12),
                   _StatusStepperBar(order: order, ref: ref),
                 ],
@@ -380,6 +391,24 @@ class _OrderDetailBody extends ConsumerWidget {
             builder: (_) => CreateReturnScreen(originalOrder: order),
           ),
         );
+        break;
+
+      case 'cancel':
+        if (!context.mounted) return;
+        final ok = await ConfirmDialog.show(
+          context,
+          title: 'Cancel Order',
+          message:
+              'Cancel ${order.orderNumber}? Stock will be restored if it was deducted.',
+          confirmText: 'Cancel Order',
+          isDestructive: true,
+          icon: Icons.cancel_rounded,
+        );
+        if (ok == true && context.mounted) {
+          await ref
+              .read(orderNotifierProvider.notifier)
+              .updateStatus(order.id, OrderStatus.cancelled);
+        }
         break;
 
       case 'delete':
