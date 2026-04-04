@@ -14,6 +14,8 @@ class OrderItem {
     this.unitPrice = 0.0,
     this.costPrice = 0.0,
     this.totalPrice = 0.0,
+    this.variantName = '',
+    this.variantValue = '',
   });
 
   int productId;
@@ -23,6 +25,15 @@ class OrderItem {
   double unitPrice;
   double costPrice;
   double totalPrice;
+  String variantName;
+  String variantValue;
+
+  @ignore
+  bool get hasVariant => variantName.isNotEmpty && variantValue.isNotEmpty;
+
+  @ignore
+  String get displayName =>
+      hasVariant ? '$productName ($variantName: $variantValue)' : productName;
 
   OrderItem copyWith({
     int? productId,
@@ -32,6 +43,8 @@ class OrderItem {
     double? unitPrice,
     double? costPrice,
     double? totalPrice,
+    String? variantName,
+    String? variantValue,
   }) =>
       OrderItem(
         productId: productId ?? this.productId,
@@ -41,6 +54,8 @@ class OrderItem {
         unitPrice: unitPrice ?? this.unitPrice,
         costPrice: costPrice ?? this.costPrice,
         totalPrice: totalPrice ?? this.totalPrice,
+        variantName: variantName ?? this.variantName,
+        variantValue: variantValue ?? this.variantValue,
       );
 
   factory OrderItem.fromJson(Map<String, dynamic> json) =>

@@ -9,6 +9,10 @@ class Settings extends _$Settings {
   static const _keyCurrency = 'currencySymbol';
   static const _keyThreshold = 'lowStockThreshold';
   static const _keyLastBackup = 'lastBackupTime';
+  static const _keyThemeMode = 'themeMode';
+  static const _keyTaxRate = 'taxRate';
+  static const _keyLanguage = 'language';
+  static const _keyDownloadDir = 'downloadDirectory';
 
   @override
   Map<String, dynamic> build() {
@@ -18,6 +22,10 @@ class Settings extends _$Settings {
       'currencySymbol': '৳',
       'lowStockThreshold': 10,
       'lastBackupTime': null,
+      'themeMode': 'system',
+      'taxRate': 0.0,
+      'language': 'en',
+      'downloadDirectory': '',
     };
   }
 
@@ -30,6 +38,10 @@ class Settings extends _$Settings {
       'lastBackupTime': prefs.getString(_keyLastBackup) != null
           ? DateTime.tryParse(prefs.getString(_keyLastBackup)!)
           : null,
+      'themeMode': prefs.getString(_keyThemeMode) ?? 'system',
+      'taxRate': prefs.getDouble(_keyTaxRate) ?? 0.0,
+      'language': prefs.getString(_keyLanguage) ?? 'en',
+      'downloadDirectory': prefs.getString(_keyDownloadDir) ?? '',
     };
   }
 
@@ -57,8 +69,37 @@ class Settings extends _$Settings {
     await prefs.setString(_keyLastBackup, time.toIso8601String());
   }
 
+  Future<void> updateThemeMode(String mode) async {
+    state = {...state, 'themeMode': mode};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyThemeMode, mode);
+  }
+
+  Future<void> updateTaxRate(double rate) async {
+    state = {...state, 'taxRate': rate};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyTaxRate, rate);
+  }
+
   String get shopName => state['shopName'] as String? ?? 'My Shop';
   String get currencySymbol => state['currencySymbol'] as String? ?? '৳';
   int get lowStockThreshold => state['lowStockThreshold'] as int? ?? 10;
   DateTime? get lastBackupTime => state['lastBackupTime'] as DateTime?;
+  String get themeMode => state['themeMode'] as String? ?? 'system';
+  double get taxRate => (state['taxRate'] as num?)?.toDouble() ?? 0.0;
+  String get language => state['language'] as String? ?? 'en';
+
+  Future<void> updateLanguage(String lang) async {
+    state = {...state, 'language': lang};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLanguage, lang);
+  }
+
+  String get downloadDirectory => state['downloadDirectory'] as String? ?? '';
+
+  Future<void> updateDownloadDirectory(String path) async {
+    state = {...state, 'downloadDirectory': path};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyDownloadDir, path);
+  }
 }

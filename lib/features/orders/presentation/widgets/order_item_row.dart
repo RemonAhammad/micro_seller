@@ -45,7 +45,7 @@ class OrderItemRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.productName,
+                      item.displayName,
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),

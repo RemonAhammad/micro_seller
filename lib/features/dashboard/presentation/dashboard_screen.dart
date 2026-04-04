@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../features/orders/providers/order_provider.dart';
 import '../../../features/expenses/providers/expense_provider.dart';
@@ -40,6 +41,14 @@ class DashboardScreen extends ConsumerWidget {
                 // ── Header ──
                 _buildHeader(statsAsync, theme),
 
+                // ── Date Range Filter ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: _DateRangeBar(),
+                  ),
+                ),
+
                 // ── Body ──
                 SliverToBoxAdapter(
                   child: statsAsync.when(
@@ -73,7 +82,12 @@ class DashboardScreen extends ConsumerWidget {
                         dailyExpenses[i] = total;
                       }
 
-                      final totalExpensesThisMonth = _monthExpenses(allExpenses);
+                      final dateRange = ref.watch(dashboardDateRangeProvider);
+                      final totalExpensesThisMonth = _rangeExpenses(
+                        allExpenses,
+                        dateRange.start,
+                        dateRange.end,
+                      );
 
                       return _DashboardBody(
                         stats: stats,
@@ -196,12 +210,13 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  double _monthExpenses(List<Expense> expenses) {
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
+  double _rangeExpenses(List<Expense> expenses, DateTime start, DateTime end) {
+    final endOfDay = DateTime(end.year, end.month, end.day).add(const Duration(days: 1));
     double total = 0;
     for (final e in expenses) {
-      if (e.date != null && !e.date!.isBefore(monthStart)) {
+      if (e.date != null &&
+          !e.date!.isBefore(start) &&
+          e.date!.isBefore(endOfDay)) {
         total += e.amount;
       }
     }
@@ -573,6 +588,139 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: 12),
           child,
         ],
+      ),
+    );
+  }
+}
+
+// ─── Date Range Bar ────────────────────────────────────────────────────────
+
+class _DateRangeBar extends ConsumerWidget {
+  static final _chipDateFormat = DateFormat('dd MMM');
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dateRange = ref.watch(dashboardDateRangeProvider);
+    final notifier = ref.read(dashboardDateRangeProvider.notifier);
+    final theme = Theme.of(context);
+    final activePreset = dateRange.preset;
+
+    final rangeLabel =
+        '${_chipDateFormat.format(dateRange.start)} - ${_chipDateFormat.format(dateRange.end)}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _buildChip(
+              context,
+              label: 'Today',
+              isActive: activePreset == DateRangePreset.today,
+              onTap: () => notifier.setToday(),
+            ),
+            const SizedBox(width: 8),
+            _buildChip(
+              context,
+              label: 'This Week',
+              isActive: activePreset == DateRangePreset.thisWeek,
+              onTap: () => notifier.setThisWeek(),
+            ),
+            const SizedBox(width: 8),
+            _buildChip(
+              context,
+              label: 'This Month',
+              isActive: activePreset == DateRangePreset.thisMonth,
+              onTap: () => notifier.setThisMonth(),
+            ),
+            const Spacer(),
+            IconButton(
+              icon: Icon(
+                Icons.date_range_rounded,
+                size: 20,
+                color: activePreset == DateRangePreset.custom
+                    ? AppColors.primary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+              tooltip: 'Custom Range',
+              visualDensity: VisualDensity.compact,
+              onPressed: () async {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                  initialDateRange: DateTimeRange(
+                    start: dateRange.start,
+                    end: dateRange.end,
+                  ),
+                  builder: (context, child) {
+                    return Theme(
+                      data: theme.copyWith(
+                        colorScheme: theme.colorScheme.copyWith(
+                          primary: AppColors.primary,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (picked != null) {
+                  notifier.setRange(picked.start, picked.end);
+                }
+              },
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            rangeLabel,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChip(
+    BuildContext context, {
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: isActive
+          ? AppColors.primary.withValues(alpha: 0.12)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isActive
+                  ? AppColors.primary
+                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+              width: isActive ? 1.5 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              color: isActive
+                  ? AppColors.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ),
     );
   }

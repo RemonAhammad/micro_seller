@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/order_provider.dart';
 import '../../../data/models/order.dart';
+import '../../../data/services/csv_export_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
 import 'widgets/order_card.dart';
@@ -17,11 +18,18 @@ class OrderListScreen extends ConsumerStatefulWidget {
 class _OrderListScreenState extends ConsumerState<OrderListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  static const _tabs = ['All', 'Pending', 'Active', 'Completed', 'Cancelled'];
+  static const _tabs = [
+    'All',
+    'Pending',
+    'Active',
+    'Completed',
+    'Cancelled',
+  ];
 
   List<int> _getCounts(List<Order> orders) {
+    final regular = orders.where((o) => !o.isReturn).toList();
     int pending = 0, active = 0, completed = 0, cancelled = 0;
-    for (final o in orders) {
+    for (final o in regular) {
       switch (o.orderStatus) {
         case OrderStatus.pending:
           pending++;
@@ -33,7 +41,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
           cancelled++;
       }
     }
-    return [orders.length, pending, active, completed, cancelled];
+    return [regular.length, pending, active, completed, cancelled];
   }
 
   @override
@@ -55,49 +63,67 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.orders),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Export CSV',
+            onPressed: () async {
+              final orders = ref.read(ordersProvider).valueOrNull ?? [];
+              if (orders.isEmpty) return;
+              await CsvExportService().exportOrders(orders);
+            },
+          ),
+        ],
         bottom: ordersAsync.whenOrNull(
-          data: (allOrders) {
-            final counts = _getCounts(allOrders);
-            return TabBar(
+              data: (allOrders) {
+                final counts = _getCounts(allOrders);
+                return TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 13),
+                  tabs: [
+                    for (int i = 0; i < _tabs.length; i++)
+                      Tab(
+                          child: _TabLabel(
+                              label: _tabs[i], count: counts[i])),
+                  ],
+                );
+              },
+            ) ??
+            TabBar(
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: [
-                for (int i = 0; i < _tabs.length; i++)
-                  Tab(child: _TabLabel(label: _tabs[i], count: counts[i])),
-              ],
-            );
-          },
-        ) ?? TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          tabs: _tabs.map((t) => Tab(text: t)).toList(),
-        ),
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              tabs: _tabs.map((t) => Tab(text: t)).toList(),
+            ),
       ),
       body: ordersAsync.when(
         data: (allOrders) {
-          final pending = allOrders
+          final regular = allOrders.where((o) => !o.isReturn).toList();
+
+          final pending = regular
               .where((o) => o.orderStatus == OrderStatus.pending)
               .toList();
-          final active = allOrders
+          final active = regular
               .where((o) =>
                   o.orderStatus == OrderStatus.confirmed ||
                   o.orderStatus == OrderStatus.shipped)
               .toList();
-          final completed = allOrders
+          final completed = regular
               .where((o) => o.orderStatus == OrderStatus.completed)
               .toList();
-          final cancelled = allOrders
+          final cancelled = regular
               .where((o) => o.orderStatus == OrderStatus.cancelled)
               .toList();
 
           return TabBarView(
             controller: _tabController,
             children: [
-              _OrderList(orders: allOrders),
+              _OrderList(orders: regular),
               _OrderList(orders: pending),
               _OrderList(orders: active),
               _OrderList(orders: completed),
@@ -134,7 +160,10 @@ class _TabLabel extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -176,7 +205,9 @@ class _OrderList extends ConsumerWidget {
         return OrderCard(
           order: order,
           onStatusChange: (status) {
-            ref.read(orderNotifierProvider.notifier).updateStatus(order.id, status);
+            ref
+                .read(orderNotifierProvider.notifier)
+                .updateStatus(order.id, status);
           },
         );
       },

@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
+import '../../../data/models/product.dart';
+import '../../../data/services/csv_export_service.dart';
+import '../../../data/services/csv_import_service.dart';
+import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -29,6 +33,78 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     super.dispose();
   }
 
+  Future<void> _importProducts(BuildContext context, WidgetRef ref) async {
+    final result = await CsvImportService().importProducts();
+    if (result == null || !context.mounted) return;
+
+    if (result.products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(result.errors.isNotEmpty
+                ? result.errors.first
+                : 'No products found in CSV')),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Import Products'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Found ${result.products.length} product(s) to import.'),
+            if (result.errors.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('${result.errors.length} row(s) skipped:',
+                  style:
+                      const TextStyle(color: Colors.orange, fontSize: 12)),
+              ...result.errors.take(3).map((e) =>
+                  Text(e, style: const TextStyle(fontSize: 11))),
+              if (result.errors.length > 3)
+                Text('...and ${result.errors.length - 3} more',
+                    style: const TextStyle(fontSize: 11)),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Import')),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    // Import products
+    final isar = await ref.read(isarProvider.future);
+    await isar.writeTxn(() async {
+      for (final product in result.products) {
+        await isar.products.put(product);
+      }
+    });
+
+    ref.invalidate(productsProvider);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${result.products.length} products imported!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsProvider);
@@ -38,6 +114,20 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       appBar: AppBar(
         title: const Text(AppStrings.products),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.file_upload_outlined),
+            tooltip: 'Import CSV',
+            onPressed: () => _importProducts(context, ref),
+          ),
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Export CSV',
+            onPressed: () async {
+              final products = ref.read(productsProvider).valueOrNull ?? [];
+              if (products.isEmpty) return;
+              await CsvExportService().exportProducts(products);
+            },
+          ),
           IconButton(
             icon: Icon(
                 _showGrid ? Icons.view_list_rounded : Icons.grid_view_rounded),

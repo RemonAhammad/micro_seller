@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/expense_provider.dart';
+import '../../../data/services/csv_export_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -19,6 +20,17 @@ class ExpenseListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.expenses),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Export CSV',
+            onPressed: () async {
+              final expenses = ref.read(expensesProvider).valueOrNull ?? [];
+              if (expenses.isEmpty) return;
+              await CsvExportService().exportExpenses(expenses);
+            },
+          ),
+        ],
       ),
       body: expensesAsync.when(
         data: (expenses) {

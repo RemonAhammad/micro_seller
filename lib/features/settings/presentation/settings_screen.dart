@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/customer.dart';
@@ -171,6 +172,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Theme
+          const _SectionHeader('Theme'),
+          _ThemeModeSelector(
+            currentMode:
+                ref.read(settingsProvider.notifier).themeMode,
+            onChanged: (mode) =>
+                ref.read(settingsProvider.notifier).updateThemeMode(mode),
+          ),
+          const SizedBox(height: 16),
+
+          // Language
+          const _SectionHeader('Language'),
+          _SettingsCard(children: [
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.language_rounded,
+                    color: AppColors.primary, size: 20),
+              ),
+              title: const Text('Language'),
+              subtitle: Text(
+                ref.read(settingsProvider.notifier).language == 'bn'
+                    ? 'বাংলা'
+                    : 'English',
+              ),
+              trailing: DropdownButton<String>(
+                value: ref.read(settingsProvider.notifier).language,
+                underline: const SizedBox.shrink(),
+                items: const [
+                  DropdownMenuItem(value: 'en', child: Text('English')),
+                  DropdownMenuItem(value: 'bn', child: Text('বাংলা')),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateLanguage(val);
+                  }
+                },
+              ),
+            ),
+          ]),
+          const SizedBox(height: 16),
+
           // Shop
           const _SectionHeader('Shop'),
           _SettingsCard(children: [
@@ -206,6 +256,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            const Divider(height: 1),
+            _EditableTile(
+              icon: Icons.percent_rounded,
+              label: 'Tax Rate (%)',
+              value:
+                  ref.read(settingsProvider.notifier).taxRate.toString(),
+              onEdit: (val) {
+                final rate = double.tryParse(val);
+                if (rate != null) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateTaxRate(rate);
+                }
+              },
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // Downloads
+          const _SectionHeader('Downloads'),
+          _SettingsCard(children: [
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.folder_rounded,
+                    color: AppColors.primary, size: 20),
+              ),
+              title: const Text('PDF Download Folder'),
+              subtitle: Text(
+                ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
+                    ? 'Not set — will ask on first download'
+                    : ref.read(settingsProvider.notifier).downloadDirectory,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: ref
+                          .read(settingsProvider.notifier)
+                          .downloadDirectory
+                          .isEmpty
+                      ? Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.5)
+                      : null,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: const Icon(Icons.edit_rounded, size: 18),
+              onTap: () async {
+                final dir = await FilePicker.platform.getDirectoryPath();
+                if (dir != null) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateDownloadDirectory(dir);
+                  setState(() {});
+                }
+              },
             ),
           ]),
           const SizedBox(height: 16),
@@ -458,6 +576,92 @@ class _EditableTile extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ThemeModeSelector extends StatelessWidget {
+  final String currentMode;
+  final ValueChanged<String> onChanged;
+
+  const _ThemeModeSelector({
+    required this.currentMode,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final modes = [
+      ('light', Icons.light_mode_rounded, 'Light'),
+      ('dark', Icons.dark_mode_rounded, 'Dark'),
+      ('system', Icons.brightness_auto_rounded, 'System'),
+    ];
+
+    return _SettingsCard(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: modes.map((entry) {
+              final (value, icon, label) = entry;
+              final isSelected = currentMode == value;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Material(
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.12)
+                        : theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => onChanged(value),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : theme.colorScheme.onSurface.withOpacity(0.12),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              icon,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : theme.colorScheme.onSurface.withOpacity(0.5),
+                              size: 24,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : theme.colorScheme.onSurface
+                                        .withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 }

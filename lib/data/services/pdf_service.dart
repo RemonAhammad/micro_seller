@@ -11,6 +11,7 @@ class PdfService {
     Order order, {
     String shopName = 'SellerBook',
     String currencySymbol = '৳',
+    double taxRate = 0.0,
   }) async {
     final pdf = pw.Document();
     final font = await PdfGoogleFonts.robotoRegular();
@@ -182,6 +183,9 @@ class PdfService {
                     if (order.deliveryFee > 0)
                       _summaryRow('Delivery Fee',
                           CurrencyFormatter.format(order.deliveryFee, symbol: currencySymbol), font, boldFont),
+                    if (taxRate > 0 && order.taxAmount > 0)
+                      _summaryRow('Tax ($taxRate%)',
+                          CurrencyFormatter.format(order.taxAmount, symbol: currencySymbol), font, boldFont),
                     pw.Divider(),
                     _summaryRow('Total',
                         CurrencyFormatter.format(order.totalAmount, symbol: currencySymbol), boldFont, boldFont,
@@ -302,6 +306,9 @@ class PdfService {
     }
     if (order.deliveryFee > 0) {
       sb.writeln('Delivery: ${CurrencyFormatter.format(order.deliveryFee, symbol: currencySymbol)}');
+    }
+    if (order.taxAmount > 0) {
+      sb.writeln('Tax: ${CurrencyFormatter.format(order.taxAmount, symbol: currencySymbol)}');
     }
     sb.writeln('*Total: ${CurrencyFormatter.format(order.totalAmount, symbol: currencySymbol)}*');
     sb.writeln();

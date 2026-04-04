@@ -10,12 +10,17 @@ import '../../../data/models/customer.dart';
 import '../providers/order_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../settings/providers/settings_provider.dart';
 
 class OrderFormScreen extends ConsumerStatefulWidget {
-  const OrderFormScreen({super.key});
+  final Order? order;
+  final int? orderId;
+
+  const OrderFormScreen({super.key, this.order, this.orderId});
 
   @override
   ConsumerState<OrderFormScreen> createState() => _OrderFormScreenState();
@@ -26,11 +31,70 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   final _discountCtrl = TextEditingController(text: '0');
   final _deliveryCtrl = TextEditingController(text: '0');
   final _amountPaidCtrl = TextEditingController();
+  final _deliveryAddressCtrl = TextEditingController();
 
   Customer? _selectedCustomer;
   final List<OrderItem> _items = [];
   OrderStatus _orderStatus = OrderStatus.pending;
+  PaymentMethod _paymentMethod = PaymentMethod.cash;
+  DateTime? _estimatedDeliveryDate;
+  bool _isRecurring = false;
+  int _recurringDays = 30;
   bool _isLoading = false;
+
+  Order? _existingOrder;
+
+  bool get _isEditing => _existingOrder != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _initForm();
+  }
+
+  Future<void> _initForm() async {
+    if (widget.order != null) {
+      _populateForm(widget.order!);
+    } else if (widget.orderId != null) {
+      final isar = await ref.read(isarProvider.future);
+      final order = await isar.orders.get(widget.orderId!);
+      if (order != null && mounted) {
+        _populateForm(order);
+      }
+    }
+  }
+
+  void _populateForm(Order order) {
+    _existingOrder = order;
+    _selectedCustomer = Customer(
+      id: order.customerId,
+      name: order.customerName,
+      phone: order.customerPhone,
+    );
+    _items
+      ..clear()
+      ..addAll(order.items.map((i) => i.copyWith()));
+    _discountCtrl.text = order.discountAmount > 0
+        ? order.discountAmount.toStringAsFixed(
+            order.discountAmount == order.discountAmount.roundToDouble() ? 0 : 2)
+        : '0';
+    _deliveryCtrl.text = order.deliveryFee > 0
+        ? order.deliveryFee.toStringAsFixed(
+            order.deliveryFee == order.deliveryFee.roundToDouble() ? 0 : 2)
+        : '0';
+    _amountPaidCtrl.text = order.amountPaid > 0
+        ? order.amountPaid.toStringAsFixed(
+            order.amountPaid == order.amountPaid.roundToDouble() ? 0 : 2)
+        : '';
+    _notesCtrl.text = order.notes;
+    _deliveryAddressCtrl.text = order.deliveryAddress;
+    _estimatedDeliveryDate = order.estimatedDeliveryDate;
+    _isRecurring = order.isRecurring;
+    _recurringDays = order.recurringIntervalDays > 0 ? order.recurringIntervalDays : 30;
+    _orderStatus = order.orderStatus;
+    _paymentMethod = order.paymentMethod;
+    setState(() {});
+  }
 
   @override
   void dispose() {
@@ -38,6 +102,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _discountCtrl.dispose();
     _deliveryCtrl.dispose();
     _amountPaidCtrl.dispose();
+    _deliveryAddressCtrl.dispose();
     super.dispose();
   }
 
@@ -45,7 +110,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       _items.fold(0.0, (sum, item) => sum + item.totalPrice);
   double get _discount => double.tryParse(_discountCtrl.text) ?? 0;
   double get _delivery => double.tryParse(_deliveryCtrl.text) ?? 0;
-  double get _total => (_subtotal - _discount + _delivery).clamp(0, double.infinity);
+
+  double get _taxRate {
+    try {
+      return ref.read(settingsProvider.notifier).taxRate;
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
+  double get _taxAmount =>
+      _taxRate > 0 ? (_subtotal - _discount).clamp(0, double.infinity) * _taxRate / 100 : 0;
+
+  double get _total =>
+      (_subtotal - _discount + _taxAmount + _delivery).clamp(0, double.infinity);
 
   // ─── Customer ────────────────────────────────────────────────────────
 
@@ -73,8 +151,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   Future<void> _pickProducts() async {
     final isar = await ref.read(isarProvider.future);
-    final products =
-        await isar.products.filter().isActiveEqualTo(true).sortByName().findAll();
     if (!mounted) return;
 
     await showModalBottomSheet(
@@ -84,7 +160,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => _ProductPickerSheet(
-        products: products,
+        isar: isar,
         currentItems: _items,
         onChanged: (updated) => setState(() {
           _items
@@ -95,18 +171,37 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  void _updateQty(int index, int delta) {
-    setState(() {
-      final item = _items[index];
-      final newQty = item.qty + delta;
-      if (newQty <= 0) {
-        _items.removeAt(index);
-      } else {
-        _items[index] = item.copyWith(
-          qty: newQty,
-          totalPrice: item.unitPrice * newQty,
-        );
+  Future<void> _updateQty(int index, int delta) async {
+    final item = _items[index];
+    final newQty = item.qty + delta;
+    if (newQty <= 0) {
+      setState(() => _items.removeAt(index));
+      return;
+    }
+    if (delta > 0) {
+      final isar = await ref.read(isarProvider.future);
+      final product = await isar.products.get(item.productId);
+      if (product != null) {
+        final stock = item.hasVariant
+            ? product.variants
+                .where((v) => v.name == item.variantName && v.value == item.variantValue)
+                .fold(0, (_, v) => v.stockQty)
+            : product.stockQty;
+        if (newQty > stock) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Only $stock in stock for ${item.displayName}')),
+            );
+          }
+          return;
+        }
       }
+    }
+    setState(() {
+      _items[index] = item.copyWith(
+        qty: newQty,
+        totalPrice: item.unitPrice * newQty,
+      );
     });
   }
 
@@ -133,7 +228,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
     try {
       final notifier = ref.read(orderNotifierProvider.notifier);
-      final orderNumber = await notifier.generateOrderNumber();
       final amountPaid = double.tryParse(_amountPaidCtrl.text) ?? 0;
 
       final paymentStatus = amountPaid >= _total
@@ -142,40 +236,88 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ? PaymentStatus.partial
               : PaymentStatus.unpaid;
 
-      final order = Order(
-        orderNumber: orderNumber,
-        customerId: _selectedCustomer?.id ?? 0,
-        customerName: _selectedCustomer?.name ?? '',
-        customerPhone: _selectedCustomer?.phone ?? '',
-        items: _items,
-        subtotal: _subtotal,
-        discountAmount: _discount,
-        deliveryFee: _delivery,
-        totalAmount: _total,
-        amountPaid: amountPaid,
-        paymentStatus: paymentStatus,
-        orderStatus: _orderStatus,
-        notes: _notesCtrl.text.trim(),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      await notifier.createOrder(order);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order created'),
-            backgroundColor: Colors.green,
-          ),
+      if (_isEditing) {
+        final order = _existingOrder!.copyWith(
+          customerId: _selectedCustomer?.id ?? 0,
+          customerName: _selectedCustomer?.name ?? '',
+          customerPhone: _selectedCustomer?.phone ?? '',
+          items: _items,
+          subtotal: _subtotal,
+          discountAmount: _discount,
+          deliveryFee: _delivery,
+          taxAmount: _taxAmount,
+          totalAmount: _total,
+          amountPaid: amountPaid,
+          paymentStatus: paymentStatus,
+          paymentMethod: _paymentMethod,
+          orderStatus: _orderStatus,
+          notes: _notesCtrl.text.trim(),
+          deliveryAddress: _deliveryAddressCtrl.text.trim(),
+          estimatedDeliveryDate: _estimatedDeliveryDate,
+          isRecurring: _isRecurring,
+          recurringIntervalDays: _isRecurring ? _recurringDays : 0,
+          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: _recurringDays)) : null,
+          updatedAt: DateTime.now(),
         );
-        context.pop();
+
+        await notifier.updateOrder(order);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order updated'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          context.pop();
+        }
+      } else {
+        final orderNumber = await notifier.generateOrderNumber();
+
+        final order = Order(
+          orderNumber: orderNumber,
+          customerId: _selectedCustomer?.id ?? 0,
+          customerName: _selectedCustomer?.name ?? '',
+          customerPhone: _selectedCustomer?.phone ?? '',
+          items: _items,
+          subtotal: _subtotal,
+          discountAmount: _discount,
+          deliveryFee: _delivery,
+          taxAmount: _taxAmount,
+          totalAmount: _total,
+          amountPaid: amountPaid,
+          paymentStatus: paymentStatus,
+          paymentMethod: _paymentMethod,
+          orderStatus: _orderStatus,
+          notes: _notesCtrl.text.trim(),
+          deliveryAddress: _deliveryAddressCtrl.text.trim(),
+          estimatedDeliveryDate: _estimatedDeliveryDate,
+          isRecurring: _isRecurring,
+          recurringIntervalDays: _isRecurring ? _recurringDays : 0,
+          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: _recurringDays)) : null,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        await notifier.createOrder(order);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order created'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          context.pop();
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to create order. Please try again.'),
+          SnackBar(
+            content: Text(_isEditing
+                ? 'Failed to update order. Please try again.'
+                : 'Failed to create order. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -193,7 +335,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.addOrder)),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit Order' : AppStrings.addOrder)),
       body: Column(
         children: [
           Expanded(
@@ -216,6 +358,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 _buildStatusSection(theme, cs),
                 const SizedBox(height: 16),
 
+                // ── Payment method ──
+                _buildPaymentMethodSection(theme, cs),
+                const SizedBox(height: 16),
+
                 // ── Notes ──
                 AppTextField(
                   label: AppStrings.notes,
@@ -224,6 +370,91 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   hint: 'Any special instructions...',
                 ),
+
+                // ── Delivery ──
+                const SizedBox(height: 16),
+                Text('Delivery', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.primary)),
+                const SizedBox(height: 8),
+                AppTextField(
+                  label: 'Delivery Address',
+                  controller: _deliveryAddressCtrl,
+                  maxLines: 2,
+                  textCapitalization: TextCapitalization.sentences,
+                  prefixIcon: const Icon(Icons.local_shipping_outlined),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _estimatedDeliveryDate ?? DateTime.now().add(const Duration(days: 3)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) setState(() => _estimatedDeliveryDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today_rounded, size: 18, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          _estimatedDeliveryDate != null
+                              ? 'Est. Delivery: ${DateFormatter.format(_estimatedDeliveryDate)}'
+                              : 'Set Estimated Delivery Date',
+                          style: TextStyle(
+                            color: _estimatedDeliveryDate != null ? cs.onSurface : cs.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        if (_estimatedDeliveryDate != null) ...[
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => setState(() => _estimatedDeliveryDate = null),
+                            child: const Icon(Icons.clear, size: 18),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── Recurring ──
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Recurring Order'),
+                  subtitle: const Text('Auto-create this order periodically'),
+                  value: _isRecurring,
+                  onChanged: (v) => setState(() => _isRecurring = v),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                if (_isRecurring)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      children: [
+                        const Text('Repeat every'),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 60,
+                          child: TextField(
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(isDense: true),
+                            controller: TextEditingController(text: '$_recurringDays'),
+                            onChanged: (v) => _recurringDays = int.tryParse(v) ?? 30,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('days'),
+                      ],
+                    ),
+                  ),
+
                 const SizedBox(height: 24),
               ],
             ),
@@ -382,7 +613,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.productName,
+                Text(item.displayName,
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 Text(
                   CurrencyFormatter.format(item.unitPrice),
@@ -555,6 +786,46 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
+  // ─── Payment Method ──────────────────────────────────────────────────
+
+  Widget _buildPaymentMethodSection(ThemeData theme, ColorScheme cs) {
+    const methods = PaymentMethod.values;
+    const labels = {
+      PaymentMethod.cash: 'Cash',
+      PaymentMethod.card: 'Card',
+      PaymentMethod.mfs: 'MFS',
+      PaymentMethod.bank: 'Bank',
+      PaymentMethod.other: 'Other',
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Payment Method',
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: methods.map((m) {
+            final selected = _paymentMethod == m;
+            return ChoiceChip(
+              label: Text(labels[m] ?? m.name),
+              selected: selected,
+              onSelected: (_) => setState(() => _paymentMethod = m),
+              selectedColor: cs.primary.withValues(alpha: 0.15),
+              labelStyle: TextStyle(
+                color: selected ? cs.primary : cs.onSurface,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
   // ─── Footer ──────────────────────────────────────────────────────────
 
   Widget _buildFooter(ThemeData theme, ColorScheme cs) {
@@ -582,6 +853,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               theme,
               valueColor: Colors.green,
             ),
+          if (_taxRate > 0)
+            _summaryRow(
+              'Tax (${_taxRate.toStringAsFixed(_taxRate == _taxRate.roundToDouble() ? 0 : 1)}%)',
+              CurrencyFormatter.format(_taxAmount),
+              theme,
+            ),
           if (_delivery > 0)
             _summaryRow('Delivery', CurrencyFormatter.format(_delivery), theme),
           const Divider(height: 12),
@@ -603,7 +880,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           ),
           const SizedBox(height: 12),
           AppButton(
-            label: 'Create Order',
+            label: _isEditing ? 'Update Order' : 'Create Order',
             onPressed: _submit,
             isLoading: _isLoading,
             isFullWidth: true,
@@ -637,12 +914,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _ProductPickerSheet extends StatefulWidget {
-  final List<Product> products;
+  final Isar isar;
   final List<OrderItem> currentItems;
   final ValueChanged<List<OrderItem>> onChanged;
 
   const _ProductPickerSheet({
-    required this.products,
+    required this.isar,
     required this.currentItems,
     required this.onChanged,
   });
@@ -655,7 +932,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   late final List<OrderItem> _items;
   final _searchCtrl = TextEditingController();
   String _query = '';
-
+  final Set<int> _expandedProducts = {};
   @override
   void initState() {
     super.initState();
@@ -668,14 +945,25 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     super.dispose();
   }
 
-  int _qtyOf(int productId) {
-    final idx = _items.indexWhere((i) => i.productId == productId);
+  int _qtyOf(int productId, {String variantName = '', String variantValue = ''}) {
+    final idx = _items.indexWhere((i) =>
+        i.productId == productId &&
+        i.variantName == variantName &&
+        i.variantValue == variantValue);
     return idx >= 0 ? _items[idx].qty : 0;
   }
 
-  void _setQty(Product product, int qty) {
+  void _setQty(Product product, int qty,
+      {String variantName = '', String variantValue = '',
+       double? priceOverride, String? skuOverride,
+       required int availableStock}) {
+    if (qty > availableStock) qty = availableStock;
     setState(() {
-      final idx = _items.indexWhere((i) => i.productId == product.id);
+      final idx = _items.indexWhere((i) =>
+          i.productId == product.id &&
+          i.variantName == variantName &&
+          i.variantValue == variantValue);
+      final unitPrice = priceOverride ?? product.sellingPrice;
       if (qty <= 0) {
         if (idx >= 0) _items.removeAt(idx);
       } else if (idx >= 0) {
@@ -687,11 +975,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
         _items.add(OrderItem(
           productId: product.id,
           productName: product.name,
-          productSku: product.sku,
+          productSku: skuOverride ?? product.sku,
           qty: qty,
-          unitPrice: product.sellingPrice,
+          unitPrice: unitPrice,
           costPrice: product.costPrice,
-          totalPrice: product.sellingPrice * qty,
+          totalPrice: unitPrice * qty,
+          variantName: variantName,
+          variantValue: variantValue,
         ));
       }
     });
@@ -702,9 +992,25 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+
+    return StreamBuilder<List<Product>>(
+      stream: widget.isar.products
+          .where()
+          .filter()
+          .isActiveEqualTo(true)
+          .sortByName()
+          .watch(fireImmediately: true),
+      builder: (context, snapshot) {
+        final allProducts = snapshot.data ?? [];
+        return _buildSheet(context, theme, cs, allProducts);
+      },
+    );
+  }
+
+  Widget _buildSheet(BuildContext context, ThemeData theme, ColorScheme cs, List<Product> allProducts) {
     final filtered = _query.isEmpty
-        ? widget.products
-        : widget.products
+        ? allProducts
+        : allProducts
             .where((p) =>
                 p.name.toLowerCase().contains(_query) ||
                 p.sku.toLowerCase().contains(_query))
@@ -804,6 +1110,182 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                         Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
                     itemBuilder: (_, i) {
                       final p = filtered[i];
+
+                      if (p.hasVariants) {
+                        final isExpanded = _expandedProducts.contains(p.id);
+                        return Column(
+                          children: [
+                            // Parent product row (tap to expand)
+                            InkWell(
+                              onTap: () => setState(() {
+                                if (isExpanded) {
+                                  _expandedProducts.remove(p.id);
+                                } else {
+                                  _expandedProducts.add(p.id);
+                                }
+                              }),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(p.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                              )),
+                                          Text(
+                                            '${p.variants.length} variant${p.variants.length == 1 ? '' : 's'}',
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                color: cs.onSurface.withValues(alpha: 0.5)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                                      size: 20,
+                                      color: cs.onSurface.withValues(alpha: 0.5),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Expanded variant rows
+                            if (isExpanded)
+                              ...p.variants.map((v) {
+                                final variantPrice = p.sellingPrice + v.priceAdjustment;
+                                final variantSku = v.sku.isNotEmpty ? v.sku : p.sku;
+                                final outOfStock = v.stockQty <= 0;
+                                final qty = _qtyOf(p.id,
+                                    variantName: v.name, variantValue: v.value);
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 16, bottom: 6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: cs.primary.withValues(alpha: 0.03),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text('${v.name}: ${v.value}',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13,
+                                                    color: outOfStock
+                                                        ? cs.onSurface
+                                                            .withValues(alpha: 0.4)
+                                                        : null,
+                                                  )),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                      CurrencyFormatter.format(
+                                                          variantPrice),
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: cs.primary)),
+                                                  Text(
+                                                    '  ·  ${v.stockQty} in stock',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: outOfStock
+                                                          ? cs.error
+                                                          : cs.onSurface
+                                                              .withValues(alpha: 0.5),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (qty > 0)
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(
+                                                  color: cs.primary
+                                                      .withValues(alpha: 0.3)),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                _sheetQtyBtn(
+                                                    Icons.remove,
+                                                    () => _setQty(p, qty - 1,
+                                                        variantName: v.name,
+                                                        variantValue: v.value,
+                                                        priceOverride: variantPrice,
+                                                        skuOverride: variantSku,
+                                                        availableStock: v.stockQty),
+                                                    cs),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                          horizontal: 10),
+                                                  child: Text('$qty',
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: cs.primary)),
+                                                ),
+                                                _sheetQtyBtn(
+                                                    Icons.add,
+                                                    qty >= v.stockQty ? null : () => _setQty(p, qty + 1,
+                                                        variantName: v.name,
+                                                        variantValue: v.value,
+                                                        priceOverride: variantPrice,
+                                                        skuOverride: variantSku,
+                                                        availableStock: v.stockQty),
+                                                    cs),
+                                              ],
+                                            ),
+                                          )
+                                        else
+                                          SizedBox(
+                                            height: 34,
+                                            child: FilledButton.tonal(
+                                              onPressed: outOfStock
+                                                  ? null
+                                                  : () => _setQty(p, 1,
+                                                      variantName: v.name,
+                                                      variantValue: v.value,
+                                                      priceOverride: variantPrice,
+                                                      skuOverride: variantSku,
+                                                      availableStock: v.stockQty),
+                                              style: FilledButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 16),
+                                              ),
+                                              child: Text(outOfStock
+                                                  ? 'Out of stock'
+                                                  : 'Add'),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                          ],
+                        );
+                      }
+
+                      // Non-variant product (original behavior)
                       final qty = _qtyOf(p.id);
                       final outOfStock = p.stockQty <= 0;
 
@@ -811,7 +1293,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                           children: [
-                            // Info
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -847,8 +1328,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 ],
                               ),
                             ),
-
-                            // Qty control or Add button
                             if (qty > 0)
                               Container(
                                 decoration: BoxDecoration(
@@ -860,7 +1339,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _sheetQtyBtn(Icons.remove,
-                                        () => _setQty(p, qty - 1), cs),
+                                        () => _setQty(p, qty - 1, availableStock: p.stockQty), cs),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 10),
@@ -870,7 +1349,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                               color: cs.primary)),
                                     ),
                                     _sheetQtyBtn(Icons.add,
-                                        () => _setQty(p, qty + 1), cs),
+                                        qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty), cs),
                                   ],
                                 ),
                               )
@@ -879,7 +1358,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 height: 34,
                                 child: FilledButton.tonal(
                                   onPressed:
-                                      outOfStock ? null : () => _setQty(p, 1),
+                                      outOfStock ? null : () => _setQty(p, 1, availableStock: p.stockQty),
                                   style: FilledButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 16),
@@ -899,13 +1378,14 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     );
   }
 
-  Widget _sheetQtyBtn(IconData icon, VoidCallback onTap, ColorScheme cs) {
+  Widget _sheetQtyBtn(IconData icon, VoidCallback? onTap, ColorScheme cs) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 16, color: cs.primary),
+        child: Icon(icon, size: 16,
+            color: onTap != null ? cs.primary : cs.onSurface.withValues(alpha: 0.25)),
       ),
     );
   }

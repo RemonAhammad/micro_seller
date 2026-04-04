@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:isar/isar.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/product_variant.dart';
 import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -43,6 +44,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   String? _imagePath;
   bool _isLoading = false;
   Product? _existingProduct;
+  final List<ProductVariant> _variants = [];
+  final List<_VariantControllers> _variantControllers = [];
 
   @override
   void initState() {
@@ -76,7 +79,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         product.lowStockThreshold > 0 ? product.lowStockThreshold.toString() : '';
     _categoryCtrl.text = product.category;
     _qrCtrl.text = product.qrCode;
-    setState(() => _imagePath = product.imagePath.isNotEmpty ? product.imagePath : null);
+    setState(() {
+      _imagePath = product.imagePath.isNotEmpty ? product.imagePath : null;
+      _variants
+        ..clear()
+        ..addAll(product.variants.map((v) => v.copyWith()));
+      for (final vc in _variantControllers) {
+        vc.dispose();
+      }
+      _variantControllers.clear();
+      for (final v in _variants) {
+        _variantControllers.add(_VariantControllers(
+          nameText: v.name,
+          valueText: v.value,
+          stockText: v.stockQty > 0 ? v.stockQty.toString() : '',
+          priceText: v.priceAdjustment != 0 ? v.priceAdjustment.toString() : '',
+          skuText: v.sku,
+        ));
+      }
+    });
   }
 
   @override
@@ -90,6 +111,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _thresholdCtrl.dispose();
     _categoryCtrl.dispose();
     _qrCtrl.dispose();
+    for (final vc in _variantControllers) {
+      vc.dispose();
+    }
     super.dispose();
   }
 
@@ -209,6 +233,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         category: categoryName,
         qrCode: _qrCtrl.text.trim(),
         isActive: existing?.isActive ?? true,
+        variants: _variants.where((v) => v.name.isNotEmpty && v.value.isNotEmpty).toList(),
         createdAt: existing?.createdAt,
       );
 
@@ -462,6 +487,147 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+
+              // ── Variants ──────────────────────────────────────────────────
+              Row(
+                children: [
+                  const _SectionLabel('Variants'),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => setState(() {
+                      _variants.add(
+                          ProductVariant(name: '', value: '', stockQty: 0));
+                      _variantControllers.add(_VariantControllers());
+                    }),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+              if (_variants.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'No variants. Add variants for sizes, colors, etc.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ..._variants.asMap().entries.map((entry) {
+                final i = entry.key;
+                final vc = _variantControllers[i];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Attribute',
+                                  hintText: 'e.g. Size',
+                                  isDense: true,
+                                ),
+                                controller: vc.name,
+                                onChanged: (val) => _variants[i] =
+                                    _variants[i].copyWith(name: val),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Value',
+                                  hintText: 'e.g. Large',
+                                  isDense: true,
+                                ),
+                                controller: vc.value,
+                                onChanged: (val) => _variants[i] =
+                                    _variants[i].copyWith(value: val),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => setState(() {
+                                _variantControllers[i].dispose();
+                                _variantControllers.removeAt(i);
+                                _variants.removeAt(i);
+                              }),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Stock',
+                                  isDense: true,
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                controller: vc.stock,
+                                onChanged: (val) => _variants[i] =
+                                    _variants[i].copyWith(
+                                        stockQty: int.tryParse(val) ?? 0),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Price +/-',
+                                  isDense: true,
+                                ),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true, signed: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'^-?\d*\.?\d*')),
+                                ],
+                                controller: vc.price,
+                                onChanged: (val) => _variants[i] =
+                                    _variants[i].copyWith(
+                                        priceAdjustment:
+                                            double.tryParse(val) ?? 0),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: 'SKU',
+                                  isDense: true,
+                                ),
+                                controller: vc.sku,
+                                onChanged: (val) => _variants[i] =
+                                    _variants[i].copyWith(sku: val),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
               const SizedBox(height: 32),
 
               AppButton(
@@ -497,5 +663,33 @@ class _SectionLabel extends StatelessWidget {
         letterSpacing: 0.5,
       ),
     );
+  }
+}
+
+class _VariantControllers {
+  final TextEditingController name;
+  final TextEditingController value;
+  final TextEditingController stock;
+  final TextEditingController price;
+  final TextEditingController sku;
+
+  _VariantControllers({
+    String nameText = '',
+    String valueText = '',
+    String stockText = '',
+    String priceText = '',
+    String skuText = '',
+  })  : name = TextEditingController(text: nameText),
+        value = TextEditingController(text: valueText),
+        stock = TextEditingController(text: stockText),
+        price = TextEditingController(text: priceText),
+        sku = TextEditingController(text: skuText);
+
+  void dispose() {
+    name.dispose();
+    value.dispose();
+    stock.dispose();
+    price.dispose();
+    sku.dispose();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'product_variant.dart';
 
 part 'product.g.dart';
 
@@ -20,6 +21,7 @@ class Product {
     this.qrCode = '',
     this.tags = const [],
     this.isActive = true,
+    this.variants = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -37,6 +39,7 @@ class Product {
   String qrCode;
   List<String> tags;
   bool isActive;
+  List<ProductVariant> variants;
   DateTime? createdAt;
   DateTime? updatedAt;
 
@@ -50,6 +53,14 @@ class Product {
 
   @ignore
   bool get isOutOfStock => stockQty <= 0;
+
+  @ignore
+  bool get hasVariants => variants.isNotEmpty;
+
+  /// Total stock across all variants (if variants exist) or base stockQty
+  @ignore
+  int get totalStock =>
+      hasVariants ? variants.fold(0, (s, v) => s + v.stockQty) : stockQty;
 
   Product copyWith({
     Id? id,
@@ -65,6 +76,7 @@ class Product {
     String? qrCode,
     List<String>? tags,
     bool? isActive,
+    List<ProductVariant>? variants,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) =>
@@ -82,6 +94,7 @@ class Product {
         qrCode: qrCode ?? this.qrCode,
         tags: tags ?? this.tags,
         isActive: isActive ?? this.isActive,
+        variants: variants ?? this.variants,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );

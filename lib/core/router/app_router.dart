@@ -15,6 +15,8 @@ import '../../features/inventory/presentation/inventory_screen.dart';
 import '../../features/inventory/presentation/stock_adjustment_screen.dart';
 import '../../features/expenses/presentation/expense_list_screen.dart';
 import '../../features/expenses/presentation/expense_form_screen.dart';
+import '../../features/reports/presentation/reports_screen.dart';
+import '../../features/returns/presentation/returns_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../constants/app_strings.dart';
 
@@ -58,9 +60,18 @@ final appRouter = GoRouter(
               GoRoute(
                 path: ':id',
                 builder: (_, s) => OrderDetailScreen(orderId: int.parse(s.pathParameters['id']!)),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, s) => OrderFormScreen(orderId: int.parse(s.pathParameters['id']!)),
+                  ),
+                ],
               ),
             ],
           ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/returns', builder: (_, __) => const ReturnsScreen()),
         ]),
         StatefulShellBranch(routes: [
           GoRoute(
@@ -111,6 +122,9 @@ final appRouter = GoRouter(
         ]),
         StatefulShellBranch(routes: [
           GoRoute(path: '/categories', builder: (_, __) => const CategoryScreen()),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/reports', builder: (_, __) => const ReportsScreen()),
         ]),
         StatefulShellBranch(routes: [
           GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
@@ -170,10 +184,12 @@ class _Sidebar extends StatelessWidget {
     (icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard, label: AppStrings.navDashboard),
     (icon: Icons.inventory_2_outlined, selectedIcon: Icons.inventory_2, label: AppStrings.navProducts),
     (icon: Icons.receipt_long_outlined, selectedIcon: Icons.receipt_long, label: AppStrings.navOrders),
+    (icon: Icons.assignment_return_outlined, selectedIcon: Icons.assignment_return, label: 'Returns'),
     (icon: Icons.people_outline, selectedIcon: Icons.people, label: AppStrings.navCustomers),
     (icon: Icons.warehouse_outlined, selectedIcon: Icons.warehouse, label: AppStrings.navInventory),
     (icon: Icons.account_balance_wallet_outlined, selectedIcon: Icons.account_balance_wallet, label: AppStrings.navExpenses),
     (icon: Icons.category_outlined, selectedIcon: Icons.category, label: 'Categories'),
+    (icon: Icons.analytics_outlined, selectedIcon: Icons.analytics, label: 'Reports'),
     (icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: AppStrings.navSettings),
   ];
 
@@ -192,7 +208,7 @@ class _Sidebar extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 8),
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 6; i++)
               _tile(i, _items[i], selectedColor, unselectedColor),
             Divider(
               indent: 12,
@@ -200,10 +216,10 @@ class _Sidebar extends StatelessWidget {
               height: 16,
               color: unselectedColor.withValues(alpha: 0.2),
             ),
-            for (int i = 5; i < 7; i++)
+            for (int i = 6; i < 9; i++)
               _tile(i, _items[i], selectedColor, unselectedColor),
             const Spacer(),
-            _tile(7, _items[7], selectedColor, unselectedColor),
+            _tile(9, _items[9], selectedColor, unselectedColor),
             const SizedBox(height: 12),
           ],
         ),

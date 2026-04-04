@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
+import 'core/l10n/app_localizations.dart';
 import 'data/services/isar_service.dart';
+import 'features/settings/providers/settings_provider.dart';
 
 class SellerBookApp extends ConsumerWidget {
   const SellerBookApp({super.key});
@@ -13,13 +16,31 @@ class SellerBookApp extends ConsumerWidget {
     // Pre-warm the Isar DB on app start
     ref.watch(isarProvider);
 
+    final settings = ref.watch(settingsProvider);
+    final mode = settings['themeMode'] as String? ?? 'system';
+    final themeMode = switch (mode) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+
+    final langCode = settings['language'] as String? ?? 'en';
+
     return MaterialApp.router(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: appRouter,
+      locale: Locale(langCode),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }

@@ -86,6 +86,12 @@ const ProductSchema = CollectionSchema(
       id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
+    ),
+    r'variants': PropertySchema(
+      id: 14,
+      name: r'variants',
+      type: IsarType.objectList,
+      target: r'ProductVariant',
     )
   },
   estimateSize: _productEstimateSize,
@@ -95,7 +101,7 @@ const ProductSchema = CollectionSchema(
   idName: r'id',
   indexes: {},
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'ProductVariant': ProductVariantSchema},
   getId: _productGetId,
   getLinks: _productGetLinks,
   attach: _productAttach,
@@ -121,6 +127,15 @@ int _productEstimateSize(
       bytesCount += value.length * 3;
     }
   }
+  bytesCount += 3 + object.variants.length * 3;
+  {
+    final offsets = allOffsets[ProductVariant]!;
+    for (var i = 0; i < object.variants.length; i++) {
+      final value = object.variants[i];
+      bytesCount +=
+          ProductVariantSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
   return bytesCount;
 }
 
@@ -144,6 +159,12 @@ void _productSerialize(
   writer.writeLong(offsets[11], object.stockQty);
   writer.writeStringList(offsets[12], object.tags);
   writer.writeDateTime(offsets[13], object.updatedAt);
+  writer.writeObjectList<ProductVariant>(
+    offsets[14],
+    allOffsets,
+    ProductVariantSchema.serialize,
+    object.variants,
+  );
 }
 
 Product _productDeserialize(
@@ -168,6 +189,13 @@ Product _productDeserialize(
     stockQty: reader.readLongOrNull(offsets[11]) ?? 0,
     tags: reader.readStringList(offsets[12]) ?? const [],
     updatedAt: reader.readDateTimeOrNull(offsets[13]),
+    variants: reader.readObjectList<ProductVariant>(
+          offsets[14],
+          ProductVariantSchema.deserialize,
+          allOffsets,
+          ProductVariant(),
+        ) ??
+        const [],
   );
   return object;
 }
@@ -207,6 +235,14 @@ P _productDeserializeProp<P>(
       return (reader.readStringList(offset) ?? const []) as P;
     case 13:
       return (reader.readDateTimeOrNull(offset)) as P;
+    case 14:
+      return (reader.readObjectList<ProductVariant>(
+            offset,
+            ProductVariantSchema.deserialize,
+            allOffsets,
+            ProductVariant(),
+          ) ??
+          const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1729,10 +1765,102 @@ extension ProductQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> variantsLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variants',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> variantsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variants',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> variantsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variants',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> variantsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variants',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variants',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> variantsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variants',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
 }
 
 extension ProductQueryObject
-    on QueryBuilder<Product, Product, QFilterCondition> {}
+    on QueryBuilder<Product, Product, QFilterCondition> {
+  QueryBuilder<Product, Product, QAfterFilterCondition> variantsElement(
+      FilterQuery<ProductVariant> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'variants');
+    });
+  }
+}
 
 extension ProductQueryLinks
     on QueryBuilder<Product, Product, QFilterCondition> {}
@@ -2250,6 +2378,13 @@ extension ProductQueryProperty
       return query.addPropertyName(r'updatedAt');
     });
   }
+
+  QueryBuilder<Product, List<ProductVariant>, QQueryOperations>
+      variantsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'variants');
+    });
+  }
 }
 
 // **************************************************************************
@@ -2272,6 +2407,10 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
       isActive: json['isActive'] as bool? ?? true,
+      variants: (json['variants'] as List<dynamic>?)
+              ?.map((e) => ProductVariant.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -2294,6 +2433,7 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
       'qrCode': instance.qrCode,
       'tags': instance.tags,
       'isActive': instance.isActive,
+      'variants': instance.variants,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

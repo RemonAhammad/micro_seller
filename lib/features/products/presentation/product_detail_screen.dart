@@ -189,6 +189,80 @@ class _ProductDetailBody extends ConsumerWidget {
                           _InfoRow('Low Stock Alert', '${product.lowStockThreshold} units'),
                         ],
                       ),
+                      if (product.hasVariants) ...[
+                        const SizedBox(height: 12),
+                        _InfoCard(
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Variants',
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ...product.variants.map((v) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.04),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${v.name}: ${v.value}',
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        if (v.sku.isNotEmpty) ...[
+                                          const Spacer(),
+                                          Text(
+                                            v.sku,
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'Stock: ${v.stockQty}',
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                          ),
+                                        ),
+                                        if (v.priceAdjustment != 0) ...[
+                                          const SizedBox(width: 16),
+                                          Text(
+                                            'Price: ${v.priceAdjustment > 0 ? '+' : ''}${CurrencyFormatter.format(v.priceAdjustment)}',
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              color: v.priceAdjustment > 0
+                                                  ? AppColors.statusCompleted
+                                                  : AppColors.statusCancelled,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )),
+                          ],
+                        ),
+                      ],
                       if (product.qrCode.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         _InfoCard(

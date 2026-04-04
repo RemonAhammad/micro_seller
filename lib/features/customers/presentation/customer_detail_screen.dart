@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -186,6 +187,43 @@ class _CustomerDetailBody extends ConsumerWidget {
                   const SizedBox(height: 16),
                 ],
 
+                // Purchase History Chart
+                FutureBuilder<List<Order>>(
+                  future: isar.orders
+                      .filter()
+                      .customerIdEqualTo(customerId)
+                      .not()
+                      .orderStatusEqualTo(OrderStatus.cancelled)
+                      .sortByCreatedAt()
+                      .findAll(),
+                  builder: (context, orderSnap) {
+                    final orders = orderSnap.data ?? [];
+                    if (orders.isEmpty) return const SizedBox.shrink();
+
+                    final now = DateTime.now();
+                    final monthlySpending = <DateTime, double>{};
+                    for (int i = 5; i >= 0; i--) {
+                      final month = DateTime(now.year, now.month - i, 1);
+                      monthlySpending[month] = 0;
+                    }
+                    for (final order in orders) {
+                      if (order.createdAt == null) continue;
+                      final key = DateTime(
+                          order.createdAt!.year, order.createdAt!.month, 1);
+                      if (monthlySpending.containsKey(key)) {
+                        monthlySpending[key] =
+                            monthlySpending[key]! + order.totalAmount;
+                      }
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _PurchaseHistoryChart(
+                          monthlySpending: monthlySpending),
+                    );
+                  },
+                ),
+
                 // Customer orders
                 Text('Order History',
                     style: theme.textTheme.titleSmall
@@ -327,6 +365,173 @@ class _InfoRow extends StatelessWidget {
             child: Text(value,
                 style: theme.textTheme.bodyMedium
                     ?.copyWith(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PurchaseHistoryChart extends StatelessWidget {
+  final Map<DateTime, double> monthlySpending;
+
+  const _PurchaseHistoryChart({required this.monthlySpending});
+
+  static const _monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final entries = monthlySpending.entries.toList();
+    final maxY = entries.fold<double>(
+        0, (prev, e) => e.value > prev ? e.value : prev);
+    final effectiveMaxY = maxY == 0 ? 100.0 : maxY * 1.2;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bar_chart_rounded,
+                  size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Purchase History (6 months)',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: effectiveMaxY,
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    tooltipRoundedRadius: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final month = entries[group.x.toInt()].key;
+                      return BarTooltipItem(
+                        '${_monthNames[month.month - 1]}\n',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: CurrencyFormatter.formatCompact(rod.toY),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 46,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Text(
+                            CurrencyFormatter.formatCompact(value),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.4),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final idx = value.toInt();
+                        if (idx < 0 || idx >= entries.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final month = entries[idx].key;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            _monthNames[month.month - 1],
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: effectiveMaxY / 4,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: theme.colorScheme.onSurface
+                          .withValues(alpha: 0.06),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: entries.asMap().entries.map((e) {
+                  return BarChartGroupData(
+                    x: e.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: e.value.value,
+                        color: AppColors.primary,
+                        width: 20,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(6),
+                          topRight: Radius.circular(6),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ],
       ),
