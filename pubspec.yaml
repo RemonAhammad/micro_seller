@@ -38,7 +38,7 @@ dependencies:
   # Image & scanning
   image_picker: ^1.1.2
   flutter_image_compress: ^2.3.0
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^6.0.0
 
   # UI & charts
   fl_chart: ^0.69.0

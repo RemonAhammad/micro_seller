@@ -153,15 +153,17 @@ class _NavigationShell extends StatelessWidget {
     final expanded = width >= 600;
 
     return Scaffold(
-      body: Row(
-        children: [
-          _Sidebar(
-            expanded: expanded,
-            currentIndex: navigationShell.currentIndex,
-            onNavigate: _navigate,
-          ),
-          Expanded(child: navigationShell),
-        ],
+      body: SafeArea(
+        child: Row(
+          children: [
+            _Sidebar(
+              expanded: expanded,
+              currentIndex: navigationShell.currentIndex,
+              onNavigate: _navigate,
+            ),
+            Expanded(child: navigationShell),
+          ],
+        ),
       ),
     );
   }
@@ -204,25 +206,23 @@ class _Sidebar extends StatelessWidget {
     return Container(
       width: expanded ? 200 : 56,
       color: bgColor,
-      child: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            for (int i = 0; i < 6; i++)
-              _tile(i, _items[i], selectedColor, unselectedColor),
-            Divider(
-              indent: 12,
-              endIndent: 12,
-              height: 16,
-              color: unselectedColor.withValues(alpha: 0.2),
-            ),
-            for (int i = 6; i < 9; i++)
-              _tile(i, _items[i], selectedColor, unselectedColor),
-            const Spacer(),
-            _tile(9, _items[9], selectedColor, unselectedColor),
-            const SizedBox(height: 12),
-          ],
-        ),
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          for (int i = 0; i < 6; i++)
+            _tile(i, _items[i], selectedColor, unselectedColor),
+          Divider(
+            indent: 12,
+            endIndent: 12,
+            height: 16,
+            color: unselectedColor.withValues(alpha: 0.2),
+          ),
+          for (int i = 6; i < 9; i++)
+            _tile(i, _items[i], selectedColor, unselectedColor),
+          const Spacer(),
+          _tile(9, _items[9], selectedColor, unselectedColor),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }

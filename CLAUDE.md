@@ -7,7 +7,7 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **Flutter** (SDK >=3.5.0 <4.0.0)
 - **State Management:** Riverpod (`flutter_riverpod` + `riverpod_annotation` + code generation)
 - **Database:** Isar 3.1 (embedded NoSQL, local-first)
-- **Navigation:** GoRouter with `StatefulShellRoute` (9-branch sidebar navigation)
+- **Navigation:** GoRouter with `StatefulShellRoute` (10-branch sidebar navigation)
 - **Code Generation:** Freezed (immutable classes), JSON serializable, Isar schema generator
 - **PDF:** `pdf` + `printing` packages for receipt generation
 - **Cloud:** Google Sign-In + Google Drive API for backup/restore
@@ -16,7 +16,7 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **CSV:** `csv` + `file_picker` for import/export
 - **Localization:** flutter_localizations + custom delegate (English + Bengali)
 - **Persistence:** SharedPreferences for app settings
-- **Other:** image_picker, mobile_scanner (QR), share_plus, url_launcher, intl
+- **Other:** image_picker, mobile_scanner v6 (QR), share_plus, url_launcher, intl
 
 ## Architecture
 
@@ -38,9 +38,9 @@ lib/
 │   │   ├── translations_en.dart     # English translation map (160+ keys)
 │   │   └── translations_bn.dart     # Bengali translation map (160+ keys)
 │   ├── router/
-│   │   └── app_router.dart       # GoRouter config, 9-branch sidebar navigation shell
+│   │   └── app_router.dart       # GoRouter config, 10-branch sidebar navigation shell, SafeArea wrapper
 │   ├── theme/
-│   │   └── app_theme.dart        # Material 3 light/dark themes
+│   │   └── app_theme.dart        # Material 3 light/dark themes, status bar matches appbar color
 │   └── utils/
 │       ├── currency_formatter.dart  # Format/parse/compact currency
 │       ├── date_formatter.dart      # Date formatting, timeAgo, isToday etc.
@@ -52,7 +52,7 @@ lib/
 │   │   ├── customer.dart         # id, name, phone, address, tag(new/regular/vip), stats
 │   │   ├── expense.dart          # id, title, amount, category(logistics/packaging/marketing/supplies/other), date
 │   │   ├── order.dart            # id, orderNumber, customer info, items, totals, payment/order status, paymentMethod, delivery, recurring, return fields
-│   │   ├── order_item.dart       # @embedded: productId, name, sku, qty, unitPrice, costPrice, totalPrice
+│   │   ├── order_item.dart       # @embedded: productId, name, sku, qty, unitPrice, costPrice, totalPrice, variantName, variantValue
 │   │   ├── product.dart          # id, name, sku, prices, stockQty, category, qrCode, isActive, variants
 │   │   ├── product_variant.dart  # @embedded: name, value, priceAdjustment, stockQty, sku
 │   │   └── stock_movement.dart   # id, productId, type(sale/restock/adjustment/damage), qty, reason
@@ -97,32 +97,34 @@ lib/
 │   │   └── providers/expense_provider.dart
 │   ├── inventory/
 │   │   ├── presentation/
-│   │   │   ├── inventory_screen.dart               # 2 tabs; category filter + sort (low stock/name/qty)
-│   │   │   ├── stock_adjustment_screen.dart        # Pill-chip type selector, qty, reason
+│   │   │   ├── inventory_screen.dart               # 2 tabs; category filter + sort (low stock/name/qty); shows per-variant stock
+│   │   │   ├── stock_adjustment_screen.dart        # Variant selector, pill-chip type selector, qty, reason; real-time stock via StreamBuilder
 │   │   │   └── widgets/stock_movement_tile.dart
 │   │   └── providers/inventory_provider.dart
 │   ├── orders/
 │   │   ├── presentation/
 │   │   │   ├── order_list_screen.dart              # 5 tabs with count badges, long-press status change, CSV export
-│   │   │   ├── order_form_screen.dart              # Create + Edit mode, payment method, tax calc, delivery, recurring toggle
-│   │   │   ├── order_detail_screen.dart            # Status actions, payment, share/print/PDF, edit button, return order, delivery tracking
+│   │   │   ├── order_form_screen.dart              # Create + Edit mode, variant-aware product picker, per-order tax/VAT field, stock validation, payment method, delivery, recurring
+│   │   │   ├── order_detail_screen.dart            # Status stepper (hidden for returns), cancel order action, payment, share/print/PDF, edit, return order, delivery tracking
 │   │   │   └── widgets/
 │   │   │       ├── order_card.dart                 # Responsive: compact on phone, row on tablet
-│   │   │       ├── order_item_row.dart
+│   │   │       ├── order_item_row.dart             # Shows variant info via displayName
 │   │   │       └── order_status_badge.dart         # Text-only badges (no icons), PaymentStatusBadge
-│   │   └── providers/order_provider.dart           # Stock deduction, rollback, customer stats, createReturnOrder, processRecurringOrders
+│   │   └── providers/order_provider.dart           # Stock deduction (base + variant), rollback, customer stats, createReturnOrder, processRecurringOrders, cancel order
 │   ├── products/
 │   │   ├── presentation/
 │   │   │   ├── product_list_screen.dart            # Search (debounced), category chips, responsive grid/list, CSV export + import
 │   │   │   ├── product_form_screen.dart            # Image, QR, category, selling+cost price, variants editor
-│   │   │   ├── product_detail_screen.dart          # Full info, adjust stock
+│   │   │   ├── product_detail_screen.dart          # Full info, variants card, adjust stock
 │   │   │   └── widgets/
 │   │   │       ├── product_card.dart
 │   │   │       └── stock_badge.dart
-│   │   └── providers/product_provider.dart         # Soft-delete (if in orders), negative stock prevention
+│   │   └── providers/product_provider.dart         # Soft-delete (if in orders), negative stock prevention, variant-aware adjustStock
 │   ├── reports/
 │   │   ├── presentation/reports_screen.dart        # Date range picker, summary cards, top products chart, category sales, top customers
 │   │   └── providers/reports_provider.dart         # Parameterized by date range, aggregates revenue/profit/expenses/rankings
+│   ├── returns/
+│   │   └── presentation/create_return_screen.dart  # Item selector with qty controls, reason chips, refund amount (capped at amountPaid), variant display
 │   └── settings/
 │       ├── presentation/settings_screen.dart       # Theme toggle, language picker, shop config, tax rate, Drive backup, clear data
 │       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language
@@ -147,7 +149,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 | **Product** | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variants** (embedded list) | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock |
 | **ProductVariant** | @embedded: name, value, priceAdjustment, stockQty, sku | — |
 | **Order** | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, **taxAmount**, totalAmount, amountPaid, paymentStatus, **paymentMethod**, orderStatus, **deliveryAddress**, **estimatedDeliveryDate**, **actualDeliveryDate**, **isReturn**, **originalOrderId**, **isRecurring**, **recurringIntervalDays**, **nextRecurringDate** | balanceDue, isFullyPaid, totalItems |
-| **OrderItem** | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice | — |
+| **OrderItem** | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice, **variantName**, **variantValue** | hasVariant, displayName |
 | **Customer** | name, phone, address, notes, tag (new/regular/vip), totalOrders, totalSpent, outstandingBalance | hasOutstanding |
 | **Expense** | title, amount, category (logistics/packaging/marketing/supplies/other), date, notes | — |
 | **StockMovement** | productId, productName, type (sale/restock/adjustment/damage), qty, reason | isIncoming |
@@ -171,20 +173,26 @@ The order creation/edit screen is designed for fast, frictionless use:
   - **Customer is required** — validation prevents creating order without one
 
 - **Product picker (bottom sheet, stays open for multi-add):**
+  - **Real-time stock** via Isar `StreamBuilder` (not a stale snapshot)
   - Search by name or SKU
-  - Inline +/- qty controls per product (no close-reopen cycle)
-  - Out-of-stock products are dimmed with disabled button
+  - **Variant support:** Products with variants show expand/collapse arrow; each variant has its own price, stock, and add/qty controls
+  - Inline +/- qty controls per product/variant (no close-reopen cycle)
+  - **Stock validation:** + button disabled when qty reaches available stock; qty clamped to stock limit
+  - Out-of-stock products/variants are dimmed with disabled button
   - Item count badge, "Done" button to close
   - Changes are pushed to parent via `onChanged` callback in real time
 
 - **Item list (main screen):**
   - Each item has +/- qty buttons and an X delete button (no hidden swipe)
+  - **Stock validation on increment** — checks current stock from Isar, shows snackbar if exceeded
+  - Shows variant info via `displayName` (e.g. "T-Shirt (Size: Large)")
   - Item count badge in section header
   - Tapping empty state opens product picker
 
 - **Pricing:**
   - Discount + delivery fee fields
-  - **Tax auto-calculated** from settings tax rate: `(subtotal - discount) * taxRate / 100`
+  - **Per-order Tax/VAT (%) field** — defaults from settings tax rate, editable per order
+  - Tax auto-calculated: `(subtotal - discount) * taxRate / 100`, shown as helper text
   - Amount paid field with "Pay Full" quick button (fills total)
 
 - **Payment method:** ChoiceChips (Cash / Card / bKash / Nagad / Bank / Other)
@@ -203,35 +211,41 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 1. Customer is required (validated in form)
 2. Save order to DB — each OrderItem stores `costPrice` from the product at time of order (frozen for accurate profit)
-3. Tax amount is calculated from settings tax rate and stored on the order
-4. If status == confirmed: deduct stock per item + create StockMovement records
-5. If customerId > 0: update customer totalOrders, totalSpent, outstandingBalance
+3. OrderItem stores `variantName`/`variantValue` if a variant was selected
+4. Tax amount is calculated from the per-order tax rate field and stored on the order
+5. If status == confirmed: deduct stock per item (**both base `stockQty` and variant `stockQty`**) + create StockMovement records
+6. If customerId > 0: update customer totalOrders, totalSpent, outstandingBalance
 
 ### Order Editing
 
 1. Load existing order by ID into the form
-2. Pre-populate all fields (customer, items, pricing, status, payment method, delivery, recurring)
+2. Pre-populate all fields (customer, items, pricing, tax rate, status, payment method, delivery, recurring)
 3. On submit, update order preserving original id, orderNumber, createdAt
 
 ### Order Status Change (rollbackable)
 
-- **Forward** (pending → confirmed/shipped/completed): deducts stock, creates sale StockMovements
-- **Rollback** (confirmed/shipped/completed → pending/cancelled): **restores stock**, creates adjustment StockMovements with "Rollback" reason
+- **Forward** (pending → confirmed/shipped/completed): deducts stock (base + variant), creates sale StockMovements
+- **Rollback** (confirmed/shipped/completed → pending/cancelled): **restores stock** (base + variant), creates adjustment StockMovements with "Rollback" reason
+- **Cancel:** Available from any non-cancelled state via popup menu on order detail screen
 - Logic: pending/cancelled = stock not deducted; confirmed/shipped/completed = stock deducted
 - Long-press any order card in the list to change status via popup menu
 
 ### Order Deletion (safe)
 
-- **Restores stock** if order was confirmed/shipped/completed (creates adjustment StockMovements)
+- **Restores stock** (base + variant) if order was confirmed/shipped/completed (creates adjustment StockMovements)
 - **Reverses customer stats** (totalOrders, totalSpent, outstandingBalance)
 - Then deletes the order
 
 ### Return Orders
 
-1. "Create Return" action from order detail screen
-2. Creates a new order with `RET-XXX` numbering, `isReturn: true`, linked via `originalOrderId`
-3. **Restores stock** for all items via restock StockMovements
-4. **Updates customer stats** (decrements totalSpent)
+1. "Create Return" action from order detail screen (hidden for return orders themselves)
+2. Create return screen shows items with variant info via `displayName`, qty selector, reason chips
+3. **Refund amount capped at `amountPaid`** on original order (validation + auto-fill cap)
+4. Refund of 0 allowed (e.g. exchange)
+5. Creates a new order with `RET-XXX` numbering, `isReturn: true`, linked via `originalOrderId`
+6. Return detail screen shows only the 3-step return flow (Requested → Received → Refunded), **not** the regular order status stepper
+7. On approve: **restores stock** (base + variant) for all items via restock StockMovements
+8. **Updates customer stats** (decrements totalSpent)
 
 ### Recurring Orders
 
@@ -255,10 +269,18 @@ The order creation/edit screen is designed for fast, frictionless use:
 1. Update order.amountPaid, determine paymentStatus (paid/partial)
 2. Update customer.outstandingBalance -= payment
 
-### Stock Adjustment (transactional)
+### Stock Adjustment (transactional, variant-aware)
 
 1. Update product.stockQty += delta (**clamped to 0 minimum**)
-2. Create StockMovement record with type and reason
+2. If variant specified: also update the matching variant's stockQty
+3. Create StockMovement record with type and reason (includes variant info in productName)
+4. Stock adjustment screen shows **variant selector** (choice chips) for products with variants
+5. Stock values shown via `StreamBuilder` for real-time updates
+
+### Product Detail Screen
+
+- Shows full product info including **variants card** with per-variant stock, price adjustment, and SKU
+- Adjust stock button links to inventory adjustment screen
 
 ### Product Deletion (safe)
 
@@ -296,13 +318,14 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 ## Navigation (GoRouter)
 
-9 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed:
+10 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
 
 | Branch | Path | Sub-routes |
 | ------ | ---- | ---------- |
 | Dashboard | `/` | — |
 | Products | `/products` | `add`, `:id`, `:id/edit` |
 | Orders | `/orders` | `add`, `:id`, `:id/edit` |
+| Returns | `/returns` | `:id` |
 | Customers | `/customers` | `add`, `:id`, `:id/edit` |
 | Inventory | `/inventory` | `adjust/:id` |
 | Expenses | `/expenses` | `add`, `:id/edit` |
@@ -316,6 +339,7 @@ The order creation/edit screen is designed for fast, frictionless use:
 - **Notifier classes** for mutations (add, update, delete, complex transactions)
 - **AsyncValue.guard()** for error handling
 - **Isar watch(fireImmediately: true)** for real-time UI updates
+- **StreamBuilder** for real-time stock in product picker and stock adjustment screens
 - **Freezed** for immutable dashboard stats (DailySales, DashboardStats)
 - **DashboardDateRange notifier** for date filter state (Today/This Week/This Month/Custom)
 - **Settings provider** (keepAlive, SharedPreferences): shopName, currencySymbol (৳), lowStockThreshold, themeMode, taxRate, language, lastBackupTime
@@ -323,13 +347,14 @@ The order creation/edit screen is designed for fast, frictionless use:
 ## UI Design
 
 - Material 3, teal primary (#00897B), light/dark theme support with **user-selectable toggle** (Light/Dark/System)
+- **Status bar** color matches appbar (white in light theme, #1C1C2E in dark theme)
 - **Language:** English + Bengali with in-app language switcher
-- **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons.
+- **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons. Wrapped in SafeArea.
 - **Responsive layouts throughout**:
   - Dashboard: stat cards via `Wrap` + `LayoutBuilder` (2-6 cols based on `width/170`); charts side-by-side on wide screens; date-range filter bar
   - Product grid: responsive columns via `LayoutBuilder` (`width/180`, clamp 2-6)
   - Order card: compact column on phone, single-row layout on tablet (>=600px)
-  - Inventory: category filter + sort dropdown bar
+  - Inventory: category filter + sort dropdown bar; **per-variant stock display**
 - **Dashboard charts**: Weekly sales bar chart, order status pie chart, revenue vs expenses line chart
 - **Reports screen**: Date range picker, summary stat cards, top products bar chart, category sales, top customers ranking
 - **Customer detail chart**: 6-month purchase history bar chart
@@ -353,4 +378,4 @@ Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (
 
 ## Platform Support
 
-Android, iOS, Web, macOS, Linux, Windows.
+Android, iOS (min 16.0), Web, macOS, Linux, Windows.

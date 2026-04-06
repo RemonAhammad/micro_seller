@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
@@ -21,6 +22,10 @@ class AppTheme {
       scrolledUnderElevation: 1,
       backgroundColor: Colors.white,
       foregroundColor: Color(0xFF1A1A2E),
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
+      ),
       titleTextStyle: TextStyle(
         color: Color(0xFF1A1A2E),
         fontSize: 20,
@@ -150,6 +155,10 @@ class AppTheme {
       scrolledUnderElevation: 1,
       backgroundColor: Color(0xFF1C1C2E),
       foregroundColor: Colors.white,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Color(0xFF1C1C2E),
+        statusBarIconBrightness: Brightness.light,
+      ),
       titleTextStyle: TextStyle(
         color: Colors.white,
         fontSize: 20,
