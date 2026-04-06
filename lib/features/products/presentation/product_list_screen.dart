@@ -175,6 +175,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                                 selected: _selectedCategory == null,
                                 onSelected: (_) =>
                                     setState(() => _selectedCategory = null),
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
                               ),
                             ),
                             ...cats.map((c) => Padding(
@@ -187,6 +189,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                                             _selectedCategory == c.name
                                                 ? null
                                                 : c.name),
+                                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
                                   ),
                                 )),
                           ],

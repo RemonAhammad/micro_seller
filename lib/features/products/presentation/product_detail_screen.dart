@@ -196,14 +196,14 @@ class _ProductDetailBody extends ConsumerWidget {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'Variants',
+                                'Variants (${product.variantCombinations.where((c) => c.isActive).length} combinations)',
                                 style: theme.textTheme.labelLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                             const SizedBox(height: 8),
-                            ...product.variants.map((v) => Padding(
+                            ...product.variantCombinations.where((c) => c.isActive).map((c) => Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Container(
                                 padding: const EdgeInsets.all(10),
@@ -216,38 +216,40 @@ class _ProductDetailBody extends ConsumerWidget {
                                   children: [
                                     Row(
                                       children: [
-                                        Text(
-                                          '${v.name}: ${v.value}',
-                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600,
+                                        Expanded(
+                                          child: Text(
+                                            c.displayLabel,
+                                            style: theme.textTheme.bodyMedium?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ),
-                                        if (v.sku.isNotEmpty) ...[
-                                          const Spacer(),
+                                        if (c.sku.isNotEmpty)
                                           Text(
-                                            v.sku,
+                                            c.sku,
                                             style: theme.textTheme.bodySmall?.copyWith(
                                               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                             ),
                                           ),
-                                        ],
                                       ],
                                     ),
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
                                         Text(
-                                          'Stock: ${v.stockQty}',
+                                          'Stock: ${c.stockQty}',
                                           style: theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                            color: c.stockQty <= 0
+                                                ? AppColors.statusCancelled
+                                                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                           ),
                                         ),
-                                        if (v.priceAdjustment != 0) ...[
+                                        if (c.priceAdjustment != 0) ...[
                                           const SizedBox(width: 16),
                                           Text(
-                                            'Price: ${v.priceAdjustment > 0 ? '+' : ''}${CurrencyFormatter.format(v.priceAdjustment)}',
+                                            'Price: ${c.priceAdjustment > 0 ? '+' : ''}${CurrencyFormatter.format(c.priceAdjustment)}',
                                             style: theme.textTheme.bodySmall?.copyWith(
-                                              color: v.priceAdjustment > 0
+                                              color: c.priceAdjustment > 0
                                                   ? AppColors.statusCompleted
                                                   : AppColors.statusCancelled,
                                               fontWeight: FontWeight.w600,

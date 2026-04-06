@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/product.dart';
-import '../../../data/models/product_variant.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../features/products/providers/product_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -27,7 +26,7 @@ class _StockAdjustmentScreenState
   final _reasonCtrl = TextEditingController();
   StockMovementType _type = StockMovementType.restock;
   bool _isLoading = false;
-  ProductVariant? _selectedVariant;
+  String _selectedCombinationKey = '';
 
   @override
   void dispose() {
@@ -58,8 +57,7 @@ class _StockAdjustmentScreenState
             delta,
             _reasonCtrl.text.trim(),
             _type,
-            variantName: _selectedVariant?.name ?? '',
-            variantValue: _selectedVariant?.value ?? '',
+            combinationKey: _selectedCombinationKey,
           );
 
       if (mounted) {
@@ -137,12 +135,12 @@ class _StockAdjustmentScreenState
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text('${product.stockQty}',
+                              Text('${product.totalStock}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 20,
                                   )),
-                              const Text('in stock',
+                              const Text('total stock',
                                   style: TextStyle(fontSize: 11)),
                             ],
                           ),
@@ -150,10 +148,10 @@ class _StockAdjustmentScreenState
                       ),
                     ),
 
-                    // Variant selector
+                    // Combination selector
                     if (product.hasVariants) ...[
                       const SizedBox(height: 16),
-                      Text('Select Variant',
+                      Text('Select Combination',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -164,32 +162,33 @@ class _StockAdjustmentScreenState
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          // "All / Base" option
                           ChoiceChip(
                             label: Text('Base stock (${product.stockQty})'),
-                            selected: _selectedVariant == null,
+                            selected: _selectedCombinationKey.isEmpty,
                             onSelected: (_) =>
-                                setState(() => _selectedVariant = null),
+                                setState(() => _selectedCombinationKey = ''),
                             selectedColor: cs.primary.withValues(alpha: 0.15),
                             labelStyle: TextStyle(
                               fontSize: 12,
-                              color: _selectedVariant == null
+                              color: _selectedCombinationKey.isEmpty
                                   ? cs.primary
                                   : cs.onSurface,
-                              fontWeight: _selectedVariant == null
+                              fontWeight: _selectedCombinationKey.isEmpty
                                   ? FontWeight.w600
                                   : FontWeight.w400,
                             ),
                           ),
-                          ...product.variants.map((v) {
-                            final selected = _selectedVariant?.name == v.name &&
-                                _selectedVariant?.value == v.value;
+                          ...product.variantCombinations
+                              .where((c) => c.isActive)
+                              .map((c) {
+                            final selected =
+                                _selectedCombinationKey == c.combinationKey;
                             return ChoiceChip(
-                              label:
-                                  Text('${v.name}: ${v.value} (${v.stockQty})'),
+                              label: Text(
+                                  '${c.displayLabel} (${c.stockQty})'),
                               selected: selected,
-                              onSelected: (_) =>
-                                  setState(() => _selectedVariant = v),
+                              onSelected: (_) => setState(() =>
+                                  _selectedCombinationKey = c.combinationKey),
                               selectedColor:
                                   cs.primary.withValues(alpha: 0.15),
                               labelStyle: TextStyle(

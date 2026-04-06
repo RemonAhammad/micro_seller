@@ -45,17 +45,23 @@ class OrderNotifier extends _$OrderNotifier {
   @override
   FutureOr<void> build() {}
 
-  /// Update variant stockQty within a product's variants list.
+  /// Update variant combination stockQty within a product.
   /// Returns the updated product (not yet persisted).
   Product _adjustVariantStock(Product product, OrderItem item, int delta) {
     if (!item.hasVariant) return product;
-    final updatedVariants = product.variants.map((v) {
-      if (v.name == item.variantName && v.value == item.variantValue) {
-        return v.copyWith(stockQty: (v.stockQty + delta).clamp(0, 999999));
+
+    // Use combinationKey if available (new system), fallback to old name:value
+    final key = item.variantCombinationKey.isNotEmpty
+        ? item.variantCombinationKey
+        : '${item.variantName}:${item.variantValue}';
+
+    final updatedCombinations = product.variantCombinations.map((c) {
+      if (c.combinationKey == key) {
+        return c.copyWith(stockQty: (c.stockQty + delta).clamp(0, 999999));
       }
-      return v;
+      return c;
     }).toList();
-    return product.copyWith(variants: updatedVariants);
+    return product.copyWith(variantCombinations: updatedCombinations);
   }
 
   Future<String> generateOrderNumber() async {

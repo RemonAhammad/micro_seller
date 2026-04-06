@@ -49,7 +49,7 @@ final unpaidOrdersProvider = AutoDisposeStreamProvider<List<Order>>.internal(
 );
 
 typedef UnpaidOrdersRef = AutoDisposeStreamProviderRef<List<Order>>;
-String _$orderNotifierHash() => r'ae15636d40f19a9df08936e0745a80c4c23cfafc';
+String _$orderNotifierHash() => r'9a734acd4d0db70b2ed72949cbb6fc0091299672';
 
 /// See also [OrderNotifier].
 @ProviderFor(OrderNotifier)

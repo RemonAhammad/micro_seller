@@ -399,7 +399,7 @@ class _StockTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${product.stockQty}',
+                    '${product.totalStock}',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
@@ -429,10 +429,10 @@ class _StockTile extends StatelessWidget {
           ),
           if (product.hasVariants) ...[
             const SizedBox(height: 8),
-            ...product.variants.map((v) {
-              final vColor = v.stockQty <= 0
+            ...product.variantCombinations.where((c) => c.isActive).map((c) {
+              final vColor = c.stockQty <= 0
                   ? Colors.red
-                  : v.stockQty <= product.lowStockThreshold
+                  : c.stockQty <= product.lowStockThreshold
                       ? Colors.orange
                       : cs.onSurface.withValues(alpha: 0.7);
               return Padding(
@@ -444,14 +444,14 @@ class _StockTile extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        '${v.name}: ${v.value}',
+                        c.displayLabel,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                     Text(
-                      '${v.stockQty}',
+                      '${c.stockQty}',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,

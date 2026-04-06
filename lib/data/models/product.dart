@@ -1,6 +1,8 @@
 import 'package:isar/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'product_variant.dart';
+import 'variant_attribute.dart';
+import 'variant_combination.dart';
 
 part 'product.g.dart';
 
@@ -22,6 +24,8 @@ class Product {
     this.tags = const [],
     this.isActive = true,
     this.variants = const [],
+    this.variantAttributes = const [],
+    this.variantCombinations = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -39,7 +43,16 @@ class Product {
   String qrCode;
   List<String> tags;
   bool isActive;
+
+  /// @deprecated — kept for migration from flat variants
   List<ProductVariant> variants;
+
+  /// Hierarchical variant attribute definitions (e.g. Size→[S,M,L], Color→[Red,Blue])
+  List<VariantAttribute> variantAttributes;
+
+  /// All sellable combinations with per-combo stock/price/sku
+  List<VariantCombination> variantCombinations;
+
   DateTime? createdAt;
   DateTime? updatedAt;
 
@@ -49,18 +62,27 @@ class Product {
       : 0;
 
   @ignore
-  bool get isLowStock => stockQty > 0 && stockQty <= lowStockThreshold;
+  bool get isLowStock => hasVariants
+      ? variantCombinations.any((c) => c.isActive && c.stockQty > 0 && c.stockQty <= lowStockThreshold)
+      : stockQty > 0 && stockQty <= lowStockThreshold;
 
   @ignore
-  bool get isOutOfStock => stockQty <= 0;
+  bool get isOutOfStock => hasVariants
+      ? variantCombinations.where((c) => c.isActive).every((c) => c.stockQty <= 0)
+      : stockQty <= 0;
 
   @ignore
-  bool get hasVariants => variants.isNotEmpty;
+  bool get hasVariants => variantCombinations.isNotEmpty;
 
-  /// Total stock across all variants (if variants exist) or base stockQty
+  /// Total stock across all active combinations (if variants exist) or base stockQty
   @ignore
-  int get totalStock =>
-      hasVariants ? variants.fold(0, (s, v) => s + v.stockQty) : stockQty;
+  int get totalStock => hasVariants
+      ? variantCombinations.where((c) => c.isActive).fold(0, (s, c) => s + c.stockQty)
+      : stockQty;
+
+  /// Find a specific combination by its canonical key
+  VariantCombination? findCombination(String key) =>
+      variantCombinations.where((c) => c.combinationKey == key).firstOrNull;
 
   Product copyWith({
     Id? id,
@@ -77,6 +99,8 @@ class Product {
     List<String>? tags,
     bool? isActive,
     List<ProductVariant>? variants,
+    List<VariantAttribute>? variantAttributes,
+    List<VariantCombination>? variantCombinations,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) =>
@@ -95,6 +119,8 @@ class Product {
         tags: tags ?? this.tags,
         isActive: isActive ?? this.isActive,
         variants: variants ?? this.variants,
+        variantAttributes: variantAttributes ?? this.variantAttributes,
+        variantCombinations: variantCombinations ?? this.variantCombinations,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );

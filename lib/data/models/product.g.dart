@@ -87,8 +87,20 @@ const ProductSchema = CollectionSchema(
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
-    r'variants': PropertySchema(
+    r'variantAttributes': PropertySchema(
       id: 14,
+      name: r'variantAttributes',
+      type: IsarType.objectList,
+      target: r'VariantAttribute',
+    ),
+    r'variantCombinations': PropertySchema(
+      id: 15,
+      name: r'variantCombinations',
+      type: IsarType.objectList,
+      target: r'VariantCombination',
+    ),
+    r'variants': PropertySchema(
+      id: 16,
       name: r'variants',
       type: IsarType.objectList,
       target: r'ProductVariant',
@@ -101,7 +113,11 @@ const ProductSchema = CollectionSchema(
   idName: r'id',
   indexes: {},
   links: {},
-  embeddedSchemas: {r'ProductVariant': ProductVariantSchema},
+  embeddedSchemas: {
+    r'ProductVariant': ProductVariantSchema,
+    r'VariantAttribute': VariantAttributeSchema,
+    r'VariantCombination': VariantCombinationSchema
+  },
   getId: _productGetId,
   getLinks: _productGetLinks,
   attach: _productAttach,
@@ -125,6 +141,24 @@ int _productEstimateSize(
     for (var i = 0; i < object.tags.length; i++) {
       final value = object.tags[i];
       bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.variantAttributes.length * 3;
+  {
+    final offsets = allOffsets[VariantAttribute]!;
+    for (var i = 0; i < object.variantAttributes.length; i++) {
+      final value = object.variantAttributes[i];
+      bytesCount +=
+          VariantAttributeSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
+  bytesCount += 3 + object.variantCombinations.length * 3;
+  {
+    final offsets = allOffsets[VariantCombination]!;
+    for (var i = 0; i < object.variantCombinations.length; i++) {
+      final value = object.variantCombinations[i];
+      bytesCount +=
+          VariantCombinationSchema.estimateSize(value, offsets, allOffsets);
     }
   }
   bytesCount += 3 + object.variants.length * 3;
@@ -159,8 +193,20 @@ void _productSerialize(
   writer.writeLong(offsets[11], object.stockQty);
   writer.writeStringList(offsets[12], object.tags);
   writer.writeDateTime(offsets[13], object.updatedAt);
-  writer.writeObjectList<ProductVariant>(
+  writer.writeObjectList<VariantAttribute>(
     offsets[14],
+    allOffsets,
+    VariantAttributeSchema.serialize,
+    object.variantAttributes,
+  );
+  writer.writeObjectList<VariantCombination>(
+    offsets[15],
+    allOffsets,
+    VariantCombinationSchema.serialize,
+    object.variantCombinations,
+  );
+  writer.writeObjectList<ProductVariant>(
+    offsets[16],
     allOffsets,
     ProductVariantSchema.serialize,
     object.variants,
@@ -189,8 +235,22 @@ Product _productDeserialize(
     stockQty: reader.readLongOrNull(offsets[11]) ?? 0,
     tags: reader.readStringList(offsets[12]) ?? const [],
     updatedAt: reader.readDateTimeOrNull(offsets[13]),
-    variants: reader.readObjectList<ProductVariant>(
+    variantAttributes: reader.readObjectList<VariantAttribute>(
           offsets[14],
+          VariantAttributeSchema.deserialize,
+          allOffsets,
+          VariantAttribute(),
+        ) ??
+        const [],
+    variantCombinations: reader.readObjectList<VariantCombination>(
+          offsets[15],
+          VariantCombinationSchema.deserialize,
+          allOffsets,
+          VariantCombination(),
+        ) ??
+        const [],
+    variants: reader.readObjectList<ProductVariant>(
+          offsets[16],
           ProductVariantSchema.deserialize,
           allOffsets,
           ProductVariant(),
@@ -236,6 +296,22 @@ P _productDeserializeProp<P>(
     case 13:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
+      return (reader.readObjectList<VariantAttribute>(
+            offset,
+            VariantAttributeSchema.deserialize,
+            allOffsets,
+            VariantAttribute(),
+          ) ??
+          const []) as P;
+    case 15:
+      return (reader.readObjectList<VariantCombination>(
+            offset,
+            VariantCombinationSchema.deserialize,
+            allOffsets,
+            VariantCombination(),
+          ) ??
+          const []) as P;
+    case 16:
       return (reader.readObjectList<ProductVariant>(
             offset,
             ProductVariantSchema.deserialize,
@@ -1766,6 +1842,184 @@ extension ProductQueryFilter
     });
   }
 
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantAttributesLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantAttributes',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantAttributesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantAttributes',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantAttributesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantAttributes',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantAttributesLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantAttributes',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantAttributesLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantAttributes',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantAttributesLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantAttributes',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantCombinationsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantCombinations',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantCombinationsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantCombinations',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantCombinationsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantCombinations',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantCombinationsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantCombinations',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantCombinationsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantCombinations',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantCombinationsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'variantCombinations',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterFilterCondition> variantsLengthEqualTo(
       int length) {
     return QueryBuilder.apply(this, (query) {
@@ -1854,6 +2108,20 @@ extension ProductQueryFilter
 
 extension ProductQueryObject
     on QueryBuilder<Product, Product, QFilterCondition> {
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantAttributesElement(FilterQuery<VariantAttribute> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'variantAttributes');
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+      variantCombinationsElement(FilterQuery<VariantCombination> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'variantCombinations');
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterFilterCondition> variantsElement(
       FilterQuery<ProductVariant> q) {
     return QueryBuilder.apply(this, (query) {
@@ -2379,6 +2647,20 @@ extension ProductQueryProperty
     });
   }
 
+  QueryBuilder<Product, List<VariantAttribute>, QQueryOperations>
+      variantAttributesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'variantAttributes');
+    });
+  }
+
+  QueryBuilder<Product, List<VariantCombination>, QQueryOperations>
+      variantCombinationsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'variantCombinations');
+    });
+  }
+
   QueryBuilder<Product, List<ProductVariant>, QQueryOperations>
       variantsProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -2411,6 +2693,15 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
               ?.map((e) => ProductVariant.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      variantAttributes: (json['variantAttributes'] as List<dynamic>?)
+              ?.map((e) => VariantAttribute.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      variantCombinations: (json['variantCombinations'] as List<dynamic>?)
+              ?.map(
+                  (e) => VariantCombination.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -2434,6 +2725,8 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
       'tags': instance.tags,
       'isActive': instance.isActive,
       'variants': instance.variants,
+      'variantAttributes': instance.variantAttributes,
+      'variantCombinations': instance.variantCombinations,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

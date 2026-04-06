@@ -195,11 +195,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       final isar = await ref.read(isarProvider.future);
       final product = await isar.products.get(item.productId);
       if (product != null) {
-        final stock = item.hasVariant
-            ? product.variants
-                .where((v) => v.name == item.variantName && v.value == item.variantValue)
-                .fold(0, (_, v) => v.stockQty)
-            : product.stockQty;
+        int stock;
+        if (item.variantCombinationKey.isNotEmpty) {
+          final combo = product.findCombination(item.variantCombinationKey);
+          stock = combo?.stockQty ?? 0;
+        } else {
+          stock = product.stockQty;
+        }
         if (newQty > stock) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -961,6 +963,9 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   final _searchCtrl = TextEditingController();
   String _query = '';
   final Set<int> _expandedProducts = {};
+  // Per-product attribute selections for stepped variant picker
+  final Map<int, Map<String, String>> _selections = {};
+
   @override
   void initState() {
     super.initState();
@@ -973,24 +978,22 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     super.dispose();
   }
 
-  int _qtyOf(int productId, {String variantName = '', String variantValue = ''}) {
+  int _qtyOf(int productId, {String combinationKey = ''}) {
     final idx = _items.indexWhere((i) =>
         i.productId == productId &&
-        i.variantName == variantName &&
-        i.variantValue == variantValue);
+        i.variantCombinationKey == combinationKey);
     return idx >= 0 ? _items[idx].qty : 0;
   }
 
   void _setQty(Product product, int qty,
-      {String variantName = '', String variantValue = '',
+      {String combinationKey = '', String displayLabel = '',
        double? priceOverride, String? skuOverride,
        required int availableStock}) {
     if (qty > availableStock) qty = availableStock;
     setState(() {
       final idx = _items.indexWhere((i) =>
           i.productId == product.id &&
-          i.variantName == variantName &&
-          i.variantValue == variantValue);
+          i.variantCombinationKey == combinationKey);
       final unitPrice = priceOverride ?? product.sellingPrice;
       if (qty <= 0) {
         if (idx >= 0) _items.removeAt(idx);
@@ -1008,8 +1011,8 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           unitPrice: unitPrice,
           costPrice: product.costPrice,
           totalPrice: unitPrice * qty,
-          variantName: variantName,
-          variantValue: variantValue,
+          variantCombinationKey: combinationKey,
+          variantDisplayLabel: displayLabel,
         ));
       }
     });
@@ -1140,6 +1143,14 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                       final p = filtered[i];
 
                       if (p.hasVariants) {
+                        // Only show combinations that are active and have been configured
+                        final activeCombos = p.variantCombinations
+                            .where((c) => c.isActive && (c.stockQty > 0 || c.priceAdjustment != 0 || c.sku.isNotEmpty))
+                            .toList();
+                        if (activeCombos.isEmpty) {
+                          // No configured combos — skip this product
+                          return const SizedBox.shrink();
+                        }
                         final isExpanded = _expandedProducts.contains(p.id);
                         return Column(
                           children: [
@@ -1166,7 +1177,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                 fontSize: 13,
                                               )),
                                           Text(
-                                            '${p.variants.length} variant${p.variants.length == 1 ? '' : 's'}',
+                                            '${activeCombos.length} combination${activeCombos.length == 1 ? '' : 's'}',
                                             style: TextStyle(
                                                 fontSize: 11,
                                                 color: cs.onSurface.withValues(alpha: 0.5)),
@@ -1183,14 +1194,14 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 ),
                               ),
                             ),
-                            // Expanded variant rows
+                            // Expanded combination rows
                             if (isExpanded)
-                              ...p.variants.map((v) {
-                                final variantPrice = p.sellingPrice + v.priceAdjustment;
-                                final variantSku = v.sku.isNotEmpty ? v.sku : p.sku;
-                                final outOfStock = v.stockQty <= 0;
+                              ...activeCombos.map((c) {
+                                final comboPrice = p.sellingPrice + c.priceAdjustment;
+                                final comboSku = c.sku.isNotEmpty ? c.sku : p.sku;
+                                final outOfStock = c.stockQty <= 0;
                                 final qty = _qtyOf(p.id,
-                                    variantName: v.name, variantValue: v.value);
+                                    combinationKey: c.combinationKey);
 
                                 return Padding(
                                   padding: const EdgeInsets.only(left: 16, bottom: 6),
@@ -1208,7 +1219,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text('${v.name}: ${v.value}',
+                                              Text(c.displayLabel,
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 13,
@@ -1221,12 +1232,12 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                 children: [
                                                   Text(
                                                       CurrencyFormatter.format(
-                                                          variantPrice),
+                                                          comboPrice),
                                                       style: TextStyle(
                                                           fontSize: 12,
                                                           color: cs.primary)),
                                                   Text(
-                                                    '  ·  ${v.stockQty} in stock',
+                                                    '  ·  ${c.stockQty} in stock',
                                                     style: TextStyle(
                                                       fontSize: 11,
                                                       color: outOfStock
@@ -1254,11 +1265,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                 _sheetQtyBtn(
                                                     Icons.remove,
                                                     () => _setQty(p, qty - 1,
-                                                        variantName: v.name,
-                                                        variantValue: v.value,
-                                                        priceOverride: variantPrice,
-                                                        skuOverride: variantSku,
-                                                        availableStock: v.stockQty),
+                                                        combinationKey: c.combinationKey,
+                                                        displayLabel: c.displayLabel,
+                                                        priceOverride: comboPrice,
+                                                        skuOverride: comboSku,
+                                                        availableStock: c.stockQty),
                                                     cs),
                                                 Padding(
                                                   padding:
@@ -1272,12 +1283,12 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                 ),
                                                 _sheetQtyBtn(
                                                     Icons.add,
-                                                    qty >= v.stockQty ? null : () => _setQty(p, qty + 1,
-                                                        variantName: v.name,
-                                                        variantValue: v.value,
-                                                        priceOverride: variantPrice,
-                                                        skuOverride: variantSku,
-                                                        availableStock: v.stockQty),
+                                                    qty >= c.stockQty ? null : () => _setQty(p, qty + 1,
+                                                        combinationKey: c.combinationKey,
+                                                        displayLabel: c.displayLabel,
+                                                        priceOverride: comboPrice,
+                                                        skuOverride: comboSku,
+                                                        availableStock: c.stockQty),
                                                     cs),
                                               ],
                                             ),
@@ -1289,11 +1300,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                               onPressed: outOfStock
                                                   ? null
                                                   : () => _setQty(p, 1,
-                                                      variantName: v.name,
-                                                      variantValue: v.value,
-                                                      priceOverride: variantPrice,
-                                                      skuOverride: variantSku,
-                                                      availableStock: v.stockQty),
+                                                      combinationKey: c.combinationKey,
+                                                      displayLabel: c.displayLabel,
+                                                      priceOverride: comboPrice,
+                                                      skuOverride: comboSku,
+                                                      availableStock: c.stockQty),
                                               style: FilledButton.styleFrom(
                                                 padding:
                                                     const EdgeInsets.symmetric(

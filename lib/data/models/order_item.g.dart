@@ -48,13 +48,23 @@ const OrderItemSchema = Schema(
       name: r'unitPrice',
       type: IsarType.double,
     ),
-    r'variantName': PropertySchema(
+    r'variantCombinationKey': PropertySchema(
       id: 7,
+      name: r'variantCombinationKey',
+      type: IsarType.string,
+    ),
+    r'variantDisplayLabel': PropertySchema(
+      id: 8,
+      name: r'variantDisplayLabel',
+      type: IsarType.string,
+    ),
+    r'variantName': PropertySchema(
+      id: 9,
       name: r'variantName',
       type: IsarType.string,
     ),
     r'variantValue': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'variantValue',
       type: IsarType.string,
     )
@@ -73,6 +83,8 @@ int _orderItemEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.productName.length * 3;
   bytesCount += 3 + object.productSku.length * 3;
+  bytesCount += 3 + object.variantCombinationKey.length * 3;
+  bytesCount += 3 + object.variantDisplayLabel.length * 3;
   bytesCount += 3 + object.variantName.length * 3;
   bytesCount += 3 + object.variantValue.length * 3;
   return bytesCount;
@@ -91,8 +103,10 @@ void _orderItemSerialize(
   writer.writeLong(offsets[4], object.qty);
   writer.writeDouble(offsets[5], object.totalPrice);
   writer.writeDouble(offsets[6], object.unitPrice);
-  writer.writeString(offsets[7], object.variantName);
-  writer.writeString(offsets[8], object.variantValue);
+  writer.writeString(offsets[7], object.variantCombinationKey);
+  writer.writeString(offsets[8], object.variantDisplayLabel);
+  writer.writeString(offsets[9], object.variantName);
+  writer.writeString(offsets[10], object.variantValue);
 }
 
 OrderItem _orderItemDeserialize(
@@ -109,8 +123,10 @@ OrderItem _orderItemDeserialize(
     qty: reader.readLongOrNull(offsets[4]) ?? 1,
     totalPrice: reader.readDoubleOrNull(offsets[5]) ?? 0.0,
     unitPrice: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
-    variantName: reader.readStringOrNull(offsets[7]) ?? '',
-    variantValue: reader.readStringOrNull(offsets[8]) ?? '',
+    variantCombinationKey: reader.readStringOrNull(offsets[7]) ?? '',
+    variantDisplayLabel: reader.readStringOrNull(offsets[8]) ?? '',
+    variantName: reader.readStringOrNull(offsets[9]) ?? '',
+    variantValue: reader.readStringOrNull(offsets[10]) ?? '',
   );
   return object;
 }
@@ -139,6 +155,10 @@ P _orderItemDeserializeProp<P>(
     case 7:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 8:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 9:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 10:
       return (reader.readStringOrNull(offset) ?? '') as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -711,6 +731,279 @@ extension OrderItemQueryFilter
     });
   }
 
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'variantCombinationKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'variantCombinationKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'variantCombinationKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'variantCombinationKey',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'variantCombinationKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'variantCombinationKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'variantCombinationKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'variantCombinationKey',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'variantCombinationKey',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantCombinationKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'variantCombinationKey',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'variantDisplayLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'variantDisplayLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'variantDisplayLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'variantDisplayLabel',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'variantDisplayLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'variantDisplayLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'variantDisplayLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'variantDisplayLabel',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'variantDisplayLabel',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+      variantDisplayLabelIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'variantDisplayLabel',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> variantNameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -998,6 +1291,8 @@ OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => OrderItem(
       totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
       variantName: json['variantName'] as String? ?? '',
       variantValue: json['variantValue'] as String? ?? '',
+      variantCombinationKey: json['variantCombinationKey'] as String? ?? '',
+      variantDisplayLabel: json['variantDisplayLabel'] as String? ?? '',
     );
 
 Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
@@ -1010,4 +1305,6 @@ Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
       'totalPrice': instance.totalPrice,
       'variantName': instance.variantName,
       'variantValue': instance.variantValue,
+      'variantCombinationKey': instance.variantCombinationKey,
+      'variantDisplayLabel': instance.variantDisplayLabel,
     };

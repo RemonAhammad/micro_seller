@@ -45,6 +45,7 @@ lib/
 │       ├── currency_formatter.dart  # Format/parse/compact currency
 │       ├── date_formatter.dart      # Date formatting, timeAgo, isToday etc.
 │       ├── debouncer.dart           # Reusable 400ms search debouncer
+│       ├── variant_utils.dart       # buildCombinationKey, buildDisplayLabel, generateCombinations (cartesian product)
 │       └── validators.dart          # Form validators (required, phone, sku, costVsSelling, etc.)
 ├── data/
 │   ├── models/
@@ -52,9 +53,11 @@ lib/
 │   │   ├── customer.dart         # id, name, phone, address, tag(new/regular/vip), stats
 │   │   ├── expense.dart          # id, title, amount, category(logistics/packaging/marketing/supplies/other), date
 │   │   ├── order.dart            # id, orderNumber, customer info, items, totals, payment/order status, paymentMethod, delivery, recurring, return fields
-│   │   ├── order_item.dart       # @embedded: productId, name, sku, qty, unitPrice, costPrice, totalPrice, variantName, variantValue
-│   │   ├── product.dart          # id, name, sku, prices, stockQty, category, qrCode, isActive, variants
-│   │   ├── product_variant.dart  # @embedded: name, value, priceAdjustment, stockQty, sku
+│   │   ├── order_item.dart       # @embedded: productId, name, sku, qty, unitPrice, costPrice, totalPrice, variantCombinationKey, variantDisplayLabel
+│   │   ├── product.dart          # id, name, sku, prices, stockQty, category, qrCode, isActive, variantAttributes, variantCombinations
+│   │   ├── product_variant.dart  # @embedded (deprecated): flat name/value/priceAdjustment/stockQty/sku
+│   │   ├── variant_attribute.dart # @embedded: name, options[] — defines one dimension (e.g. Size→[S,M,L])
+│   │   ├── variant_combination.dart # @embedded: combinationKey, displayLabel, priceAdjustment, stockQty, sku, isActive
 │   │   └── stock_movement.dart   # id, productId, type(sale/restock/adjustment/damage), qty, reason
 │   ├── repositories/
 │   │   ├── customer_repository.dart   # CRUD, search, watchAll stream
@@ -65,6 +68,7 @@ lib/
 │   └── services/
 │       ├── csv_export_service.dart  # Export orders/products/expenses as CSV via share_plus
 │       ├── csv_import_service.dart  # Import products from CSV via file_picker
+│       ├── migration_service.dart  # One-time migration: flat variants → hierarchical VariantAttribute + VariantCombination
 │       ├── drive_service.dart       # Google Drive backup/restore (safe restore with rollback), max 5 backups, OAuth
 │       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 6 collection schemas
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
@@ -146,10 +150,11 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 
 | Model | Key Fields | Computed Props |
 | ----- | ---------- | -------------- |
-| **Product** | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variants** (embedded list) | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock |
-| **ProductVariant** | @embedded: name, value, priceAdjustment, stockQty, sku | — |
+| **Product** | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variantAttributes** (embedded list), **variantCombinations** (embedded list) | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock, findCombination(key) |
+| **VariantAttribute** | @embedded: name, options[] — one dimension of variation (e.g. Size→[S,M,L]) | — |
+| **VariantCombination** | @embedded: combinationKey (canonical sorted "Color:Red/Size:L"), displayLabel, priceAdjustment, stockQty, sku, isActive | — |
 | **Order** | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, **taxAmount**, totalAmount, amountPaid, paymentStatus, **paymentMethod**, orderStatus, **deliveryAddress**, **estimatedDeliveryDate**, **actualDeliveryDate**, **isReturn**, **originalOrderId**, **isRecurring**, **recurringIntervalDays**, **nextRecurringDate** | balanceDue, isFullyPaid, totalItems |
-| **OrderItem** | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice, **variantName**, **variantValue** | hasVariant, displayName |
+| **OrderItem** | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice, **variantCombinationKey**, **variantDisplayLabel** | hasVariant, displayName |
 | **Customer** | name, phone, address, notes, tag (new/regular/vip), totalOrders, totalSpent, outstandingBalance | hasOutstanding |
 | **Expense** | title, amount, category (logistics/packaging/marketing/supplies/other), date, notes | — |
 | **StockMovement** | productId, productName, type (sale/restock/adjustment/damage), qty, reason | isIncoming |
@@ -175,10 +180,10 @@ The order creation/edit screen is designed for fast, frictionless use:
 - **Product picker (bottom sheet, stays open for multi-add):**
   - **Real-time stock** via Isar `StreamBuilder` (not a stale snapshot)
   - Search by name or SKU
-  - **Variant support:** Products with variants show expand/collapse arrow; each variant has its own price, stock, and add/qty controls
-  - Inline +/- qty controls per product/variant (no close-reopen cycle)
+  - **Hierarchical variant support:** Products with variant combinations show expand/collapse; each combination (e.g. "Size: L / Color: Red") has its own price, stock, and add/qty controls
+  - Inline +/- qty controls per product/combination (no close-reopen cycle)
   - **Stock validation:** + button disabled when qty reaches available stock; qty clamped to stock limit
-  - Out-of-stock products/variants are dimmed with disabled button
+  - Out-of-stock products/combinations are dimmed with disabled button
   - Item count badge, "Done" button to close
   - Changes are pushed to parent via `onChanged` callback in real time
 
@@ -269,18 +274,32 @@ The order creation/edit screen is designed for fast, frictionless use:
 1. Update order.amountPaid, determine paymentStatus (paid/partial)
 2. Update customer.outstandingBalance -= payment
 
-### Stock Adjustment (transactional, variant-aware)
+### Stock Adjustment (transactional, combination-aware)
 
 1. Update product.stockQty += delta (**clamped to 0 minimum**)
-2. If variant specified: also update the matching variant's stockQty
-3. Create StockMovement record with type and reason (includes variant info in productName)
-4. Stock adjustment screen shows **variant selector** (choice chips) for products with variants
+2. If `combinationKey` specified: also update the matching `VariantCombination.stockQty`
+3. Create StockMovement record with type and reason (includes combination displayLabel in productName)
+4. Stock adjustment screen shows **combination selector** (choice chips) for products with variants
 5. Stock values shown via `StreamBuilder` for real-time updates
 
 ### Product Detail Screen
 
-- Shows full product info including **variants card** with per-variant stock, price adjustment, and SKU
+- Shows full product info including **variants card** with per-combination stock, price adjustment, and SKU
 - Adjust stock button links to inventory adjustment screen
+
+### Hierarchical Variant System
+
+Products support **multi-attribute variant combinations**:
+
+1. **VariantAttributes** define dimensions: e.g. Size→[S,M,L], Color→[Red,Blue]
+2. **VariantCombinations** are the cartesian product: "Size: S / Color: Red", "Size: S / Color: Blue", etc.
+3. Each combination has its own `stockQty`, `priceAdjustment`, `sku`, and `isActive` flag
+4. Combinations are identified by a canonical `combinationKey` (sorted alphabetically: "Color:Red/Size:L")
+5. **Product form** has a two-step editor: define attributes+options, then auto-generated combination table with bulk actions
+6. **Limits:** max 3 attributes, max 15 options each
+7. **Migration:** Old flat `ProductVariant` data is auto-migrated to single-attribute combinations on first launch
+8. **OrderItem** stores `variantCombinationKey` + `variantDisplayLabel` (denormalized for display)
+9. All stock operations (order create/status/delete, return, manual adjustment) use `combinationKey` for per-combination stock tracking
 
 ### Product Deletion (safe)
 

@@ -7,13 +7,14 @@ import '../models/expense.dart';
 import '../models/order.dart';
 import '../models/product.dart';
 import '../models/stock_movement.dart';
+import 'migration_service.dart';
 
 part 'isar_service.g.dart';
 
 @Riverpod(keepAlive: true)
 Future<Isar> isar(IsarRef ref) async {
   final dir = await getApplicationDocumentsDirectory();
-  return await Isar.open(
+  final db = await Isar.open(
     [
       CategorySchema,
       ProductSchema,
@@ -25,4 +26,9 @@ Future<Isar> isar(IsarRef ref) async {
     directory: dir.path,
     name: 'sellerbook_db',
   );
+
+  // Run one-time migrations
+  await migrateVariantsV2(db);
+
+  return db;
 }

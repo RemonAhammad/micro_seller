@@ -16,6 +16,8 @@ class OrderItem {
     this.totalPrice = 0.0,
     this.variantName = '',
     this.variantValue = '',
+    this.variantCombinationKey = '',
+    this.variantDisplayLabel = '',
   });
 
   int productId;
@@ -25,15 +27,32 @@ class OrderItem {
   double unitPrice;
   double costPrice;
   double totalPrice;
+
+  /// @deprecated — kept for backward compat with old flat variants
   String variantName;
   String variantValue;
 
-  @ignore
-  bool get hasVariant => variantName.isNotEmpty && variantValue.isNotEmpty;
+  /// Canonical combination key: "Color:Red/Size:L"
+  String variantCombinationKey;
+
+  /// Human-readable label stored at order time: "Size: L / Color: Red"
+  String variantDisplayLabel;
 
   @ignore
-  String get displayName =>
-      hasVariant ? '$productName ($variantName: $variantValue)' : productName;
+  bool get hasVariant =>
+      variantCombinationKey.isNotEmpty ||
+      (variantName.isNotEmpty && variantValue.isNotEmpty);
+
+  @ignore
+  String get displayName {
+    if (variantDisplayLabel.isNotEmpty) {
+      return '$productName ($variantDisplayLabel)';
+    }
+    if (variantName.isNotEmpty && variantValue.isNotEmpty) {
+      return '$productName ($variantName: $variantValue)';
+    }
+    return productName;
+  }
 
   OrderItem copyWith({
     int? productId,
@@ -45,6 +64,8 @@ class OrderItem {
     double? totalPrice,
     String? variantName,
     String? variantValue,
+    String? variantCombinationKey,
+    String? variantDisplayLabel,
   }) =>
       OrderItem(
         productId: productId ?? this.productId,
@@ -56,6 +77,9 @@ class OrderItem {
         totalPrice: totalPrice ?? this.totalPrice,
         variantName: variantName ?? this.variantName,
         variantValue: variantValue ?? this.variantValue,
+        variantCombinationKey:
+            variantCombinationKey ?? this.variantCombinationKey,
+        variantDisplayLabel: variantDisplayLabel ?? this.variantDisplayLabel,
       );
 
   factory OrderItem.fromJson(Map<String, dynamic> json) =>
