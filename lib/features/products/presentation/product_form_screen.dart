@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:isar/isar.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/supplier.dart';
 import '../../../data/models/variant_attribute.dart';
 import '../../../data/models/variant_combination.dart';
 import '../providers/product_provider.dart';
@@ -47,6 +48,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   String? _imagePath;
   bool _isLoading = false;
   Product? _existingProduct;
+  Supplier? _selectedSupplier;
 
   // ── Hierarchical Variant State ──
   final List<_AttributeEntry> _attributes = [];
@@ -71,7 +73,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
   }
 
-  void _populateForm(Product product) {
+  void _populateForm(Product product) async {
     _nameCtrl.text = product.name;
     _skuCtrl.text = product.sku;
     _descCtrl.text = product.description;
@@ -84,6 +86,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         product.lowStockThreshold > 0 ? product.lowStockThreshold.toString() : '';
     _categoryCtrl.text = product.category;
     _qrCtrl.text = product.qrCode;
+
+    // Load linked supplier if any
+    if (product.supplierId > 0) {
+      try {
+        final isar = await ref.read(isarProvider.future);
+        final supplier = await isar.suppliers.get(product.supplierId);
+        if (supplier != null && mounted) {
+          setState(() => _selectedSupplier = supplier);
+        }
+      } catch (_) {}
+    }
+
     setState(() {
       _imagePath = product.imagePath.isNotEmpty ? product.imagePath : null;
 
@@ -306,6 +320,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
+  Future<void> _pickSupplier() async {
+    final isar = await ref.read(isarProvider.future);
+    final suppliers = await isar.suppliers.where().sortByName().findAll();
+    if (!mounted) return;
+
+    final result = await showModalBottomSheet<Supplier?>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _SupplierPickerSheet(suppliers: suppliers),
+    );
+
+    if (result != null) {
+      setState(() => _selectedSupplier = result);
+    }
+  }
+
   Future<void> _scanQr() async {
     final result = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const QrScannerScreen()),
@@ -376,6 +409,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         isActive: existing?.isActive ?? true,
         variantAttributes: variantAttributes,
         variantCombinations: variantCombinations,
+        supplierId: _selectedSupplier?.id ?? 0,
         createdAt: existing?.createdAt,
       );
 
@@ -525,6 +559,63 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 },
                 loading: () => const SizedBox.shrink(),
                 error: (_, __) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Supplier (optional) ────────────────────────────────────────
+              InkWell(
+                onTap: _pickSupplier,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: cs.outline.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.local_shipping_outlined,
+                          color: cs.onSurface.withValues(alpha: 0.5),
+                          size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _selectedSupplier != null
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Supplier',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: cs.onSurface
+                                              .withValues(alpha: 0.5))),
+                                  Text(_selectedSupplier!.name,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14)),
+                                ],
+                              )
+                            : Text('Supplier (optional)',
+                                style: TextStyle(
+                                    color: cs.onSurface.withValues(alpha: 0.5),
+                                    fontSize: 14)),
+                      ),
+                      if (_selectedSupplier != null)
+                        GestureDetector(
+                          onTap: () =>
+                              setState(() => _selectedSupplier = null),
+                          child: Icon(Icons.close,
+                              size: 18,
+                              color: cs.onSurface.withValues(alpha: 0.5)),
+                        )
+                      else
+                        Icon(Icons.arrow_forward_ios,
+                            size: 14,
+                            color: cs.onSurface.withValues(alpha: 0.4)),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -1033,5 +1124,141 @@ class _CombinationEntry {
     stockCtrl.dispose();
     priceCtrl.dispose();
     skuCtrl.dispose();
+  }
+}
+
+// ─── Supplier Picker Sheet ──────────────────────────────────────────────────
+
+class _SupplierPickerSheet extends StatefulWidget {
+  final List<Supplier> suppliers;
+
+  const _SupplierPickerSheet({required this.suppliers});
+
+  @override
+  State<_SupplierPickerSheet> createState() => _SupplierPickerSheetState();
+}
+
+class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final filtered = _query.isEmpty
+        ? widget.suppliers
+        : widget.suppliers
+            .where((s) =>
+                s.name.toLowerCase().contains(_query) ||
+                s.company.toLowerCase().contains(_query) ||
+                s.phone.contains(_query))
+            .toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.95,
+      minChildSize: 0.3,
+      expand: false,
+      builder: (ctx, ctrl) => Column(
+        children: [
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: cs.outline.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text('Select Supplier',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _searchCtrl,
+              autofocus: true,
+              onChanged: (v) => setState(() => _query = v.toLowerCase()),
+              decoration: const InputDecoration(
+                hintText: 'Search...',
+                prefixIcon: Icon(Icons.search, size: 20),
+                isDense: true,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.local_shipping_outlined,
+                            size: 48,
+                            color: cs.onSurface.withValues(alpha: 0.3)),
+                        const SizedBox(height: 8),
+                        Text('No suppliers found',
+                            style: TextStyle(
+                                color: cs.onSurface.withValues(alpha: 0.4))),
+                        const SizedBox(height: 4),
+                        Text('Add suppliers from the Suppliers menu',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: cs.onSurface.withValues(alpha: 0.4))),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    controller: ctrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => Divider(
+                        height: 1, color: cs.outline.withValues(alpha: 0.1)),
+                    itemBuilder: (_, i) {
+                      final s = filtered[i];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        onTap: () => Navigator.pop(ctx, s),
+                        leading: CircleAvatar(
+                          radius: 18,
+                          backgroundColor:
+                              cs.primary.withValues(alpha: 0.1),
+                          child: Text(
+                            s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: cs.primary,
+                                fontSize: 14),
+                          ),
+                        ),
+                        title: Text(s.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500, fontSize: 14)),
+                        subtitle: s.company.isNotEmpty
+                            ? Text(s.company,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        cs.onSurface.withValues(alpha: 0.5)))
+                            : null,
+                        dense: true,
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 }

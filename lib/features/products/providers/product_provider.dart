@@ -98,7 +98,9 @@ class ProductNotifier extends _$ProductNotifier {
 
   Future<void> adjustStock(
       int productId, int delta, String reason, StockMovementType type,
-      {String combinationKey = ''}) async {
+      {String combinationKey = '',
+      String supplierName = '',
+      int supplierId = 0}) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
@@ -128,12 +130,21 @@ class ProductNotifier extends _$ProductNotifier {
               ? '${product.name} (${combo.displayLabel})'
               : '${product.name} ($combinationKey)';
         }
+
+        // Compose reason with supplier prefix if provided
+        String fullReason = reason;
+        if (supplierName.isNotEmpty) {
+          final prefix = 'From: $supplierName';
+          fullReason = reason.isNotEmpty ? '$prefix — $reason' : prefix;
+        }
+
         await isar.stockMovements.put(StockMovement(
           productId: productId,
           productName: movementName,
           type: type,
           qty: delta,
-          reason: reason,
+          reason: fullReason,
+          supplierId: supplierId,
           createdAt: DateTime.now(),
         ));
       });

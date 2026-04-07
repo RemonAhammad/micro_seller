@@ -17,6 +17,13 @@ import '../../features/expenses/presentation/expense_list_screen.dart';
 import '../../features/expenses/presentation/expense_form_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/returns/presentation/returns_screen.dart';
+import '../../features/suppliers/presentation/supplier_list_screen.dart';
+import '../../features/suppliers/presentation/supplier_form_screen.dart';
+import '../../features/suppliers/presentation/supplier_detail_screen.dart';
+import '../../features/suppliers/presentation/purchase_list_screen.dart';
+import '../../features/suppliers/presentation/purchase_form_screen.dart';
+import '../../features/suppliers/presentation/purchase_detail_screen.dart';
+import '../../features/cash_register/presentation/cash_register_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../constants/app_strings.dart';
 
@@ -109,6 +116,47 @@ final appRouter = GoRouter(
         ]),
         StatefulShellBranch(routes: [
           GoRoute(
+            path: '/suppliers',
+            builder: (_, __) => const SupplierListScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (_, __) => const SupplierFormScreen(),
+              ),
+              GoRoute(
+                path: 'purchases',
+                builder: (_, __) => const PurchaseListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (_, __) => const PurchaseFormScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, s) => PurchaseDetailScreen(
+                        purchaseId: int.parse(s.pathParameters['id']!)),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (_, s) => SupplierDetailScreen(supplierId: int.parse(s.pathParameters['id']!)),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, s) => SupplierFormScreen(supplierId: int.parse(s.pathParameters['id']!)),
+                  ),
+                  GoRoute(
+                    path: 'purchase/add',
+                    builder: (_, s) => PurchaseFormScreen(supplierId: int.parse(s.pathParameters['id']!)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(
             path: '/expenses',
             builder: (_, __) => const ExpenseListScreen(),
             routes: [
@@ -119,6 +167,9 @@ final appRouter = GoRouter(
               ),
             ],
           ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/cash-register', builder: (_, __) => const CashRegisterScreen()),
         ]),
         StatefulShellBranch(routes: [
           GoRoute(path: '/categories', builder: (_, __) => const CategoryScreen()),
@@ -189,7 +240,9 @@ class _Sidebar extends StatelessWidget {
     (icon: Icons.assignment_return_outlined, selectedIcon: Icons.assignment_return, label: 'Returns'),
     (icon: Icons.people_outline, selectedIcon: Icons.people, label: AppStrings.navCustomers),
     (icon: Icons.warehouse_outlined, selectedIcon: Icons.warehouse, label: AppStrings.navInventory),
+    (icon: Icons.local_shipping_outlined, selectedIcon: Icons.local_shipping, label: 'Suppliers'),
     (icon: Icons.account_balance_wallet_outlined, selectedIcon: Icons.account_balance_wallet, label: AppStrings.navExpenses),
+    (icon: Icons.point_of_sale_outlined, selectedIcon: Icons.point_of_sale, label: 'Cash Register'),
     (icon: Icons.category_outlined, selectedIcon: Icons.category, label: 'Categories'),
     (icon: Icons.analytics_outlined, selectedIcon: Icons.analytics, label: 'Reports'),
     (icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: AppStrings.navSettings),
@@ -209,18 +262,31 @@ class _Sidebar extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 8),
-          for (int i = 0; i < 6; i++)
-            _tile(i, _items[i], selectedColor, unselectedColor),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  for (int i = 0; i < 7; i++)
+                    _tile(i, _items[i], selectedColor, unselectedColor),
+                  Divider(
+                    indent: 12,
+                    endIndent: 12,
+                    height: 16,
+                    color: unselectedColor.withValues(alpha: 0.2),
+                  ),
+                  for (int i = 7; i < 11; i++)
+                    _tile(i, _items[i], selectedColor, unselectedColor),
+                ],
+              ),
+            ),
+          ),
           Divider(
             indent: 12,
             endIndent: 12,
-            height: 16,
-            color: unselectedColor.withValues(alpha: 0.2),
+            height: 1,
+            color: unselectedColor.withValues(alpha: 0.15),
           ),
-          for (int i = 6; i < 9; i++)
-            _tile(i, _items[i], selectedColor, unselectedColor),
-          const Spacer(),
-          _tile(9, _items[9], selectedColor, unselectedColor),
+          _tile(11, _items[11], selectedColor, unselectedColor),
           const SizedBox(height: 12),
         ],
       ),

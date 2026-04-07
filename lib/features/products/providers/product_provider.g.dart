@@ -52,7 +52,7 @@ final lowStockProductsProvider =
 );
 
 typedef LowStockProductsRef = AutoDisposeStreamProviderRef<List<Product>>;
-String _$productNotifierHash() => r'3ff6b3c8e18442f6eafe5fc8f35fe1ddb2c7a480';
+String _$productNotifierHash() => r'c46a3340e119a3c58f3966f8031832ecf0f727da';
 
 /// See also [ProductNotifier].
 @ProviderFor(ProductNotifier)

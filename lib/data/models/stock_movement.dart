@@ -15,6 +15,7 @@ class StockMovement {
     this.type = StockMovementType.adjustment,
     this.qty = 0,
     this.reason = '',
+    this.supplierId = 0,
     this.createdAt,
   });
 
@@ -27,6 +28,10 @@ class StockMovement {
 
   int qty;
   String reason;
+
+  /// Optional supplier id (0 = not linked to any supplier)
+  int supplierId;
+
   DateTime? createdAt;
 
   @ignore
@@ -39,6 +44,7 @@ class StockMovement {
     StockMovementType? type,
     int? qty,
     String? reason,
+    int? supplierId,
     DateTime? createdAt,
   }) =>
       StockMovement(
@@ -48,6 +54,7 @@ class StockMovement {
         type: type ?? this.type,
         qty: qty ?? this.qty,
         reason: reason ?? this.reason,
+        supplierId: supplierId ?? this.supplierId,
         createdAt: createdAt ?? this.createdAt,
       );
 

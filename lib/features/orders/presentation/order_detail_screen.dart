@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/order.dart';
 import '../providers/order_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -192,7 +193,40 @@ class _OrderDetailBody extends ConsumerWidget {
                   _InfoCard(children: [
                     _InfoRow(label: 'Customer', value: order.customerName),
                     if (order.customerPhone.isNotEmpty)
-                      _InfoRow(label: 'Phone', value: order.customerPhone),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Phone',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  order.customerPhone,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () => launchUrl(Uri.parse('tel:${order.customerPhone}')),
+                                  child: Icon(
+                                    Icons.call_rounded,
+                                    size: 18,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                   ]),
                 // Delivery tracking
                 if (order.deliveryAddress.isNotEmpty || order.estimatedDeliveryDate != null)

@@ -77,30 +77,35 @@ const ProductSchema = CollectionSchema(
       name: r'stockQty',
       type: IsarType.long,
     ),
-    r'tags': PropertySchema(
+    r'supplierId': PropertySchema(
       id: 12,
+      name: r'supplierId',
+      type: IsarType.long,
+    ),
+    r'tags': PropertySchema(
+      id: 13,
       name: r'tags',
       type: IsarType.stringList,
     ),
     r'updatedAt': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'variantAttributes': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'variantAttributes',
       type: IsarType.objectList,
       target: r'VariantAttribute',
     ),
     r'variantCombinations': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'variantCombinations',
       type: IsarType.objectList,
       target: r'VariantCombination',
     ),
     r'variants': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'variants',
       type: IsarType.objectList,
       target: r'ProductVariant',
@@ -191,22 +196,23 @@ void _productSerialize(
   writer.writeDouble(offsets[9], object.sellingPrice);
   writer.writeString(offsets[10], object.sku);
   writer.writeLong(offsets[11], object.stockQty);
-  writer.writeStringList(offsets[12], object.tags);
-  writer.writeDateTime(offsets[13], object.updatedAt);
+  writer.writeLong(offsets[12], object.supplierId);
+  writer.writeStringList(offsets[13], object.tags);
+  writer.writeDateTime(offsets[14], object.updatedAt);
   writer.writeObjectList<VariantAttribute>(
-    offsets[14],
+    offsets[15],
     allOffsets,
     VariantAttributeSchema.serialize,
     object.variantAttributes,
   );
   writer.writeObjectList<VariantCombination>(
-    offsets[15],
+    offsets[16],
     allOffsets,
     VariantCombinationSchema.serialize,
     object.variantCombinations,
   );
   writer.writeObjectList<ProductVariant>(
-    offsets[16],
+    offsets[17],
     allOffsets,
     ProductVariantSchema.serialize,
     object.variants,
@@ -233,24 +239,25 @@ Product _productDeserialize(
     sellingPrice: reader.readDouble(offsets[9]),
     sku: reader.readStringOrNull(offsets[10]) ?? '',
     stockQty: reader.readLongOrNull(offsets[11]) ?? 0,
-    tags: reader.readStringList(offsets[12]) ?? const [],
-    updatedAt: reader.readDateTimeOrNull(offsets[13]),
+    supplierId: reader.readLongOrNull(offsets[12]) ?? 0,
+    tags: reader.readStringList(offsets[13]) ?? const [],
+    updatedAt: reader.readDateTimeOrNull(offsets[14]),
     variantAttributes: reader.readObjectList<VariantAttribute>(
-          offsets[14],
+          offsets[15],
           VariantAttributeSchema.deserialize,
           allOffsets,
           VariantAttribute(),
         ) ??
         const [],
     variantCombinations: reader.readObjectList<VariantCombination>(
-          offsets[15],
+          offsets[16],
           VariantCombinationSchema.deserialize,
           allOffsets,
           VariantCombination(),
         ) ??
         const [],
     variants: reader.readObjectList<ProductVariant>(
-          offsets[16],
+          offsets[17],
           ProductVariantSchema.deserialize,
           allOffsets,
           ProductVariant(),
@@ -292,10 +299,12 @@ P _productDeserializeProp<P>(
     case 11:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 12:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 13:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 14:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 15:
       return (reader.readObjectList<VariantAttribute>(
             offset,
             VariantAttributeSchema.deserialize,
@@ -303,7 +312,7 @@ P _productDeserializeProp<P>(
             VariantAttribute(),
           ) ??
           const []) as P;
-    case 15:
+    case 16:
       return (reader.readObjectList<VariantCombination>(
             offset,
             VariantCombinationSchema.deserialize,
@@ -311,7 +320,7 @@ P _productDeserializeProp<P>(
             VariantCombination(),
           ) ??
           const []) as P;
-    case 16:
+    case 17:
       return (reader.readObjectList<ProductVariant>(
             offset,
             ProductVariantSchema.deserialize,
@@ -1558,6 +1567,59 @@ extension ProductQueryFilter
     });
   }
 
+  QueryBuilder<Product, Product, QAfterFilterCondition> supplierIdEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'supplierId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> supplierIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'supplierId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> supplierIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'supplierId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> supplierIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'supplierId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterFilterCondition> tagsElementEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -2278,6 +2340,18 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
     });
   }
 
+  QueryBuilder<Product, Product, QAfterSortBy> sortBySupplierId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortBySupplierIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -2449,6 +2523,18 @@ extension ProductQuerySortThenBy
     });
   }
 
+  QueryBuilder<Product, Product, QAfterSortBy> thenBySupplierId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenBySupplierIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -2539,6 +2625,12 @@ extension ProductQueryWhereDistinct
   QueryBuilder<Product, Product, QDistinct> distinctByStockQty() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'stockQty');
+    });
+  }
+
+  QueryBuilder<Product, Product, QDistinct> distinctBySupplierId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'supplierId');
     });
   }
 
@@ -2635,6 +2727,12 @@ extension ProductQueryProperty
     });
   }
 
+  QueryBuilder<Product, int, QQueryOperations> supplierIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'supplierId');
+    });
+  }
+
   QueryBuilder<Product, List<String>, QQueryOperations> tagsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'tags');
@@ -2702,6 +2800,7 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
                   (e) => VariantCombination.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      supplierId: (json['supplierId'] as num?)?.toInt() ?? 0,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -2727,6 +2826,7 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
       'variants': instance.variants,
       'variantAttributes': instance.variantAttributes,
       'variantCombinations': instance.variantCombinations,
+      'supplierId': instance.supplierId,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

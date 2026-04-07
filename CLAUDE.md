@@ -38,7 +38,7 @@ lib/
 │   │   ├── translations_en.dart     # English translation map (160+ keys)
 │   │   └── translations_bn.dart     # Bengali translation map (160+ keys)
 │   ├── router/
-│   │   └── app_router.dart       # GoRouter config, 10-branch sidebar navigation shell, SafeArea wrapper
+│   │   └── app_router.dart       # GoRouter config, 12-branch sidebar navigation shell, SafeArea wrapper
 │   ├── theme/
 │   │   └── app_theme.dart        # Material 3 light/dark themes, status bar matches appbar color
 │   └── utils/
@@ -58,6 +58,9 @@ lib/
 │   │   ├── product_variant.dart  # @embedded (deprecated): flat name/value/priceAdjustment/stockQty/sku
 │   │   ├── variant_attribute.dart # @embedded: name, options[] — defines one dimension (e.g. Size→[S,M,L])
 │   │   ├── variant_combination.dart # @embedded: combinationKey, displayLabel, priceAdjustment, stockQty, sku, isActive
+│   │   ├── supplier.dart         # id, name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue
+│   │   ├── purchase.dart         # id, supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber
+│   │   ├── cash_register.dart    # id, openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt
 │   │   └── stock_movement.dart   # id, productId, type(sale/restock/adjustment/damage), qty, reason
 │   ├── repositories/
 │   │   ├── customer_repository.dart   # CRUD, search, watchAll stream
@@ -70,7 +73,7 @@ lib/
 │       ├── csv_import_service.dart  # Import products from CSV via file_picker
 │       ├── migration_service.dart  # One-time migration: flat variants → hierarchical VariantAttribute + VariantCombination
 │       ├── drive_service.dart       # Google Drive backup/restore (safe restore with rollback), max 5 backups, OAuth
-│       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 6 collection schemas
+│       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 9 collection schemas
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
 │       └── pdf_service.dart         # Order receipt PDF (with tax line), WhatsApp text generation
 ├── features/
@@ -118,7 +121,7 @@ lib/
 │   ├── products/
 │   │   ├── presentation/
 │   │   │   ├── product_list_screen.dart            # Search (debounced), category chips, responsive grid/list, CSV export + import
-│   │   │   ├── product_form_screen.dart            # Image, QR, category, selling+cost price, variants editor
+│   │   │   ├── product_form_screen.dart            # Image, QR, category, selling+cost price, hierarchical variants editor (attributes + combinations), scroll-to-top on validation fail, autofocus on new attribute
 │   │   │   ├── product_detail_screen.dart          # Full info, variants card, adjust stock
 │   │   │   └── widgets/
 │   │   │       ├── product_card.dart
@@ -129,6 +132,18 @@ lib/
 │   │   └── providers/reports_provider.dart         # Parameterized by date range, aggregates revenue/profit/expenses/rankings
 │   ├── returns/
 │   │   └── presentation/create_return_screen.dart  # Item selector with qty controls, reason chips, refund amount (capped at amountPaid), variant display
+│   ├── suppliers/
+│   │   ├── presentation/
+│   │   │   ├── supplier_list_screen.dart           # List with due amounts; FABs for "New Purchase" + "Add Supplier"; appbar action for "All Purchases"
+│   │   │   ├── supplier_form_screen.dart           # Add/edit supplier (name, company, phone, email, address, notes)
+│   │   │   ├── supplier_detail_screen.dart         # Contact info with call button, stats, purchase history (tappable), New Purchase + Pay Due actions
+│   │   │   ├── purchase_list_screen.dart           # All purchases across suppliers, FAB to add
+│   │   │   ├── purchase_form_screen.dart           # Optional supplier picker, product picker with unit cost, payment method, partial payment, notes
+│   │   │   └── purchase_detail_screen.dart         # Items, payment summary, record payment, delete (reverses stock + supplier stats)
+│   │   └── providers/supplier_provider.dart        # CRUD; createPurchase (auto-restocks + updates costPrice + supplier stats); deletePurchase (reverses); recordSupplierPayment, recordPurchasePayment
+│   ├── cash_register/
+│   │   ├── presentation/cash_register_screen.dart  # Open/close register, cash in/out, expected vs actual closing, history
+│   │   └── providers/cash_register_provider.dart   # openRegister, closeRegister, addCashIn, addCashOut
 │   └── settings/
 │       ├── presentation/settings_screen.dart       # Theme toggle, language picker, shop config, tax rate, Drive backup, clear data
 │       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language
@@ -150,7 +165,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 
 | Model | Key Fields | Computed Props |
 | ----- | ---------- | -------------- |
-| **Product** | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variantAttributes** (embedded list), **variantCombinations** (embedded list) | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock, findCombination(key) |
+| **Product** | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variantAttributes** (embedded list), **variantCombinations** (embedded list), **supplierId** (optional, 0 = none) | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock, findCombination(key) |
 | **VariantAttribute** | @embedded: name, options[] — one dimension of variation (e.g. Size→[S,M,L]) | — |
 | **VariantCombination** | @embedded: combinationKey (canonical sorted "Color:Red/Size:L"), displayLabel, priceAdjustment, stockQty, sku, isActive | — |
 | **Order** | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, **taxAmount**, totalAmount, amountPaid, paymentStatus, **paymentMethod**, orderStatus, **deliveryAddress**, **estimatedDeliveryDate**, **actualDeliveryDate**, **isReturn**, **originalOrderId**, **isRecurring**, **recurringIntervalDays**, **nextRecurringDate** | balanceDue, isFullyPaid, totalItems |
@@ -159,6 +174,10 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 | **Expense** | title, amount, category (logistics/packaging/marketing/supplies/other), date, notes | — |
 | **StockMovement** | productId, productName, type (sale/restock/adjustment/damage), qty, reason | isIncoming |
 | **Category** | name | — |
+| **Supplier** | name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue | hasOutstanding |
+| **Purchase** | supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber | balanceDue, isFullyPaid, totalItems |
+| **PurchaseItem** | @embedded: productId, productName, qty, unitCost, totalCost | — |
+| **CashRegister** | openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt | expectedClosing, difference |
 
 ## Order Form UX (order_form_screen.dart)
 
@@ -181,9 +200,11 @@ The order creation/edit screen is designed for fast, frictionless use:
   - **Real-time stock** via Isar `StreamBuilder` (not a stale snapshot)
   - Search by name or SKU
   - **Hierarchical variant support:** Products with variant combinations show expand/collapse; each combination (e.g. "Size: L / Color: Red") has its own price, stock, and add/qty controls
+  - **Unconfigured combinations hidden** — combos with no stock, no price, and no SKU are not shown
   - Inline +/- qty controls per product/combination (no close-reopen cycle)
   - **Stock validation:** + button disabled when qty reaches available stock; qty clamped to stock limit
-  - Out-of-stock products/combinations are dimmed with disabled button
+  - Out-of-stock combinations shown as disabled with "Out of stock" label
+  - Products with no configured combos are hidden entirely
   - Item count badge, "Done" button to close
   - Changes are pushed to parent via `onChanged` callback in real time
 
@@ -335,9 +356,49 @@ Products support **multi-attribute variant combinations**:
 - **Payment reminders:** triggered for unpaid orders
 - Checked automatically on dashboard load
 
+### Supplier Management
+
+- **Supplier directory** with name, company, phone (with call button), email, address, notes
+- **Optional supplier:** purchases can be recorded with no supplier linked (e.g. one-off cash buys)
+- **Product → Supplier link (optional):** products have an optional `supplierId` to mark their primary supplier
+- **Product form** has an optional supplier picker (below the Category field)
+- **Supplier detail** shows a "Products from this supplier" section with linked products (tappable to view product detail)
+- **Purchase history:** supplier detail screen shows full purchase history (tappable to view detail)
+- **Supplier stats:** totalPurchases, totalPaid, totalDue tracked automatically when supplier is linked
+- **Payment tracking:** record direct payments to suppliers (reduces their outstanding due)
+- **Safe deletion:** deleting a supplier unlinks purchases AND products (sets their `supplierId` to 0, preserves all data)
+
+### Purchase Recording (transactional)
+
+1. **Entry points:** "New Purchase" FAB on supplier list, "+ New Purchase" on supplier detail, or all-purchases list FAB
+2. **Optional supplier picker** at top of form (can be skipped for one-off buys)
+3. **Product picker** with real-time stock and current cost price; tap to add, +/- to adjust qty. When a supplier is selected, a filter chip lets you toggle between "{Supplier} only" and "All products" to quickly find that supplier's items
+4. **Per-item unit cost** field — defaults to product's existing costPrice
+5. **Payment:** amount paid (with "Pay Full" quick button), payment method chips (Cash/Card/bKash/Nagad/Bank/Other), reference number, notes
+6. **On save:**
+   - Stock auto-restocks for each item
+   - Product `costPrice` is updated to the new unit cost (so future profit margins are accurate)
+   - StockMovement records created with "Purchase from {supplier}" or "Purchase" reason
+   - If supplier linked: their `totalPurchases`, `totalPaid`, `totalDue` are updated
+7. **Record payment** action on purchase detail reduces both purchase and supplier dues
+8. **Delete purchase** reverses everything: deducts stock back, decrements supplier stats
+
+### Daily Cash Register
+
+- **Open register:** set opening cash amount to start the day
+- **Cash in/out:** record cash inflows (e.g. sales) and outflows (e.g. supplier payments, petty cash) during the day
+- **Expected closing:** auto-calculated as `opening + cashIn - cashOut`
+- **Close register:** enter actual closing amount, system shows difference (over/short)
+- **Auto-close:** opening a new register auto-closes any existing open register
+- **History:** view past register sessions with opening, closing, cash flow, and differences
+
+### Order Detail UX
+
+- **Call button** next to customer phone number — taps to open dialer
+
 ## Navigation (GoRouter)
 
-10 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
+12 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
 
 | Branch | Path | Sub-routes |
 | ------ | ---- | ---------- |
@@ -347,7 +408,9 @@ Products support **multi-attribute variant combinations**:
 | Returns | `/returns` | `:id` |
 | Customers | `/customers` | `add`, `:id`, `:id/edit` |
 | Inventory | `/inventory` | `adjust/:id` |
+| Suppliers | `/suppliers` | `add`, `:id`, `:id/edit`, `:id/purchase/add`, `purchases`, `purchases/add`, `purchases/:id` |
 | Expenses | `/expenses` | `add`, `:id/edit` |
+| Cash Register | `/cash-register` | — |
 | Categories | `/categories` | — |
 | Reports | `/reports` | — |
 | Settings | `/settings` | — |

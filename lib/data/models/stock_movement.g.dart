@@ -42,8 +42,13 @@ const StockMovementSchema = CollectionSchema(
       name: r'reason',
       type: IsarType.string,
     ),
-    r'type': PropertySchema(
+    r'supplierId': PropertySchema(
       id: 5,
+      name: r'supplierId',
+      type: IsarType.long,
+    ),
+    r'type': PropertySchema(
+      id: 6,
       name: r'type',
       type: IsarType.string,
       enumMap: _StockMovementtypeEnumValueMap,
@@ -86,7 +91,8 @@ void _stockMovementSerialize(
   writer.writeString(offsets[2], object.productName);
   writer.writeLong(offsets[3], object.qty);
   writer.writeString(offsets[4], object.reason);
-  writer.writeString(offsets[5], object.type.name);
+  writer.writeLong(offsets[5], object.supplierId);
+  writer.writeString(offsets[6], object.type.name);
 }
 
 StockMovement _stockMovementDeserialize(
@@ -102,7 +108,8 @@ StockMovement _stockMovementDeserialize(
     productName: reader.readStringOrNull(offsets[2]) ?? '',
     qty: reader.readLongOrNull(offsets[3]) ?? 0,
     reason: reader.readStringOrNull(offsets[4]) ?? '',
-    type: _StockMovementtypeValueEnumMap[reader.readStringOrNull(offsets[5])] ??
+    supplierId: reader.readLongOrNull(offsets[5]) ?? 0,
+    type: _StockMovementtypeValueEnumMap[reader.readStringOrNull(offsets[6])] ??
         StockMovementType.adjustment,
   );
   return object;
@@ -126,6 +133,8 @@ P _stockMovementDeserializeProp<P>(
     case 4:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 5:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 6:
       return (_StockMovementtypeValueEnumMap[reader.readStringOrNull(offset)] ??
           StockMovementType.adjustment) as P;
     default:
@@ -752,6 +761,62 @@ extension StockMovementQueryFilter
     });
   }
 
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+      supplierIdEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'supplierId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+      supplierIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'supplierId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+      supplierIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'supplierId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+      supplierIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'supplierId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> typeEqualTo(
     StockMovementType value, {
     bool caseSensitive = true,
@@ -959,6 +1024,19 @@ extension StockMovementQuerySortBy
     });
   }
 
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> sortBySupplierId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
+      sortBySupplierIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.desc);
+    });
+  }
+
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy> sortByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -1049,6 +1127,19 @@ extension StockMovementQuerySortThenBy
     });
   }
 
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> thenBySupplierId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
+      thenBySupplierIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierId', Sort.desc);
+    });
+  }
+
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy> thenByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -1093,6 +1184,12 @@ extension StockMovementQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'reason', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctBySupplierId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'supplierId');
     });
   }
 
@@ -1142,6 +1239,12 @@ extension StockMovementQueryProperty
     });
   }
 
+  QueryBuilder<StockMovement, int, QQueryOperations> supplierIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'supplierId');
+    });
+  }
+
   QueryBuilder<StockMovement, StockMovementType, QQueryOperations>
       typeProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1163,6 +1266,7 @@ StockMovement _$StockMovementFromJson(Map<String, dynamic> json) =>
           StockMovementType.adjustment,
       qty: (json['qty'] as num?)?.toInt() ?? 0,
       reason: json['reason'] as String? ?? '',
+      supplierId: (json['supplierId'] as num?)?.toInt() ?? 0,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -1176,6 +1280,7 @@ Map<String, dynamic> _$StockMovementToJson(StockMovement instance) =>
       'type': _$StockMovementTypeEnumMap[instance.type]!,
       'qty': instance.qty,
       'reason': instance.reason,
+      'supplierId': instance.supplierId,
       'createdAt': instance.createdAt?.toIso8601String(),
     };
 

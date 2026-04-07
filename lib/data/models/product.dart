@@ -26,6 +26,7 @@ class Product {
     this.variants = const [],
     this.variantAttributes = const [],
     this.variantCombinations = const [],
+    this.supplierId = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -52,6 +53,9 @@ class Product {
 
   /// All sellable combinations with per-combo stock/price/sku
   List<VariantCombination> variantCombinations;
+
+  /// Optional primary supplier id (0 = no supplier linked)
+  int supplierId;
 
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -101,6 +105,7 @@ class Product {
     List<ProductVariant>? variants,
     List<VariantAttribute>? variantAttributes,
     List<VariantCombination>? variantCombinations,
+    int? supplierId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) =>
@@ -121,6 +126,7 @@ class Product {
         variants: variants ?? this.variants,
         variantAttributes: variantAttributes ?? this.variantAttributes,
         variantCombinations: variantCombinations ?? this.variantCombinations,
+        supplierId: supplierId ?? this.supplierId,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
