@@ -78,6 +78,24 @@ dev_dependencies:
   isar_generator: ^3.1.0+1
   json_serializable: ^6.7.1
 
+  # Launcher icon generation
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#00897B"
+  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
+
 flutter:
   uses-material-design: true
   assets:

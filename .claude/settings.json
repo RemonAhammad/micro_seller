@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -l /Users/remon/Flutter/micro_seller/build/app/outputs/flutter-apk/app-release.apk)",
+      "Read(//Users/remon/Library/Android/sdk/build-tools/**)",
+      "Bash(~/Library/Android/sdk/build-tools/35.0.0/apksigner verify:*)"
+    ]
+  }
+}
