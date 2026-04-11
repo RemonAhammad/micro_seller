@@ -51,14 +51,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final isar = await ref.read(isarProvider.future);
       await _driveService.backupToDrive(isar);
-      ref
-          .read(settingsProvider.notifier)
-          .updateLastBackupTime(DateTime.now());
+      ref.read(settingsProvider.notifier).updateLastBackupTime(DateTime.now());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(AppStrings.backupSuccess),
-              backgroundColor: Colors.green),
+          const SnackBar(content: Text(AppStrings.backupSuccess), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
@@ -101,8 +97,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final confirmed = await ConfirmDialog.show(
         context,
         title: 'Restore Data',
-        message:
-            'This will replace all current data with the backup from ${selected.name}. Continue?',
+        message: 'This will replace all current data with the backup from ${selected.name}. Continue?',
         confirmText: 'Restore',
         isDestructive: true,
         icon: Icons.restore_rounded,
@@ -115,9 +110,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(AppStrings.restoreSuccess),
-              backgroundColor: Colors.green),
+          const SnackBar(content: Text(AppStrings.restoreSuccess), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
@@ -179,10 +172,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Theme
           const _SectionHeader('Theme'),
           _ThemeModeSelector(
-            currentMode:
-                ref.read(settingsProvider.notifier).themeMode,
-            onChanged: (mode) =>
-                ref.read(settingsProvider.notifier).updateThemeMode(mode),
+            currentMode: ref.read(settingsProvider.notifier).themeMode,
+            onChanged: (mode) => ref.read(settingsProvider.notifier).updateThemeMode(mode),
           ),
           const SizedBox(height: 16),
 
@@ -197,14 +188,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.language_rounded,
-                    color: AppColors.primary, size: 20),
+                child: const Icon(Icons.language_rounded, color: AppColors.primary, size: 20),
               ),
               title: const Text('Language'),
               subtitle: Text(
-                ref.read(settingsProvider.notifier).language == 'bn'
-                    ? 'বাংলা'
-                    : 'English',
+                ref.read(settingsProvider.notifier).language == 'bn' ? 'বাংলা' : 'English',
               ),
               trailing: DropdownButton<String>(
                 value: ref.read(settingsProvider.notifier).language,
@@ -215,9 +203,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
                 onChanged: (val) {
                   if (val != null) {
-                    ref
-                        .read(settingsProvider.notifier)
-                        .updateLanguage(val);
+                    ref.read(settingsProvider.notifier).updateLanguage(val);
                   }
                 },
               ),
@@ -232,30 +218,51 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: Icons.store_rounded,
               label: AppStrings.shopName,
               value: ref.read(settingsProvider.notifier).shopName,
-              onEdit: (val) =>
-                  ref.read(settingsProvider.notifier).updateShopName(val),
+              onEdit: (val) => ref.read(settingsProvider.notifier).updateShopName(val),
             ),
             const Divider(height: 1),
-            _EditableTile(
-              icon: Icons.attach_money_rounded,
-              label: AppStrings.currencySymbol,
-              value: ref.read(settingsProvider.notifier).currencySymbol,
-              onEdit: (val) =>
-                  ref.read(settingsProvider.notifier).updateCurrencySymbol(val),
-              maxLength: 3,
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.attach_money_rounded, color: AppColors.primary, size: 20),
+              ),
+              title: const Text(AppStrings.currencySymbol),
+              subtitle: Text(
+                ref.read(settingsProvider.notifier).currencySymbol,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+              onTap: () async {
+                final selected = await showModalBottomSheet<String>(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  builder: (_) => _CurrencyPickerSheet(
+                    currentSymbol: ref.read(settingsProvider.notifier).currencySymbol,
+                  ),
+                );
+                if (selected != null) {
+                  ref.read(settingsProvider.notifier).updateCurrencySymbol(selected);
+                  setState(() {});
+                }
+              },
             ),
             const Divider(height: 1),
             _EditableTile(
               icon: Icons.inventory_2_rounded,
               label: AppStrings.defaultLowStockThreshold,
-              value:
-                  ref.read(settingsProvider.notifier).lowStockThreshold.toString(),
+              value: ref.read(settingsProvider.notifier).lowStockThreshold.toString(),
               onEdit: (val) {
                 final n = int.tryParse(val);
                 if (n != null) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateLowStockThreshold(n);
+                  ref.read(settingsProvider.notifier).updateLowStockThreshold(n);
                 }
               },
               keyboardType: TextInputType.number,
@@ -265,18 +272,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _EditableTile(
               icon: Icons.percent_rounded,
               label: 'Tax Rate (%)',
-              value:
-                  ref.read(settingsProvider.notifier).taxRate.toString(),
+              value: ref.read(settingsProvider.notifier).taxRate.toString(),
               onEdit: (val) {
                 final rate = double.tryParse(val);
                 if (rate != null) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateTaxRate(rate);
+                  ref.read(settingsProvider.notifier).updateTaxRate(rate);
                 }
               },
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
               ],
@@ -295,8 +298,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.folder_rounded,
-                    color: AppColors.primary, size: 20),
+                child: const Icon(Icons.folder_rounded, color: AppColors.primary, size: 20),
               ),
               title: const Text('PDF Download Folder'),
               subtitle: Text(
@@ -305,14 +307,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : ref.read(settingsProvider.notifier).downloadDirectory,
                 style: TextStyle(
                   fontSize: 12,
-                  color: ref
-                          .read(settingsProvider.notifier)
-                          .downloadDirectory
-                          .isEmpty
-                      ? Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.5)
+                  color: ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
+                      ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
                       : null,
                 ),
                 maxLines: 1,
@@ -322,9 +318,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () async {
                 final dir = await FilePicker.platform.getDirectoryPath();
                 if (dir != null) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateDownloadDirectory(dir);
+                  ref.read(settingsProvider.notifier).updateDownloadDirectory(dir);
                   setState(() {});
                 }
               },
@@ -344,11 +338,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: _isLocalExporting
-                    ? const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.upload_file_rounded,
-                        color: Colors.blue, size: 20),
+                    ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.upload_file_rounded, color: Colors.blue, size: 20),
               ),
               title: const Text('Export Backup'),
               subtitle: const Text(
@@ -360,8 +351,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   : () async {
                       setState(() => _isLocalExporting = true);
                       try {
-                        final isar =
-                            await ref.read(isarProvider.future);
+                        final isar = await ref.read(isarProvider.future);
                         await _localBackupService.exportBackup(isar);
                       } catch (e) {
                         if (mounted) {
@@ -389,11 +379,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: _isLocalImporting
-                    ? const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.download_rounded,
-                        color: Colors.orange, size: 20),
+                    ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.download_rounded, color: Colors.orange, size: 20),
               ),
               title: const Text('Import Backup'),
               subtitle: const Text(
@@ -415,18 +402,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (ok != true) return;
                       setState(() => _isLocalImporting = true);
                       try {
-                        final isar =
-                            await ref.read(isarProvider.future);
-                        final success =
-                            await _localBackupService.importBackup(isar);
+                        final isar = await ref.read(isarProvider.future);
+                        final success = await _localBackupService.importBackup(isar);
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(success
-                                  ? 'Data restored successfully!'
-                                  : 'No file selected'),
-                              backgroundColor:
-                                  success ? Colors.green : null,
+                              content: Text(success ? 'Data restored successfully!' : 'No file selected'),
+                              backgroundColor: success ? Colors.green : null,
                             ),
                           );
                         }
@@ -460,16 +442,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.account_circle_rounded,
-                    color: AppColors.primary),
+                child: const Icon(Icons.account_circle_rounded, color: AppColors.primary),
               ),
               title: const Text(AppStrings.googleAccount),
               subtitle: Text(
                 _googleAccountEmail ?? 'Not signed in',
                 style: TextStyle(
-                  color: _googleAccountEmail != null
-                      ? AppColors.primary
-                      : theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: _googleAccountEmail != null ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ),
               trailing: TextButton(
@@ -482,9 +461,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     setState(() => _googleAccountEmail = account?.email);
                   }
                 },
-                child: Text(_googleAccountEmail != null
-                    ? AppStrings.signOut
-                    : AppStrings.signIn),
+                child: Text(_googleAccountEmail != null ? AppStrings.signOut : AppStrings.signIn),
               ),
             ),
             const Divider(height: 1),
@@ -505,8 +482,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               title: const Text(AppStrings.backupToDrive),
               subtitle: ref.read(settingsProvider.notifier).lastBackupTime != null
-                  ? Text(
-                      'Last: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}')
+                  ? Text('Last: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}')
                   : null,
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: _isBackingUp ? null : _backup,
@@ -545,8 +521,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.info_outline_rounded,
-                    color: AppColors.primary),
+                child: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
               ),
               title: const Text(AppStrings.appVersion),
               trailing: Text(
@@ -671,8 +646,7 @@ class _EditableTile extends StatelessWidget {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Edit $label'),
             content: TextField(
               controller: ctrl,
@@ -683,9 +657,7 @@ class _EditableTile extends StatelessWidget {
               decoration: InputDecoration(labelText: label),
             ),
             actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
               FilledButton(
                 onPressed: () {
                   onEdit(ctrl.text.trim());
@@ -731,9 +703,7 @@ class _ThemeModeSelector extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Material(
-                    color: isSelected
-                        ? AppColors.primary.withOpacity(0.12)
-                        : theme.colorScheme.surface,
+                    color: isSelected ? AppColors.primary.withOpacity(0.12) : theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
@@ -743,9 +713,7 @@ class _ThemeModeSelector extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : theme.colorScheme.onSurface.withOpacity(0.12),
+                            color: isSelected ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.12),
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -753,9 +721,7 @@ class _ThemeModeSelector extends StatelessWidget {
                           children: [
                             Icon(
                               icon,
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : theme.colorScheme.onSurface.withOpacity(0.5),
+                              color: isSelected ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.5),
                               size: 24,
                             ),
                             const SizedBox(height: 6),
@@ -763,13 +729,8 @@ class _ThemeModeSelector extends StatelessWidget {
                               label,
                               style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : theme.colorScheme.onSurface
-                                        .withOpacity(0.7),
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -808,8 +769,7 @@ class _BackupPickerSheet extends StatelessWidget {
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Text('Select Backup to Restore',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          child: Text('Select Backup to Restore', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         ),
         ListView.builder(
           shrinkWrap: true,
@@ -817,8 +777,7 @@ class _BackupPickerSheet extends StatelessWidget {
           itemBuilder: (ctx, i) {
             final backup = backups[i];
             return ListTile(
-              leading:
-                  const Icon(Icons.cloud_download_rounded, color: Colors.green),
+              leading: const Icon(Icons.cloud_download_rounded, color: Colors.green),
               title: Text(backup.name),
               subtitle: Text(DateFormatter.formatWithTime(backup.createdTime)),
               onTap: () => Navigator.pop(ctx, backup),
@@ -827,6 +786,179 @@ class _BackupPickerSheet extends StatelessWidget {
         ),
         const SizedBox(height: 16),
       ],
+    );
+  }
+}
+
+// ─── Currency Picker Sheet ──────────────────────────────────────────────────
+
+class _CurrencyPickerSheet extends StatefulWidget {
+  final String currentSymbol;
+
+  const _CurrencyPickerSheet({required this.currentSymbol});
+
+  @override
+  State<_CurrencyPickerSheet> createState() => _CurrencyPickerSheetState();
+}
+
+class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  static const _currencies = <({String symbol, String name, String code})>[
+    (symbol: '\$', name: 'US Dollar', code: 'USD'),
+    (symbol: '৳', name: 'Bangladeshi Taka', code: 'BDT'),
+    (symbol: '€', name: 'Euro', code: 'EUR'),
+    (symbol: '£', name: 'British Pound', code: 'GBP'),
+    (symbol: '¥', name: 'Japanese Yen', code: 'JPY'),
+    (symbol: '¥', name: 'Chinese Yuan', code: 'CNY'),
+    (symbol: '₩', name: 'South Korean Won', code: 'KRW'),
+    (symbol: '₱', name: 'Philippine Peso', code: 'PHP'),
+    (symbol: '฿', name: 'Thai Baht', code: 'THB'),
+    (symbol: '₫', name: 'Vietnamese Dong', code: 'VND'),
+    (symbol: 'RM', name: 'Malaysian Ringgit', code: 'MYR'),
+    (symbol: 'S\$', name: 'Singapore Dollar', code: 'SGD'),
+    (symbol: '₨', name: 'Pakistani Rupee', code: 'PKR'),
+    (symbol: '₨', name: 'Sri Lankan Rupee', code: 'LKR'),
+    (symbol: '₨', name: 'Nepalese Rupee', code: 'NPR'),
+    (symbol: 'R', name: 'South African Rand', code: 'ZAR'),
+    (symbol: 'A\$', name: 'Australian Dollar', code: 'AUD'),
+    (symbol: 'C\$', name: 'Canadian Dollar', code: 'CAD'),
+    (symbol: 'Fr', name: 'Swiss Franc', code: 'CHF'),
+    (symbol: 'kr', name: 'Swedish Krona', code: 'SEK'),
+    (symbol: 'kr', name: 'Norwegian Krone', code: 'NOK'),
+    (symbol: 'kr', name: 'Danish Krone', code: 'DKK'),
+    (symbol: 'zł', name: 'Polish Zloty', code: 'PLN'),
+    (symbol: '₺', name: 'Turkish Lira', code: 'TRY'),
+    (symbol: 'R\$', name: 'Brazilian Real', code: 'BRL'),
+    (symbol: '\$', name: 'Mexican Peso', code: 'MXN'),
+    (symbol: '₽', name: 'Russian Ruble', code: 'RUB'),
+    (symbol: 'د.إ', name: 'UAE Dirham', code: 'AED'),
+    (symbol: 'ر.س', name: 'Saudi Riyal', code: 'SAR'),
+    (symbol: 'د.ك', name: 'Kuwaiti Dinar', code: 'KWD'),
+    (symbol: 'ر.ق', name: 'Qatari Riyal', code: 'QAR'),
+    (symbol: '﷼', name: 'Iranian Rial', code: 'IRR'),
+    (symbol: 'E£', name: 'Egyptian Pound', code: 'EGP'),
+    (symbol: '₦', name: 'Nigerian Naira', code: 'NGN'),
+    (symbol: 'KSh', name: 'Kenyan Shilling', code: 'KES'),
+    (symbol: '₵', name: 'Ghanaian Cedi', code: 'GHS'),
+    (symbol: 'Tk', name: 'Bangladeshi Taka (alt)', code: 'BDT2'),
+    (symbol: '₹', name: 'Indian Rupee', code: 'INR'),
+  ];
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    final filtered = _query.isEmpty
+        ? _currencies
+        : _currencies
+            .where((c) =>
+                c.name.toLowerCase().contains(_query) ||
+                c.code.toLowerCase().contains(_query) ||
+                c.symbol.contains(_query))
+            .toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
+      expand: false,
+      builder: (ctx, ctrl) => Column(
+        children: [
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: cs.outline.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text('Select Currency', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _searchCtrl,
+              autofocus: true,
+              onChanged: (v) => setState(() => _query = v.toLowerCase()),
+              decoration: InputDecoration(
+                hintText: 'Search currency...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                      )
+                    : null,
+                isDense: true,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: ListView.separated(
+              controller: ctrl,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
+              itemBuilder: (_, i) {
+                final c = filtered[i];
+                final isSelected = c.symbol == widget.currentSymbol;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  onTap: () => Navigator.pop(ctx, c.symbol),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isSelected ? cs.primary.withValues(alpha: 0.15) : cs.onSurface.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        c.symbol,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: isSelected ? cs.primary : cs.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                  title: Text(c.name,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontSize: 14,
+                        color: isSelected ? cs.primary : null,
+                      )),
+                  subtitle: Text(c.code,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                      )),
+                  trailing: isSelected ? Icon(Icons.check_circle, color: cs.primary, size: 20) : null,
+                  dense: true,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

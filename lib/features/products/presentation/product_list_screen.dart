@@ -8,6 +8,7 @@ import '../../../data/services/csv_export_service.dart';
 import '../../../data/services/csv_import_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
 import 'widgets/product_card.dart';
@@ -333,7 +334,7 @@ class _ProductListTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '৳${product.sellingPrice}',
+                  CurrencyFormatter.format(product.sellingPrice),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: theme.colorScheme.primary,

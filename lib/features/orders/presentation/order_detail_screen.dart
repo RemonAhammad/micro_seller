@@ -486,9 +486,9 @@ class _OrderDetailBody extends ConsumerWidget {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
               ],
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Payment Amount',
-                prefixText: '৳ ',
+                prefixText: '${CurrencyFormatter.symbol} ',
               ),
             ),
           ],

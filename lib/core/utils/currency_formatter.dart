@@ -1,7 +1,9 @@
 import 'package:intl/intl.dart';
 
 class CurrencyFormatter {
-  static String _symbol = '৳';
+  static String _symbol = '\$';
+
+  static String get symbol => _symbol;
 
   static void setSymbol(String symbol) {
     _symbol = symbol;

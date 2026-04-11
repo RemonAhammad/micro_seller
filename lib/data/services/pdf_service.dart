@@ -10,9 +10,10 @@ class PdfService {
   Future<Uint8List> generateOrderReceipt(
     Order order, {
     String shopName = 'SellerBook',
-    String currencySymbol = '৳',
+    String? currencySymbol,
     double taxRate = 0.0,
   }) async {
+    final sym = currencySymbol ?? CurrencyFormatter.symbol;
     final pdf = pw.Document();
     final font = await PdfGoogleFonts.robotoRegular();
     final boldFont = await PdfGoogleFonts.robotoBold();
@@ -153,12 +154,12 @@ class PdfService {
                       _tableCell('${item.qty}', font),
                       _tableCell(
                         CurrencyFormatter.format(item.unitPrice,
-                            symbol: currencySymbol),
+                            symbol: sym),
                         font,
                       ),
                       _tableCell(
                         CurrencyFormatter.format(item.totalPrice,
-                            symbol: currencySymbol),
+                            symbol: sym),
                         font,
                       ),
                     ],
@@ -176,25 +177,25 @@ class PdfService {
                 child: pw.Column(
                   children: [
                     _summaryRow('Subtotal',
-                        CurrencyFormatter.format(order.subtotal, symbol: currencySymbol), font, boldFont),
+                        CurrencyFormatter.format(order.subtotal, symbol: sym), font, boldFont),
                     if (order.discountAmount > 0)
                       _summaryRow('Discount',
-                          '- ${CurrencyFormatter.format(order.discountAmount, symbol: currencySymbol)}', font, boldFont),
+                          '- ${CurrencyFormatter.format(order.discountAmount, symbol: sym)}', font, boldFont),
                     if (order.deliveryFee > 0)
                       _summaryRow('Delivery Fee',
-                          CurrencyFormatter.format(order.deliveryFee, symbol: currencySymbol), font, boldFont),
+                          CurrencyFormatter.format(order.deliveryFee, symbol: sym), font, boldFont),
                     if (taxRate > 0 && order.taxAmount > 0)
                       _summaryRow('Tax ($taxRate%)',
-                          CurrencyFormatter.format(order.taxAmount, symbol: currencySymbol), font, boldFont),
+                          CurrencyFormatter.format(order.taxAmount, symbol: sym), font, boldFont),
                     pw.Divider(),
                     _summaryRow('Total',
-                        CurrencyFormatter.format(order.totalAmount, symbol: currencySymbol), boldFont, boldFont,
+                        CurrencyFormatter.format(order.totalAmount, symbol: sym), boldFont, boldFont,
                         isTotal: true),
                     _summaryRow('Paid',
-                        CurrencyFormatter.format(order.amountPaid, symbol: currencySymbol), font, boldFont),
+                        CurrencyFormatter.format(order.amountPaid, symbol: sym), font, boldFont),
                     if (order.balanceDue > 0)
                       _summaryRow('Balance Due',
-                          CurrencyFormatter.format(order.balanceDue, symbol: currencySymbol), boldFont, boldFont,
+                          CurrencyFormatter.format(order.balanceDue, symbol: sym), boldFont, boldFont,
                           isRed: true),
                   ],
                 ),
@@ -286,7 +287,8 @@ class PdfService {
     );
   }
 
-  String generateWhatsAppText(Order order, {String currencySymbol = '৳'}) {
+  String generateWhatsAppText(Order order, {String? currencySymbol}) {
+    final waSym = currencySymbol ?? CurrencyFormatter.symbol;
     final sb = StringBuffer();
     sb.writeln('📦 Order ${order.orderNumber}');
     sb.writeln('📅 ${DateFormatter.format(order.createdAt)}');
@@ -297,20 +299,20 @@ class PdfService {
     sb.writeln('Products:');
     for (final item in order.items) {
       sb.writeln(
-          '• ${item.productName} x${item.qty} — ${CurrencyFormatter.format(item.totalPrice, symbol: currencySymbol)}');
+          '• ${item.productName} x${item.qty} — ${CurrencyFormatter.format(item.totalPrice, symbol: waSym)}');
     }
     sb.writeln();
-    sb.writeln('Subtotal: ${CurrencyFormatter.format(order.subtotal, symbol: currencySymbol)}');
+    sb.writeln('Subtotal: ${CurrencyFormatter.format(order.subtotal, symbol: waSym)}');
     if (order.discountAmount > 0) {
-      sb.writeln('Discount: -${CurrencyFormatter.format(order.discountAmount, symbol: currencySymbol)}');
+      sb.writeln('Discount: -${CurrencyFormatter.format(order.discountAmount, symbol: waSym)}');
     }
     if (order.deliveryFee > 0) {
-      sb.writeln('Delivery: ${CurrencyFormatter.format(order.deliveryFee, symbol: currencySymbol)}');
+      sb.writeln('Delivery: ${CurrencyFormatter.format(order.deliveryFee, symbol: waSym)}');
     }
     if (order.taxAmount > 0) {
-      sb.writeln('Tax: ${CurrencyFormatter.format(order.taxAmount, symbol: currencySymbol)}');
+      sb.writeln('Tax: ${CurrencyFormatter.format(order.taxAmount, symbol: waSym)}');
     }
-    sb.writeln('*Total: ${CurrencyFormatter.format(order.totalAmount, symbol: currencySymbol)}*');
+    sb.writeln('*Total: ${CurrencyFormatter.format(order.totalAmount, symbol: waSym)}*');
     sb.writeln();
     final statusStr = order.paymentStatus == PaymentStatus.paid
         ? '✅ Paid'

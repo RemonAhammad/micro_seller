@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/utils/currency_formatter.dart';
 
 part 'settings_provider.g.dart';
 
@@ -19,7 +20,7 @@ class Settings extends _$Settings {
     _loadFromDisk();
     return {
       'shopName': 'My Shop',
-      'currencySymbol': '৳',
+      'currencySymbol': '\$',
       'lowStockThreshold': 10,
       'lastBackupTime': null,
       'themeMode': 'system',
@@ -31,13 +32,14 @@ class Settings extends _$Settings {
 
   Future<void> _loadFromDisk() async {
     final prefs = await SharedPreferences.getInstance();
+    final currency = prefs.getString(_keyCurrency) ?? '\$';
+    CurrencyFormatter.setSymbol(currency);
     state = {
       'shopName': prefs.getString(_keyShopName) ?? 'My Shop',
-      'currencySymbol': prefs.getString(_keyCurrency) ?? '৳',
+      'currencySymbol': currency,
       'lowStockThreshold': prefs.getInt(_keyThreshold) ?? 10,
-      'lastBackupTime': prefs.getString(_keyLastBackup) != null
-          ? DateTime.tryParse(prefs.getString(_keyLastBackup)!)
-          : null,
+      'lastBackupTime':
+          prefs.getString(_keyLastBackup) != null ? DateTime.tryParse(prefs.getString(_keyLastBackup)!) : null,
       'themeMode': prefs.getString(_keyThemeMode) ?? 'system',
       'taxRate': prefs.getDouble(_keyTaxRate) ?? 0.0,
       'language': prefs.getString(_keyLanguage) ?? 'en',
@@ -52,6 +54,7 @@ class Settings extends _$Settings {
   }
 
   Future<void> updateCurrencySymbol(String symbol) async {
+    CurrencyFormatter.setSymbol(symbol);
     state = {...state, 'currencySymbol': symbol};
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyCurrency, symbol);
@@ -82,7 +85,7 @@ class Settings extends _$Settings {
   }
 
   String get shopName => state['shopName'] as String? ?? 'My Shop';
-  String get currencySymbol => state['currencySymbol'] as String? ?? '৳';
+  String get currencySymbol => state['currencySymbol'] as String? ?? '\$';
   int get lowStockThreshold => state['lowStockThreshold'] as int? ?? 10;
   DateTime? get lastBackupTime => state['lastBackupTime'] as DateTime?;
   String get themeMode => state['themeMode'] as String? ?? 'system';
