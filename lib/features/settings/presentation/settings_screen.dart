@@ -10,6 +10,7 @@ import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/services/drive_service.dart';
+import '../../../data/services/local_backup_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_colors.dart';
@@ -25,8 +26,11 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _driveService = DriveService();
+  final _localBackupService = LocalBackupService();
   bool _isBackingUp = false;
   bool _isRestoring = false;
+  bool _isLocalExporting = false;
+  bool _isLocalImporting = false;
   String? _googleAccountEmail;
 
   @override
@@ -324,6 +328,123 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   setState(() {});
                 }
               },
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // Local Backup
+          const _SectionHeader('Local Backup'),
+          _SettingsCard(children: [
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: _isLocalExporting
+                    ? const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.upload_file_rounded,
+                        color: Colors.blue, size: 20),
+              ),
+              title: const Text('Export Backup'),
+              subtitle: const Text(
+                'Save all data as a JSON file',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: _isLocalExporting
+                  ? null
+                  : () async {
+                      setState(() => _isLocalExporting = true);
+                      try {
+                        final isar =
+                            await ref.read(isarProvider.future);
+                        await _localBackupService.exportBackup(isar);
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Export failed: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isLocalExporting = false);
+                        }
+                      }
+                    },
+            ),
+            const Divider(height: 1, indent: 56),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: _isLocalImporting
+                    ? const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.download_rounded,
+                        color: Colors.orange, size: 20),
+              ),
+              title: const Text('Import Backup'),
+              subtitle: const Text(
+                'Restore from a JSON backup file',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: _isLocalImporting
+                  ? null
+                  : () async {
+                      final ok = await ConfirmDialog.show(
+                        context,
+                        title: 'Import Backup',
+                        message:
+                            'This will replace ALL current data with the backup file. This cannot be undone. Continue?',
+                        confirmText: 'Import',
+                        isDestructive: true,
+                        icon: Icons.warning_rounded,
+                      );
+                      if (ok != true) return;
+                      setState(() => _isLocalImporting = true);
+                      try {
+                        final isar =
+                            await ref.read(isarProvider.future);
+                        final success =
+                            await _localBackupService.importBackup(isar);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(success
+                                  ? 'Data restored successfully!'
+                                  : 'No file selected'),
+                              backgroundColor:
+                                  success ? Colors.green : null,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Import failed: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isLocalImporting = false);
+                        }
+                      }
+                    },
             ),
           ]),
           const SizedBox(height: 16),
