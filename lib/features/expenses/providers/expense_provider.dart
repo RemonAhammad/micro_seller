@@ -10,7 +10,7 @@ Stream<List<Expense>> expenses(ExpensesRef ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.expenses
       .where()
-      .sortByDateDesc()
+      .sortByCreatedAtDesc()
       .watch(fireImmediately: true);
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:isar/isar.dart';
 import '../../../data/models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -86,7 +87,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       final existing = _existing ?? widget.expense;
 
       final expense = Expense(
-        id: existing?.id ?? 0,
+        id: existing?.id ?? Isar.autoIncrement,
         title: _titleCtrl.text.trim(),
         amount: double.parse(_amountCtrl.text),
         category: _category,

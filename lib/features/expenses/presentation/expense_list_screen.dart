@@ -113,6 +113,7 @@ class ExpenseListScreen extends ConsumerWidget {
                     final expense = expenses[i];
                     return ExpenseCard(
                       expense: expense,
+                      onTap: () => context.push('/expenses/${expense.id}/edit'),
                       onDelete: () async {
                         final ok = await ConfirmDialog.show(
                           context,

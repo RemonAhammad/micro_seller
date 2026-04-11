@@ -7,7 +7,7 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **Flutter** (SDK >=3.5.0 <4.0.0)
 - **State Management:** Riverpod (`flutter_riverpod` + `riverpod_annotation` + code generation)
 - **Database:** Isar 3.1 (embedded NoSQL, local-first)
-- **Navigation:** GoRouter with `StatefulShellRoute` (10-branch sidebar navigation)
+- **Navigation:** GoRouter with `StatefulShellRoute` (12-branch sidebar navigation)
 - **Code Generation:** Freezed (immutable classes), JSON serializable, Isar schema generator
 - **PDF:** `pdf` + `printing` packages for receipt generation
 - **Cloud:** Google Sign-In + Google Drive API for backup/restore
@@ -457,6 +457,40 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (dashboard stats)
+
+## Build & Release
+
+### Android Release Config
+- **Application ID:** `com.blackshadowsoftwareltd.micro_seller`
+- **Keystore:** Shared upload keystore at `/Users/remon/Documents/upload-keystore.jks` (same as Fuel Cost app)
+- **Signing:** `android/key.properties` → read by `build.gradle.kts` → `signingConfigs.release`
+- **R8/ProGuard:** enabled (`isMinifyEnabled = true`, `isShrinkResources = true`) with rules in `android/app/proguard-rules.pro`
+- **Core library desugaring:** enabled for `flutter_local_notifications`
+- **NDK version:** `27.0.12077973`
+- **Subprojects fix:** Forces `compileSdk = 35` on older plugins (isar_flutter_libs) to resolve `android:attr/lStar not found`
+- **Launcher icon:** Generated via `flutter_launcher_icons` from `assets/icons/app_icon.png`, named `launcher_icon`
+- **Predictive back:** `android:enableOnBackInvokedCallback="true"` in manifest
+
+### iOS Config
+- **Minimum iOS version:** 16.0 (set in `ios/Podfile`)
+
+### Build Commands
+```bash
+# Debug
+flutter run
+
+# Release APK (for testing)
+flutter build apk --release
+
+# Release AAB (for Play Store upload)
+flutter build appbundle --release
+# Output: build/app/outputs/bundle/release/app-release.aab
+
+# Generate launcher icons (after placing icon in assets/icons/app_icon.png)
+dart run flutter_launcher_icons
+```
+
+See [RELEASE.md](RELEASE.md) for the full Play Store publishing guide.
 
 ## Platform Support
 
