@@ -64,6 +64,13 @@ android {
             )
         }
     }
+
+    // Support 16 KB memory page sizes (required by Google Play for Android 15+)
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
