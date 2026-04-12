@@ -2,7 +2,7 @@
 
 ## ✅ Already Configured
 
-- ✅ **Application ID:** `com.blackshadowsoftwareltd.micro_seller`
+- ✅ **Application ID:** `com.blackshadowsoftware.micro_seller`
 - ✅ **App name:** MicroSeller
 - ✅ **Release signing:** Uses shared keystore at `/Users/remon/Documents/upload-keystore.jks`
 - ✅ **key.properties** configured (same keystore as Fuel Cost app)
@@ -11,7 +11,7 @@
 - ✅ **Core library desugaring** enabled (for flutter_local_notifications)
 - ✅ **NDK version** pinned: `27.0.12077973`
 - ✅ **enableOnBackInvokedCallback** for predictive back gesture
-- ✅ **Kotlin package:** `com.blackshadowsoftwareltd.micro_seller`
+- ✅ **Kotlin package:** `com.blackshadowsoftware.micro_seller`
 - ✅ **Release build verified:** APK (86.9 MB) + AAB (62.3 MB) both build and sign correctly
 - ✅ **Signing verified:** CN=Rimon Ahammad
 

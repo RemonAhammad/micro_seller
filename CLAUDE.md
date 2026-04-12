@@ -461,7 +461,7 @@ Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (
 ## Build & Release
 
 ### Android Release Config
-- **Application ID:** `com.blackshadowsoftwareltd.micro_seller`
+- **Application ID:** `com.blackshadowsoftware.micro_seller`
 - **Keystore:** Shared upload keystore at `/Users/remon/Documents/upload-keystore.jks` (same as Fuel Cost app)
 - **Signing:** `android/key.properties` → read by `build.gradle.kts` → `signingConfigs.release`
 - **R8/ProGuard:** enabled (`isMinifyEnabled = true`, `isShrinkResources = true`) with rules in `android/app/proguard-rules.pro`

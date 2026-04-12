@@ -1,4 +1,4 @@
-package com.blackshadowsoftwareltd.micro_seller
+package com.blackshadowsoftware.micro_seller
 
 import io.flutter.embedding.android.FlutterActivity
 
