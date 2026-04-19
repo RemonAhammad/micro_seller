@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:isar/isar.dart';
 import '../../../data/models/customer.dart';
 import '../providers/customer_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -74,7 +75,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     try {
       final existing = _existing ?? widget.customer;
       final customer = Customer(
-        id: existing?.id ?? 0,
+        id: existing?.id ?? Isar.autoIncrement,
         name: _nameCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
         address: _addressCtrl.text.trim(),

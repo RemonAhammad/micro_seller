@@ -9,6 +9,9 @@ import '../../../data/models/expense.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
+import '../../../data/models/supplier.dart';
+import '../../../data/models/purchase.dart';
+import '../../../data/models/cash_register.dart';
 import '../../../data/services/drive_service.dart';
 import '../../../data/services/local_backup_service.dart';
 import '../../../data/services/isar_service.dart';
@@ -148,6 +151,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await isar.expenses.clear();
       await isar.stockMovements.clear();
       await isar.categories.clear();
+      await isar.suppliers.clear();
+      await isar.purchases.clear();
+      await isar.cashRegisters.clear();
     });
 
     if (mounted) {
