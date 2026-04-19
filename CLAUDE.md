@@ -16,7 +16,9 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **CSV:** `csv` + `file_picker` for import/export
 - **Localization:** flutter_localizations + custom delegate (English + Bengali)
 - **Persistence:** SharedPreferences for app settings
-- **Other:** image_picker, mobile_scanner v6 (QR), share_plus, url_launcher, intl
+- **Onboarding:** showcaseview v5 for first-time guided tour
+- **In-App Update:** in_app_update for Play Store auto-update prompts
+- **Other:** image_picker, mobile_scanner v6 (QR), share_plus, url_launcher, intl, package_info_plus
 
 ## Architecture
 
@@ -24,7 +26,7 @@ Feature-based modular structure with repository pattern:
 
 ```text
 lib/
-├── main.dart                     # Entry point, portrait-only, ProviderScope, notification init
+├── main.dart                     # Entry point, portrait-only, ProviderScope, currency init, notification init
 ├── app.dart                      # Root MaterialApp, theme (light/dark/system), GoRouter, Isar warmup, localization
 ├── core/
 │   ├── constants/
@@ -74,7 +76,10 @@ lib/
 │       ├── migration_service.dart  # One-time migration: flat variants → hierarchical VariantAttribute + VariantCombination
 │       ├── drive_service.dart       # Google Drive backup/restore (safe restore with rollback), max 5 backups, OAuth
 │       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 9 collection schemas
+│       ├── local_backup_service.dart # Export/import all 9 collections as JSON to/from local files
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
+│       ├── tutorial_service.dart    # SharedPreferences flags: splash_shown, tour_completed; resetAll()
+│       ├── update_service.dart      # In-app update via Play Store (immediate for critical, flexible for normal)
 │       └── pdf_service.dart         # Order receipt PDF (with tax line), WhatsApp text generation
 ├── features/
 │   ├── categories/
@@ -89,7 +94,7 @@ lib/
 │   │   └── providers/customer_provider.dart        # Cascading delete (unlinks orders)
 │   ├── dashboard/
 │   │   ├── presentation/
-│   │   │   ├── dashboard_screen.dart               # Responsive dashboard with date-range filter bar (Today/Week/Month/Custom)
+│   │   │   ├── dashboard_screen.dart               # Responsive dashboard with date-range filter bar, showcaseview tour (3 steps), in-app update check
 │   │   │   └── widgets/
 │   │   │       ├── stat_card.dart                  # Compact card with icon, value, label
 │   │   │       ├── sales_chart.dart                # SalesChart (bar), OrderStatusChart (pie), RevenueExpenseChart (line)
@@ -130,6 +135,8 @@ lib/
 │   ├── reports/
 │   │   ├── presentation/reports_screen.dart        # Date range picker, summary cards, top products chart, category sales, top customers
 │   │   └── providers/reports_provider.dart         # Parameterized by date range, aggregates revenue/profit/expenses/rankings
+│   ├── splash/
+│   │   └── presentation/splash_screen.dart         # Animated 3s splash: pulsing rings, logo scale+rotate, title slide, tagline fade, loader
 │   ├── returns/
 │   │   └── presentation/create_return_screen.dart  # Item selector with qty controls, reason chips, refund amount (capped at amountPaid), variant display
 │   ├── suppliers/
@@ -145,7 +152,7 @@ lib/
 │   │   ├── presentation/cash_register_screen.dart  # Open/close register, cash in/out, expected vs actual closing, history
 │   │   └── providers/cash_register_provider.dart   # openRegister, closeRegister, addCashIn, addCashOut
 │   └── settings/
-│       ├── presentation/settings_screen.dart       # Theme toggle, language picker, shop config, tax rate, Drive backup, clear data
+│       ├── presentation/settings_screen.dart       # Theme toggle, language picker, currency picker (38+ currencies), shop config, tax rate, local backup export/import, Drive backup, clear data
 │       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language
 └── shared/
     ├── screens/qr_scanner_screen.dart
@@ -396,12 +403,56 @@ Products support **multi-attribute variant combinations**:
 
 - **Call button** next to customer phone number — taps to open dialer
 
+### Splash Screen
+
+- **3-second animated sequence** with teal gradient background
+- Staggered reveals: pulsing rings → logo icon (scale + rotate with elastic overshoot) → "MicroSeller" title slides up → tagline pill fades in → circular loader appears
+- Auto-navigates to dashboard after animation completes
+- Uses GoRouter `go('/')` for clean transition
+
+### First-Time Showcase Tour
+
+- **3 highlight steps** on the dashboard (first-time users only):
+  1. Date Range Filter — explains filtering by Today/Week/Month/Custom
+  2. Business Stats — overview of revenue, profit, orders, expenses
+  3. Charts & Insights — visual breakdown of trends
+- Uses `ShowcaseView.register()` (showcaseview v5+ API)
+- Auto-starts 1.2s after dashboard loads (lets data settle)
+- One-time only — flagged via SharedPreferences (`tour_completed`)
+- Dismissing or completing marks it as done
+- `TutorialService.resetAll()` available for future "Replay Tour" in settings
+
+### In-App Update (Play Store)
+
+- Checks for Play Store updates when dashboard loads
+- **Immediate update** forced for critical versions (priority >= 4)
+- **Flexible update** for normal versions (downloads in background, prompts to install)
+- Silent failure — never disrupts user if check fails
+- Android-only (skips on other platforms)
+
+### Local Backup Export/Import
+
+- **Export:** Saves all 9 collections as a timestamped JSON file via share sheet
+- **Import:** Pick a `.json` file, confirm with destructive warning, replaces all data
+- Available in Settings → Local Backup section
+- Complements Google Drive backup (works offline, shareable via any app)
+
+### Currency System
+
+- **38+ currencies** with searchable picker in Settings (symbol, name, code)
+- `CurrencyFormatter.setSymbol()` called in `main.dart` before app renders (from SharedPreferences)
+- Also called on every currency change in settings
+- All screens use `CurrencyFormatter.format()` which reads the static symbol — no hardcoded currency symbols in runtime code
+- `CurrencyFormatter.symbol` getter for accessing the current symbol directly
+- PDF receipts and WhatsApp text also use the dynamic symbol
+
 ## Navigation (GoRouter)
 
-12 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
+Initial route is `/splash` (animated splash screen), then navigates to `/` (dashboard shell). 12 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
 
-| Branch | Path | Sub-routes |
+| Route | Path | Sub-routes |
 | ------ | ---- | ---------- |
+| Splash | `/splash` | — (initial route, auto-navigates to `/`) |
 | Dashboard | `/` | — |
 | Products | `/products` | `add`, `:id`, `:id/edit` |
 | Orders | `/orders` | `add`, `:id`, `:id/edit` |

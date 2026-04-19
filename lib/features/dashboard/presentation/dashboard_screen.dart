@@ -7,6 +7,7 @@ import '../../../features/orders/providers/order_provider.dart';
 import '../../../features/expenses/providers/expense_provider.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/expense.dart';
+import '../../../data/services/update_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -17,11 +18,24 @@ import 'widgets/sales_chart.dart';
 import 'widgets/low_stock_list.dart';
 import 'widgets/unpaid_orders_widget.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdate();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final unpaidOrdersAsync = ref.watch(unpaidOrdersProvider);
     final ordersAsync = ref.watch(ordersProvider);

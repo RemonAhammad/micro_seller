@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:showcaseview/showcaseview.dart';
+import '../../data/services/tutorial_service.dart';
 import '../../features/categories/presentation/category_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
@@ -24,12 +26,17 @@ import '../../features/suppliers/presentation/purchase_list_screen.dart';
 import '../../features/suppliers/presentation/purchase_form_screen.dart';
 import '../../features/suppliers/presentation/purchase_detail_screen.dart';
 import '../../features/cash_register/presentation/cash_register_screen.dart';
+import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../constants/app_strings.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (_, __) => const SplashScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) => _NavigationShell(navigationShell: navigationShell),
       branches: [
@@ -187,14 +194,68 @@ final appRouter = GoRouter(
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-class _NavigationShell extends StatelessWidget {
+class _NavigationShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   const _NavigationShell({required this.navigationShell});
 
+  @override
+  State<_NavigationShell> createState() => _NavigationShellState();
+}
+
+class _NavigationShellState extends State<_NavigationShell> {
+  // Showcase keys for sidebar items
+  final GlobalKey _categoriesKey = GlobalKey();
+  final GlobalKey _productsKey = GlobalKey();
+  final GlobalKey _ordersKey = GlobalKey();
+  final GlobalKey _returnsKey = GlobalKey();
+  int _tourStepsCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    ShowcaseView.register(
+      onComplete: (index, key) {
+        if (_tourStepsCount > 0 && index == _tourStepsCount - 1) {
+          TutorialService.setTourCompleted();
+        }
+      },
+      onDismiss: (key) {
+        TutorialService.setTourCompleted();
+      },
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeStartTour();
+    });
+  }
+
+  @override
+  void dispose() {
+    ShowcaseView.get().unregister();
+    super.dispose();
+  }
+
+  Future<void> _maybeStartTour() async {
+    final done = await TutorialService.isTourCompleted();
+    if (done || !mounted) return;
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
+
+    final keys = <GlobalKey>[
+      _categoriesKey,
+      _productsKey,
+      _ordersKey,
+      _returnsKey,
+    ];
+    _tourStepsCount = keys.length;
+    ShowcaseView.get().startShowCase(keys);
+  }
+
   void _navigate(int branch) {
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       branch,
-      initialLocation: branch == navigationShell.currentIndex,
+      initialLocation: branch == widget.navigationShell.currentIndex,
     );
   }
 
@@ -209,10 +270,16 @@ class _NavigationShell extends StatelessWidget {
           children: [
             _Sidebar(
               expanded: expanded,
-              currentIndex: navigationShell.currentIndex,
+              currentIndex: widget.navigationShell.currentIndex,
               onNavigate: _navigate,
+              showcaseKeys: {
+                9: _categoriesKey,   // Categories
+                1: _productsKey,     // Products
+                2: _ordersKey,       // Orders
+                3: _returnsKey,      // Returns
+              },
             ),
-            Expanded(child: navigationShell),
+            Expanded(child: widget.navigationShell),
           ],
         ),
       ),
@@ -226,11 +293,13 @@ class _Sidebar extends StatelessWidget {
   final bool expanded;
   final int currentIndex;
   final void Function(int) onNavigate;
+  final Map<int, GlobalKey> showcaseKeys;
 
   const _Sidebar({
     required this.expanded,
     required this.currentIndex,
     required this.onNavigate,
+    this.showcaseKeys = const {},
   });
 
   static const _items = <({IconData icon, IconData selectedIcon, String label})>[
@@ -293,6 +362,13 @@ class _Sidebar extends StatelessWidget {
     );
   }
 
+  static const _showcaseDescriptions = <int, ({String title, String desc})>{
+    9: (title: 'Categories', desc: 'Start here! Create product categories like Clothing, Electronics, Food, etc.'),
+    1: (title: 'Products', desc: 'Add your products with prices, stock, variants (sizes/colors), and images.'),
+    2: (title: 'Orders', desc: 'Create and manage customer orders. Track payment, delivery, and order status.'),
+    3: (title: 'Returns', desc: 'Handle product returns and refunds with a simple 3-step flow.'),
+  };
+
   Widget _tile(
     int index,
     ({IconData icon, IconData selectedIcon, String label}) item,
@@ -308,8 +384,10 @@ class _Sidebar extends StatelessWidget {
     final bg = selected ? selectedColor.withValues(alpha: 0.12) : Colors.transparent;
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
 
+    Widget tile;
+
     if (expanded) {
-      return Padding(
+      tile = Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Material(
           color: bg,
@@ -341,24 +419,38 @@ class _Sidebar extends StatelessWidget {
           ),
         ),
       );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Tooltip(
-        message: item.label,
-        preferBelow: false,
-        waitDuration: const Duration(milliseconds: 400),
-        child: IconButton(
-          onPressed: () => onNavigate(index),
-          icon: icon,
-          style: IconButton.styleFrom(
-            backgroundColor: bg,
-            shape: shape,
-            fixedSize: const Size(44, 44),
+    } else {
+      tile = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Tooltip(
+          message: item.label,
+          preferBelow: false,
+          waitDuration: const Duration(milliseconds: 400),
+          child: IconButton(
+            onPressed: () => onNavigate(index),
+            icon: icon,
+            style: IconButton.styleFrom(
+              backgroundColor: bg,
+              shape: shape,
+              fixedSize: const Size(44, 44),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    // Wrap with Showcase if this tile has a showcase key
+    final key = showcaseKeys[index];
+    if (key != null) {
+      final info = _showcaseDescriptions[index];
+      return Showcase(
+        key: key,
+        title: info?.title ?? item.label,
+        description: info?.desc ?? '',
+        child: tile,
+      );
+    }
+
+    return tile;
   }
 }
