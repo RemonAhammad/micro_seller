@@ -405,4 +405,15 @@ const translationsTh = <String, String>{
   'addFirstCustomer': 'เพิ่มลูกค้าเพื่อติดตามคำสั่งซื้อ',
   'noExpenses': 'ยังไม่มีค่าใช้จ่ายที่บันทึกไว้',
   'noStockMovements': 'ยังไม่มีความเคลื่อนไหวสต็อกที่บันทึกไว้',
+
+  // Misc
+  'error': 'ข้อผิดพลาด',
+  'pay': 'ชำระ',
+  'scanQrBarcode': 'สแกน QR / บาร์โค้ด',
+  'addSuppliersHint': 'เพิ่มผู้จัดจำหน่ายจากเมนูผู้จัดจำหน่าย',
+  'productsFoundToImport': 'พบ {count} รายการเพื่อนำเข้า',
+  'productsImported': 'นำเข้า {count} รายการแล้ว!',
+  'notEnoughStock': 'มีเพียง {stock} ในสต็อกสำหรับ {item}',
+  'rowsSkipped': 'ข้าม {count} แถว:',
+  'andMore': '...และอีก {count}',
 };

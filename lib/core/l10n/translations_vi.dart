@@ -405,4 +405,15 @@ const translationsVi = <String, String>{
   'addFirstCustomer': 'Thêm khách hàng để theo dõi đơn hàng của họ',
   'noExpenses': 'Chưa có chi phí nào được ghi nhận',
   'noStockMovements': 'Chưa có biến động kho nào được ghi nhận',
+
+  // Misc
+  'error': 'Lỗi',
+  'pay': 'Thanh toán',
+  'scanQrBarcode': 'Quét QR / Mã vạch',
+  'addSuppliersHint': 'Thêm nhà cung cấp từ menu Nhà cung cấp',
+  'productsFoundToImport': 'Tìm thấy {count} sản phẩm để nhập.',
+  'productsImported': 'Đã nhập {count} sản phẩm!',
+  'notEnoughStock': 'Chỉ còn {stock} trong kho cho {item}',
+  'rowsSkipped': 'Đã bỏ qua {count} hàng:',
+  'andMore': '...và thêm {count}',
 };

@@ -909,7 +909,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
               Expanded(
                 child: filtered.isEmpty
                     ? Center(
-                        child: Text('No products found',
+                        child: Text(AppStrings.of(context).noProductsFound,
                             style: TextStyle(
                                 color: cs.onSurface.withValues(alpha: 0.4))))
                     : ListView.separated(
@@ -938,7 +938,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                               fontWeight: FontWeight.w600,
                                               fontSize: 13)),
                                       Text(
-                                        'Stock: ${p.stockQty}  ·  Cost: ${CurrencyFormatter.format(p.costPrice)}',
+                                        '${AppStrings.of(context).stock}: ${p.stockQty}  ·  ${AppStrings.of(context).costPrice}: ${CurrencyFormatter.format(p.costPrice)}',
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: cs.onSurface
@@ -997,7 +997,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 16),
                                       ),
-                                      child: const Text('Add'),
+                                      child: Text(AppStrings.of(context).add),
                                     ),
                                   ),
                               ],

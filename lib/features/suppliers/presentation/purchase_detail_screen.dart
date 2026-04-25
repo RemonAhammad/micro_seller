@@ -277,22 +277,23 @@ class _Body extends ConsumerWidget {
   }
 
   void _showPayDialog(BuildContext context, WidgetRef ref, Purchase purchase) {
+    final s = AppStrings.of(context);
     final ctrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Record Payment'),
+        title: Text(s.recordPayment),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Due: ${CurrencyFormatter.format(purchase.balanceDue)}'),
+            Text('${s.due}: ${CurrencyFormatter.format(purchase.balanceDue)}'),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Payment Amount',
+              decoration: InputDecoration(
+                labelText: s.paymentAmount,
                 isDense: true,
               ),
             ),
@@ -301,7 +302,7 @@ class _Body extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           FilledButton(
             onPressed: () async {
               final amount = double.tryParse(ctrl.text);
@@ -311,7 +312,7 @@ class _Body extends ConsumerWidget {
                   .recordPurchasePayment(purchase.id, amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Pay'),
+            child: Text(s.pay),
           ),
         ],
       ),

@@ -405,4 +405,15 @@ const translationsPt = <String, String>{
   'addFirstCustomer': 'Adicione clientes para acompanhar seus pedidos',
   'noExpenses': 'Nenhuma despesa registrada',
   'noStockMovements': 'Nenhuma movimentação de estoque registrada',
+
+  // Misc
+  'error': 'Erro',
+  'pay': 'Pagar',
+  'scanQrBarcode': 'Escanear QR / Código de barras',
+  'addSuppliersHint': 'Adicione fornecedores no menu Fornecedores',
+  'productsFoundToImport': '{count} produto(s) encontrado(s) para importar.',
+  'productsImported': '{count} produtos importados!',
+  'notEnoughStock': 'Apenas {stock} em estoque para {item}',
+  'rowsSkipped': '{count} linha(s) ignorada(s):',
+  'andMore': '...e mais {count}',
 };

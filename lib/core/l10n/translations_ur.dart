@@ -405,4 +405,15 @@ const translationsUr = <String, String>{
   'addFirstCustomer': 'ان کے آرڈرز ٹریک کرنے کے لیے گاہک شامل کریں',
   'noExpenses': 'ابھی تک کوئی خرچ ریکارڈ نہیں ہوا',
   'noStockMovements': 'ابھی تک کوئی اسٹاک کی نقل و حرکت ریکارڈ نہیں ہوئی',
+
+  // Misc
+  'error': 'خرابی',
+  'pay': 'ادا کریں',
+  'scanQrBarcode': 'QR / بارکوڈ اسکین کریں',
+  'addSuppliersHint': 'سپلائرز مینو سے سپلائر شامل کریں',
+  'productsFoundToImport': 'درآمد کے لیے {count} پروڈکٹ ملے۔',
+  'productsImported': '{count} پروڈکٹس درآمد ہو گئیں!',
+  'notEnoughStock': '{item} کے لیے صرف {stock} اسٹاک میں ہے',
+  'rowsSkipped': '{count} قطار(یں) چھوڑ دی گئیں:',
+  'andMore': '...اور {count} مزید',
 };

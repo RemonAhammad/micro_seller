@@ -205,7 +205,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         if (newQty > stock) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Only $stock in stock for ${item.displayName}')),
+              SnackBar(
+                  content: Text(AppStrings.of(context)
+                      .notEnoughStock(stock, item.displayName))),
             );
           }
           return;

@@ -339,7 +339,7 @@ class _SupplierProductsSection extends ConsumerWidget {
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13)),
                                 if (p.sku.isNotEmpty)
-                                  Text('SKU: ${p.sku}',
+                                  Text('${AppStrings.of(context).sku}: ${p.sku}',
                                       style: TextStyle(
                                           fontSize: 11,
                                           color: cs.onSurface

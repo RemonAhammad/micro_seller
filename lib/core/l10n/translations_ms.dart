@@ -405,4 +405,15 @@ const translationsMs = <String, String>{
   'addFirstCustomer': 'Tambah pelanggan untuk menjejaki pesanan mereka',
   'noExpenses': 'Belum ada perbelanjaan direkodkan',
   'noStockMovements': 'Belum ada pergerakan stok direkodkan',
+
+  // Misc
+  'error': 'Ralat',
+  'pay': 'Bayar',
+  'scanQrBarcode': 'Imbas QR / Kod bar',
+  'addSuppliersHint': 'Tambah pembekal daripada menu Pembekal',
+  'productsFoundToImport': 'Dijumpai {count} produk untuk diimport.',
+  'productsImported': '{count} produk telah diimport!',
+  'notEnoughStock': 'Hanya {stock} dalam stok untuk {item}',
+  'rowsSkipped': '{count} baris dilangkau:',
+  'andMore': '...dan {count} lagi',
 };

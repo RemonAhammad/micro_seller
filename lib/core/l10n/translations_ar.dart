@@ -404,4 +404,15 @@ const translationsAr = <String, String>{
   'addFirstCustomer': 'أضف عملاء لتتبع طلباتهم',
   'noExpenses': 'لم يتم تسجيل مصروفات بعد',
   'noStockMovements': 'لم يتم تسجيل حركات مخزون',
+
+  // Misc
+  'error': 'خطأ',
+  'pay': 'دفع',
+  'scanQrBarcode': 'مسح QR / الباركود',
+  'addSuppliersHint': 'أضف الموردين من قائمة الموردين',
+  'productsFoundToImport': 'تم العثور على {count} منتج للاستيراد.',
+  'productsImported': 'تم استيراد {count} منتج!',
+  'notEnoughStock': 'يتوفر {stock} فقط من {item}',
+  'rowsSkipped': 'تم تخطي {count} صف:',
+  'andMore': '...و{count} آخر',
 };

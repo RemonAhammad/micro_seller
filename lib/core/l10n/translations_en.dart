@@ -405,4 +405,15 @@ const translationsEn = <String, String>{
   'addFirstCustomer': 'Add customers to track their orders',
   'noExpenses': 'No expenses recorded yet',
   'noStockMovements': 'No stock movements recorded',
+
+  // Misc
+  'error': 'Error',
+  'pay': 'Pay',
+  'scanQrBarcode': 'Scan QR / Barcode',
+  'addSuppliersHint': 'Add suppliers from the Suppliers menu',
+  'productsFoundToImport': 'Found {count} product(s) to import.',
+  'productsImported': '{count} products imported!',
+  'notEnoughStock': 'Only {stock} in stock for {item}',
+  'rowsSkipped': '{count} row(s) skipped:',
+  'andMore': '...and {count} more',
 };

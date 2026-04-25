@@ -957,8 +957,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               children: [
                                 Expanded(
                                   child: TextField(
-                                    decoration: const InputDecoration(
-                                      labelText: 'Stock',
+                                    decoration: InputDecoration(
+                                      labelText: s.stock,
                                       isDense: true,
                                     ),
                                     keyboardType: TextInputType.number,
@@ -971,8 +971,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
-                                    decoration: const InputDecoration(
-                                      labelText: 'Price +/-',
+                                    decoration: InputDecoration(
+                                      labelText: s.priceAdjustment,
                                       isDense: true,
                                     ),
                                     keyboardType:
@@ -988,8 +988,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
-                                    decoration: const InputDecoration(
-                                      labelText: 'SKU',
+                                    decoration: InputDecoration(
+                                      labelText: s.sku,
                                       isDense: true,
                                     ),
                                     controller: combo.skuCtrl,
@@ -1214,7 +1214,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                             style: TextStyle(
                                 color: cs.onSurface.withValues(alpha: 0.4))),
                         const SizedBox(height: 4),
-                        Text('Add suppliers from the Suppliers menu',
+                        Text(AppStrings.of(context).addSuppliersHint,
                             style: TextStyle(
                                 fontSize: 12,
                                 color: cs.onSurface.withValues(alpha: 0.4))),

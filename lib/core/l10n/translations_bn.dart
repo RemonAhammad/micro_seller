@@ -405,4 +405,15 @@ const translationsBn = <String, String>{
   'addFirstCustomer': 'অর্ডার ট্র্যাক করতে গ্রাহক যোগ করুন',
   'noExpenses': 'এখনো কোনো খরচ রেকর্ড করা হয়নি',
   'noStockMovements': 'কোনো স্টক মুভমেন্ট রেকর্ড করা হয়নি',
+
+  // Misc
+  'error': 'ত্রুটি',
+  'pay': 'পরিশোধ',
+  'scanQrBarcode': 'QR / বারকোড স্ক্যান করুন',
+  'addSuppliersHint': 'সরবরাহকারী মেনু থেকে যোগ করুন',
+  'productsFoundToImport': 'আমদানির জন্য {count} পণ্য পাওয়া গেছে।',
+  'productsImported': '{count} পণ্য আমদানি করা হয়েছে!',
+  'notEnoughStock': '{item} এর জন্য মাত্র {stock} স্টকে আছে',
+  'rowsSkipped': '{count} সারি বাদ দেওয়া হয়েছে:',
+  'andMore': '...এবং আরও {count}',
 };

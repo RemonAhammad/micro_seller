@@ -59,16 +59,18 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Found ${result.products.length} product(s) to import.'),
+            Text(AppStrings.of(context)
+                .productsFoundToImport(result.products.length)),
             if (result.errors.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('${result.errors.length} row(s) skipped:',
+              Text(AppStrings.of(context).rowsSkipped(result.errors.length),
                   style:
                       const TextStyle(color: Colors.orange, fontSize: 12)),
               ...result.errors.take(3).map((e) =>
                   Text(e, style: const TextStyle(fontSize: 11))),
               if (result.errors.length > 3)
-                Text('...and ${result.errors.length - 3} more',
+                Text(
+                    AppStrings.of(context).andMore(result.errors.length - 3),
                     style: const TextStyle(fontSize: 11)),
             ],
           ],
@@ -99,7 +101,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${result.products.length} products imported!'),
+          content: Text(
+              AppStrings.of(context).productsImported(result.products.length)),
           backgroundColor: Colors.green,
         ),
       );
@@ -263,7 +266,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/products/add'),

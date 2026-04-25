@@ -405,4 +405,15 @@ const translationsTr = <String, String>{
   'addFirstCustomer': 'Siparişlerini takip etmek için müşteri ekleyin',
   'noExpenses': 'Henüz gider kaydedilmedi',
   'noStockMovements': 'Henüz stok hareketi kaydedilmedi',
+
+  // Misc
+  'error': 'Hata',
+  'pay': 'Öde',
+  'scanQrBarcode': 'QR / Barkod Tara',
+  'addSuppliersHint': 'Tedarikçileri Tedarikçiler menüsünden ekleyin',
+  'productsFoundToImport': 'İçe aktarılacak {count} ürün bulundu.',
+  'productsImported': '{count} ürün içe aktarıldı!',
+  'notEnoughStock': '{item} için yalnızca {stock} stokta',
+  'rowsSkipped': '{count} satır atlandı:',
+  'andMore': '...ve {count} tane daha',
 };

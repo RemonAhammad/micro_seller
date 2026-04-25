@@ -463,4 +463,23 @@ class _L10nStrings {
   String get open => _l10n.tr('open');
   String get bkash => _l10n.tr('bkash');
   String get nagad => _l10n.tr('nagad');
+
+  // Misc
+  String get error => _l10n.tr('error');
+  String get pay => _l10n.tr('pay');
+  String get scanQrBarcode => _l10n.tr('scanQrBarcode');
+  String get addSuppliersHint => _l10n.tr('addSuppliersHint');
+
+  String productsFoundToImport(int count) =>
+      _l10n.tr('productsFoundToImport').replaceAll('{count}', '$count');
+  String productsImported(int count) =>
+      _l10n.tr('productsImported').replaceAll('{count}', '$count');
+  String notEnoughStock(int stock, String item) => _l10n
+      .tr('notEnoughStock')
+      .replaceAll('{stock}', '$stock')
+      .replaceAll('{item}', item);
+  String rowsSkipped(int count) =>
+      _l10n.tr('rowsSkipped').replaceAll('{count}', '$count');
+  String andMore(int count) =>
+      _l10n.tr('andMore').replaceAll('{count}', '$count');
 }
