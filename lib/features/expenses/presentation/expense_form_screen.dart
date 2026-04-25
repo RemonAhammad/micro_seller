@@ -116,7 +116,8 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Error: $e'), backgroundColor: Colors.red),
+              content: Text('${AppStrings.of(context).error}: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {

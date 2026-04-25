@@ -493,7 +493,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               title: Text(s.backupToDrive),
               subtitle: ref.read(settingsProvider.notifier).lastBackupTime != null
-                  ? Text('Last: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}')
+                  ? Text('${s.lastBackup}: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}')
                   : null,
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: _isBackingUp ? null : _backup,
@@ -779,9 +779,10 @@ class _BackupPickerSheet extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Text('Select Backup to Restore', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Text(AppStrings.of(context).selectBackupToRestore,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         ),
         ListView.builder(
           shrinkWrap: true,

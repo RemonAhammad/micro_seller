@@ -124,7 +124,8 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
     );
   }

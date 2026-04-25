@@ -88,7 +88,8 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/customers/add'),

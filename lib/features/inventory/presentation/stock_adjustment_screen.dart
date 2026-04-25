@@ -122,7 +122,9 @@ class _StockAdjustmentScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('${AppStrings.of(context).error}: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -183,7 +185,7 @@ class _StockAdjustmentScreenState
                                 Text(product.name,
                                     style: theme.textTheme.titleMedium
                                         ?.copyWith(fontWeight: FontWeight.w700)),
-                                Text('SKU: ${product.sku}',
+                                Text('${AppStrings.of(context).sku}: ${product.sku}',
                                     style: theme.textTheme.bodySmall),
                               ],
                             ),

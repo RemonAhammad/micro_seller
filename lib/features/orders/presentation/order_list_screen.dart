@@ -133,7 +133,8 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/orders/add'),
