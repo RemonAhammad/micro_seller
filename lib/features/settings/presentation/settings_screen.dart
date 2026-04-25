@@ -17,6 +17,7 @@ import '../../../data/services/local_backup_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 
@@ -198,21 +199,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               title: const Text('Language'),
               subtitle: Text(
-                ref.read(settingsProvider.notifier).language == 'bn' ? 'বাংলা' : 'English',
+                AppLocalizations.languageNames[ref.read(settingsProvider.notifier).language] ?? 'English',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
-              trailing: DropdownButton<String>(
-                value: ref.read(settingsProvider.notifier).language,
-                underline: const SizedBox.shrink(),
-                items: const [
-                  DropdownMenuItem(value: 'en', child: Text('English')),
-                  DropdownMenuItem(value: 'bn', child: Text('বাংলা')),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    ref.read(settingsProvider.notifier).updateLanguage(val);
-                  }
-                },
-              ),
+              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+              onTap: () async {
+                final currentLang = ref.read(settingsProvider.notifier).language;
+                final selected = await showModalBottomSheet<String>(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  builder: (_) => _LanguagePickerSheet(currentCode: currentLang),
+                );
+                if (selected != null) {
+                  ref.read(settingsProvider.notifier).updateLanguage(selected);
+                  setState(() {});
+                }
+              },
             ),
           ]),
           const SizedBox(height: 16),
@@ -958,6 +963,96 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                         color: cs.onSurface.withValues(alpha: 0.5),
                       )),
                   trailing: isSelected ? Icon(Icons.check_circle, color: cs.primary, size: 20) : null,
+                  dense: true,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Language Picker Sheet ──────────────────────────────────────────────────
+
+class _LanguagePickerSheet extends StatelessWidget {
+  final String currentCode;
+
+  const _LanguagePickerSheet({required this.currentCode});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final languages = AppLocalizations.languageNames.entries.toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.85,
+      minChildSize: 0.3,
+      expand: false,
+      builder: (ctx, ctrl) => Column(
+        children: [
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: cs.outline.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text('Select Language',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.separated(
+              controller: ctrl,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: languages.length,
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
+              itemBuilder: (_, i) {
+                final entry = languages[i];
+                final isSelected = entry.key == currentCode;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  onTap: () => Navigator.pop(ctx, entry.key),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? cs.primary.withValues(alpha: 0.15)
+                          : cs.onSurface.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        entry.key.toUpperCase(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: isSelected ? cs.primary : cs.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                  title: Text(entry.value,
+                      style: TextStyle(
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontSize: 15,
+                        color: isSelected ? cs.primary : null,
+                      )),
+                  trailing: isSelected
+                      ? Icon(Icons.check_circle, color: cs.primary, size: 20)
+                      : null,
                   dense: true,
                 );
               },
