@@ -108,12 +108,13 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final productsAsync = ref.watch(productsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.products),
+        title: Text(s.products),
         actions: [
           IconButton(
             icon: const Icon(Icons.file_upload_outlined),
@@ -225,9 +226,9 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             final isFiltered = _query.isNotEmpty || _selectedCategory != null;
             return EmptyState(
               icon: Icons.inventory_2_rounded,
-              title: isFiltered ? 'No products found' : AppStrings.noDataFound,
-              subtitle: isFiltered ? null : AppStrings.addFirstProduct,
-              actionLabel: isFiltered ? null : AppStrings.addProduct,
+              title: isFiltered ? 'No products found' : s.noDataFound,
+              subtitle: isFiltered ? null : s.addFirstProduct,
+              actionLabel: isFiltered ? null : s.addProduct,
               onAction: isFiltered ? null : () => context.push('/products/add'),
             );
           }
@@ -266,7 +267,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/products/add'),
-        tooltip: AppStrings.addProduct,
+        tooltip: s.addProduct,
         child: const Icon(Icons.add),
       ),
     );

@@ -36,6 +36,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final statsAsync = ref.watch(dashboardStatsProvider);
     final unpaidOrdersAsync = ref.watch(unpaidOrdersProvider);
     final ordersAsync = ref.watch(ordersProvider);
@@ -138,7 +139,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   if (stats.lowStockProducts.isNotEmpty)
                                     Expanded(
                                       child: _SectionCard(
-                                        title: AppStrings.lowStockItems,
+                                        title: s.lowStockItems,
                                         icon: Icons.inventory_2_rounded,
                                         iconColor: AppColors.statusPending,
                                         action: TextButton(
@@ -157,7 +158,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   if (unpaidOrders.isNotEmpty)
                                     Expanded(
                                       child: _SectionCard(
-                                        title: AppStrings.unpaidAmount,
+                                        title: s.unpaidAmount,
                                         icon: Icons.payment_rounded,
                                         iconColor: AppColors.paymentUnpaid,
                                         action: TextButton(
@@ -181,7 +182,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   padding: const EdgeInsets.fromLTRB(
                                       16, 0, 16, 12),
                                   child: _SectionCard(
-                                    title: AppStrings.lowStockItems,
+                                    title: s.lowStockItems,
                                     icon: Icons.inventory_2_rounded,
                                     iconColor: AppColors.statusPending,
                                     action: TextButton(
@@ -198,7 +199,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   padding: const EdgeInsets.fromLTRB(
                                       16, 0, 16, 24),
                                   child: _SectionCard(
-                                    title: AppStrings.unpaidAmount,
+                                    title: s.unpaidAmount,
                                     icon: Icons.payment_rounded,
                                     iconColor: AppColors.paymentUnpaid,
                                     action: TextButton(
@@ -380,6 +381,7 @@ class _DashboardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
@@ -397,7 +399,7 @@ class _DashboardBody extends StatelessWidget {
                   Expanded(
                     flex: 3,
                     child: _SectionCard(
-                      title: AppStrings.weeklySales,
+                      title: s.weeklySales,
                       icon: Icons.bar_chart_rounded,
                       iconColor: AppColors.primary,
                       child: SalesChart(weeklySales: stats.weeklySales),
@@ -422,7 +424,7 @@ class _DashboardBody extends StatelessWidget {
           else ...[
             if (stats.weeklySales.isNotEmpty)
               _SectionCard(
-                title: AppStrings.weeklySales,
+                title: s.weeklySales,
                 icon: Icons.bar_chart_rounded,
                 iconColor: AppColors.primary,
                 child: SalesChart(weeklySales: stats.weeklySales),
@@ -470,15 +472,16 @@ class _DashboardBody extends StatelessWidget {
   }
 
   Widget _buildStatCards(BuildContext context) {
+    final s = AppStrings.of(context);
     final items = [
       (
-        label: AppStrings.monthRevenue,
+        label: s.monthRevenue,
         value: CurrencyFormatter.formatCompact(stats.thisMonthRevenue),
         icon: Icons.trending_up_rounded,
         color: AppColors.primary,
       ),
       (
-        label: AppStrings.monthProfit,
+        label: s.monthProfit,
         value: CurrencyFormatter.formatCompact(stats.thisMonthProfit),
         icon: Icons.account_balance_wallet_rounded,
         color: const Color(0xFF42A5F5),
@@ -490,19 +493,19 @@ class _DashboardBody extends StatelessWidget {
         color: AppColors.statusCancelled,
       ),
       (
-        label: AppStrings.pendingOrders,
+        label: s.pendingOrders,
         value: '${stats.pendingOrders}',
         icon: Icons.hourglass_top_rounded,
         color: AppColors.statusPending,
       ),
       (
-        label: AppStrings.unpaidAmount,
+        label: s.unpaidAmount,
         value: CurrencyFormatter.formatCompact(stats.unpaidTotal),
         icon: Icons.money_off_rounded,
         color: AppColors.paymentUnpaid,
       ),
       (
-        label: AppStrings.lowStockItems,
+        label: s.lowStockItems,
         value: '${stats.lowStockProducts.length}',
         icon: Icons.inventory_2_rounded,
         color: AppColors.statusPending,

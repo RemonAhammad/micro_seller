@@ -58,7 +58,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ref.read(settingsProvider.notifier).updateLastBackupTime(DateTime.now());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.backupSuccess), backgroundColor: Colors.green),
+          SnackBar(content: Text(AppStrings.of(context).backupSuccess), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
@@ -114,7 +114,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.restoreSuccess), backgroundColor: Colors.green),
+          SnackBar(content: Text(AppStrings.of(context).restoreSuccess), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
@@ -137,7 +137,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final ok = await ConfirmDialog.show(
       context,
       title: 'Clear All Data',
-      message: AppStrings.clearDataConfirmation,
+      message: AppStrings.of(context).clearDataConfirmation,
       confirmText: 'Clear Everything',
       isDestructive: true,
       icon: Icons.warning_rounded,
@@ -166,12 +166,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     ref.watch(settingsProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.settings),
+        title: Text(s.settings),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -227,7 +228,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsCard(children: [
             _EditableTile(
               icon: Icons.store_rounded,
-              label: AppStrings.shopName,
+              label: s.shopName,
               value: ref.read(settingsProvider.notifier).shopName,
               onEdit: (val) => ref.read(settingsProvider.notifier).updateShopName(val),
             ),
@@ -242,7 +243,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 child: const Icon(Icons.attach_money_rounded, color: AppColors.primary, size: 20),
               ),
-              title: const Text(AppStrings.currencySymbol),
+              title: Text(s.currencySymbol),
               subtitle: Text(
                 ref.read(settingsProvider.notifier).currencySymbol,
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
@@ -268,7 +269,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const Divider(height: 1),
             _EditableTile(
               icon: Icons.inventory_2_rounded,
-              label: AppStrings.defaultLowStockThreshold,
+              label: s.defaultLowStockThreshold,
               value: ref.read(settingsProvider.notifier).lowStockThreshold.toString(),
               onEdit: (val) {
                 final n = int.tryParse(val);
@@ -455,7 +456,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 child: const Icon(Icons.account_circle_rounded, color: AppColors.primary),
               ),
-              title: const Text(AppStrings.googleAccount),
+              title: Text(s.googleAccount),
               subtitle: Text(
                 _googleAccountEmail ?? 'Not signed in',
                 style: TextStyle(
@@ -472,7 +473,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     setState(() => _googleAccountEmail = account?.email);
                   }
                 },
-                child: Text(_googleAccountEmail != null ? AppStrings.signOut : AppStrings.signIn),
+                child: Text(_googleAccountEmail != null ? s.signOut : s.signIn),
               ),
             ),
             const Divider(height: 1),
@@ -491,7 +492,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       )
                     : const Icon(Icons.cloud_upload_rounded, color: Colors.blue),
               ),
-              title: const Text(AppStrings.backupToDrive),
+              title: Text(s.backupToDrive),
               subtitle: ref.read(settingsProvider.notifier).lastBackupTime != null
                   ? Text('Last: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}')
                   : null,
@@ -514,7 +515,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       )
                     : const Icon(Icons.cloud_download_rounded, color: Colors.green),
               ),
-              title: const Text(AppStrings.restoreFromDrive),
+              title: Text(s.restoreFromDrive),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: _isRestoring ? null : _restore,
             ),
@@ -534,7 +535,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 child: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
               ),
-              title: const Text(AppStrings.appVersion),
+              title: Text(s.appVersion),
               trailing: Text(
                 '1.0.0',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -558,9 +559,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 child: const Icon(Icons.delete_forever_rounded, color: Colors.red),
               ),
-              title: const Text(
-                AppStrings.clearAllData,
-                style: TextStyle(color: Colors.red),
+              title: Text(
+                s.clearAllData,
+                style: const TextStyle(color: Colors.red),
               ),
               onTap: _clearData,
               trailing: const Icon(Icons.chevron_right_rounded, color: Colors.red),

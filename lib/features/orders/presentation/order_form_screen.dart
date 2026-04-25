@@ -346,11 +346,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit Order' : AppStrings.addOrder)),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit Order' : s.addOrder)),
       body: Column(
         children: [
           Expanded(
@@ -379,7 +380,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
                 // ── Notes ──
                 AppTextField(
-                  label: AppStrings.notes,
+                  label: s.notes,
                   controller: _notesCtrl,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,

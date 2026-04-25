@@ -126,12 +126,13 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final isEdit = widget.expense != null || widget.expenseId != null;
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Expense' : AppStrings.addExpense),
+        title: Text(isEdit ? 'Edit Expense' : s.addExpense),
       ),
       body: Form(
         key: _formKey,
@@ -141,7 +142,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppTextField(
-                label: AppStrings.expenseTitle,
+                label: s.expenseTitle,
                 controller: _titleCtrl,
                 textCapitalization: TextCapitalization.sentences,
                 validator: (v) => Validators.required(v, 'Title'),
@@ -149,7 +150,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: AppStrings.amount,
+                label: s.amount,
                 controller: _amountCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -258,7 +259,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: AppStrings.notes,
+                label: s.notes,
                 controller: _notesCtrl,
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,

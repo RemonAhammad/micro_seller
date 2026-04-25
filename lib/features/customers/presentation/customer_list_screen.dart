@@ -29,11 +29,12 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final customersAsync = ref.watch(customersProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.customers),
+        title: Text(s.customers),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),
           child: Padding(
@@ -72,9 +73,9 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           if (customers.isEmpty) {
             return EmptyState(
               icon: Icons.people_rounded,
-              title: _query.isNotEmpty ? 'No customers found' : AppStrings.noDataFound,
-              subtitle: _query.isEmpty ? AppStrings.addFirstCustomer : null,
-              actionLabel: _query.isEmpty ? AppStrings.addCustomer : null,
+              title: _query.isNotEmpty ? 'No customers found' : s.noDataFound,
+              subtitle: _query.isEmpty ? s.addFirstCustomer : null,
+              actionLabel: _query.isEmpty ? s.addCustomer : null,
               onAction: _query.isEmpty ? () => context.push('/customers/add') : null,
             );
           }
@@ -91,7 +92,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/customers/add'),
-        tooltip: AppStrings.addCustomer,
+        tooltip: s.addCustomer,
         child: const Icon(Icons.add),
       ),
     );

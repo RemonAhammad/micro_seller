@@ -59,6 +59,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final movementsAsync = ref.watch(stockMovementsProvider);
     final productsAsync = ref.watch(productsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
@@ -67,7 +68,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.inventory),
+        title: Text(s.inventory),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -83,10 +84,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           productsAsync.when(
             data: (products) {
               if (products.isEmpty) {
-                return const EmptyState(
+                return EmptyState(
                   icon: Icons.inventory_2_rounded,
-                  title: AppStrings.noDataFound,
-                  subtitle: AppStrings.addFirstProduct,
+                  title: s.noDataFound,
+                  subtitle: s.addFirstProduct,
                 );
               }
 
@@ -292,9 +293,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           movementsAsync.when(
             data: (movements) {
               if (movements.isEmpty) {
-                return const EmptyState(
+                return EmptyState(
                   icon: Icons.swap_vert_rounded,
-                  title: AppStrings.noStockMovements,
+                  title: s.noStockMovements,
                 );
               }
               return ListView.builder(

@@ -15,11 +15,12 @@ class ExpenseListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final expensesAsync = ref.watch(expensesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.expenses),
+        title: Text(s.expenses),
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
@@ -37,9 +38,9 @@ class ExpenseListScreen extends ConsumerWidget {
           if (expenses.isEmpty) {
             return EmptyState(
               icon: Icons.account_balance_wallet_rounded,
-              title: AppStrings.noExpenses,
+              title: s.noExpenses,
               subtitle: 'Track your business expenses here',
-              actionLabel: AppStrings.addExpense,
+              actionLabel: s.addExpense,
               onAction: () => context.push('/expenses/add'),
             );
           }
@@ -141,7 +142,7 @@ class ExpenseListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/expenses/add'),
-        tooltip: AppStrings.addExpense,
+        tooltip: s.addExpense,
         child: const Icon(Icons.add),
       ),
     );

@@ -446,6 +446,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final isEdit = widget.product != null || widget.productId != null;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
@@ -453,7 +454,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? AppStrings.editProduct : AppStrings.addProduct),
+        title: Text(isEdit ? s.editProduct : s.addProduct),
       ),
       body: Form(
         key: _formKey,
@@ -514,7 +515,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const _SectionLabel('Basic Info'),
               const SizedBox(height: 12),
               AppTextField(
-                label: AppStrings.productName,
+                label: s.productName,
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
                 validator: (v) => Validators.required(v, 'Product name'),
@@ -524,7 +525,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
               // ── Category with chips ────────────────────────────────────────
               AppTextField(
-                label: AppStrings.category,
+                label: s.category,
                 controller: _categoryCtrl,
                 textCapitalization: TextCapitalization.words,
                 validator: (v) => Validators.required(v, 'Category'),
@@ -620,7 +621,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const SizedBox(height: 12),
 
               AppTextField(
-                label: AppStrings.productSku,
+                label: s.sku,
                 controller: _skuCtrl,
                 textCapitalization: TextCapitalization.characters,
                 validator: Validators.sku,
@@ -642,7 +643,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const SizedBox(height: 12),
 
               AppTextField(
-                label: AppStrings.productDescription,
+                label: s.description,
                 controller: _descCtrl,
                 maxLines: 3,
                 textCapitalization: TextCapitalization.sentences,
@@ -656,7 +657,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 children: [
                   Expanded(
                     child: AppTextField(
-                      label: AppStrings.sellingPrice,
+                      label: s.sellingPrice,
                       controller: _sellingPriceCtrl,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -671,7 +672,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: AppTextField(
-                      label: AppStrings.costPrice,
+                      label: s.costPrice,
                       controller: _costPriceCtrl,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -694,7 +695,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 children: [
                   Expanded(
                     child: AppTextField(
-                      label: AppStrings.stockQuantity,
+                      label: s.stockQuantity,
                       controller: _stockCtrl,
                       keyboardType: TextInputType.number,
                       inputFormatters: [
@@ -708,7 +709,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: AppTextField(
-                      label: AppStrings.lowStockThreshold,
+                      label: s.lowStockThreshold,
                       controller: _thresholdCtrl,
                       keyboardType: TextInputType.number,
                       inputFormatters: [

@@ -132,12 +132,13 @@ class _StockAdjustmentScreenState
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final isarAsync = ref.watch(isarProvider);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.stockAdjustment)),
+      appBar: AppBar(title: Text(s.stockAdjustment)),
       body: isarAsync.when(
         data: (isar) => StreamBuilder<Product?>(
           stream: isar.products
@@ -408,7 +409,7 @@ class _StockAdjustmentScreenState
                   ],
 
                   AppTextField(
-                    label: AppStrings.adjustQty,
+                    label: s.adjustQty,
                     controller: _qtyCtrl,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -420,7 +421,7 @@ class _StockAdjustmentScreenState
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
-                    label: AppStrings.reason,
+                    label: s.reason,
                     controller: _reasonCtrl,
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 2,

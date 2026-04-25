@@ -1,10 +1,19 @@
+import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
+
 class AppStrings {
   AppStrings._();
 
-  static const appName = 'SellerBook';
-  static const tagline = 'Your smart seller companion';
+  static const appName = 'MicroSeller';
+  static const tagline = 'Your Complete Business Manager';
 
-  // Navigation
+  /// Get a localized AppStrings instance.
+  /// Usage: `AppStrings.of(context).products`
+  /// Or keep using the static constants for non-translated strings.
+  static _L10nStrings of(BuildContext context) =>
+      _L10nStrings(AppLocalizations.of(context));
+
+  // Static fallbacks (used where context is not available, e.g. router)
   static const navDashboard = 'Dashboard';
   static const navProducts = 'Products';
   static const navOrders = 'Orders';
@@ -14,7 +23,11 @@ class AppStrings {
   static const navExpenses = 'Expenses';
   static const navSettings = 'Settings';
 
-  // Dashboard
+  // Non-translatable constants
+  static const exportCsv = 'Export CSV';
+  static const importCsv = 'Import CSV';
+
+  // ── Legacy static accessors (used by sidebar, kept as-is) ──
   static const todayRevenue = "Today's Revenue";
   static const monthRevenue = 'Month Revenue';
   static const monthProfit = 'Month Profit';
@@ -23,8 +36,6 @@ class AppStrings {
   static const unpaidAmount = 'Unpaid Amount';
   static const lowStockItems = 'Low Stock Items';
   static const weeklySales = 'Weekly Sales';
-
-  // Products
   static const products = 'Products';
   static const addProduct = 'Add Product';
   static const editProduct = 'Edit Product';
@@ -40,8 +51,6 @@ class AppStrings {
   static const inStock = 'In Stock';
   static const lowStock = 'Low Stock';
   static const outOfStock = 'Out of Stock';
-
-  // Orders
   static const orders = 'Orders';
   static const addOrder = 'New Order';
   static const orderNumber = 'Order #';
@@ -53,20 +62,14 @@ class AppStrings {
   static const total = 'Total';
   static const amountPaid = 'Amount Paid';
   static const notes = 'Notes';
-
-  // Order status
   static const pending = 'Pending';
   static const confirmed = 'Confirmed';
   static const shipped = 'Shipped';
   static const completed = 'Completed';
   static const cancelled = 'Cancelled';
-
-  // Payment status
   static const unpaid = 'Unpaid';
   static const partial = 'Partial';
   static const paid = 'Paid';
-
-  // Customers
   static const customers = 'Customers';
   static const addCustomer = 'Add Customer';
   static const editCustomer = 'Edit Customer';
@@ -75,23 +78,17 @@ class AppStrings {
   static const address = 'Address';
   static const totalSpent = 'Total Spent';
   static const outstandingBalance = 'Outstanding Balance';
-
-  // Inventory
   static const inventory = 'Inventory';
   static const stockAdjustment = 'Stock Adjustment';
   static const stockMovements = 'Stock Movements';
   static const adjustQty = 'Adjust Quantity';
   static const reason = 'Reason';
-
-  // Expenses
   static const expenses = 'Expenses';
   static const addExpense = 'Add Expense';
   static const expenseTitle = 'Expense Title';
   static const amount = 'Amount';
   static const expenseCategory = 'Category';
   static const date = 'Date';
-
-  // Settings
   static const settings = 'Settings';
   static const shopName = 'Shop Name';
   static const currencySymbol = 'Currency Symbol';
@@ -104,8 +101,6 @@ class AppStrings {
   static const clearAllData = 'Clear All Data';
   static const signIn = 'Sign In';
   static const signOut = 'Sign Out';
-
-  // Actions
   static const save = 'Save';
   static const cancel = 'Cancel';
   static const delete = 'Delete';
@@ -119,8 +114,6 @@ class AppStrings {
   static const share = 'Share';
   static const print = 'Print';
   static const markAsPaid = 'Mark as Paid';
-
-  // Messages
   static const deleteConfirmation = 'Are you sure you want to delete this?';
   static const clearDataConfirmation =
       'This will permanently delete all your data. This action cannot be undone. Are you sure?';
@@ -135,4 +128,155 @@ class AppStrings {
   static const addFirstCustomer = 'Add customers to track their orders';
   static const noExpenses = 'No expenses recorded yet';
   static const noStockMovements = 'No stock movements recorded';
+}
+
+/// Localized strings — wraps AppLocalizations.tr() for each key
+class _L10nStrings {
+  final AppLocalizations _l10n;
+  _L10nStrings(this._l10n);
+
+  String get dashboard => _l10n.tr('dashboard');
+  String get products => _l10n.tr('products');
+  String get orders => _l10n.tr('orders');
+  String get customers => _l10n.tr('customers');
+  String get inventory => _l10n.tr('inventory');
+  String get expenses => _l10n.tr('expenses');
+  String get categories => _l10n.tr('categories');
+  String get settings => _l10n.tr('settings');
+  String get reports => _l10n.tr('reports');
+  String get todayRevenue => _l10n.tr('todayRevenue');
+  String get monthRevenue => _l10n.tr('monthRevenue');
+  String get monthProfit => _l10n.tr('monthProfit');
+  String get totalOrders => _l10n.tr('totalOrders');
+  String get pendingOrders => _l10n.tr('pendingOrders');
+  String get unpaidAmount => _l10n.tr('unpaidAmount');
+  String get lowStockItems => _l10n.tr('lowStockItems');
+  String get weeklySales => _l10n.tr('weeklySales');
+  String get goodMorning => _l10n.tr('goodMorning');
+  String get goodAfternoon => _l10n.tr('goodAfternoon');
+  String get goodEvening => _l10n.tr('goodEvening');
+  String get addProduct => _l10n.tr('addProduct');
+  String get editProduct => _l10n.tr('editProduct');
+  String get productName => _l10n.tr('productName');
+  String get sku => _l10n.tr('sku');
+  String get description => _l10n.tr('description');
+  String get sellingPrice => _l10n.tr('sellingPrice');
+  String get costPrice => _l10n.tr('costPrice');
+  String get stockQuantity => _l10n.tr('stockQuantity');
+  String get lowStockThreshold => _l10n.tr('lowStockThreshold');
+  String get category => _l10n.tr('category');
+  String get profitMargin => _l10n.tr('profitMargin');
+  String get inStock => _l10n.tr('inStock');
+  String get lowStock => _l10n.tr('lowStock');
+  String get outOfStock => _l10n.tr('outOfStock');
+  String get addOrder => _l10n.tr('addOrder');
+  String get editOrder => _l10n.tr('editOrder');
+  String get orderNumber => _l10n.tr('orderNumber');
+  String get customer => _l10n.tr('customer');
+  String get orderItems => _l10n.tr('orderItems');
+  String get subtotal => _l10n.tr('subtotal');
+  String get discount => _l10n.tr('discount');
+  String get deliveryFee => _l10n.tr('deliveryFee');
+  String get tax => _l10n.tr('tax');
+  String get total => _l10n.tr('total');
+  String get amountPaid => _l10n.tr('amountPaid');
+  String get notes => _l10n.tr('notes');
+  String get paymentMethod => _l10n.tr('paymentMethod');
+  String get deliveryAddress => _l10n.tr('deliveryAddress');
+  String get estimatedDelivery => _l10n.tr('estimatedDelivery');
+  String get returnOrder => _l10n.tr('returnOrder');
+  String get pending => _l10n.tr('pending');
+  String get confirmed => _l10n.tr('confirmed');
+  String get shipped => _l10n.tr('shipped');
+  String get completed => _l10n.tr('completed');
+  String get cancelled => _l10n.tr('cancelled');
+  String get unpaid => _l10n.tr('unpaid');
+  String get partial => _l10n.tr('partial');
+  String get paid => _l10n.tr('paid');
+  String get cash => _l10n.tr('cash');
+  String get card => _l10n.tr('card');
+  String get mfs => _l10n.tr('mfs');
+  String get bank => _l10n.tr('bank');
+  String get other => _l10n.tr('other');
+  String get addCustomer => _l10n.tr('addCustomer');
+  String get editCustomer => _l10n.tr('editCustomer');
+  String get customerName => _l10n.tr('customerName');
+  String get phone => _l10n.tr('phone');
+  String get address => _l10n.tr('address');
+  String get totalSpent => _l10n.tr('totalSpent');
+  String get outstandingBalance => _l10n.tr('outstandingBalance');
+  String get purchaseHistory => _l10n.tr('purchaseHistory');
+  String get stockAdjustment => _l10n.tr('stockAdjustment');
+  String get stockMovements => _l10n.tr('stockMovements');
+  String get adjustQty => _l10n.tr('adjustQty');
+  String get reason => _l10n.tr('reason');
+  String get addExpense => _l10n.tr('addExpense');
+  String get expenseTitle => _l10n.tr('expenseTitle');
+  String get amount => _l10n.tr('amount');
+  String get expenseCategory => _l10n.tr('expenseCategory');
+  String get date => _l10n.tr('date');
+  String get shopName => _l10n.tr('shopName');
+  String get currencySymbol => _l10n.tr('currencySymbol');
+  String get taxRate => _l10n.tr('taxRate');
+  String get theme => _l10n.tr('theme');
+  String get light => _l10n.tr('light');
+  String get dark => _l10n.tr('dark');
+  String get system => _l10n.tr('system');
+  String get language => _l10n.tr('language');
+  String get googleAccount => _l10n.tr('googleAccount');
+  String get backupToDrive => _l10n.tr('backupToDrive');
+  String get restoreFromDrive => _l10n.tr('restoreFromDrive');
+  String get lastBackup => _l10n.tr('lastBackup');
+  String get appVersion => _l10n.tr('appVersion');
+  String get defaultLowStockThreshold => _l10n.tr('defaultLowStockThreshold');
+  String get clearAllData => _l10n.tr('clearAllData');
+  String get signIn => _l10n.tr('signIn');
+  String get signOut => _l10n.tr('signOut');
+  String get save => _l10n.tr('save');
+  String get cancel => _l10n.tr('cancel');
+  String get delete => _l10n.tr('delete');
+  String get edit => _l10n.tr('edit');
+  String get confirm => _l10n.tr('confirm');
+  String get yes => _l10n.tr('yes');
+  String get no => _l10n.tr('no');
+  String get add => _l10n.tr('add');
+  String get search => _l10n.tr('search');
+  String get filter => _l10n.tr('filter');
+  String get share => _l10n.tr('share');
+  String get print => _l10n.tr('print');
+  String get markAsPaid => _l10n.tr('markAsPaid');
+  String get exportCsv => _l10n.tr('exportCsv');
+  String get importCsv => _l10n.tr('importCsv');
+  String get deleteConfirmation => _l10n.tr('deleteConfirmation');
+  String get clearDataConfirmation => _l10n.tr('clearDataConfirmation');
+  String get savedSuccessfully => _l10n.tr('savedSuccessfully');
+  String get deletedSuccessfully => _l10n.tr('deletedSuccessfully');
+  String get errorOccurred => _l10n.tr('errorOccurred');
+  String get backupSuccess => _l10n.tr('backupSuccess');
+  String get restoreSuccess => _l10n.tr('restoreSuccess');
+  String get noDataFound => _l10n.tr('noDataFound');
+  String get addFirstProduct => _l10n.tr('addFirstProduct');
+  String get addFirstOrder => _l10n.tr('addFirstOrder');
+  String get addFirstCustomer => _l10n.tr('addFirstCustomer');
+  String get noExpenses => _l10n.tr('noExpenses');
+  String get noStockMovements => _l10n.tr('noStockMovements');
+  String get totalRevenue => _l10n.tr('totalRevenue');
+  String get totalProfit => _l10n.tr('totalProfit');
+  String get totalExpenses => _l10n.tr('totalExpenses');
+  String get avgOrderValue => _l10n.tr('avgOrderValue');
+  String get topProducts => _l10n.tr('topProducts');
+  String get topProductsByQty => _l10n.tr('topProductsByQty');
+  String get topCustomers => _l10n.tr('topCustomers');
+  String get salesByCategory => _l10n.tr('salesByCategory');
+  String get recurringOrder => _l10n.tr('recurringOrder');
+  String get repeatEvery => _l10n.tr('repeatEvery');
+  String get days => _l10n.tr('days');
+  String get delivery => _l10n.tr('delivery');
+  String get markDelivered => _l10n.tr('markDelivered');
+  String get delivered => _l10n.tr('delivered');
+  String get variants => _l10n.tr('variants');
+  String get addVariant => _l10n.tr('addVariant');
+  String get variantName => _l10n.tr('variantName');
+  String get variantValue => _l10n.tr('variantValue');
+  String get priceAdjustment => _l10n.tr('priceAdjustment');
 }

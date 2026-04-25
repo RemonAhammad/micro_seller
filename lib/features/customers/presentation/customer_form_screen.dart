@@ -118,12 +118,13 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final isEdit = widget.customer != null || widget.customerId != null;
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? AppStrings.editCustomer : AppStrings.addCustomer),
+        title: Text(isEdit ? s.editCustomer : s.addCustomer),
       ),
       body: Form(
         key: _formKey,
@@ -133,7 +134,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppTextField(
-                label: AppStrings.customerName,
+                label: s.customerName,
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
                 validator: (v) => Validators.required(v, 'Name'),
@@ -142,7 +143,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: AppStrings.phone,
+                label: s.phone,
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
@@ -154,7 +155,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: AppStrings.address,
+                label: s.address,
                 controller: _addressCtrl,
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,
@@ -163,7 +164,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: AppStrings.notes,
+                label: s.notes,
                 controller: _notesCtrl,
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,

@@ -58,11 +58,12 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final ordersAsync = ref.watch(ordersProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.orders),
+        title: Text(s.orders),
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
@@ -136,7 +137,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/orders/add'),
-        tooltip: AppStrings.addOrder,
+        tooltip: s.addOrder,
         child: const Icon(Icons.add),
       ),
     );
@@ -188,11 +189,12 @@ class _OrderList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     if (orders.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.receipt_long_rounded,
-        title: AppStrings.noDataFound,
-        subtitle: AppStrings.addFirstOrder,
+        title: s.noDataFound,
+        subtitle: s.addFirstOrder,
       );
     }
 
