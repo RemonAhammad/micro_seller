@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/supplier_provider.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -11,25 +12,26 @@ class PurchaseListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final purchasesAsync = ref.watch(purchasesProvider);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Purchases')),
+      appBar: AppBar(title: Text(s.purchases)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/suppliers/purchases/add'),
-        tooltip: 'New Purchase',
+        tooltip: s.newPurchase,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add),
       ),
       body: purchasesAsync.when(
         data: (purchases) {
           if (purchases.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.shopping_bag_outlined,
-              title: 'No purchases yet',
-              subtitle: 'Record your first stock purchase',
+              title: s.noPurchasesYet,
+              subtitle: s.tr('recordFirstPurchase'),
             );
           }
           return ListView.separated(
@@ -95,7 +97,7 @@ class PurchaseListScreen extends ConsumerWidget {
                               ),
                               if (p.balanceDue > 0)
                                 Text(
-                                  'Due: ${CurrencyFormatter.format(p.balanceDue)}',
+                                  '${s.due}: ${CurrencyFormatter.format(p.balanceDue)}',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.red.shade400,
@@ -110,7 +112,7 @@ class PurchaseListScreen extends ConsumerWidget {
                                     color: Colors.green.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text('Paid',
+                                  child: Text(s.paid,
                                       style: TextStyle(
                                           fontSize: 10,
                                           color: Colors.green,

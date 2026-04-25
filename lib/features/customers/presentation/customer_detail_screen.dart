@@ -10,6 +10,7 @@ import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../orders/presentation/widgets/order_card.dart';
 
@@ -39,6 +40,7 @@ class _CustomerDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
 
     return FutureBuilder<Customer?>(
@@ -52,7 +54,7 @@ class _CustomerDetailBody extends ConsumerWidget {
         if (customer == null) {
           return Scaffold(
               appBar: AppBar(),
-              body: const Center(child: Text('Customer not found')));
+              body: Center(child: Text(s.customerNotFound)));
         }
 
         final tagColor = switch (customer.tag) {
@@ -75,9 +77,9 @@ class _CustomerDetailBody extends ConsumerWidget {
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
                     context,
-                    title: 'Delete Customer',
-                    message: 'Delete ${customer.name}?',
-                    confirmText: 'Delete',
+                    title: s.deleteCustomer,
+                    message: '${s.delete} ${customer.name}?',
+                    confirmText: s.delete,
                     isDestructive: true,
                     icon: Icons.delete_rounded,
                   );
@@ -142,7 +144,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _StatChip(
-                        label: 'Orders',
+                        label: s.orders,
                         value: '${customer.totalOrders}',
                         icon: Icons.receipt_long_rounded,
                         color: theme.colorScheme.primary,
@@ -151,7 +153,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _StatChip(
-                        label: 'Total Spent',
+                        label: s.totalSpent,
                         value:
                             CurrencyFormatter.formatCompact(customer.totalSpent),
                         icon: Icons.payments_rounded,
@@ -162,7 +164,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _StatChip(
-                          label: 'Outstanding',
+                          label: s.outstanding,
                           value: CurrencyFormatter.formatCompact(
                               customer.outstandingBalance),
                           icon: Icons.money_off_rounded,
@@ -178,10 +180,10 @@ class _CustomerDetailBody extends ConsumerWidget {
                     customer.notes.isNotEmpty) ...[
                   _InfoCard(children: [
                     if (customer.address.isNotEmpty)
-                      _InfoRow('Address', customer.address),
+                      _InfoRow(s.address, customer.address),
                     if (customer.notes.isNotEmpty)
-                      _InfoRow('Notes', customer.notes),
-                    _InfoRow('Member since',
+                      _InfoRow(s.notes, customer.notes),
+                    _InfoRow(s.tr('memberSince'),
                         DateFormatter.format(customer.createdAt)),
                   ]),
                   const SizedBox(height: 16),
@@ -225,7 +227,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                 ),
 
                 // Customer orders
-                Text('Order History',
+                Text(s.purchaseHistory,
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
@@ -246,7 +248,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                         ),
                         child: Center(
                           child: Text(
-                            'No orders yet',
+                            s.addFirstOrder,
                             style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withOpacity(0.4),

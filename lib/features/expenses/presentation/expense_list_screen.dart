@@ -24,7 +24,7 @@ class ExpenseListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Export CSV',
+            tooltip: s.exportCsv,
             onPressed: () async {
               final expenses = ref.read(expensesProvider).valueOrNull ?? [];
               if (expenses.isEmpty) return;
@@ -39,7 +39,7 @@ class ExpenseListScreen extends ConsumerWidget {
             return EmptyState(
               icon: Icons.account_balance_wallet_rounded,
               title: s.noExpenses,
-              subtitle: 'Track your business expenses here',
+              subtitle: s.trackExpenses,
               actionLabel: s.addExpense,
               onAction: () => context.push('/expenses/add'),
             );
@@ -70,7 +70,7 @@ class ExpenseListScreen extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('This Month',
+                        Text(s.thisMonth,
                             style: TextStyle(
                                 color: Colors.white70, fontSize: 12)),
                         Text(
@@ -87,7 +87,7 @@ class ExpenseListScreen extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Entries',
+                        Text(s.entries,
                             style: TextStyle(
                                 color: Colors.white70, fontSize: 12)),
                         Text(
@@ -118,9 +118,9 @@ class ExpenseListScreen extends ConsumerWidget {
                       onDelete: () async {
                         final ok = await ConfirmDialog.show(
                           context,
-                          title: 'Delete Expense',
-                          message: 'Delete "${expense.title}"?',
-                          confirmText: 'Delete',
+                          title: s.deleteExpense,
+                          message: '${s.delete} "${expense.title}"?',
+                          confirmText: s.delete,
                           isDestructive: true,
                           icon: Icons.delete_rounded,
                         );

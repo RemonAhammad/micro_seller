@@ -18,13 +18,12 @@ class OrderListScreen extends ConsumerStatefulWidget {
 class _OrderListScreenState extends ConsumerState<OrderListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  static const _tabs = [
-    'All',
-    'Pending',
-    'Active',
-    'Completed',
-    'Cancelled',
-  ];
+  static const _tabCount = 5;
+
+  List<String> _tabLabels(BuildContext context) {
+    final s = AppStrings.of(context);
+    return [s.all, s.pending, s.tr('active'), s.completed, s.cancelled];
+  }
 
   List<int> _getCounts(List<Order> orders) {
     final regular = orders.where((o) => !o.isReturn).toList();
@@ -47,7 +46,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabCount, vsync: this);
   }
 
   @override
@@ -60,6 +59,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final ordersAsync = ref.watch(ordersProvider);
+    final tabs = _tabLabels(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +67,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Export CSV',
+            tooltip: s.exportCsv,
             onPressed: () async {
               final orders = ref.read(ordersProvider).valueOrNull ?? [];
               if (orders.isEmpty) return;
@@ -85,10 +85,10 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
                   labelStyle: const TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 13),
                   tabs: [
-                    for (int i = 0; i < _tabs.length; i++)
+                    for (int i = 0; i < tabs.length; i++)
                       Tab(
                           child: _TabLabel(
-                              label: _tabs[i], count: counts[i])),
+                              label: tabs[i], count: counts[i])),
                   ],
                 );
               },
@@ -99,7 +99,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
               tabAlignment: TabAlignment.start,
               labelStyle:
                   const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: _tabs.map((t) => Tab(text: t)).toList(),
+              tabs: tabs.map((t) => Tab(text: t)).toList(),
             ),
       ),
       body: ordersAsync.when(

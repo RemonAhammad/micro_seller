@@ -7,6 +7,7 @@ import '../../../data/models/purchase.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../providers/supplier_provider.dart';
 import '../../../shared/widgets/app_text_field.dart';
@@ -135,7 +136,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   Future<void> _submit() async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one item')),
+        SnackBar(content: Text(AppStrings.of(context).addAtLeastOneItem)),
       );
       return;
     }
@@ -158,8 +159,8 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Purchase recorded! Stock updated.'),
+          SnackBar(
+            content: Text(AppStrings.of(context).purchaseRecorded),
             backgroundColor: Colors.green,
           ),
         );
@@ -168,8 +169,8 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save purchase'),
+          SnackBar(
+            content: Text(AppStrings.of(context).failedToSavePurchase),
             backgroundColor: Colors.red,
           ),
         );
@@ -181,11 +182,12 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Purchase')),
+      appBar: AppBar(title: Text(s.newPurchase)),
       body: SingleChildScrollView(
         controller: _scrollCtrl,
         padding: const EdgeInsets.all(16),
@@ -193,7 +195,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Supplier picker (optional) ─────────────────────────────
-            Text('Supplier (optional)',
+            Text(s.supplierOptional,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -232,7 +234,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                                               .withValues(alpha: 0.5))),
                               ],
                             )
-                          : Text('Tap to select supplier',
+                          : Text(s.tapToSelectSupplier,
                               style: TextStyle(
                                   color: cs.onSurface.withValues(alpha: 0.5),
                                   fontSize: 13)),
@@ -257,7 +259,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             // ── Items ──────────────────────────────────────────────────
             Row(
               children: [
-                Text('Items',
+                Text(s.items,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -282,7 +284,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 TextButton.icon(
                   onPressed: _pickProducts,
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add', style: TextStyle(fontSize: 12)),
+                  label: Text(s.add, style: const TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -302,7 +304,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                         Icon(Icons.add_shopping_cart_rounded,
                             size: 32, color: cs.onSurface.withValues(alpha: 0.3)),
                         const SizedBox(height: 8),
-                        Text('Tap to add items',
+                        Text(s.tr('tapToAddProducts'),
                             style: TextStyle(
                                 color: cs.onSurface.withValues(alpha: 0.5),
                                 fontSize: 12)),
@@ -336,7 +338,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             const SizedBox(height: 16),
 
             // ── Payment ────────────────────────────────────────────────
-            Text('Payment',
+            Text(s.payment,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -348,7 +350,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
               children: [
                 Expanded(
                   child: AppTextField(
-                    label: 'Amount Paid',
+                    label: s.amountPaid,
                     controller: _amountPaidCtrl,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -369,7 +371,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                                     ? 0
                                     : 2))
                         : null,
-                    child: const Text('Pay Full'),
+                    child: Text(s.payFull),
                   ),
                 ),
               ],
@@ -397,13 +399,13 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             const SizedBox(height: 12),
 
             AppTextField(
-              label: 'Reference / Receipt # (optional)',
+              label: s.referenceReceipt,
               controller: _refCtrl,
             ),
             const SizedBox(height: 12),
 
             AppTextField(
-              label: 'Notes (optional)',
+              label: s.notesOptional,
               controller: _notesCtrl,
               maxLines: 2,
               textCapitalization: TextCapitalization.sentences,
@@ -420,14 +422,14 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
               ),
               child: Column(
                 children: [
-                  _summaryRow(theme, 'Total',
+                  _summaryRow(theme, s.total,
                       CurrencyFormatter.format(_totalAmount), isBold: true),
-                  _summaryRow(theme, 'Paid',
+                  _summaryRow(theme, s.paid,
                       CurrencyFormatter.format(_amountPaid)),
                   if (_balanceDue > 0)
                     _summaryRow(
                       theme,
-                      'Due',
+                      s.due,
                       CurrencyFormatter.format(_balanceDue),
                       valueColor: Colors.red,
                       isBold: true,
@@ -439,7 +441,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             const SizedBox(height: 20),
 
             AppButton(
-              label: 'Save Purchase',
+              label: s.savePurchase,
               icon: Icons.check_rounded,
               onPressed: _submit,
               isLoading: _isLoading,
@@ -516,11 +518,11 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 child: SizedBox(
                   height: 36,
                   child: TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Unit Cost',
+                    decoration: InputDecoration(
+                      labelText: AppStrings.of(context).unitCost,
                       isDense: true,
                       contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                     ),
                     style: const TextStyle(fontSize: 12),
                     keyboardType:
@@ -580,14 +582,17 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     );
   }
 
-  String _methodLabel(PurchasePaymentMethod m) => switch (m) {
-        PurchasePaymentMethod.cash => 'Cash',
-        PurchasePaymentMethod.card => 'Card',
-        PurchasePaymentMethod.bkash => 'bKash',
-        PurchasePaymentMethod.nagad => 'Nagad',
-        PurchasePaymentMethod.bank => 'Bank',
-        PurchasePaymentMethod.other => 'Other',
-      };
+  String _methodLabel(PurchasePaymentMethod m) {
+    final s = AppStrings.of(context);
+    return switch (m) {
+      PurchasePaymentMethod.cash => s.cash,
+      PurchasePaymentMethod.card => s.card,
+      PurchasePaymentMethod.bkash => s.bkash,
+      PurchasePaymentMethod.nagad => s.nagad,
+      PurchasePaymentMethod.bank => s.bank,
+      PurchasePaymentMethod.other => s.other,
+    };
+  }
 }
 
 // ─── Supplier Picker Sheet ─────────────────────────────────────────────────
@@ -643,7 +648,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Select Supplier',
+            child: Text(AppStrings.of(context).tr('selectSupplier'),
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.w700)),
           ),
@@ -654,9 +659,9 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
               controller: _searchCtrl,
               autofocus: true,
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
-              decoration: const InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: Icon(Icons.search, size: 20),
+              decoration: InputDecoration(
+                hintText: '${AppStrings.of(context).search}...',
+                prefixIcon: const Icon(Icons.search, size: 20),
                 isDense: true,
               ),
             ),
@@ -665,7 +670,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
           Expanded(
             child: filtered.isEmpty
                 ? Center(
-                    child: Text('No suppliers found',
+                    child: Text(AppStrings.of(context).tr('noSuppliersFound'),
                         style: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.4))))
                 : ListView.separated(
@@ -832,7 +837,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    Text('Add Items',
+                    Text(AppStrings.of(context).addItems,
                         style: theme.textTheme.titleSmall
                             ?.copyWith(fontWeight: FontWeight.w700)),
                     if (totalItems > 0) ...[
@@ -854,7 +859,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                     const Spacer(),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Done'),
+                      child: Text(AppStrings.of(context).done),
                     ),
                   ],
                 ),
@@ -865,7 +870,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                   controller: _searchCtrl,
                   onChanged: (v) => setState(() => _query = v.toLowerCase()),
                   decoration: InputDecoration(
-                    hintText: 'Search...',
+                    hintText: '${AppStrings.of(context).search}...',
                     prefixIcon: const Icon(Icons.search, size: 20),
                     suffixIcon: _query.isNotEmpty
                         ? IconButton(

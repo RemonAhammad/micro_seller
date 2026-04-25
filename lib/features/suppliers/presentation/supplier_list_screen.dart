@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/supplier_provider.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 
@@ -10,17 +11,18 @@ class SupplierListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final suppliersAsync = ref.watch(suppliersProvider);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Suppliers'),
+        title: Text(s.suppliers),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_bag_outlined),
-            tooltip: 'All Purchases',
+            tooltip: s.allPurchases,
             onPressed: () => context.push('/suppliers/purchases'),
           ),
         ],
@@ -33,13 +35,13 @@ class SupplierListScreen extends ConsumerWidget {
             heroTag: 'newPurchase',
             onPressed: () => context.push('/suppliers/purchases/add'),
             icon: const Icon(Icons.shopping_bag),
-            label: const Text('New Purchase'),
+            label: Text(s.newPurchase),
           ),
           const SizedBox(height: 12),
           FloatingActionButton(
             heroTag: 'addSupplier',
             onPressed: () => context.push('/suppliers/add'),
-            tooltip: 'Add Supplier',
+            tooltip: s.addSupplier,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: const Icon(Icons.add),
           ),
@@ -48,10 +50,10 @@ class SupplierListScreen extends ConsumerWidget {
       body: suppliersAsync.when(
         data: (suppliers) {
           if (suppliers.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.local_shipping_outlined,
-              title: 'No suppliers yet',
-              subtitle: 'Add your first supplier to track purchases',
+              title: s.noSuppliersYet,
+              subtitle: s.tr('addSuppliersFromMenu'),
             );
           }
           return ListView.separated(
@@ -111,7 +113,7 @@ class SupplierListScreen extends ConsumerWidget {
                       ),
                       if (s.hasOutstanding)
                         Text(
-                          'Due: ${CurrencyFormatter.format(s.totalDue)}',
+                          '${AppStrings.of(context).due}: ${CurrencyFormatter.format(suppliers[i].totalDue)}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

@@ -145,7 +145,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         action: TextButton(
                                           onPressed: () =>
                                               context.go('/inventory'),
-                                          child: const Text('View All'),
+                                          child: Text(s.viewAll),
                                         ),
                                         child: LowStockList(
                                             products:
@@ -164,7 +164,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         action: TextButton(
                                           onPressed: () =>
                                               context.go('/orders'),
-                                          child: const Text('View All'),
+                                          child: Text(s.viewAll),
                                         ),
                                         child: UnpaidOrdersWidget(
                                             orders: unpaidOrders),
@@ -188,7 +188,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     action: TextButton(
                                       onPressed: () =>
                                           context.go('/inventory'),
-                                      child: const Text('View All'),
+                                      child: Text(s.viewAll),
                                     ),
                                     child: LowStockList(
                                         products: stats.lowStockProducts),
@@ -205,7 +205,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     action: TextButton(
                                       onPressed: () =>
                                           context.go('/orders'),
-                                      child: const Text('View All'),
+                                      child: Text(s.viewAll),
                                     ),
                                     child: UnpaidOrdersWidget(
                                         orders: unpaidOrders),
@@ -240,6 +240,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   SliverAppBar _buildHeader(
       AsyncValue<DashboardStats> statsAsync, ThemeData theme) {
+    final s = AppStrings.of(context);
     return SliverAppBar(
       expandedHeight: 140,
       pinned: true,
@@ -302,8 +303,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Today's Revenue",
-                                style: TextStyle(
+                            Text(s.todayRevenue,
+                                style: const TextStyle(
                                     color: Colors.white70, fontSize: 11)),
                             Text(
                               CurrencyFormatter.format(stats.todayRevenue),
@@ -320,8 +321,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('Total Orders',
-                                style: TextStyle(
+                            Text(s.totalOrders,
+                                style: const TextStyle(
                                     color: Colors.white70, fontSize: 11)),
                             Text(
                               '${stats.totalOrders}',
@@ -355,10 +356,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   String _getGreeting() {
+    final s = AppStrings.of(context);
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return s.goodMorning;
+    if (hour < 17) return s.goodAfternoon;
+    return s.goodEvening;
   }
 }
 
@@ -412,7 +414,7 @@ class _DashboardBody extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: _SectionCard(
-                      title: 'Order Status',
+                      title: s.orderStatus,
                       icon: Icons.donut_small_rounded,
                       iconColor: AppColors.statusConfirmed,
                       child:
@@ -432,7 +434,7 @@ class _DashboardBody extends StatelessWidget {
             if (stats.weeklySales.isNotEmpty) const SizedBox(height: 14),
             if (statusCounts.isNotEmpty)
               _SectionCard(
-                title: 'Order Status',
+                title: s.orderStatus,
                 icon: Icons.donut_small_rounded,
                 iconColor: AppColors.statusConfirmed,
                 child: OrderStatusChart(statusCounts: statusCounts),
@@ -444,7 +446,7 @@ class _DashboardBody extends StatelessWidget {
           if (stats.weeklySales.isNotEmpty) ...[
             if (!isWide) ...[
               _SectionCard(
-                title: 'Revenue vs Expenses',
+                title: s.revenueVsExpenses,
                 icon: Icons.compare_arrows_rounded,
                 iconColor: AppColors.chartProfit,
                 child: RevenueExpenseChart(
@@ -455,7 +457,7 @@ class _DashboardBody extends StatelessWidget {
               const SizedBox(height: 14),
             ] else ...[
               _SectionCard(
-                title: 'Revenue vs Expenses (7 days)',
+                title: s.revenueVsExpenses7d,
                 icon: Icons.compare_arrows_rounded,
                 iconColor: AppColors.chartProfit,
                 child: RevenueExpenseChart(
@@ -487,7 +489,7 @@ class _DashboardBody extends StatelessWidget {
         color: const Color(0xFF42A5F5),
       ),
       (
-        label: 'Month Expenses',
+        label: s.monthExpenses,
         value: CurrencyFormatter.formatCompact(monthExpenses),
         icon: Icons.receipt_long_rounded,
         color: AppColors.statusCancelled,
@@ -617,6 +619,7 @@ class _DateRangeBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final dateRange = ref.watch(dashboardDateRangeProvider);
     final notifier = ref.read(dashboardDateRangeProvider.notifier);
     final theme = Theme.of(context);
@@ -632,21 +635,21 @@ class _DateRangeBar extends ConsumerWidget {
           children: [
             _buildChip(
               context,
-              label: 'Today',
+              label: s.today,
               isActive: activePreset == DateRangePreset.today,
               onTap: () => notifier.setToday(),
             ),
             const SizedBox(width: 8),
             _buildChip(
               context,
-              label: 'This Week',
+              label: s.thisWeek,
               isActive: activePreset == DateRangePreset.thisWeek,
               onTap: () => notifier.setThisWeek(),
             ),
             const SizedBox(width: 8),
             _buildChip(
               context,
-              label: 'This Month',
+              label: s.thisMonth,
               isActive: activePreset == DateRangePreset.thisMonth,
               onTap: () => notifier.setThisMonth(),
             ),
@@ -659,7 +662,7 @@ class _DateRangeBar extends ConsumerWidget {
                     ? AppColors.primary
                     : theme.colorScheme.onSurfaceVariant,
               ),
-              tooltip: 'Custom Range',
+              tooltip: s.customRange,
               visualDensity: VisualDensity.compact,
               onPressed: () async {
                 final picked = await showDateRangePicker(
@@ -794,7 +797,7 @@ class _ErrorBody extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 40, color: Colors.red),
             const SizedBox(height: 12),
-            Text('Failed to load dashboard',
+            Text(AppStrings.of(context).errorOccurred,
                 style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
             Text(error,

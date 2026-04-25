@@ -83,7 +83,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (backups.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No backups found on Drive')),
+          SnackBar(content: Text(AppStrings.of(context).tr('noBackupsFound'))),
         );
         return;
       }
@@ -100,9 +100,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       final confirmed = await ConfirmDialog.show(
         context,
-        title: 'Restore Data',
-        message: 'This will replace all current data with the backup from ${selected.name}. Continue?',
-        confirmText: 'Restore',
+        title: AppStrings.of(context).tr('restoreData'),
+        message: AppStrings.of(context).tr('restoreDataConfirm'),
+        confirmText: AppStrings.of(context).restoreFromDrive,
         isDestructive: true,
         icon: Icons.restore_rounded,
       );
@@ -136,9 +136,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _clearData() async {
     final ok = await ConfirmDialog.show(
       context,
-      title: 'Clear All Data',
+      title: AppStrings.of(context).clearAllData,
       message: AppStrings.of(context).clearDataConfirmation,
-      confirmText: 'Clear Everything',
+      confirmText: AppStrings.of(context).clearAllData,
       isDestructive: true,
       icon: Icons.warning_rounded,
     );
@@ -159,7 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All data cleared')),
+        SnackBar(content: Text(AppStrings.of(context).allDataCleared)),
       );
     }
   }
@@ -178,7 +178,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           // Theme
-          const _SectionHeader('Theme'),
+          _SectionHeader(s.theme),
           _ThemeModeSelector(
             currentMode: ref.read(settingsProvider.notifier).themeMode,
             onChanged: (mode) => ref.read(settingsProvider.notifier).updateThemeMode(mode),
@@ -186,7 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Language
-          const _SectionHeader('Language'),
+          _SectionHeader(s.language),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -198,7 +198,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 child: const Icon(Icons.language_rounded, color: AppColors.primary, size: 20),
               ),
-              title: const Text('Language'),
+              title: Text(s.language),
               subtitle: Text(
                 AppLocalizations.languageNames[ref.read(settingsProvider.notifier).language] ?? 'English',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
@@ -224,7 +224,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Shop
-          const _SectionHeader('Shop'),
+          _SectionHeader(s.shop),
           _SettingsCard(children: [
             _EditableTile(
               icon: Icons.store_rounded,
@@ -283,7 +283,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const Divider(height: 1),
             _EditableTile(
               icon: Icons.percent_rounded,
-              label: 'Tax Rate (%)',
+              label: s.taxRate,
               value: ref.read(settingsProvider.notifier).taxRate.toString(),
               onEdit: (val) {
                 final rate = double.tryParse(val);
@@ -300,7 +300,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Downloads
-          const _SectionHeader('Downloads'),
+          _SectionHeader(s.downloads),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -312,10 +312,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 child: const Icon(Icons.folder_rounded, color: AppColors.primary, size: 20),
               ),
-              title: const Text('PDF Download Folder'),
+              title: Text(s.pdfDownloadFolder),
               subtitle: Text(
                 ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
-                    ? 'Not set — will ask on first download'
+                    ? s.tr('notSetWillAsk')
                     : ref.read(settingsProvider.notifier).downloadDirectory,
                 style: TextStyle(
                   fontSize: 12,
@@ -339,7 +339,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Local Backup
-          const _SectionHeader('Local Backup'),
+          _SectionHeader(s.localBackup),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -353,9 +353,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.upload_file_rounded, color: Colors.blue, size: 20),
               ),
-              title: const Text('Export Backup'),
-              subtitle: const Text(
-                'Save all data as a JSON file',
+              title: Text(s.exportBackup),
+              subtitle: Text(
+                s.exportBackupDesc,
                 style: TextStyle(fontSize: 12),
               ),
               onTap: _isLocalExporting
@@ -369,7 +369,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Export failed: $e'),
+                              content: Text('${s.tr("exportFailed")}: $e'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -394,20 +394,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.download_rounded, color: Colors.orange, size: 20),
               ),
-              title: const Text('Import Backup'),
-              subtitle: const Text(
-                'Restore from a JSON backup file',
-                style: TextStyle(fontSize: 12),
+              title: Text(s.importBackup),
+              subtitle: Text(
+                s.importBackupDesc,
+                style: const TextStyle(fontSize: 12),
               ),
               onTap: _isLocalImporting
                   ? null
                   : () async {
                       final ok = await ConfirmDialog.show(
                         context,
-                        title: 'Import Backup',
-                        message:
-                            'This will replace ALL current data with the backup file. This cannot be undone. Continue?',
-                        confirmText: 'Import',
+                        title: s.importBackup,
+                        message: s.importBackupConfirm,
+                        confirmText: s.importBackup,
                         isDestructive: true,
                         icon: Icons.warning_rounded,
                       );
@@ -419,7 +418,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(success ? 'Data restored successfully!' : 'No file selected'),
+                              content: Text(success ? s.tr('dataRestoredSuccess') : s.tr('noFileSelected')),
                               backgroundColor: success ? Colors.green : null,
                             ),
                           );
@@ -428,7 +427,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Import failed: $e'),
+                              content: Text('${s.tr("importFailed")}: $e'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -444,7 +443,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Google Drive
-          const _SectionHeader('Google Drive Backup'),
+          _SectionHeader(s.googleDriveBackup),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -458,7 +457,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               title: Text(s.googleAccount),
               subtitle: Text(
-                _googleAccountEmail ?? 'Not signed in',
+                _googleAccountEmail ?? s.signIn,
                 style: TextStyle(
                   color: _googleAccountEmail != null ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
@@ -523,7 +522,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // About
-          const _SectionHeader('About'),
+          _SectionHeader(s.tr('about')),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -547,7 +546,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Danger zone
-          const _SectionHeader('Danger Zone'),
+          _SectionHeader(s.dangerZone),
           _SettingsCard(children: [
             ListTile(
               leading: Container(
@@ -659,7 +658,7 @@ class _EditableTile extends StatelessWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text('Edit $label'),
+            title: Text('${AppStrings.of(context).edit} $label'),
             content: TextField(
               controller: ctrl,
               autofocus: true,
@@ -669,13 +668,13 @@ class _EditableTile extends StatelessWidget {
               decoration: InputDecoration(labelText: label),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.of(context).cancel)),
               FilledButton(
                 onPressed: () {
                   onEdit(ctrl.text.trim());
                   Navigator.pop(ctx);
                 },
-                child: const Text('Save'),
+                child: Text(AppStrings.of(context).save),
               ),
             ],
           ),
@@ -696,11 +695,12 @@ class _ThemeModeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final modes = [
-      ('light', Icons.light_mode_rounded, 'Light'),
-      ('dark', Icons.dark_mode_rounded, 'Dark'),
-      ('system', Icons.brightness_auto_rounded, 'System'),
+      ('light', Icons.light_mode_rounded, s.light),
+      ('dark', Icons.dark_mode_rounded, s.dark),
+      ('system', Icons.brightness_auto_rounded, s.system),
     ];
 
     return _SettingsCard(
@@ -896,7 +896,7 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Select Currency', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+            child: Text(AppStrings.of(context).selectCurrency, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -906,7 +906,7 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
               autofocus: true,
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
-                hintText: 'Search currency...',
+                hintText: AppStrings.of(context).searchCurrency,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
@@ -1006,7 +1006,7 @@ class _LanguagePickerSheet extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Select Language',
+            child: Text(AppStrings.of(context).selectLanguage,
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.w700)),
           ),

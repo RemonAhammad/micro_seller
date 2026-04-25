@@ -9,6 +9,7 @@ import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import 'widgets/stock_badge.dart';
 
@@ -39,6 +40,7 @@ class _ProductDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
 
     return FutureBuilder<Product?>(
@@ -53,7 +55,7 @@ class _ProductDetailBody extends ConsumerWidget {
         if (product == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Product not found')),
+            body: Center(child: Text(s.productNotFound)),
           );
         }
 
@@ -73,9 +75,9 @@ class _ProductDetailBody extends ConsumerWidget {
                     onPressed: () async {
                       final ok = await ConfirmDialog.show(
                         context,
-                        title: 'Delete Product',
-                        message: 'Are you sure you want to delete "${product.name}"? This action cannot be undone.',
-                        confirmText: 'Delete',
+                        title: s.deleteProduct,
+                        message: s.deleteProductConfirm,
+                        confirmText: s.delete,
                         isDestructive: true,
                         icon: Icons.delete_rounded,
                       );
@@ -157,15 +159,15 @@ class _ProductDetailBody extends ConsumerWidget {
                       _InfoCard(
                         children: [
                           _InfoRow(
-                            'Selling Price',
+                            s.sellingPrice,
                             CurrencyFormatter.format(product.sellingPrice),
                             valueColor: theme.colorScheme.primary,
                             isBold: true,
                           ),
                           if (product.costPrice > 0) ...[
-                            _InfoRow('Cost Price', CurrencyFormatter.format(product.costPrice)),
+                            _InfoRow(s.costPrice, CurrencyFormatter.format(product.costPrice)),
                             _InfoRow(
-                              'Profit Margin',
+                              s.profitMargin,
                               '${product.profitMargin.toStringAsFixed(1)}%',
                               valueColor:
                                   product.profitMargin >= 0 ? AppColors.statusCompleted : AppColors.statusCancelled,
@@ -178,15 +180,15 @@ class _ProductDetailBody extends ConsumerWidget {
                       _InfoCard(
                         children: [
                           _InfoRow(
-                            'Current Stock',
-                            '${product.stockQty} units',
+                            s.stock,
+                            '${product.stockQty}',
                             valueColor: product.isOutOfStock
                                 ? AppColors.statusCancelled
                                 : product.isLowStock
                                     ? AppColors.statusPending
                                     : null,
                           ),
-                          _InfoRow('Low Stock Alert', '${product.lowStockThreshold} units'),
+                          _InfoRow(s.lowStockThreshold, '${product.lowStockThreshold}'),
                         ],
                       ),
                       if (product.hasVariants) ...[
@@ -196,7 +198,7 @@ class _ProductDetailBody extends ConsumerWidget {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'Variants (${product.variantCombinations.where((c) => c.isActive).length} combinations)',
+                                '${s.variants} (${product.variantCombinations.where((c) => c.isActive).length} ${s.combinations})',
                                 style: theme.textTheme.labelLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -237,7 +239,7 @@ class _ProductDetailBody extends ConsumerWidget {
                                     Row(
                                       children: [
                                         Text(
-                                          'Stock: ${c.stockQty}',
+                                          '${s.stock}: ${c.stockQty}',
                                           style: theme.textTheme.bodySmall?.copyWith(
                                             color: c.stockQty <= 0
                                                 ? AppColors.statusCancelled
@@ -269,7 +271,7 @@ class _ProductDetailBody extends ConsumerWidget {
                         const SizedBox(height: 12),
                         _InfoCard(
                           children: [
-                            _InfoRow('QR / Barcode', product.qrCode),
+                            _InfoRow(s.qrBarcode, product.qrCode),
                           ],
                         ),
                       ],
@@ -278,7 +280,7 @@ class _ProductDetailBody extends ConsumerWidget {
                         _InfoCard(
                           children: [
                             Text(
-                              'Description',
+                              s.description,
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: theme.colorScheme.onSurface.withOpacity(0.5),
                               ),
@@ -291,8 +293,8 @@ class _ProductDetailBody extends ConsumerWidget {
                       const SizedBox(height: 12),
                       _InfoCard(
                         children: [
-                          _InfoRow('Created', DateFormatter.format(product.createdAt)),
-                          _InfoRow('Last Updated', DateFormatter.format(product.updatedAt)),
+                          _InfoRow(s.tr('created'), DateFormatter.format(product.createdAt)),
+                          _InfoRow(s.tr('lastUpdated'), DateFormatter.format(product.updatedAt)),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -302,7 +304,7 @@ class _ProductDetailBody extends ConsumerWidget {
                         child: OutlinedButton.icon(
                           onPressed: () => context.push('/inventory/adjust/$productId'),
                           icon: const Icon(Icons.tune_rounded),
-                          label: const Text('Adjust Stock'),
+                          label: Text(s.adjustStock),
                         ),
                       ),
                     ],

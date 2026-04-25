@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -49,6 +50,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final reportAsync = ref.watch(reportDataProvider(_startDate, _endDate));
@@ -71,8 +73,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Reports',
+                        Text(
+                          s.reports,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -119,7 +121,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     children: [
                       Icon(Icons.error_outline, size: 40, color: cs.error),
                       const SizedBox(height: 12),
-                      Text('Failed to load report',
+                      Text(s.errorOccurred,
                           style: theme.textTheme.titleSmall),
                       const SizedBox(height: 6),
                       Text(e.toString(),
@@ -176,6 +178,7 @@ class _ReportBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
@@ -184,7 +187,7 @@ class _ReportBody extends StatelessWidget {
           const SizedBox(height: 14),
           if (data.topProducts.isNotEmpty) ...[
             _SectionCard(
-              title: 'Top Products by Revenue',
+              title: s.topProducts,
               icon: Icons.bar_chart_rounded,
               iconColor: AppColors.primary,
               child: _TopProductsChart(products: data.topProducts),
@@ -193,7 +196,7 @@ class _ReportBody extends StatelessWidget {
           ],
           if (data.salesByCategory.isNotEmpty) ...[
             _SectionCard(
-              title: 'Sales by Category',
+              title: s.salesByCategory,
               icon: Icons.pie_chart_rounded,
               iconColor: AppColors.statusConfirmed,
               child: _RankedList(
@@ -205,7 +208,7 @@ class _ReportBody extends StatelessWidget {
           ],
           if (data.topCustomers.isNotEmpty) ...[
             _SectionCard(
-              title: 'Top Customers',
+              title: s.topCustomers,
               icon: Icons.people_rounded,
               iconColor: AppColors.statusShipped,
               child: _RankedList(
@@ -217,12 +220,12 @@ class _ReportBody extends StatelessWidget {
           ],
           if (data.topProductsByQty.isNotEmpty)
             _SectionCard(
-              title: 'Top Products by Quantity',
+              title: s.topProductsByQty,
               icon: Icons.inventory_2_rounded,
               iconColor: AppColors.statusPending,
               child: _RankedList(
                 entries: data.topProductsByQty,
-                formatValue: (v) => '${v.toInt()} sold',
+                formatValue: (v) => '${v.toInt()} ${s.tr("sold")}',
               ),
             ),
         ],
@@ -231,27 +234,28 @@ class _ReportBody extends StatelessWidget {
   }
 
   Widget _buildStatCards(BuildContext context) {
+    final s = AppStrings.of(context);
     final items = [
       (
-        label: 'Total Revenue',
+        label: s.totalRevenue,
         value: CurrencyFormatter.formatCompact(data.totalRevenue),
         icon: Icons.trending_up_rounded,
         color: AppColors.primary,
       ),
       (
-        label: 'Total Profit',
+        label: s.totalProfit,
         value: CurrencyFormatter.formatCompact(data.totalProfit),
         icon: Icons.account_balance_wallet_rounded,
         color: const Color(0xFF42A5F5),
       ),
       (
-        label: 'Total Expenses',
+        label: s.totalExpenses,
         value: CurrencyFormatter.formatCompact(data.totalExpenses),
         icon: Icons.receipt_long_rounded,
         color: AppColors.statusCancelled,
       ),
       (
-        label: 'Avg Order Value',
+        label: s.avgOrderValue,
         value: CurrencyFormatter.formatCompact(data.avgOrderValue),
         icon: Icons.shopping_cart_rounded,
         color: AppColors.statusShipped,

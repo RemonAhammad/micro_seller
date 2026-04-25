@@ -71,9 +71,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
         title: Text(s.inventory),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Stock Levels'),
-            Tab(text: 'Movements'),
+          tabs: [
+            Tab(text: s.stockLevels),
+            Tab(text: s.movements),
           ],
         ),
       ),
@@ -116,7 +116,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           initialValue: _categoryFilter,
                           onSelected: (v) =>
                               setState(() => _categoryFilter = v),
-                          tooltip: 'Filter by category',
+                          tooltip: s.filter,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 6),
@@ -142,7 +142,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                             .withValues(alpha: 0.6)),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _categoryFilter ?? 'All',
+                                  _categoryFilter ?? s.all,
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -173,7 +173,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                           : cs.onSurface
                                               .withValues(alpha: 0.6)),
                                   const SizedBox(width: 10),
-                                  Text('All Categories',
+                                  Text(s.tr('allCategories'),
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: _categoryFilter == null
@@ -239,7 +239,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                         PopupMenuButton<_StockSort>(
                           initialValue: _sort,
                           onSelected: (v) => setState(() => _sort = v),
-                          tooltip: 'Sort',
+                          tooltip: s.tr('sort'),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -313,12 +313,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     );
   }
 
-  String _sortLabel(_StockSort sort) => switch (sort) {
-        _StockSort.lowStock => 'Low Stock',
-        _StockSort.name => 'Name',
-        _StockSort.stockAsc => 'Stock ↑',
-        _StockSort.stockDesc => 'Stock ↓',
-      };
+  String _sortLabel(_StockSort sort) {
+    final s = AppStrings.of(context);
+    return switch (sort) {
+      _StockSort.lowStock => s.lowStock,
+      _StockSort.name => s.customerName,
+      _StockSort.stockAsc => '${s.stock} ↑',
+      _StockSort.stockDesc => '${s.stock} ↓',
+    };
+  }
 
   PopupMenuItem<_StockSort> _sortItem(
       _StockSort value, String label, IconData icon) {

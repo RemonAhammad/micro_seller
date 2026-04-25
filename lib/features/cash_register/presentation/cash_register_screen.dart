@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/cash_register_provider.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 
@@ -12,12 +13,13 @@ class CashRegisterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final registersAsync = ref.watch(cashRegistersProvider);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cash Register')),
+      appBar: AppBar(title: Text(s.cashRegister)),
       body: registersAsync.when(
         data: (registers) {
           final openReg = registers.where((r) => !r.isClosed).firstOrNull;
@@ -37,7 +39,7 @@ class CashRegisterScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // History
-                Text('History',
+                Text(s.history,
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
@@ -46,7 +48,7 @@ class CashRegisterScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
-                      child: Text('No register history yet',
+                      child: Text(s.noRegisterHistory,
                           style: TextStyle(
                               color: cs.onSurface.withValues(alpha: 0.4))),
                     ),
@@ -79,7 +81,7 @@ class CashRegisterScreen extends ConsumerWidget {
                                     color: Colors.green.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Text('Closed',
+                                  child: Text(s.closed,
                                       style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
@@ -88,21 +90,21 @@ class CashRegisterScreen extends ConsumerWidget {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            _historyRow(theme, 'Opening',
+                            _historyRow(theme, s.tr('opening'),
                                 CurrencyFormatter.format(r.openingAmount)),
-                            _historyRow(theme, 'Cash In',
+                            _historyRow(theme, s.cashIn,
                                 CurrencyFormatter.format(r.totalCashIn)),
-                            _historyRow(theme, 'Cash Out',
+                            _historyRow(theme, s.cashOut,
                                 CurrencyFormatter.format(r.totalCashOut)),
-                            _historyRow(theme, 'Expected',
+                            _historyRow(theme, s.tr('expected'),
                                 CurrencyFormatter.format(r.expectedClosing)),
-                            _historyRow(theme, 'Closing',
+                            _historyRow(theme, s.tr('closing'),
                                 CurrencyFormatter.format(r.closingAmount ?? 0),
                                 isBold: true),
                             if (r.difference.abs() > 0.01)
                               _historyRow(
                                 theme,
-                                'Difference',
+                                s.tr('difference'),
                                 '${r.difference > 0 ? '+' : ''}${CurrencyFormatter.format(r.difference)}',
                                 valueColor: r.difference > 0
                                     ? Colors.green
@@ -157,6 +159,7 @@ class _OpenRegisterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -171,7 +174,7 @@ class _OpenRegisterCard extends StatelessWidget {
             children: [
               Icon(Icons.point_of_sale_rounded, color: cs.primary, size: 24),
               const SizedBox(width: 10),
-              Text('Register Open',
+              Text(s.registerOpen,
                   style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700, color: cs.primary)),
               const Spacer(),
@@ -181,14 +184,14 @@ class _OpenRegisterCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _statRow('Opening Amount',
+          _statRow(s.openingAmount,
               CurrencyFormatter.format(register.openingAmount)),
           _statRow(
-              'Cash In', CurrencyFormatter.format(register.totalCashIn)),
+              s.cashIn, CurrencyFormatter.format(register.totalCashIn)),
           _statRow(
-              'Cash Out', CurrencyFormatter.format(register.totalCashOut)),
+              s.cashOut, CurrencyFormatter.format(register.totalCashOut)),
           const Divider(height: 16),
-          _statRow('Expected Closing',
+          _statRow(s.expectedClosing,
               CurrencyFormatter.format(register.expectedClosing),
               isBold: true, valueColor: cs.primary),
           const SizedBox(height: 16),
@@ -198,7 +201,7 @@ class _OpenRegisterCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _showCashInOutDialog(context, true),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Cash In', style: TextStyle(fontSize: 12)),
+                  label: Text(s.cashIn, style: const TextStyle(fontSize: 12)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -207,7 +210,7 @@ class _OpenRegisterCard extends StatelessWidget {
                   onPressed: () => _showCashInOutDialog(context, false),
                   icon: const Icon(Icons.remove, size: 16),
                   label:
-                      const Text('Cash Out', style: TextStyle(fontSize: 12)),
+                      Text(s.cashOut, style: const TextStyle(fontSize: 12)),
                 ),
               ),
             ],
@@ -218,7 +221,7 @@ class _OpenRegisterCard extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: () => _showCloseDialog(context),
               icon: const Icon(Icons.lock_rounded, size: 16),
-              label: const Text('Close Register'),
+              label: Text(s.closeRegister),
             ),
           ),
         ],
@@ -246,11 +249,12 @@ class _OpenRegisterCard extends StatelessWidget {
   }
 
   void _showCashInOutDialog(BuildContext context, bool isIn) {
+    final s = AppStrings.of(context);
     final ctrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isIn ? 'Cash In' : 'Cash Out'),
+        title: Text(isIn ? s.cashIn : s.cashOut),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -260,12 +264,12 @@ class _OpenRegisterCard extends StatelessWidget {
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
           ],
           decoration:
-              const InputDecoration(labelText: 'Amount', isDense: true),
+              InputDecoration(labelText: s.amount, isDense: true),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           FilledButton(
             onPressed: () async {
               final amount = double.tryParse(ctrl.text);
@@ -281,7 +285,7 @@ class _OpenRegisterCard extends StatelessWidget {
               }
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Confirm'),
+            child: Text(s.confirm),
           ),
         ],
       ),
@@ -289,18 +293,19 @@ class _OpenRegisterCard extends StatelessWidget {
   }
 
   void _showCloseDialog(BuildContext context) {
+    final s = AppStrings.of(context);
     final ctrl = TextEditingController(
         text: register.expectedClosing.toStringAsFixed(2));
     final notesCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Close Register'),
+        title: Text(s.closeRegister),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-                'Expected: ${CurrencyFormatter.format(register.expectedClosing)}'),
+                '${s.tr("expected")}: ${CurrencyFormatter.format(register.expectedClosing)}'),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
@@ -310,14 +315,14 @@ class _OpenRegisterCard extends StatelessWidget {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
               ],
-              decoration: const InputDecoration(
-                  labelText: 'Actual Closing Amount', isDense: true),
+              decoration: InputDecoration(
+                  labelText: s.tr('closingAmount'), isDense: true),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: notesCtrl,
-              decoration: const InputDecoration(
-                  labelText: 'Notes (optional)', isDense: true),
+              decoration: InputDecoration(
+                  labelText: s.notesOptional, isDense: true),
               textCapitalization: TextCapitalization.sentences,
             ),
           ],
@@ -325,7 +330,7 @@ class _OpenRegisterCard extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           FilledButton(
             onPressed: () async {
               final amount = double.tryParse(ctrl.text);
@@ -336,7 +341,7 @@ class _OpenRegisterCard extends StatelessWidget {
                       notes: notesCtrl.text.trim());
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Close'),
+            child: Text(s.close),
           ),
         ],
       ),
@@ -356,6 +361,7 @@ class _ClosedStateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -368,16 +374,16 @@ class _ClosedStateCard extends StatelessWidget {
           Icon(Icons.point_of_sale_rounded,
               size: 48, color: cs.onSurface.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          Text('No register open',
+          Text(s.noRegisterOpen,
               style: theme.textTheme.titleSmall?.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.5))),
           const SizedBox(height: 4),
-          Text('Open a register to start tracking cash flow',
+          Text(s.openRegisterDesc,
               style: theme.textTheme.bodySmall?.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.4))),
           const SizedBox(height: 20),
           AppButton(
-            label: 'Open Register',
+            label: s.openRegister,
             icon: Icons.lock_open_rounded,
             isFullWidth: true,
             height: 48,
@@ -389,11 +395,12 @@ class _ClosedStateCard extends StatelessWidget {
   }
 
   void _showOpenDialog(BuildContext context) {
+    final s = AppStrings.of(context);
     final ctrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Open Register'),
+        title: Text(s.openRegister),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -402,13 +409,13 @@ class _ClosedStateCard extends StatelessWidget {
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
           ],
-          decoration: const InputDecoration(
-              labelText: 'Opening Cash Amount', isDense: true),
+          decoration: InputDecoration(
+              labelText: s.openingAmount, isDense: true),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           FilledButton(
             onPressed: () async {
               final amount = double.tryParse(ctrl.text) ?? 0;
@@ -417,7 +424,7 @@ class _ClosedStateCard extends StatelessWidget {
                   .openRegister(amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Open'),
+            child: Text(s.open),
           ),
         ],
       ),

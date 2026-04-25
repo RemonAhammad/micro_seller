@@ -6,6 +6,7 @@ import 'package:isar/isar.dart';
 import '../../../data/models/supplier.dart';
 import '../providers/supplier_provider.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -96,7 +97,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(_existing != null ? 'Supplier updated!' : 'Supplier added!'),
+          content: Text(AppStrings.of(context).savedSuccessfully),
           backgroundColor: Colors.green,
         ));
         context.pop();
@@ -104,7 +105,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save supplier'), backgroundColor: Colors.red),
+          SnackBar(content: Text(AppStrings.of(context).tr('failedToSaveSupplier')), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -114,9 +115,10 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final isEdit = _existing != null || widget.supplierId != null;
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? 'Edit Supplier' : 'Add Supplier')),
+      appBar: AppBar(title: Text(isEdit ? s.editSupplier : s.addSupplier)),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -125,7 +127,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppTextField(
-                label: 'Name',
+                label: s.customerName,
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
                 validator: (v) => Validators.required(v, 'Name'),
@@ -133,14 +135,14 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: 'Company',
+                label: s.company,
                 controller: _companyCtrl,
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: 'Phone',
+                label: s.phone,
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
@@ -150,14 +152,14 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: 'Email',
+                label: s.tr('email'),
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: 'Address',
+                label: s.address,
                 controller: _addressCtrl,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 2,
@@ -165,14 +167,14 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
               ),
               const SizedBox(height: 12),
               AppTextField(
-                label: 'Notes',
+                label: s.notes,
                 controller: _notesCtrl,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 3,
               ),
               const SizedBox(height: 32),
               AppButton(
-                label: isEdit ? 'Update Supplier' : 'Add Supplier',
+                label: isEdit ? s.editSupplier : s.addSupplier,
                 onPressed: _submit,
                 isLoading: _isLoading,
                 isFullWidth: true,

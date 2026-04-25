@@ -60,7 +60,7 @@ class _StockAdjustmentScreenState
 
     if (suppliers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No suppliers yet. Add one from the Suppliers menu.')),
+        SnackBar(content: Text(AppStrings.of(context).noSuppliersYet)),
       );
       return;
     }
@@ -83,7 +83,7 @@ class _StockAdjustmentScreenState
     final qty = int.tryParse(_qtyCtrl.text);
     if (qty == null || qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid quantity')),
+        SnackBar(content: Text(AppStrings.of(context).pleaseEnterValidQty)),
       );
       return;
     }
@@ -112,8 +112,8 @@ class _StockAdjustmentScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Stock adjusted successfully!'),
+          SnackBar(
+            content: Text(AppStrings.of(context).stockAdjustedSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -196,8 +196,8 @@ class _StockAdjustmentScreenState
                                     fontWeight: FontWeight.w800,
                                     fontSize: 20,
                                   )),
-                              const Text('total stock',
-                                  style: TextStyle(fontSize: 11)),
+                              Text(s.tr('totalStock'),
+                                  style: const TextStyle(fontSize: 11)),
                             ],
                           ),
                         ],
@@ -207,7 +207,7 @@ class _StockAdjustmentScreenState
                     // Combination selector
                     if (product.hasVariants) ...[
                       const SizedBox(height: 16),
-                      Text('Select Combination',
+                      Text(s.selectCombination,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -219,7 +219,7 @@ class _StockAdjustmentScreenState
                         runSpacing: 8,
                         children: [
                           ChoiceChip(
-                            label: Text('Base stock (${product.stockQty})'),
+                            label: Text('${s.baseStock} (${product.stockQty})'),
                             selected: _selectedCombinationKey.isEmpty,
                             onSelected: (_) =>
                                 setState(() => _selectedCombinationKey = ''),
@@ -263,7 +263,7 @@ class _StockAdjustmentScreenState
                     const SizedBox(height: 24),
                   ],
 
-                  Text('Adjustment Type',
+                  Text(s.adjustmentType,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -278,22 +278,22 @@ class _StockAdjustmentScreenState
                       final (icon, label, color) = switch (type) {
                         StockMovementType.restock => (
                             Icons.add_shopping_cart_rounded,
-                            'Restock',
+                            s.restock,
                             Colors.green
                           ),
                         StockMovementType.adjustment => (
                             Icons.tune_rounded,
-                            'Adjust',
+                            s.adjust,
                             Colors.blue
                           ),
                         StockMovementType.sale => (
                             Icons.sell_rounded,
-                            'Sale',
+                            s.sale,
                             Colors.orange
                           ),
                         StockMovementType.damage => (
                             Icons.broken_image_rounded,
-                            'Damage',
+                            s.damage,
                             Colors.red
                           ),
                       };
@@ -370,7 +370,7 @@ class _StockAdjustmentScreenState
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text('Supplier',
+                                        Text(s.suppliers,
                                             style: TextStyle(
                                                 fontSize: 11,
                                                 color: cs.onSurface
@@ -381,7 +381,7 @@ class _StockAdjustmentScreenState
                                                 fontSize: 14)),
                                       ],
                                     )
-                                  : Text('Supplier (optional)',
+                                  : Text(s.supplierOptional,
                                       style: TextStyle(
                                           color: cs.onSurface
                                               .withValues(alpha: 0.5),
@@ -416,8 +416,8 @@ class _StockAdjustmentScreenState
                     prefixIcon: const Icon(Icons.numbers_rounded),
                     helperText: _type == StockMovementType.sale ||
                             _type == StockMovementType.damage
-                        ? 'This will deduct from stock'
-                        : 'This will add to stock',
+                        ? s.willDeductFromStock
+                        : s.willAddToStock,
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
@@ -429,7 +429,7 @@ class _StockAdjustmentScreenState
                   const SizedBox(height: 32),
 
                   AppButton(
-                    label: 'Apply Adjustment',
+                    label: s.applyAdjustment,
                     onPressed: _submit,
                     isLoading: _isLoading,
                     isFullWidth: true,
@@ -501,7 +501,7 @@ class _StockSupplierPickerSheetState extends State<_StockSupplierPickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Select Supplier',
+            child: Text(AppStrings.of(context).tr('selectSupplier'),
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.w700)),
           ),
@@ -512,9 +512,9 @@ class _StockSupplierPickerSheetState extends State<_StockSupplierPickerSheet> {
               controller: _searchCtrl,
               autofocus: true,
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
-              decoration: const InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: Icon(Icons.search, size: 20),
+              decoration: InputDecoration(
+                hintText: '${AppStrings.of(context).search}...',
+                prefixIcon: const Icon(Icons.search, size: 20),
                 isDense: true,
               ),
             ),
@@ -523,7 +523,7 @@ class _StockSupplierPickerSheetState extends State<_StockSupplierPickerSheet> {
           Expanded(
             child: filtered.isEmpty
                 ? Center(
-                    child: Text('No suppliers found',
+                    child: Text(AppStrings.of(context).tr('noSuppliersFound'),
                         style: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.4))))
                 : ListView.separated(

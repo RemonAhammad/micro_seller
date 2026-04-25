@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/category.dart';
 import '../providers/category_provider.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
 
 class CategoryScreen extends ConsumerWidget {
@@ -9,20 +10,21 @@ class CategoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories'),
+        title: Text(s.categories),
       ),
       body: categoriesAsync.when(
         data: (cats) {
           if (cats.isEmpty) {
             return EmptyState(
               icon: Icons.category_rounded,
-              title: 'No categories yet',
-              subtitle: 'Add categories to organise your products',
-              actionLabel: 'Add Category',
+              title: s.noCategoriesYet,
+              subtitle: s.addCategoriesToOrganise,
+              actionLabel: s.addCategory,
               onAction: () => _showDialog(context, ref),
             );
           }
@@ -39,7 +41,7 @@ class CategoryScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showDialog(context, ref),
-        tooltip: 'Add Category',
+        tooltip: s.addCategory,
         child: const Icon(Icons.add),
       ),
     );
@@ -47,29 +49,29 @@ class CategoryScreen extends ConsumerWidget {
 
   void _showDialog(BuildContext context, WidgetRef ref,
       {Category? existing}) {
+    final s = AppStrings.of(context);
     final ctrl = TextEditingController(text: existing?.name ?? '');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(existing == null ? 'New Category' : 'Edit Category'),
+        title: Text(existing == null ? s.addCategory : s.editCategory),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Category name',
-            hintText: 'e.g. Electronics',
+          decoration: InputDecoration(
+            labelText: s.categoryName,
           ),
           onSubmitted: (_) => _save(ctx, ref, ctrl, existing),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(s.cancel),
           ),
           FilledButton(
             onPressed: () => _save(ctx, ref, ctrl, existing),
-            child: Text(existing == null ? 'Add' : 'Save'),
+            child: Text(existing == null ? s.add : s.save),
           ),
         ],
       ),
@@ -117,20 +119,21 @@ class _CategoryTile extends StatelessWidget {
             color: Colors.white, size: 26),
       ),
       confirmDismiss: (_) async {
+        final s = AppStrings.of(context);
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Delete Category'),
+            title: Text(s.deleteCategory),
             content: Text(
-                'Delete "${category.name}"? Products using this category are not affected.'),
+                '${s.delete} "${category.name}"?'),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel')),
+                  child: Text(s.cancel)),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child:
-                    const Text('Delete', style: TextStyle(color: Colors.red)),
+                    Text(s.delete, style: const TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -180,25 +183,26 @@ class _CategoryTile extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
+    final s = AppStrings.of(context);
     final ctrl = TextEditingController(text: category.name);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Category'),
+        title: Text(s.editCategory),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Category name'),
+          decoration: InputDecoration(labelText: s.categoryName),
           onSubmitted: (_) => _saveEdit(ctx, ctrl),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           FilledButton(
               onPressed: () => _saveEdit(ctx, ctrl),
-              child: const Text('Save')),
+              child: Text(s.save)),
         ],
       ),
     );

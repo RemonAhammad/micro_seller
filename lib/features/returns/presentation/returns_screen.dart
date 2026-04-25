@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../orders/providers/order_provider.dart';
 import '../../../data/models/order.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -17,12 +18,12 @@ class ReturnsScreen extends ConsumerStatefulWidget {
 class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  static const _tabs = ['All', 'Requested', 'Received', 'Refunded', 'Rejected'];
+  static const _tabCount = 5;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabCount, vsync: this);
   }
 
   @override
@@ -53,13 +54,20 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
     return [returns.length, requested, received, refunded, rejected];
   }
 
+  List<String> _tabLabels(BuildContext context) {
+    final s = AppStrings.of(context);
+    return [s.all, s.tr('requested'), s.tr('received'), s.tr('refunded'), s.tr('rejected')];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final ordersAsync = ref.watch(ordersProvider);
+    final tabs = _tabLabels(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Returns & Refunds'),
+        title: Text(s.returnsAndRefunds),
         bottom: ordersAsync.whenOrNull(
               data: (allOrders) {
                 final returns = _filterReturns(allOrders);
@@ -71,8 +79,8 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
                   labelStyle:
                       const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                   tabs: [
-                    for (int i = 0; i < _tabs.length; i++)
-                      Tab(child: _TabLabel(label: _tabs[i], count: counts[i])),
+                    for (int i = 0; i < tabs.length; i++)
+                      Tab(child: _TabLabel(label: tabs[i], count: counts[i])),
                   ],
                 );
               },
@@ -83,7 +91,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
               tabAlignment: TabAlignment.start,
               labelStyle:
                   const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: _tabs.map((t) => Tab(text: t)).toList(),
+              tabs: tabs.map((t) => Tab(text: t)).toList(),
             ),
       ),
       body: ordersAsync.when(
@@ -168,10 +176,11 @@ class _ReturnList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (orders.isEmpty) {
-      return const EmptyState(
+      final s = AppStrings.of(context);
+      return EmptyState(
         icon: Icons.assignment_return_rounded,
-        title: 'No returns',
-        subtitle: 'Return orders will appear here',
+        title: s.noReturns,
+        subtitle: s.returnOrdersAppearHere,
       );
     }
     return ListView.separated(
@@ -300,12 +309,13 @@ class _ReasonChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final (label, color) = switch (reason) {
-      ReturnReason.defective => ('Defective', Colors.red),
-      ReturnReason.wrongItem => ('Wrong Item', Colors.orange),
-      ReturnReason.damaged => ('Damaged', Colors.red),
-      ReturnReason.changedMind => ('Changed Mind', Colors.blue),
-      ReturnReason.other => ('Other', Colors.grey),
+      ReturnReason.defective => (s.defective, Colors.red),
+      ReturnReason.wrongItem => (s.wrongItem, Colors.orange),
+      ReturnReason.damaged => (s.tr('damaged'), Colors.red),
+      ReturnReason.changedMind => (s.changedMind, Colors.blue),
+      ReturnReason.other => (s.other, Colors.grey),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -329,12 +339,13 @@ class _ReturnStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final (label, color) = switch (status) {
-      ReturnStatus.none => ('None', Colors.grey),
-      ReturnStatus.requested => ('Requested', Colors.orange),
-      ReturnStatus.approved || ReturnStatus.received => ('Received', Colors.blue),
-      ReturnStatus.refunded => ('Refunded', Colors.green),
-      ReturnStatus.rejected => ('Rejected', Colors.red),
+      ReturnStatus.none => (s.tr('none'), Colors.grey),
+      ReturnStatus.requested => (s.tr('requested'), Colors.orange),
+      ReturnStatus.approved || ReturnStatus.received => (s.tr('received'), Colors.blue),
+      ReturnStatus.refunded => (s.tr('refunded'), Colors.green),
+      ReturnStatus.rejected => (s.tr('rejected'), Colors.red),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

@@ -267,6 +267,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   void _showImageSourceSheet() {
+    final s = AppStrings.of(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -288,7 +289,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('Take Photo'),
+              title: Text(s.takePhoto),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.camera);
@@ -296,7 +297,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Choose from Gallery'),
+              title: Text(s.chooseFromGallery),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.gallery);
@@ -306,8 +307,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ListTile(
                 leading: const Icon(Icons.delete_outline_rounded,
                     color: Colors.red),
-                title: const Text('Remove Photo',
-                    style: TextStyle(color: Colors.red)),
+                title: Text(s.removePhoto,
+                    style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() => _imagePath = null);
@@ -424,7 +425,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEdit ? 'Product updated!' : 'Product added!'),
+            content: Text(isEdit ? AppStrings.of(context).productUpdated : AppStrings.of(context).productAdded),
             backgroundColor: Colors.green,
           ),
         );
@@ -433,8 +434,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save product. Please try again.'),
+          SnackBar(
+            content: Text(AppStrings.of(context).failedToSaveProduct),
             backgroundColor: Colors.red,
           ),
         );
@@ -586,7 +587,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             ? Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Supplier',
+                                  Text(s.suppliers,
                                       style: TextStyle(
                                           fontSize: 11,
                                           color: cs.onSurface
@@ -597,7 +598,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                           fontSize: 14)),
                                 ],
                               )
-                            : Text('Supplier (optional)',
+                            : Text(s.supplierOptional,
                                 style: TextStyle(
                                     color: cs.onSurface.withValues(alpha: 0.5),
                                     fontSize: 14)),
@@ -631,12 +632,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
               // ── QR / Barcode ───────────────────────────────────────────────
               AppTextField(
-                label: 'QR / Barcode',
+                label: s.qrBarcode,
                 controller: _qrCtrl,
                 textInputAction: TextInputAction.next,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner_rounded),
-                  tooltip: 'Scan',
+                  tooltip: s.scan,
                   onPressed: _scanQr,
                 ),
               ),
@@ -725,13 +726,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               // ── Variant Attributes ─────────────────────────────────────────
               Row(
                 children: [
-                  const _SectionLabel('Variant Attributes'),
+                  _SectionLabel(s.variantAttributes),
                   const Spacer(),
                   if (_attributes.length < 3)
                     TextButton.icon(
                       onPressed: _addAttribute,
                       icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Add', style: TextStyle(fontSize: 12)),
+                      label: Text(s.add, style: const TextStyle(fontSize: 12)),
                     ),
                 ],
               ),
@@ -739,7 +740,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    'No variants. Add attributes like Size, Color, etc.',
+                    s.tr('noVariantsHint'),
                     style: TextStyle(
                       fontSize: 12,
                       color: cs.onSurface.withValues(alpha: 0.5),
@@ -766,9 +767,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           children: [
                             Expanded(
                               child: TextField(
-                                decoration: const InputDecoration(
-                                  labelText: 'Attribute Name',
-                                  hintText: 'e.g. Size',
+                                decoration: InputDecoration(
+                                  labelText: s.attributeName,
+                                  hintText: s.tr('variantName'),
                                   isDense: true,
                                 ),
                                 controller: attr.nameCtrl,
@@ -788,7 +789,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text('Options',
+                        Text(s.tr('option'),
                             style: TextStyle(
                                 fontSize: 11,
                                 color: cs.onSurface.withValues(alpha: 0.5))),
@@ -805,7 +806,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 child: TextField(
                                   controller: attr.optionCtrls[oi],
                                   decoration: InputDecoration(
-                                    hintText: 'Option',
+                                    hintText: s.option,
                                     isDense: true,
                                     contentPadding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 8),
@@ -833,8 +834,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               child: TextButton.icon(
                                 onPressed: () => _addOption(i),
                                 icon: const Icon(Icons.add, size: 14),
-                                label: const Text('Add',
-                                    style: TextStyle(fontSize: 11)),
+                                label: Text(s.add,
+                                    style: const TextStyle(fontSize: 11)),
                                 style: TextButton.styleFrom(
                                   padding:
                                       const EdgeInsets.symmetric(horizontal: 8),
@@ -856,12 +857,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 Row(
                   children: [
                     _SectionLabel(
-                        'Combinations (${_combinations.length})'),
+                        '${s.combinations} (${_combinations.length})'),
                     const Spacer(),
                     TextButton(
                       onPressed: _regenerateCombinations,
-                      child: const Text('Regenerate',
-                          style: TextStyle(fontSize: 11)),
+                      child: Text(s.regenerate,
+                          style: const TextStyle(fontSize: 11)),
                     ),
                   ],
                 ),
@@ -871,7 +872,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   children: [
                     Expanded(
                       child: _BulkSetField(
-                        label: 'Set All Stock',
+                        label: s.setAllStock,
                         onApply: (val) {
                           final v = int.tryParse(val);
                           if (v == null) return;
@@ -886,7 +887,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _BulkSetField(
-                        label: 'Set All Price +/-',
+                        label: s.setAllPrice,
                         onApply: (val) {
                           setState(() {
                             for (final c in _combinations) {
@@ -1180,7 +1181,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Select Supplier',
+            child: Text(AppStrings.of(context).tr('selectSupplier'),
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.w700)),
           ),
@@ -1191,9 +1192,9 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
               controller: _searchCtrl,
               autofocus: true,
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
-              decoration: const InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: Icon(Icons.search, size: 20),
+              decoration: InputDecoration(
+                hintText: '${AppStrings.of(context).search}...',
+                prefixIcon: const Icon(Icons.search, size: 20),
                 isDense: true,
               ),
             ),
@@ -1209,7 +1210,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                             size: 48,
                             color: cs.onSurface.withValues(alpha: 0.3)),
                         const SizedBox(height: 8),
-                        Text('No suppliers found',
+                        Text(AppStrings.of(context).tr('noSuppliersFound'),
                             style: TextStyle(
                                 color: cs.onSurface.withValues(alpha: 0.4))),
                         const SizedBox(height: 4),

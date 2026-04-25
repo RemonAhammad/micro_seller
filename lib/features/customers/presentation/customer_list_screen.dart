@@ -44,7 +44,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
               onChanged: (v) => _debouncer.run(
                   () => setState(() => _query = v.toLowerCase())),
               decoration: InputDecoration(
-                hintText: 'Search customers...',
+                hintText: s.searchCustomers,
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
@@ -73,7 +73,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           if (customers.isEmpty) {
             return EmptyState(
               icon: Icons.people_rounded,
-              title: _query.isNotEmpty ? 'No customers found' : s.noDataFound,
+              title: _query.isNotEmpty ? s.noCustomersFound : s.noDataFound,
               subtitle: _query.isEmpty ? s.addFirstCustomer : null,
               actionLabel: _query.isEmpty ? s.addCustomer : null,
               onAction: _query.isEmpty ? () => context.push('/customers/add') : null,

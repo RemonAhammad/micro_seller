@@ -6,16 +6,9 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../orders/providers/order_provider.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
-
-const _reasonLabels = {
-  ReturnReason.defective: 'Defective',
-  ReturnReason.wrongItem: 'Wrong Item',
-  ReturnReason.damaged: 'Damaged',
-  ReturnReason.changedMind: 'Changed Mind',
-  ReturnReason.other: 'Other',
-};
 
 class CreateReturnScreen extends ConsumerStatefulWidget {
   final Order originalOrder;
@@ -65,7 +58,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
   Future<void> _submit() async {
     if (!_returnQtys.any((q) => q > 0)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one item to return')),
+        SnackBar(content: Text(AppStrings.of(context).tr('selectAtLeastOneItem'))),
       );
       return;
     }
@@ -98,14 +91,14 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Return request submitted')),
+          SnackBar(content: Text(AppStrings.of(context).tr('returnRequestSubmitted'))),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create return: $e')),
+          SnackBar(content: Text(AppStrings.of(context).tr('failedToCreateReturn'))),
         );
       }
     } finally {
@@ -118,12 +111,21 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final order = widget.originalOrder;
 
+    Map<ReturnReason, String> reasonLabels = {
+      ReturnReason.defective: s.defective,
+      ReturnReason.wrongItem: s.wrongItem,
+      ReturnReason.damaged: s.tr('damaged'),
+      ReturnReason.changedMind: s.changedMind,
+      ReturnReason.other: s.other,
+    };
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Return')),
+      appBar: AppBar(title: Text(s.createReturnTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -154,7 +156,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           ),
           const SizedBox(height: 20),
 
-          Text('Select Items', style: _sectionLabel(cs)),
+          Text(s.selectItems, style: _sectionLabel(cs)),
           const SizedBox(height: 8),
           ...List.generate(order.items.length, (i) {
             final item = order.items[i];
@@ -198,7 +200,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           }),
           const SizedBox(height: 16),
 
-          Text('Return Reason', style: _sectionLabel(cs)),
+          Text(s.returnReason, style: _sectionLabel(cs)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -206,7 +208,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
             children: ReturnReason.values.map((r) {
               final selected = _reason == r;
               return ChoiceChip(
-                label: Text(_reasonLabels[r] ?? r.name),
+                label: Text(reasonLabels[r] ?? r.name),
                 selected: selected,
                 onSelected: (_) => setState(() => _reason = r),
                 selectedColor: cs.primary.withValues(alpha: 0.15),
@@ -219,10 +221,10 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           ),
           const SizedBox(height: 16),
 
-          Text('Refund Amount', style: _sectionLabel(cs)),
+          Text(s.refundAmount, style: _sectionLabel(cs)),
           const SizedBox(height: 8),
           AppTextField(
-            label: 'Refund',
+            label: s.tr('refund'),
             controller: _refundCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
@@ -232,16 +234,16 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Max refundable: ${CurrencyFormatter.format(_maxRefundable)} (amount paid on original order)',
+            '${s.tr("maxRefundable")}: ${CurrencyFormatter.format(_maxRefundable)} (${s.tr("amountPaidOnOriginal")})',
             style:
                 theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
 
-          Text('Notes', style: _sectionLabel(cs)),
+          Text(s.notes, style: _sectionLabel(cs)),
           const SizedBox(height: 8),
           AppTextField(
-            label: 'Return notes (optional)',
+            label: s.tr('returnNotesOptional'),
             controller: _notesCtrl,
             maxLines: 3,
             textCapitalization: TextCapitalization.sentences,
@@ -249,7 +251,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           const SizedBox(height: 24),
 
           AppButton(
-            label: 'Submit Return Request',
+            label: s.submitReturnRequest,
             icon: Icons.assignment_return,
             isLoading: _isLoading,
             isFullWidth: true,

@@ -96,7 +96,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(existing != null ? 'Customer updated!' : 'Customer added!'),
+            content: Text(AppStrings.of(context).savedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -105,8 +105,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save customer. Please try again.'),
+          SnackBar(
+            content: Text(AppStrings.of(context).failedToSaveCustomer),
             backgroundColor: Colors.red,
           ),
         );
@@ -171,7 +171,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              Text('Customer Type',
+              Text(s.tr('customerType'),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -181,9 +181,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               Row(
                 children: CustomerTag.values.map((tag) {
                   final label = switch (tag) {
-                    CustomerTag.newCustomer => 'New',
-                    CustomerTag.regular => 'Regular',
-                    CustomerTag.vip => 'VIP',
+                    CustomerTag.newCustomer => s.tr('new'),
+                    CustomerTag.regular => s.tr('regular'),
+                    CustomerTag.vip => s.tr('vip'),
                   };
                   final isSelected = _tag == tag;
                   return Expanded(
@@ -226,7 +226,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               const SizedBox(height: 32),
 
               AppButton(
-                label: isEdit ? 'Update Customer' : 'Add Customer',
+                label: isEdit ? s.editCustomer : s.addCustomer,
                 onPressed: _submit,
                 isLoading: _isLoading,
                 isFullWidth: true,

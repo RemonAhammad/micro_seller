@@ -106,7 +106,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text(isEdit ? 'Expense updated!' : 'Expense added!'),
+                Text(AppStrings.of(context).savedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -132,7 +132,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Expense' : s.addExpense),
+        title: Text(isEdit ? s.editExpense : s.addExpense),
       ),
       body: Form(
         key: _formKey,
@@ -184,7 +184,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Date',
+                            Text(s.date,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: theme.colorScheme.onSurface
@@ -206,7 +206,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               const SizedBox(height: 16),
 
               // Category
-              Text('Category',
+              Text(s.expenseCategory,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -218,11 +218,11 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 runSpacing: 8,
                 children: ExpenseCategory.values.map((cat) {
                   final label = switch (cat) {
-                    ExpenseCategory.logistics => 'Logistics',
-                    ExpenseCategory.packaging => 'Packaging',
-                    ExpenseCategory.marketing => 'Marketing',
-                    ExpenseCategory.supplies => 'Supplies',
-                    ExpenseCategory.other => 'Other',
+                    ExpenseCategory.logistics => s.logistics,
+                    ExpenseCategory.packaging => s.packaging,
+                    ExpenseCategory.marketing => s.marketing,
+                    ExpenseCategory.supplies => s.supplies,
+                    ExpenseCategory.other => s.other,
                   };
                   final isSelected = _category == cat;
 
@@ -267,7 +267,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               const SizedBox(height: 32),
 
               AppButton(
-                label: isEdit ? 'Update Expense' : 'Add Expense',
+                label: isEdit ? s.editExpense : s.addExpense,
                 onPressed: _submit,
                 isLoading: _isLoading,
                 isFullWidth: true,

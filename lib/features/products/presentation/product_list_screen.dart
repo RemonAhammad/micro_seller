@@ -43,7 +43,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         SnackBar(
             content: Text(result.errors.isNotEmpty
                 ? result.errors.first
-                : 'No products found in CSV')),
+                : AppStrings.of(context).noProductsFound)),
       );
       return;
     }
@@ -54,7 +54,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Import Products'),
+        title: Text(AppStrings.of(context).importProducts),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,10 +76,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(AppStrings.of(context).cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Import')),
+              child: Text(AppStrings.of(context).importCsv)),
         ],
       ),
     );
@@ -118,12 +118,12 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.file_upload_outlined),
-            tooltip: 'Import CSV',
+            tooltip: s.importCsv,
             onPressed: () => _importProducts(context, ref),
           ),
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Export CSV',
+            tooltip: s.exportCsv,
             onPressed: () async {
               final products = ref.read(productsProvider).valueOrNull ?? [];
               if (products.isEmpty) return;
@@ -147,7 +147,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                   onChanged: (v) => _debouncer.run(
                       () => setState(() => _query = v.toLowerCase())),
                   decoration: InputDecoration(
-                    hintText: 'Search products...',
+                    hintText: s.searchProducts,
                     prefixIcon: const Icon(Icons.search_rounded, size: 20),
                     suffixIcon: _query.isNotEmpty
                         ? IconButton(
@@ -173,7 +173,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: FilterChip(
-                                label: const Text('All'),
+                                label: Text(s.all),
                                 selected: _selectedCategory == null,
                                 onSelected: (_) =>
                                     setState(() => _selectedCategory = null),
@@ -226,7 +226,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             final isFiltered = _query.isNotEmpty || _selectedCategory != null;
             return EmptyState(
               icon: Icons.inventory_2_rounded,
-              title: isFiltered ? 'No products found' : s.noDataFound,
+              title: isFiltered ? s.noProductsFound : s.noDataFound,
               subtitle: isFiltered ? null : s.addFirstProduct,
               actionLabel: isFiltered ? null : s.addProduct,
               onAction: isFiltered ? null : () => context.push('/products/add'),
@@ -342,7 +342,7 @@ class _ProductListTile extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  '${product.stockQty} in stock',
+                  '${product.stockQty} ${AppStrings.of(context).tr('inStockLabel')}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: product.isLowStock
                         ? Colors.orange

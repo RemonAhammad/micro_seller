@@ -7,6 +7,7 @@ import '../providers/supplier_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 
 class PurchaseDetailScreen extends ConsumerWidget {
@@ -31,17 +32,21 @@ class _Body extends ConsumerWidget {
 
   const _Body({required this.purchaseId, required this.isar});
 
-  String _methodLabel(PurchasePaymentMethod m) => switch (m) {
-        PurchasePaymentMethod.cash => 'Cash',
-        PurchasePaymentMethod.card => 'Card',
-        PurchasePaymentMethod.bkash => 'bKash',
-        PurchasePaymentMethod.nagad => 'Nagad',
-        PurchasePaymentMethod.bank => 'Bank',
-        PurchasePaymentMethod.other => 'Other',
-      };
+  String _methodLabel(BuildContext context, PurchasePaymentMethod m) {
+    final s = AppStrings.of(context);
+    return switch (m) {
+      PurchasePaymentMethod.cash => s.cash,
+      PurchasePaymentMethod.card => s.card,
+      PurchasePaymentMethod.bkash => s.bkash,
+      PurchasePaymentMethod.nagad => s.nagad,
+      PurchasePaymentMethod.bank => s.bank,
+      PurchasePaymentMethod.other => s.other,
+    };
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -52,23 +57,22 @@ class _Body extends ConsumerWidget {
         if (p == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Purchase not found')),
+            body: Center(child: Text(s.purchaseNotFound)),
           );
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Purchase #${p.id}'),
+            title: Text('${s.purchases} #${p.id}'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.delete_rounded),
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
                     context,
-                    title: 'Delete Purchase',
-                    message:
-                        'Delete this purchase? Stock will be reduced by purchased amounts.',
-                    confirmText: 'Delete',
+                    title: s.deletePurchase,
+                    message: s.tr('deletePurchaseConfirm'),
+                    confirmText: s.delete,
                     isDestructive: true,
                     icon: Icons.delete_rounded,
                   );
@@ -99,12 +103,12 @@ class _Body extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      _row(theme, 'Supplier',
-                          p.supplierName.isNotEmpty ? p.supplierName : 'No supplier'),
-                      _row(theme, 'Date', DateFormatter.formatWithTime(p.createdAt)),
-                      _row(theme, 'Payment', _methodLabel(p.paymentMethod)),
+                      _row(theme, s.suppliers,
+                          p.supplierName.isNotEmpty ? p.supplierName : '-'),
+                      _row(theme, s.date, DateFormatter.formatWithTime(p.createdAt)),
+                      _row(theme, s.payment, _methodLabel(context, p.paymentMethod)),
                       if (p.referenceNumber.isNotEmpty)
-                        _row(theme, 'Reference', p.referenceNumber),
+                        _row(theme, s.referenceReceipt, p.referenceNumber),
                     ],
                   ),
                 ),
@@ -112,7 +116,7 @@ class _Body extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Items
-                Text('Items',
+                Text(s.items,
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
@@ -197,12 +201,12 @@ class _Body extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      _row(theme, 'Total',
+                      _row(theme, s.total,
                           CurrencyFormatter.format(p.totalAmount),
                           isBold: true, valueColor: cs.primary),
-                      _row(theme, 'Paid', CurrencyFormatter.format(p.amountPaid)),
+                      _row(theme, s.paid, CurrencyFormatter.format(p.amountPaid)),
                       if (p.balanceDue > 0)
-                        _row(theme, 'Balance Due',
+                        _row(theme, s.balanceDue,
                             CurrencyFormatter.format(p.balanceDue),
                             isBold: true, valueColor: Colors.red),
                     ],
@@ -216,7 +220,7 @@ class _Body extends ConsumerWidget {
                     child: FilledButton.icon(
                       onPressed: () => _showPayDialog(context, ref, p),
                       icon: const Icon(Icons.payments_outlined),
-                      label: const Text('Record Payment'),
+                      label: Text(s.recordPayment),
                     ),
                   ),
                 ],
@@ -233,7 +237,7 @@ class _Body extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Notes',
+                        Text(s.notes,
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: cs.onSurface.withValues(alpha: 0.5),
                             )),

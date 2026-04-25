@@ -227,14 +227,14 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   Future<void> _submit() async {
     if (_selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a customer')),
+        SnackBar(content: Text(AppStrings.of(context).pleaseSelectCustomer)),
       );
       return;
     }
 
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one product')),
+        SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)),
       );
       return;
     }
@@ -279,8 +279,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Order updated'),
+            SnackBar(
+              content: Text(AppStrings.of(context).orderUpdated),
               backgroundColor: Colors.green,
             ),
           );
@@ -318,8 +318,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Order created'),
+            SnackBar(
+              content: Text(AppStrings.of(context).orderCreated),
               backgroundColor: Colors.green,
             ),
           );
@@ -330,9 +330,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing
-                ? 'Failed to update order. Please try again.'
-                : 'Failed to create order. Please try again.'),
+            content: Text(AppStrings.of(context).errorOccurred),
             backgroundColor: Colors.red,
           ),
         );
@@ -351,7 +349,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit Order' : s.addOrder)),
+      appBar: AppBar(title: Text(_isEditing ? s.editOrder : s.addOrder)),
       body: Column(
         children: [
           Expanded(
@@ -384,15 +382,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   controller: _notesCtrl,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
-                  hint: 'Any special instructions...',
+                  hint: s.tr('anySpecialInstructions'),
                 ),
 
                 // ── Delivery ──
                 const SizedBox(height: 16),
-                Text('Delivery', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.primary)),
+                Text(s.delivery, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.primary)),
                 const SizedBox(height: 8),
                 AppTextField(
-                  label: 'Delivery Address',
+                  label: s.deliveryAddress,
                   controller: _deliveryAddressCtrl,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
@@ -421,8 +419,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                         const SizedBox(width: 8),
                         Text(
                           _estimatedDeliveryDate != null
-                              ? 'Est. Delivery: ${DateFormatter.format(_estimatedDeliveryDate)}'
-                              : 'Set Estimated Delivery Date',
+                              ? '${s.estimatedDelivery}: ${DateFormatter.format(_estimatedDeliveryDate)}'
+                              : s.estimatedDelivery,
                           style: TextStyle(
                             color: _estimatedDeliveryDate != null ? cs.onSurface : cs.onSurface.withValues(alpha: 0.5),
                           ),
@@ -442,8 +440,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 // ── Recurring ──
                 const SizedBox(height: 12),
                 SwitchListTile(
-                  title: const Text('Recurring Order'),
-                  subtitle: const Text('Auto-create this order periodically'),
+                  title: Text(s.recurringOrder),
+                  subtitle: Text(s.autoCreateOrder),
                   value: _isRecurring,
                   onChanged: (v) => setState(() => _isRecurring = v),
                   contentPadding: EdgeInsets.zero,
@@ -453,7 +451,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
-                        const Text('Repeat every'),
+                        Text(s.repeatEvery),
                         const SizedBox(width: 8),
                         SizedBox(
                           width: 60,
@@ -466,7 +464,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text('days'),
+                        Text(s.days),
                       ],
                     ),
                   ),
@@ -517,7 +515,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       ],
                     )
                   : Text(
-                      'Select or create customer',
+                      AppStrings.of(context).selectCustomer,
                       style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
                     ),
             ),
@@ -542,7 +540,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       children: [
         Row(
           children: [
-            Text('Items',
+            Text(AppStrings.of(context).items,
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.w700)),
             if (_items.isNotEmpty) ...[
@@ -567,7 +565,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             TextButton.icon(
               onPressed: _pickProducts,
               icon: const Icon(Icons.add, size: 16),
-              label: const Text('Add'),
+              label: Text(AppStrings.of(context).add),
             ),
           ],
         ),
@@ -589,7 +587,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       size: 28, color: cs.onSurface.withValues(alpha: 0.3)),
                   const SizedBox(height: 6),
                   Text(
-                    'Tap to add products',
+                    AppStrings.of(context).tapToAddProducts,
                     style: TextStyle(
                       color: cs.onSurface.withValues(alpha: 0.4),
                       fontSize: 13,
@@ -704,13 +702,14 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   // ─── Pricing ─────────────────────────────────────────────────────────
 
   Widget _buildPricingSection(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: AppTextField(
-                label: 'Discount',
+                label: s.discount,
                 controller: _discountCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -723,7 +722,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: AppTextField(
-                label: 'Delivery Fee',
+                label: s.deliveryFee,
                 controller: _deliveryCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -737,7 +736,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         ),
         const SizedBox(height: 12),
         AppTextField(
-          label: 'Tax / VAT (%)',
+          label: s.taxVat,
           controller: _taxRateCtrl,
           keyboardType:
               const TextInputType.numberWithOptions(decimal: true),
@@ -756,7 +755,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           children: [
             Expanded(
               child: AppTextField(
-                label: 'Amount Paid',
+                label: s.amountPaid,
                 controller: _amountPaidCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -774,7 +773,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                     ? () => setState(() => _amountPaidCtrl.text =
                         _total.toStringAsFixed(_total == _total.roundToDouble() ? 0 : 2))
                     : null,
-                child: const Text('Pay Full'),
+                child: Text(s.payFull),
               ),
             ),
           ],
@@ -790,7 +789,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Status',
+        Text(AppStrings.of(context).tr('status'),
             style: theme.textTheme.titleSmall
                 ?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
@@ -820,19 +819,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   // ─── Payment Method ──────────────────────────────────────────────────
 
   Widget _buildPaymentMethodSection(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
     const methods = PaymentMethod.values;
-    const labels = {
-      PaymentMethod.cash: 'Cash',
-      PaymentMethod.card: 'Card',
-      PaymentMethod.mfs: 'MFS',
-      PaymentMethod.bank: 'Bank',
-      PaymentMethod.other: 'Other',
+    final labels = {
+      PaymentMethod.cash: s.cash,
+      PaymentMethod.card: s.card,
+      PaymentMethod.mfs: s.mfs,
+      PaymentMethod.bank: s.bank,
+      PaymentMethod.other: s.other,
     };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Payment Method',
+        Text(s.paymentMethod,
             style: theme.textTheme.titleSmall
                 ?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
@@ -860,6 +860,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   // ─── Footer ──────────────────────────────────────────────────────────
 
   Widget _buildFooter(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       decoration: BoxDecoration(
@@ -876,27 +877,27 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Summary rows
-          _summaryRow('Subtotal', CurrencyFormatter.format(_subtotal), theme),
+          _summaryRow(s.subtotal, CurrencyFormatter.format(_subtotal), theme),
           if (_discount > 0)
             _summaryRow(
-              'Discount',
+              s.discount,
               '- ${CurrencyFormatter.format(_discount)}',
               theme,
               valueColor: Colors.green,
             ),
           if (_taxRate > 0)
             _summaryRow(
-              'Tax (${_taxRate.toStringAsFixed(_taxRate == _taxRate.roundToDouble() ? 0 : 1)}%)',
+              '${s.tax} (${_taxRate.toStringAsFixed(_taxRate == _taxRate.roundToDouble() ? 0 : 1)}%)',
               CurrencyFormatter.format(_taxAmount),
               theme,
             ),
           if (_delivery > 0)
-            _summaryRow('Delivery', CurrencyFormatter.format(_delivery), theme),
+            _summaryRow(s.delivery, CurrencyFormatter.format(_delivery), theme),
           const Divider(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total',
+              Text(s.total,
                   style: theme.textTheme.titleSmall
                       ?.copyWith(fontWeight: FontWeight.w700)),
               Text(
@@ -911,7 +912,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           ),
           const SizedBox(height: 12),
           AppButton(
-            label: _isEditing ? 'Update Order' : 'Create Order',
+            label: _isEditing ? s.editOrder : s.addOrder,
             onPressed: _submit,
             isLoading: _isLoading,
             isFullWidth: true,
@@ -1072,7 +1073,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Text('Add Products',
+                Text(AppStrings.of(context).addItems,
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 if (totalItems > 0) ...[
@@ -1096,7 +1097,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                 const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Done'),
+                  child: Text(AppStrings.of(context).done),
                 ),
               ],
             ),
@@ -1109,7 +1110,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
-                hintText: 'Search by name or SKU...',
+                hintText: AppStrings.of(context).searchByNameOrSku,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
@@ -1131,7 +1132,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           Expanded(
             child: filtered.isEmpty
                 ? Center(
-                    child: Text('No products found',
+                    child: Text(AppStrings.of(context).noProductsFound,
                         style: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.4))))
                 : ListView.separated(
@@ -1513,7 +1514,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create customer')),
+          SnackBar(content: Text(AppStrings.of(context).failedToSaveCustomer)),
         );
         setState(() => _saving = false);
       }
@@ -1522,6 +1523,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -1556,7 +1558,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     ),
                   ),
                 Text(
-                  _showForm ? 'New Customer' : 'Select Customer',
+                  _showForm ? s.createNewCustomer : s.selectCustomer,
                   style: theme.textTheme.titleSmall
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
@@ -1578,9 +1580,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     controller: _nameCtrl,
                     autofocus: true,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      prefixIcon: Icon(Icons.person_outline, size: 20),
+                    decoration: InputDecoration(
+                      labelText: s.customerName,
+                      prefixIcon: const Icon(Icons.person_outline, size: 20),
                       isDense: true,
                     ),
                   ),
@@ -1591,9 +1593,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]')),
                     ],
-                    decoration: const InputDecoration(
-                      labelText: 'Phone',
-                      prefixIcon: Icon(Icons.phone_outlined, size: 20),
+                    decoration: InputDecoration(
+                      labelText: s.phone,
+                      prefixIcon: const Icon(Icons.phone_outlined, size: 20),
                       isDense: true,
                     ),
                   ),
@@ -1601,9 +1603,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   TextField(
                     controller: _addressCtrl,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Address (optional)',
-                      prefixIcon: Icon(Icons.location_on_outlined, size: 20),
+                    decoration: InputDecoration(
+                      labelText: s.address,
+                      prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
                       isDense: true,
                     ),
                   ),
@@ -1617,7 +1619,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                 strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.check, size: 18),
-                    label: Text(_saving ? 'Saving...' : 'Add & Select'),
+                    label: Text(_saving ? s.tr('loading') : s.addAndSelect),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(46),
                     ),
@@ -1634,7 +1636,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                 autofocus: true,
                 onChanged: (v) => setState(() => _query = v.toLowerCase()),
                 decoration: InputDecoration(
-                  hintText: 'Search by name or phone...',
+                  hintText: s.searchByNameOrPhone,
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _query.isNotEmpty
                       ? IconButton(
@@ -1671,7 +1673,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                           size: 20, color: cs.primary),
                       const SizedBox(width: 10),
                       Text(
-                        'Create New Customer',
+                        s.createNewCustomer,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
@@ -1693,7 +1695,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             Expanded(
               child: _filtered.isEmpty
                   ? Center(
-                      child: Text('No customers found',
+                      child: Text(s.noCustomersFound,
                           style: TextStyle(
                               color: cs.onSurface.withValues(alpha: 0.4))))
                   : ListView.separated(

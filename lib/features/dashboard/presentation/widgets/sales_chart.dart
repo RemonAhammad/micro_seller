@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../providers/dashboard_provider.dart';
@@ -22,6 +23,7 @@ class _SalesChartState extends State<SalesChart> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -30,10 +32,10 @@ class _SalesChartState extends State<SalesChart> {
     }
 
     final maxRevenue = widget.weeklySales
-        .map((s) => s.revenue)
+        .map((d) => d.revenue)
         .reduce((a, b) => a > b ? a : b);
     final maxProfit = widget.weeklySales
-        .map((s) => s.profit)
+        .map((d) => d.profit)
         .reduce((a, b) => a > b ? a : b);
     final maxY = (_showRevenue ? maxRevenue : maxProfit) * 1.3;
 
@@ -43,14 +45,14 @@ class _SalesChartState extends State<SalesChart> {
         Row(
           children: [
             _ChartToggle(
-              label: 'Revenue',
+              label: s.revenue,
               color: AppColors.chartRevenue,
               isSelected: _showRevenue,
               onTap: () => setState(() => _showRevenue = true),
             ),
             const SizedBox(width: 8),
             _ChartToggle(
-              label: 'Profit',
+              label: s.profit,
               color: AppColors.chartProfit,
               isSelected: !_showRevenue,
               onTap: () => setState(() => _showRevenue = false),
@@ -190,6 +192,7 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final entries = widget.statusCounts.entries
@@ -200,7 +203,7 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
       return SizedBox(
         height: 120,
         child: Center(
-          child: Text('No orders yet',
+          child: Text(s.addFirstOrder,
               style: TextStyle(color: cs.onSurface.withValues(alpha: 0.4))),
         ),
       );
@@ -319,13 +322,14 @@ class RevenueExpenseChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     if (weeklySales.isEmpty) return const SizedBox(height: 140);
 
     final maxRevenue = weeklySales
-        .map((s) => s.revenue)
+        .map((d) => d.revenue)
         .reduce((a, b) => a > b ? a : b);
     final maxExpense = dailyExpenses.values.isEmpty
         ? 0.0
@@ -340,13 +344,13 @@ class RevenueExpenseChart extends StatelessWidget {
           children: [
             _dot(AppColors.chartRevenue),
             const SizedBox(width: 4),
-            Text('Revenue',
+            Text(s.revenue,
                 style: TextStyle(
                     fontSize: 11, color: cs.onSurface.withValues(alpha: 0.6))),
             const SizedBox(width: 14),
             _dot(AppColors.statusCancelled),
             const SizedBox(width: 4),
-            Text('Expenses',
+            Text(s.expenses,
                 style: TextStyle(
                     fontSize: 11, color: cs.onSurface.withValues(alpha: 0.6))),
           ],

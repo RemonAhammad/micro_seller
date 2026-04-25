@@ -15,6 +15,7 @@ import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../returns/presentation/create_return_screen.dart';
@@ -46,6 +47,7 @@ class _OrderDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final ordersAsync = ref.watch(ordersProvider);
     final theme = Theme.of(context);
 
@@ -55,7 +57,7 @@ class _OrderDetailBody extends ConsumerWidget {
         if (order == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Order not found')),
+            body: Center(child: Text(s.orderNotFound)),
           );
         }
 
@@ -71,59 +73,59 @@ class _OrderDetailBody extends ConsumerWidget {
                 onSelected: (action) =>
                     _handleAction(context, ref, order, action),
                 itemBuilder: (_) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                       value: 'share_text',
                       child: ListTile(
-                        leading: Icon(Icons.message_rounded),
-                        title: Text('Share via WhatsApp'),
+                        leading: const Icon(Icons.message_rounded),
+                        title: Text(s.shareViaWhatsApp),
                         contentPadding: EdgeInsets.zero,
                       )),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                       value: 'share_pdf',
                       child: ListTile(
-                        leading: Icon(Icons.picture_as_pdf_rounded),
-                        title: Text('Share PDF'),
+                        leading: const Icon(Icons.picture_as_pdf_rounded),
+                        title: Text(s.sharePdf),
                         contentPadding: EdgeInsets.zero,
                       )),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                       value: 'download_pdf',
                       child: ListTile(
-                        leading: Icon(Icons.download_rounded),
-                        title: Text('Download PDF'),
+                        leading: const Icon(Icons.download_rounded),
+                        title: Text(s.downloadPdf),
                         contentPadding: EdgeInsets.zero,
                       )),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                       value: 'print',
                       child: ListTile(
-                        leading: Icon(Icons.print_rounded),
-                        title: Text('Print'),
+                        leading: const Icon(Icons.print_rounded),
+                        title: Text(s.print),
                         contentPadding: EdgeInsets.zero,
                       )),
                   if (!order.isReturn)
-                    const PopupMenuItem(
+                    PopupMenuItem(
                         value: 'return',
                         child: ListTile(
-                          leading: Icon(Icons.assignment_return_rounded),
-                          title: Text('Create Return'),
+                          leading: const Icon(Icons.assignment_return_rounded),
+                          title: Text(s.createReturn),
                           contentPadding: EdgeInsets.zero,
                         )),
                   if (order.orderStatus != OrderStatus.cancelled) ...[
                     const PopupMenuDivider(),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                         value: 'cancel',
                         child: ListTile(
-                          leading: Icon(Icons.cancel_rounded, color: Colors.orange),
-                          title: Text('Cancel Order',
-                              style: TextStyle(color: Colors.orange)),
+                          leading: const Icon(Icons.cancel_rounded, color: Colors.orange),
+                          title: Text(s.cancelOrder,
+                              style: const TextStyle(color: Colors.orange)),
                           contentPadding: EdgeInsets.zero,
                         )),
                   ],
                   const PopupMenuDivider(),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                       value: 'delete',
                       child: ListTile(
-                        leading: Icon(Icons.delete_rounded, color: Colors.red),
-                        title: Text('Delete', style: TextStyle(color: Colors.red)),
+                        leading: const Icon(Icons.delete_rounded, color: Colors.red),
+                        title: Text(s.delete, style: const TextStyle(color: Colors.red)),
                         contentPadding: EdgeInsets.zero,
                       )),
                 ],
@@ -150,15 +152,15 @@ class _OrderDetailBody extends ConsumerWidget {
                           color: Colors.orange.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.assignment_return_rounded,
+                            const Icon(Icons.assignment_return_rounded,
                                 size: 14, color: Colors.orange),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
-                              'Return',
-                              style: TextStyle(
+                              s.returns,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.orange,
@@ -191,7 +193,7 @@ class _OrderDetailBody extends ConsumerWidget {
                 // Customer info
                 if (order.customerName.isNotEmpty)
                   _InfoCard(children: [
-                    _InfoRow(label: 'Customer', value: order.customerName),
+                    _InfoRow(label: s.customer, value: order.customerName),
                     if (order.customerPhone.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -199,7 +201,7 @@ class _OrderDetailBody extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Phone',
+                              s.phone,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
@@ -235,7 +237,7 @@ class _OrderDetailBody extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 // Items
-                const _SectionLabel('Order Items'),
+                _SectionLabel(s.orderItems),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -257,39 +259,39 @@ class _OrderDetailBody extends ConsumerWidget {
                 // Totals
                 _InfoCard(children: [
                   _InfoRow(
-                      label: 'Subtotal',
+                      label: s.subtotal,
                       value: CurrencyFormatter.format(order.subtotal)),
                   if (order.discountAmount > 0)
                     _InfoRow(
-                      label: 'Discount',
+                      label: s.discount,
                       value:
                           '- ${CurrencyFormatter.format(order.discountAmount)}',
                       valueColor: Colors.green,
                     ),
                   if (order.taxAmount > 0)
                     _InfoRow(
-                        label: 'Tax',
+                        label: s.tax,
                         value: CurrencyFormatter.format(order.taxAmount)),
                   if (order.deliveryFee > 0)
                     _InfoRow(
-                        label: 'Delivery',
+                        label: s.delivery,
                         value: CurrencyFormatter.format(order.deliveryFee)),
                   const Divider(height: 16),
                   _InfoRow(
-                    label: 'Total',
+                    label: s.total,
                     value: CurrencyFormatter.format(order.totalAmount),
                     isBold: true,
                     valueColor: theme.colorScheme.primary,
                   ),
                   _InfoRow(
-                      label: 'Paid',
+                      label: s.paid,
                       value: CurrencyFormatter.format(order.amountPaid)),
                   _InfoRow(
-                      label: 'Payment Method',
-                      value: _paymentMethodLabel(order.paymentMethod)),
+                      label: s.paymentMethod,
+                      value: _paymentMethodLabel(context, order.paymentMethod)),
                   if (order.balanceDue > 0)
                     _InfoRow(
-                      label: 'Balance Due',
+                      label: s.balanceDue,
                       value: CurrencyFormatter.format(order.balanceDue),
                       isBold: true,
                       valueColor: AppColors.paymentUnpaid,
@@ -299,7 +301,7 @@ class _OrderDetailBody extends ConsumerWidget {
 
                 if (order.notes.isNotEmpty)
                   _InfoCard(children: [
-                    Text('Notes',
+                    Text(s.notes,
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.5),
                         )),
@@ -321,7 +323,7 @@ class _OrderDetailBody extends ConsumerWidget {
                     child: FilledButton.icon(
                       onPressed: () => _showPaymentDialog(context, ref, order),
                       icon: const Icon(Icons.payment_rounded),
-                      label: const Text('Record Payment'),
+                      label: Text(s.recordPayment),
                     ),
                   ),
               ],
@@ -335,13 +337,14 @@ class _OrderDetailBody extends ConsumerWidget {
     );
   }
 
-  String _paymentMethodLabel(PaymentMethod method) {
+  String _paymentMethodLabel(BuildContext context, PaymentMethod method) {
+    final s = AppStrings.of(context);
     return switch (method) {
-      PaymentMethod.cash => 'Cash',
-      PaymentMethod.card => 'Card',
-      PaymentMethod.mfs => 'MFS',
-      PaymentMethod.bank => 'Bank',
-      PaymentMethod.other => 'Other',
+      PaymentMethod.cash => s.cash,
+      PaymentMethod.card => s.card,
+      PaymentMethod.mfs => s.mfs,
+      PaymentMethod.bank => s.bank,
+      PaymentMethod.other => s.other,
     };
   }
 
@@ -398,10 +401,10 @@ class _OrderDetailBody extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('PDF saved to $downloadDir'),
+              content: Text('${AppStrings.of(context).pdfSavedTo} $downloadDir'),
               backgroundColor: Colors.green,
               action: SnackBarAction(
-                label: 'Share',
+                label: AppStrings.of(context).share,
                 textColor: Colors.white,
                 onPressed: () => Share.shareXFiles([XFile(file.path)]),
               ),
@@ -429,12 +432,13 @@ class _OrderDetailBody extends ConsumerWidget {
 
       case 'cancel':
         if (!context.mounted) return;
+        final s = AppStrings.of(context);
         final ok = await ConfirmDialog.show(
           context,
-          title: 'Cancel Order',
+          title: s.cancelOrder,
           message:
-              'Cancel ${order.orderNumber}? Stock will be restored if it was deducted.',
-          confirmText: 'Cancel Order',
+              '${s.cancelOrder} ${order.orderNumber}? ${s.cancelOrderConfirm}',
+          confirmText: s.cancelOrder,
           isDestructive: true,
           icon: Icons.cancel_rounded,
         );
@@ -447,11 +451,12 @@ class _OrderDetailBody extends ConsumerWidget {
 
       case 'delete':
         if (!context.mounted) return;
+        final sd = AppStrings.of(context);
         final ok = await ConfirmDialog.show(
           context,
-          title: 'Delete Order',
-          message: 'Delete ${order.orderNumber}? This cannot be undone.',
-          confirmText: 'Delete',
+          title: sd.deleteOrder,
+          message: '${sd.deleteOrder} ${order.orderNumber}? ${sd.deleteOrderConfirm}',
+          confirmText: sd.delete,
           isDestructive: true,
           icon: Icons.delete_rounded,
         );
@@ -467,16 +472,17 @@ class _OrderDetailBody extends ConsumerWidget {
 
   void _showPaymentDialog(
       BuildContext context, WidgetRef ref, Order order) {
+    final s = AppStrings.of(context);
     final ctrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Record Payment'),
+        title: Text(s.recordPayment),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Balance due: ${CurrencyFormatter.format(order.balanceDue)}'),
+            Text('${s.balanceDue}: ${CurrencyFormatter.format(order.balanceDue)}'),
             const SizedBox(height: 16),
             TextField(
               controller: ctrl,
@@ -487,7 +493,7 @@ class _OrderDetailBody extends ConsumerWidget {
                 FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
               ],
               decoration: InputDecoration(
-                labelText: 'Payment Amount',
+                labelText: s.paymentAmount,
                 prefixText: '${CurrencyFormatter.symbol} ',
               ),
             ),
@@ -496,7 +502,7 @@ class _OrderDetailBody extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           FilledButton(
             onPressed: () async {
               final amount = double.tryParse(ctrl.text) ?? 0;
@@ -506,7 +512,7 @@ class _OrderDetailBody extends ConsumerWidget {
                   .recordPayment(order.id, amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(s.save),
           ),
         ],
       ),
@@ -521,6 +527,7 @@ class _StatusActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final nextStatus = switch (order.orderStatus) {
       OrderStatus.pending => OrderStatus.confirmed,
       OrderStatus.confirmed => OrderStatus.shipped,
@@ -529,9 +536,9 @@ class _StatusActions extends ConsumerWidget {
     };
 
     final nextLabel = switch (nextStatus) {
-      OrderStatus.confirmed => 'Confirm Order',
-      OrderStatus.shipped => 'Mark as Shipped',
-      OrderStatus.completed => 'Mark as Completed',
+      OrderStatus.confirmed => s.tr('confirmOrder'),
+      OrderStatus.shipped => s.tr('markAsShipped'),
+      OrderStatus.completed => s.tr('markAsCompleted'),
       _ => null,
     };
 
@@ -635,6 +642,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -656,7 +664,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
               Icon(Icons.local_shipping_rounded, size: 18, color: cs.primary),
               const SizedBox(width: 8),
               Text(
-                'Delivery Tracking',
+                s.delivery,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -666,7 +674,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Progress stepper
-          _buildProgressStepper(cs),
+          _buildProgressStepper(context, cs),
           const SizedBox(height: 12),
 
           if (order.deliveryAddress.isNotEmpty)
@@ -697,7 +705,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
                   Icon(Icons.schedule_rounded, size: 16, color: cs.onSurface.withOpacity(0.5)),
                   const SizedBox(width: 8),
                   Text(
-                    'Est. Delivery: ${DateFormatter.format(order.estimatedDeliveryDate)}',
+                    '${s.estimatedDelivery}: ${DateFormatter.format(order.estimatedDeliveryDate)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: cs.onSurface.withOpacity(0.7),
                     ),
@@ -714,7 +722,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
                   const Icon(Icons.check_circle_rounded, size: 16, color: AppColors.statusCompleted),
                   const SizedBox(width: 8),
                   Text(
-                    'Delivered: ${DateFormatter.format(order.actualDeliveryDate)}',
+                    '${s.delivered}: ${DateFormatter.format(order.actualDeliveryDate)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.statusCompleted,
                       fontWeight: FontWeight.w600,
@@ -738,7 +746,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
                       );
                 },
                 icon: const Icon(Icons.check_rounded, size: 18),
-                label: const Text('Mark as Delivered'),
+                label: Text(s.markAsDelivered),
               ),
             ),
         ],
@@ -746,8 +754,9 @@ class _DeliveryTrackingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressStepper(ColorScheme cs) {
-    const steps = ['Placed', 'Confirmed', 'Shipped', 'Delivered'];
+  Widget _buildProgressStepper(BuildContext context, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    final steps = [s.tr('placed'), s.confirmed, s.shipped, s.delivered];
     final current = _stepIndex;
 
     return Row(
@@ -828,12 +837,15 @@ class _StatusStepperBar extends StatelessWidget {
     OrderStatus.completed,
   ];
 
-  static const _labels = {
-    OrderStatus.pending: 'Pending',
-    OrderStatus.confirmed: 'Confirmed',
-    OrderStatus.shipped: 'Shipped',
-    OrderStatus.completed: 'Completed',
-  };
+  Map<OrderStatus, String> _labels(BuildContext context) {
+    final s = AppStrings.of(context);
+    return {
+      OrderStatus.pending: s.pending,
+      OrderStatus.confirmed: s.confirmed,
+      OrderStatus.shipped: s.shipped,
+      OrderStatus.completed: s.completed,
+    };
+  }
 
   int get _currentIndex => _flow.indexOf(order.orderStatus).clamp(0, _flow.length - 1);
   bool get _canGoBack => _currentIndex > 0;
@@ -845,6 +857,8 @@ class _StatusStepperBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final labels = _labels(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -910,11 +924,11 @@ class _StatusStepperBar extends StatelessWidget {
           const SizedBox(height: 6),
           // Labels
           Row(
-            children: _flow.map((s) {
-              final isActive = _flow.indexOf(s) <= _currentIndex;
+            children: _flow.map((status) {
+              final isActive = _flow.indexOf(status) <= _currentIndex;
               return Expanded(
                 child: Text(
-                  _labels[s] ?? s.name,
+                  labels[status] ?? status.name,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 9,
@@ -938,7 +952,7 @@ class _StatusStepperBar extends StatelessWidget {
                       : null,
                   icon: const Icon(Icons.arrow_back_rounded, size: 16),
                   label: Text(
-                    _canGoBack ? _labels[_flow[_currentIndex - 1]]! : 'Back',
+                    _canGoBack ? labels[_flow[_currentIndex - 1]]! : s.tr('back'),
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -950,7 +964,7 @@ class _StatusStepperBar extends StatelessWidget {
                       ? () => _changeStatus(context, _flow[_currentIndex + 1])
                       : null,
                   icon: Text(
-                    _canGoForward ? _labels[_flow[_currentIndex + 1]]! : 'Done',
+                    _canGoForward ? labels[_flow[_currentIndex + 1]]! : s.done,
                     style: const TextStyle(fontSize: 12),
                   ),
                   label: const Icon(Icons.arrow_forward_rounded, size: 16),
@@ -972,21 +986,27 @@ class _ReturnFlowCard extends StatelessWidget {
 
   const _ReturnFlowCard({required this.order, required this.ref});
 
-  static const _reasonLabels = {
-    ReturnReason.defective: 'Defective',
-    ReturnReason.wrongItem: 'Wrong Item',
-    ReturnReason.damaged: 'Damaged',
-    ReturnReason.changedMind: 'Changed Mind',
-    ReturnReason.other: 'Other',
-  };
+  Map<ReturnReason, String> _reasonLabels(BuildContext context) {
+    final s = AppStrings.of(context);
+    return {
+      ReturnReason.defective: s.defective,
+      ReturnReason.wrongItem: s.wrongItem,
+      ReturnReason.damaged: s.tr('damaged'),
+      ReturnReason.changedMind: s.changedMind,
+      ReturnReason.other: s.other,
+    };
+  }
 
-  static const _statusLabels = {
-    ReturnStatus.requested: 'Requested',
-    ReturnStatus.approved: 'Approved',
-    ReturnStatus.received: 'Items Received',
-    ReturnStatus.refunded: 'Refunded',
-    ReturnStatus.rejected: 'Rejected',
-  };
+  Map<ReturnStatus, String> _statusLabels(BuildContext context) {
+    final s = AppStrings.of(context);
+    return {
+      ReturnStatus.requested: s.tr('requested'),
+      ReturnStatus.approved: s.tr('approved'),
+      ReturnStatus.received: s.tr('itemsReceived'),
+      ReturnStatus.refunded: s.tr('refunded'),
+      ReturnStatus.rejected: s.tr('rejected'),
+    };
+  }
 
   Color _statusColor(ReturnStatus s) => switch (s) {
         ReturnStatus.requested => Colors.orange,
@@ -999,6 +1019,9 @@ class _ReturnFlowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final statusLbls = _statusLabels(context);
+    final reasonLbls = _reasonLabels(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final status = order.returnStatus;
@@ -1020,7 +1043,7 @@ class _ReturnFlowCard extends StatelessWidget {
               Icon(Icons.assignment_return_rounded, size: 18, color: color),
               const SizedBox(width: 8),
               Text(
-                'Return for #${order.originalOrderId}',
+                '${s.returns} #${order.originalOrderId}',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
@@ -1036,7 +1059,7 @@ class _ReturnFlowCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  _statusLabels[status] ?? status.name,
+                  statusLbls[status] ?? status.name,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1050,7 +1073,7 @@ class _ReturnFlowCard extends StatelessWidget {
           // Reason
           const SizedBox(height: 8),
           Text(
-            'Reason: ${_reasonLabels[order.returnReason] ?? order.returnReason.name}',
+            '${s.returnReason}: ${reasonLbls[order.returnReason] ?? order.returnReason.name}',
             style: theme.textTheme.bodySmall?.copyWith(
               color: cs.onSurface.withValues(alpha: 0.7),
             ),
@@ -1060,7 +1083,7 @@ class _ReturnFlowCard extends StatelessWidget {
           if (order.refundAmount > 0) ...[
             const SizedBox(height: 4),
             Text(
-              'Refund amount: ${CurrencyFormatter.format(order.refundAmount)}',
+              '${s.refundAmount}: ${CurrencyFormatter.format(order.refundAmount)}',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -1072,7 +1095,7 @@ class _ReturnFlowCard extends StatelessWidget {
           if (order.returnNotes.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              'Notes: ${order.returnNotes}',
+              '${s.notes}: ${order.returnNotes}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: cs.onSurface.withValues(alpha: 0.6),
               ),
@@ -1093,9 +1116,9 @@ class _ReturnFlowCard extends StatelessWidget {
                     onPressed: () async {
                       final ok = await ConfirmDialog.show(
                         context,
-                        title: 'Reject Return',
-                        message: 'Reject this return request?',
-                        confirmText: 'Reject',
+                        title: s.rejectReturn,
+                        message: s.tr('rejectReturnConfirm'),
+                        confirmText: s.tr('reject'),
                         isDestructive: true,
                         icon: Icons.close_rounded,
                       );
@@ -1106,7 +1129,7 @@ class _ReturnFlowCard extends StatelessWidget {
                       }
                     },
                     icon: const Icon(Icons.close_rounded, size: 16),
-                    label: const Text('Reject', style: TextStyle(fontSize: 12)),
+                    label: Text(s.tr('reject'), style: const TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                   ),
                 ),
@@ -1116,10 +1139,9 @@ class _ReturnFlowCard extends StatelessWidget {
                     onPressed: () async {
                       final ok = await ConfirmDialog.show(
                         context,
-                        title: 'Approve & Receive Items',
-                        message:
-                            'Approve this return and mark items as received? Stock will be restored.',
-                        confirmText: 'Approve',
+                        title: s.tr('approveAndReceiveItems'),
+                        message: s.tr('approveReturnConfirm'),
+                        confirmText: s.tr('approve'),
                         icon: Icons.check_rounded,
                       );
                       if (ok == true) {
@@ -1129,8 +1151,8 @@ class _ReturnFlowCard extends StatelessWidget {
                       }
                     },
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: const Text('Approve & Receive',
-                        style: TextStyle(fontSize: 12)),
+                    label: Text(s.approveAndReceive,
+                        style: const TextStyle(fontSize: 12)),
                     style: FilledButton.styleFrom(
                         backgroundColor: Colors.blue),
                   ),
@@ -1147,10 +1169,10 @@ class _ReturnFlowCard extends StatelessWidget {
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
                     context,
-                    title: 'Process Refund',
+                    title: s.processRefund,
                     message:
-                        'Refund ${CurrencyFormatter.format(order.refundAmount)} to ${order.customerName.isNotEmpty ? order.customerName : "customer"}?',
-                    confirmText: 'Refund',
+                        '${s.tr("refund")} ${CurrencyFormatter.format(order.refundAmount)} ${order.customerName.isNotEmpty ? order.customerName : s.customer}?',
+                    confirmText: s.tr('refund'),
                     icon: Icons.currency_exchange_rounded,
                   );
                   if (ok == true) {
@@ -1159,8 +1181,8 @@ class _ReturnFlowCard extends StatelessWidget {
                         .processRefund(order.id);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Refund processed'),
+                        SnackBar(
+                          content: Text(s.tr('refundProcessed')),
                           backgroundColor: Colors.green,
                         ),
                       );
@@ -1169,7 +1191,7 @@ class _ReturnFlowCard extends StatelessWidget {
                 },
                 icon: const Icon(Icons.currency_exchange_rounded, size: 16),
                 label: Text(
-                    'Process Refund (${CurrencyFormatter.format(order.refundAmount)})',
+                    '${s.processRefund} (${CurrencyFormatter.format(order.refundAmount)})',
                     style: const TextStyle(fontSize: 12)),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.orange,
@@ -1196,7 +1218,7 @@ class _ReturnFlowCard extends StatelessWidget {
                       color: Colors.green, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'Refunded ${CurrencyFormatter.format(order.refundAmount)}',
+                    '${s.tr("refunded")} ${CurrencyFormatter.format(order.refundAmount)}',
                     style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.w700,
@@ -1218,14 +1240,14 @@ class _ReturnFlowCard extends StatelessWidget {
                 color: Colors.red.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.cancel_rounded, color: Colors.red, size: 16),
-                  SizedBox(width: 6),
+                  const Icon(Icons.cancel_rounded, color: Colors.red, size: 16),
+                  const SizedBox(width: 6),
                   Text(
-                    'Return Rejected',
-                    style: TextStyle(
+                    s.tr('returnRejected'),
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -1246,7 +1268,10 @@ class _ReturnStepIndicator extends StatelessWidget {
 
   const _ReturnStepIndicator({required this.status});
 
-  static const _steps = ['Requested', 'Received', 'Refunded'];
+  List<String> _steps(BuildContext context) {
+    final s = AppStrings.of(context);
+    return [s.tr('requested'), s.tr('received'), s.tr('refunded')];
+  }
 
   int get _activeIndex => switch (status) {
         ReturnStatus.requested => 0,
@@ -1259,9 +1284,10 @@ class _ReturnStepIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (_activeIndex < 0) return const SizedBox.shrink();
+    final steps = _steps(context);
 
     return Row(
-      children: List.generate(_steps.length, (i) {
+      children: List.generate(steps.length, (i) {
         final isActive = i <= _activeIndex;
         return Expanded(
           child: Row(
@@ -1295,7 +1321,7 @@ class _ReturnStepIndicator extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _steps[i],
+                    steps[i],
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,

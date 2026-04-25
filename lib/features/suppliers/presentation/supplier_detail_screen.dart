@@ -8,6 +8,7 @@ import '../providers/supplier_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 
 class SupplierDetailScreen extends ConsumerWidget {
@@ -34,6 +35,7 @@ class _Body extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -44,7 +46,7 @@ class _Body extends ConsumerWidget {
         if (supplier == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Supplier not found')),
+            body: Center(child: Text(s.supplierNotFound)),
           );
         }
 
@@ -61,9 +63,9 @@ class _Body extends ConsumerWidget {
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
                     context,
-                    title: 'Delete Supplier',
-                    message: 'Delete "${supplier.name}"? Purchase records will be kept.',
-                    confirmText: 'Delete',
+                    title: s.deleteSupplier,
+                    message: '${s.delete} "${supplier.name}"? ${s.tr("deleteSupplierConfirm")}',
+                    confirmText: s.delete,
                     isDestructive: true,
                     icon: Icons.delete_rounded,
                   );
@@ -91,14 +93,14 @@ class _Body extends ConsumerWidget {
                   child: Column(
                     children: [
                       if (supplier.company.isNotEmpty)
-                        _row(theme, 'Company', supplier.company),
+                        _row(theme, s.company, supplier.company),
                       if (supplier.phone.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Phone', style: theme.textTheme.bodyMedium?.copyWith(
+                              Text(s.phone, style: theme.textTheme.bodyMedium?.copyWith(
                                 color: cs.onSurface.withValues(alpha: 0.6),
                               )),
                               Row(
@@ -118,9 +120,9 @@ class _Body extends ConsumerWidget {
                           ),
                         ),
                       if (supplier.email.isNotEmpty)
-                        _row(theme, 'Email', supplier.email),
+                        _row(theme, s.tr('email'), supplier.email),
                       if (supplier.address.isNotEmpty)
-                        _row(theme, 'Address', supplier.address),
+                        _row(theme, s.address, supplier.address),
                     ],
                   ),
                 ),
@@ -136,10 +138,10 @@ class _Body extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      _row(theme, 'Total Purchases', '${supplier.totalPurchases}'),
-                      _row(theme, 'Total Paid', CurrencyFormatter.format(supplier.totalPaid)),
+                      _row(theme, s.purchases, '${supplier.totalPurchases}'),
+                      _row(theme, s.paid, CurrencyFormatter.format(supplier.totalPaid)),
                       if (supplier.hasOutstanding)
-                        _row(theme, 'Amount Due', CurrencyFormatter.format(supplier.totalDue),
+                        _row(theme, s.due, CurrencyFormatter.format(supplier.totalDue),
                             valueColor: Colors.red),
                     ],
                   ),
@@ -155,7 +157,7 @@ class _Body extends ConsumerWidget {
                         onPressed: () =>
                             context.push('/suppliers/${supplier.id}/purchase/add'),
                         icon: const Icon(Icons.add_shopping_cart, size: 18),
-                        label: const Text('New Purchase'),
+                        label: Text(s.newPurchase),
                       ),
                     ),
                     if (supplier.hasOutstanding) ...[
@@ -164,7 +166,7 @@ class _Body extends ConsumerWidget {
                         child: OutlinedButton.icon(
                           onPressed: () => _showPayDialog(context, ref, supplier),
                           icon: const Icon(Icons.payments_outlined, size: 18),
-                          label: const Text('Pay Due'),
+                          label: Text(s.payDue),
                         ),
                       ),
                     ],
@@ -210,25 +212,25 @@ class _Body extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Record Payment'),
+        title: Text(AppStrings.of(context).tr('recordPaymentToSupplier')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Due: ${CurrencyFormatter.format(supplier.totalDue)}'),
+            Text('${AppStrings.of(context).due}: ${CurrencyFormatter.format(supplier.totalDue)}'),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Payment Amount',
+              decoration: InputDecoration(
+                labelText: AppStrings.of(context).paymentAmount,
                 isDense: true,
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.of(context).cancel)),
           FilledButton(
             onPressed: () async {
               final amount = double.tryParse(ctrl.text);
@@ -237,7 +239,7 @@ class _Body extends ConsumerWidget {
                   .recordSupplierPayment(supplier.id, amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Pay'),
+            child: Text(AppStrings.of(context).payDue),
           ),
         ],
       ),
@@ -265,7 +267,7 @@ class _SupplierProductsSection extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text('Products',
+                Text(AppStrings.of(context).productsFromSupplier,
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(width: 6),
@@ -393,7 +395,7 @@ class _SupplierRestockActivity extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text('Restock Activity',
+                Text(AppStrings.of(context).restockActivity,
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(width: 6),
