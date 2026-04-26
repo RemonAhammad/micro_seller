@@ -71,6 +71,9 @@ dependencies:
   in_app_update: ^4.2.5
   package_info_plus: ^9.0.1
 
+  # Env
+  flutter_dotenv: ^5.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -106,3 +109,4 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - .env

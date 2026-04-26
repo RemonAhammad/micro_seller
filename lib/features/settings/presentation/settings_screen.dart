@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,6 +52,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  String _driveErrorMessage(DriveBackupException e) {
+    switch (e.code) {
+      case DriveErrorCode.notSignedIn:
+        return 'Please sign in to Google first.';
+      case DriveErrorCode.signInCancelled:
+        return 'Sign-in was cancelled.';
+      case DriveErrorCode.signInFailed:
+        return 'Could not sign in to Google. Please try again.';
+      case DriveErrorCode.developerError:
+        return 'Google sign-in is not configured. Check Cloud Console: '
+            'package name, SHA-1, and Drive API enablement.';
+      case DriveErrorCode.network:
+        return 'Network error. Check your internet connection.';
+      case DriveErrorCode.uploadFailed:
+        return 'Could not upload backup. Check your connection and try again.';
+      case DriveErrorCode.downloadFailed:
+        return 'Could not download backup. Check your connection and try again.';
+      case DriveErrorCode.invalidBackup:
+        return 'This backup file is corrupted or unrecognised.';
+      case DriveErrorCode.rolledBack:
+        return 'Restore failed. Your previous data has been preserved.';
+      case DriveErrorCode.restoreFailed:
+        return 'Restore failed. Some data may be inconsistent — try again.';
+      case DriveErrorCode.unknown:
+        return e.message;
+    }
+  }
+
+  void _logFailure(String tag, Object error, StackTrace stack) {
+    developer.log(tag, name: 'SettingsScreen', error: error, stackTrace: stack);
+    if (kDebugMode) {
+      debugPrint('[SettingsScreen] $tag: $error');
+      debugPrintStack(stackTrace: stack, label: 'SettingsScreen.$tag');
+    }
+  }
+
   Future<void> _backup() async {
     setState(() => _isBackingUp = true);
     try {
@@ -58,16 +96,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ref.read(settingsProvider.notifier).updateLastBackupTime(DateTime.now());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).backupSuccess), backgroundColor: Colors.green),
+          SnackBar(
+              content: Text(AppStrings.of(context).backupSuccess),
+              backgroundColor: Colors.green),
         );
       }
-    } catch (e) {
+    } on DriveBackupException catch (e, st) {
+      _logFailure('backup', e, st);
       if (mounted) {
-        final msg = e.toString().contains('Not authenticated')
-            ? 'Please sign in to Google first.'
-            : 'Backup failed. Check your internet connection and try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text(_driveErrorMessage(e)),
+              backgroundColor: Colors.red),
+        );
+      }
+    } catch (e, st) {
+      _logFailure('backup.unexpected', e, st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Backup failed: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -114,18 +163,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).restoreSuccess), backgroundColor: Colors.green),
+          SnackBar(
+              content: Text(AppStrings.of(context).restoreSuccess),
+              backgroundColor: Colors.green),
         );
       }
-    } catch (e) {
+    } on DriveBackupException catch (e, st) {
+      _logFailure('restore', e, st);
       if (mounted) {
-        final msg = e.toString().contains('Not authenticated')
-            ? 'Please sign in to Google first.'
-            : e.toString().contains('preserved')
-                ? 'Restore failed. Your previous data has been preserved.'
-                : 'Restore failed. Check your internet connection and try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text(_driveErrorMessage(e)),
+              backgroundColor: Colors.red),
+        );
+      }
+    } catch (e, st) {
+      _logFailure('restore.unexpected', e, st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Restore failed: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
