@@ -4,14 +4,13 @@ import '../l10n/app_localizations.dart';
 class AppStrings {
   AppStrings._();
 
-  static const appName = 'MicroSeller';
+  static const appName = 'Micro Seller';
   static const tagline = 'Your Complete Business Manager';
 
   /// Get a localized AppStrings instance.
   /// Usage: `AppStrings.of(context).products`
   /// Or keep using the static constants for non-translated strings.
-  static _L10nStrings of(BuildContext context) =>
-      _L10nStrings(AppLocalizations.of(context));
+  static _L10nStrings of(BuildContext context) => _L10nStrings(AppLocalizations.of(context));
 
   // Static fallbacks (used where context is not available, e.g. router)
   static const navDashboard = 'Dashboard';
@@ -470,16 +469,10 @@ class _L10nStrings {
   String get scanQrBarcode => _l10n.tr('scanQrBarcode');
   String get addSuppliersHint => _l10n.tr('addSuppliersHint');
 
-  String productsFoundToImport(int count) =>
-      _l10n.tr('productsFoundToImport').replaceAll('{count}', '$count');
-  String productsImported(int count) =>
-      _l10n.tr('productsImported').replaceAll('{count}', '$count');
-  String notEnoughStock(int stock, String item) => _l10n
-      .tr('notEnoughStock')
-      .replaceAll('{stock}', '$stock')
-      .replaceAll('{item}', item);
-  String rowsSkipped(int count) =>
-      _l10n.tr('rowsSkipped').replaceAll('{count}', '$count');
-  String andMore(int count) =>
-      _l10n.tr('andMore').replaceAll('{count}', '$count');
+  String productsFoundToImport(int count) => _l10n.tr('productsFoundToImport').replaceAll('{count}', '$count');
+  String productsImported(int count) => _l10n.tr('productsImported').replaceAll('{count}', '$count');
+  String notEnoughStock(int stock, String item) =>
+      _l10n.tr('notEnoughStock').replaceAll('{stock}', '$stock').replaceAll('{item}', item);
+  String rowsSkipped(int count) => _l10n.tr('rowsSkipped').replaceAll('{count}', '$count');
+  String andMore(int count) => _l10n.tr('andMore').replaceAll('{count}', '$count');
 }

@@ -1,9 +1,9 @@
-# Release Guide — Publishing MicroSeller to Google Play Store
+# Release Guide — Publishing Micro Seller to Google Play Store
 
 ## ✅ Already Configured
 
 - ✅ **Application ID:** `com.blackshadowsoftware.micro_seller`
-- ✅ **App name:** MicroSeller
+- ✅ **App name:** Micro Seller
 - ✅ **Release signing:** Uses shared keystore at `/Users/remon/Documents/upload-keystore.jks`
 - ✅ **key.properties** configured (same keystore as Fuel Cost app)
 - ✅ **R8/ProGuard** enabled with minification + shrink resources
@@ -22,10 +22,12 @@
 ### 1. Add Launcher Icon
 
 Place your icon files at:
+
 - `assets/icons/app_icon.png` (1024×1024 PNG, main icon)
 - `assets/icons/app_icon_foreground.png` (optional, for adaptive icon foreground — use transparent background, keep content in inner 66%)
 
 Then run:
+
 ```bash
 flutter pub get
 dart run flutter_launcher_icons
@@ -34,6 +36,7 @@ dart run flutter_launcher_icons
 ### 2. Bump Version Before Each Release
 
 `pubspec.yaml`:
+
 ```yaml
 version: 1.0.0+1
 #         ^      ^
@@ -45,9 +48,9 @@ version: 1.0.0+1
 
 Host a privacy policy at a public URL. Minimum content:
 
-> **MicroSeller Privacy Policy**
+> **Micro Seller Privacy Policy**
 >
-> MicroSeller is an offline-first inventory and order management app. All business data is stored locally on your device.
+> Micro Seller is an offline-first inventory and order management app. All business data is stored locally on your device.
 >
 > **Data Collection:** We do not collect any personal data, analytics, or telemetry.
 >
@@ -64,9 +67,11 @@ You can create a `privacy_policy.html` file (like Fuel Cost has) and host it on 
 ### 4. Google Drive OAuth (if using backup feature)
 
 Add the release keystore SHA-1 to your Google Cloud project's OAuth credentials:
+
 ```bash
 keytool -list -v -keystore /Users/remon/Documents/upload-keystore.jks -alias upload
 ```
+
 Copy the SHA-1 fingerprint and add it in Google Cloud Console → APIs & Services → Credentials → your OAuth client.
 
 ---
@@ -87,6 +92,7 @@ Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
 ## Play Console Submission Checklist
 
 ### Store Listing
+
 - [ ] **Short description** (80 chars): `Offline inventory & order management for small sellers`
 - [ ] **Full description** (4000 chars)
 - [ ] **App icon** (512×512 PNG)
@@ -96,15 +102,18 @@ Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
 - [ ] **Privacy policy URL**
 
 ### Content Rating
+
 - [ ] Fill questionnaire (no violence, no ads → "Everyone")
 
 ### Data Safety
+
 - [ ] Data collected: **No**
 - [ ] Data shared: **None**
 - [ ] If using Drive backup: "User data backed up to user's own Drive"
 - [ ] Encryption in transit: **Yes**
 
 ### Other Declarations
+
 - [ ] Target age: 18+
 - [ ] Contains ads: **No**
 - [ ] App access: All features available without login
@@ -123,6 +132,7 @@ Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
 ## Future Updates
 
 Each release:
+
 1. Bump version in `pubspec.yaml` (e.g. `1.0.0+1` → `1.0.1+2`)
 2. `flutter clean && flutter pub get && dart run build_runner build --delete-conflicting-outputs`
 3. `flutter build appbundle --release`

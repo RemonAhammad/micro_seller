@@ -1,4 +1,4 @@
-# MicroSeller (SellerBook) — Project Context
+# Micro Seller (SellerBook) — Project Context
 
 A Flutter inventory & order management app for micro/small sellers. Local-first with optional Google Drive backup.
 
@@ -170,21 +170,21 @@ lib/
 
 All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJson()`.
 
-| Model | Key Fields | Computed Props |
-| ----- | ---------- | -------------- |
-| **Product** | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variantAttributes** (embedded list), **variantCombinations** (embedded list), **supplierId** (optional, 0 = none) | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock, findCombination(key) |
-| **VariantAttribute** | @embedded: name, options[] — one dimension of variation (e.g. Size→[S,M,L]) | — |
-| **VariantCombination** | @embedded: combinationKey (canonical sorted "Color:Red/Size:L"), displayLabel, priceAdjustment, stockQty, sku, isActive | — |
-| **Order** | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, **taxAmount**, totalAmount, amountPaid, paymentStatus, **paymentMethod**, orderStatus, **deliveryAddress**, **estimatedDeliveryDate**, **actualDeliveryDate**, **isReturn**, **originalOrderId**, **isRecurring**, **recurringIntervalDays**, **nextRecurringDate** | balanceDue, isFullyPaid, totalItems |
-| **OrderItem** | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice, **variantCombinationKey**, **variantDisplayLabel** | hasVariant, displayName |
-| **Customer** | name, phone, address, notes, tag (new/regular/vip), totalOrders, totalSpent, outstandingBalance | hasOutstanding |
-| **Expense** | title, amount, category (logistics/packaging/marketing/supplies/other), date, notes | — |
-| **StockMovement** | productId, productName, type (sale/restock/adjustment/damage), qty, reason | isIncoming |
-| **Category** | name | — |
-| **Supplier** | name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue | hasOutstanding |
-| **Purchase** | supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber | balanceDue, isFullyPaid, totalItems |
-| **PurchaseItem** | @embedded: productId, productName, qty, unitCost, totalCost | — |
-| **CashRegister** | openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt | expectedClosing, difference |
+| Model                  | Key Fields                                                                                                                                                                                                                                                                                                                                                       | Computed Props                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Product**            | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variantAttributes** (embedded list), **variantCombinations** (embedded list), **supplierId** (optional, 0 = none)                                                                                                                                                 | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock, findCombination(key) |
+| **VariantAttribute**   | @embedded: name, options[] — one dimension of variation (e.g. Size→[S,M,L])                                                                                                                                                                                                                                                                                      | —                                                                                     |
+| **VariantCombination** | @embedded: combinationKey (canonical sorted "Color:Red/Size:L"), displayLabel, priceAdjustment, stockQty, sku, isActive                                                                                                                                                                                                                                          | —                                                                                     |
+| **Order**              | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, **taxAmount**, totalAmount, amountPaid, paymentStatus, **paymentMethod**, orderStatus, **deliveryAddress**, **estimatedDeliveryDate**, **actualDeliveryDate**, **isReturn**, **originalOrderId**, **isRecurring**, **recurringIntervalDays**, **nextRecurringDate** | balanceDue, isFullyPaid, totalItems                                                   |
+| **OrderItem**          | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice, **variantCombinationKey**, **variantDisplayLabel**                                                                                                                                                                                                                     | hasVariant, displayName                                                               |
+| **Customer**           | name, phone, address, notes, tag (new/regular/vip), totalOrders, totalSpent, outstandingBalance                                                                                                                                                                                                                                                                  | hasOutstanding                                                                        |
+| **Expense**            | title, amount, category (logistics/packaging/marketing/supplies/other), date, notes                                                                                                                                                                                                                                                                              | —                                                                                     |
+| **StockMovement**      | productId, productName, type (sale/restock/adjustment/damage), qty, reason                                                                                                                                                                                                                                                                                       | isIncoming                                                                            |
+| **Category**           | name                                                                                                                                                                                                                                                                                                                                                             | —                                                                                     |
+| **Supplier**           | name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue                                                                                                                                                                                                                                                                                 | hasOutstanding                                                                        |
+| **Purchase**           | supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber                                                                                                                                                                                                                                          | balanceDue, isFullyPaid, totalItems                                                   |
+| **PurchaseItem**       | @embedded: productId, productName, qty, unitCost, totalCost                                                                                                                                                                                                                                                                                                      | —                                                                                     |
+| **CashRegister**       | openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt                                                                                                                                                                                                                                                 | expectedClosing, difference                                                           |
 
 ## Order Form UX (order_form_screen.dart)
 
@@ -406,7 +406,7 @@ Products support **multi-attribute variant combinations**:
 ### Splash Screen
 
 - **3-second animated sequence** with teal gradient background
-- Staggered reveals: pulsing rings → logo icon (scale + rotate with elastic overshoot) → "MicroSeller" title slides up → tagline pill fades in → circular loader appears
+- Staggered reveals: pulsing rings → logo icon (scale + rotate with elastic overshoot) → "Micro Seller" title slides up → tagline pill fades in → circular loader appears
 - Auto-navigates to dashboard after animation completes
 - Uses GoRouter `go('/')` for clean transition
 
@@ -450,21 +450,21 @@ Products support **multi-attribute variant combinations**:
 
 Initial route is `/splash` (animated splash screen), then navigates to `/` (dashboard shell). 12 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
 
-| Route | Path | Sub-routes |
-| ------ | ---- | ---------- |
-| Splash | `/splash` | — (initial route, auto-navigates to `/`) |
-| Dashboard | `/` | — |
-| Products | `/products` | `add`, `:id`, `:id/edit` |
-| Orders | `/orders` | `add`, `:id`, `:id/edit` |
-| Returns | `/returns` | `:id` |
-| Customers | `/customers` | `add`, `:id`, `:id/edit` |
-| Inventory | `/inventory` | `adjust/:id` |
-| Suppliers | `/suppliers` | `add`, `:id`, `:id/edit`, `:id/purchase/add`, `purchases`, `purchases/add`, `purchases/:id` |
-| Expenses | `/expenses` | `add`, `:id/edit` |
-| Cash Register | `/cash-register` | — |
-| Categories | `/categories` | — |
-| Reports | `/reports` | — |
-| Settings | `/settings` | — |
+| Route         | Path             | Sub-routes                                                                                  |
+| ------------- | ---------------- | ------------------------------------------------------------------------------------------- |
+| Splash        | `/splash`        | — (initial route, auto-navigates to `/`)                                                    |
+| Dashboard     | `/`              | —                                                                                           |
+| Products      | `/products`      | `add`, `:id`, `:id/edit`                                                                    |
+| Orders        | `/orders`        | `add`, `:id`, `:id/edit`                                                                    |
+| Returns       | `/returns`       | `:id`                                                                                       |
+| Customers     | `/customers`     | `add`, `:id`, `:id/edit`                                                                    |
+| Inventory     | `/inventory`     | `adjust/:id`                                                                                |
+| Suppliers     | `/suppliers`     | `add`, `:id`, `:id/edit`, `:id/purchase/add`, `purchases`, `purchases/add`, `purchases/:id` |
+| Expenses      | `/expenses`      | `add`, `:id/edit`                                                                           |
+| Cash Register | `/cash-register` | —                                                                                           |
+| Categories    | `/categories`    | —                                                                                           |
+| Reports       | `/reports`       | —                                                                                           |
+| Settings      | `/settings`      | —                                                                                           |
 
 ## State Management Pattern
 
@@ -503,6 +503,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 ## Code Generation
 
 Run after model/provider changes:
+
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
@@ -512,6 +513,7 @@ Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (
 ## Build & Release
 
 ### Android Release Config
+
 - **Application ID:** `com.blackshadowsoftware.micro_seller`
 - **Keystore:** Shared upload keystore at `/Users/remon/Documents/upload-keystore.jks` (same as Fuel Cost app)
 - **Signing:** `android/key.properties` → read by `build.gradle.kts` → `signingConfigs.release`
@@ -523,9 +525,11 @@ Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (
 - **Predictive back:** `android:enableOnBackInvokedCallback="true"` in manifest
 
 ### iOS Config
+
 - **Minimum iOS version:** 16.0 (set in `ios/Podfile`)
 
 ### Build Commands
+
 ```bash
 # Debug
 flutter run

@@ -30,7 +30,7 @@ class LocalBackupService {
 
     return jsonEncode({
       'version': _backupVersion,
-      'appName': 'MicroSeller',
+      'appName': 'Micro Seller',
       'timestamp': DateTime.now().toIso8601String(),
       'products': products.map((e) => e.toJson()).toList(),
       'orders': orders.map((e) => e.toJson()).toList(),
@@ -49,8 +49,7 @@ class LocalBackupService {
     final data = jsonDecode(jsonStr) as Map<String, dynamic>;
 
     if (data['products'] == null && data['orders'] == null) {
-      throw const FormatException(
-          'Invalid backup file — missing required collections');
+      throw const FormatException('Invalid backup file — missing required collections');
     }
 
     await isar.writeTxn(() async {
@@ -65,49 +64,40 @@ class LocalBackupService {
       await isar.cashRegisters.clear();
 
       if (data['products'] != null) {
-        await isar.products.putAll((data['products'] as List)
-            .map((e) => Product.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.products
+            .putAll((data['products'] as List).map((e) => Product.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['orders'] != null) {
-        await isar.orders.putAll((data['orders'] as List)
-            .map((e) => Order.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.orders
+            .putAll((data['orders'] as List).map((e) => Order.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['customers'] != null) {
-        await isar.customers.putAll((data['customers'] as List)
-            .map((e) => Customer.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.customers
+            .putAll((data['customers'] as List).map((e) => Customer.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['expenses'] != null) {
-        await isar.expenses.putAll((data['expenses'] as List)
-            .map((e) => Expense.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.expenses
+            .putAll((data['expenses'] as List).map((e) => Expense.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['stockMovements'] != null) {
-        await isar.stockMovements.putAll((data['stockMovements'] as List)
-            .map((e) => StockMovement.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.stockMovements.putAll(
+            (data['stockMovements'] as List).map((e) => StockMovement.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['categories'] != null) {
-        await isar.categories.putAll((data['categories'] as List)
-            .map((e) => Category.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.categories
+            .putAll((data['categories'] as List).map((e) => Category.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['suppliers'] != null) {
-        await isar.suppliers.putAll((data['suppliers'] as List)
-            .map((e) => Supplier.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.suppliers
+            .putAll((data['suppliers'] as List).map((e) => Supplier.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['purchases'] != null) {
-        await isar.purchases.putAll((data['purchases'] as List)
-            .map((e) => Purchase.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.purchases
+            .putAll((data['purchases'] as List).map((e) => Purchase.fromJson(e as Map<String, dynamic>)).toList());
       }
       if (data['cashRegisters'] != null) {
-        await isar.cashRegisters.putAll((data['cashRegisters'] as List)
-            .map((e) => CashRegister.fromJson(e as Map<String, dynamic>))
-            .toList());
+        await isar.cashRegisters.putAll(
+            (data['cashRegisters'] as List).map((e) => CashRegister.fromJson(e as Map<String, dynamic>)).toList());
       }
     });
   }
@@ -117,13 +107,11 @@ class LocalBackupService {
     final json = await encodeAll(isar);
 
     final dir = await Directory.systemTemp.createTemp('microseller_backup');
-    final timestamp =
-        DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
+    final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
     final file = File('${dir.path}/microseller_backup_$timestamp.json');
     await file.writeAsString(json);
 
-    await Share.shareXFiles([XFile(file.path)],
-        subject: 'MicroSeller Backup');
+    await Share.shareXFiles([XFile(file.path)], subject: 'Micro Seller Backup');
 
     return file.path;
   }
@@ -131,8 +119,7 @@ class LocalBackupService {
   /// Export to a specific directory (no share sheet).
   Future<String?> exportToDirectory(Isar isar, String directoryPath) async {
     final json = await encodeAll(isar);
-    final timestamp =
-        DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
+    final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
     final file = File('$directoryPath/microseller_backup_$timestamp.json');
     await file.writeAsString(json);
     return file.path;
