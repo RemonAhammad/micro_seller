@@ -207,7 +207,7 @@ class AppTheme {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       labelStyle: const TextStyle(color: Color(0xFF9CA3AF)),
     ),
-    scaffoldBackgroundColor: const Color(0xFF15152A),
+    scaffoldBackgroundColor: Colors.blueGrey.shade900,
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: AppColors.primaryLight,
       foregroundColor: Colors.white,

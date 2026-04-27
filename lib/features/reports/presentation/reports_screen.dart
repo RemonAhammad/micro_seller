@@ -60,45 +60,40 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 90,
+            expandedHeight: 120,
             pinned: true,
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
+            centerTitle: false,
+            title: Text(
+              s.reports,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(gradient: AppColors.dashboardGradient),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 8, 20, 0),
+                    child: Row(
                       children: [
-                        Text(
-                          s.reports,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
+                        _DateChip(
+                          label: DateFormatter.formatShort(_startDate),
+                          onTap: () => _pickDate(isStart: true),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            _DateChip(
-                              label: DateFormatter.formatShort(_startDate),
-                              onTap: () => _pickDate(isStart: true),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: Text('to',
-                                  style: TextStyle(color: Colors.white70, fontSize: 12)),
-                            ),
-                            _DateChip(
-                              label: DateFormatter.formatShort(_endDate),
-                              onTap: () => _pickDate(isStart: false),
-                            ),
-                          ],
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text('to',
+                              style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        ),
+                        _DateChip(
+                          label: DateFormatter.formatShort(_endDate),
+                          onTap: () => _pickDate(isStart: false),
                         ),
                       ],
                     ),
