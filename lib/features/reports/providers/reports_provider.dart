@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
@@ -9,7 +9,7 @@ part 'reports_provider.g.dart';
 
 @riverpod
 Future<ReportData> reportData(
-  ReportDataRef ref,
+  Ref ref,
   DateTime startDate,
   DateTime endDate,
 ) async {

@@ -27,16 +27,8 @@ const CashRegisterSchema = CollectionSchema(
       name: r'closingAmount',
       type: IsarType.double,
     ),
-    r'isClosed': PropertySchema(
-      id: 2,
-      name: r'isClosed',
-      type: IsarType.bool,
-    ),
-    r'notes': PropertySchema(
-      id: 3,
-      name: r'notes',
-      type: IsarType.string,
-    ),
+    r'isClosed': PropertySchema(id: 2, name: r'isClosed', type: IsarType.bool),
+    r'notes': PropertySchema(id: 3, name: r'notes', type: IsarType.string),
     r'openedAt': PropertySchema(
       id: 4,
       name: r'openedAt',
@@ -66,8 +58,9 @@ const CashRegisterSchema = CollectionSchema(
       id: 9,
       name: r'totalSales',
       type: IsarType.double,
-    )
+    ),
   },
+
   estimateSize: _cashRegisterEstimateSize,
   serialize: _cashRegisterSerialize,
   deserialize: _cashRegisterDeserialize,
@@ -76,10 +69,11 @@ const CashRegisterSchema = CollectionSchema(
   indexes: {},
   links: {},
   embeddedSchemas: {},
+
   getId: _cashRegisterGetId,
   getLinks: _cashRegisterGetLinks,
   attach: _cashRegisterAttach,
-  version: '3.1.0+1',
+  version: '3.3.2',
 );
 
 int _cashRegisterEstimateSize(
@@ -173,7 +167,10 @@ List<IsarLinkBase<dynamic>> _cashRegisterGetLinks(CashRegister object) {
 }
 
 void _cashRegisterAttach(
-    IsarCollection<dynamic> col, Id id, CashRegister object) {
+  IsarCollection<dynamic> col,
+  Id id,
+  CashRegister object,
+) {
   object.id = id;
 }
 
@@ -190,15 +187,13 @@ extension CashRegisterQueryWhere
     on QueryBuilder<CashRegister, CashRegister, QWhereClause> {
   QueryBuilder<CashRegister, CashRegister, QAfterWhereClause> idEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: id,
-        upper: id,
-      ));
+      return query.addWhereClause(IdWhereClause.between(lower: id, upper: id));
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterWhereClause> idNotEqualTo(
-      Id id) {
+    Id id,
+  ) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -221,8 +216,9 @@ extension CashRegisterQueryWhere
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterWhereClause> idGreaterThan(
-      Id id,
-      {bool include = false}) {
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.greaterThan(lower: id, includeLower: include),
@@ -230,8 +226,10 @@ extension CashRegisterQueryWhere
     });
   }
 
-  QueryBuilder<CashRegister, CashRegister, QAfterWhereClause> idLessThan(Id id,
-      {bool include = false}) {
+  QueryBuilder<CashRegister, CashRegister, QAfterWhereClause> idLessThan(
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.lessThan(upper: id, includeUpper: include),
@@ -246,12 +244,14 @@ extension CashRegisterQueryWhere
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: lowerId,
-        includeLower: includeLower,
-        upper: upperId,
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IdWhereClause.between(
+          lower: lowerId,
+          includeLower: includeLower,
+          upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
@@ -259,145 +259,150 @@ extension CashRegisterQueryWhere
 extension CashRegisterQueryFilter
     on QueryBuilder<CashRegister, CashRegister, QFilterCondition> {
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closedAtIsNull() {
+  closedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'closedAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'closedAt'),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closedAtIsNotNull() {
+  closedAtIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'closedAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'closedAt'),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closedAtEqualTo(DateTime? value) {
+  closedAtEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'closedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'closedAt', value: value),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closedAtGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  closedAtGreaterThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'closedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'closedAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closedAtLessThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  closedAtLessThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'closedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'closedAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closedAtBetween(
+  closedAtBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'closedAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'closedAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closingAmountIsNull() {
+  closingAmountIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'closingAmount',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'closingAmount'),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closingAmountIsNotNull() {
+  closingAmountIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'closingAmount',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'closingAmount'),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closingAmountEqualTo(
-    double? value, {
-    double epsilon = Query.epsilon,
-  }) {
+  closingAmountEqualTo(double? value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'closingAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'closingAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closingAmountGreaterThan(
-    double? value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'closingAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closingAmountLessThan(
+  closingAmountGreaterThan(
     double? value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'closingAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'closingAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      closingAmountBetween(
+  closingAmountLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'closingAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  closingAmountBetween(
     double? lower,
     double? upper, {
     bool includeLower = true,
@@ -405,24 +410,27 @@ extension CashRegisterQueryFilter
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'closingAmount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'closingAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition> idEqualTo(
-      Id value) {
+    Id value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'id', value: value),
+      );
     });
   }
 
@@ -431,11 +439,13 @@ extension CashRegisterQueryFilter
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -444,11 +454,13 @@ extension CashRegisterQueryFilter
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -459,23 +471,24 @@ extension CashRegisterQueryFilter
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'id',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      isClosedEqualTo(bool value) {
+  isClosedEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isClosed',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isClosed', value: value),
+      );
     });
   }
 
@@ -484,27 +497,31 @@ extension CashRegisterQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      notesGreaterThan(
+  notesGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -514,12 +531,14 @@ extension CashRegisterQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -531,28 +550,29 @@ extension CashRegisterQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'notes',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'notes',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      notesStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  notesStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -561,180 +581,191 @@ extension CashRegisterQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition> notesContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition> notesMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'notes',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      notesIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'notes',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      notesIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'notes',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openedAtIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'openedAt',
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openedAtIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'openedAt',
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openedAtEqualTo(DateTime? value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'openedAt',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openedAtGreaterThan(
-    DateTime? value, {
-    bool include = false,
+    String pattern, {
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'openedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'notes',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openedAtLessThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  notesIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'openedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'notes', value: ''),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openedAtBetween(
+  notesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'notes', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  openedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'openedAt'),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  openedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'openedAt'),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  openedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'openedAt', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  openedAtGreaterThan(DateTime? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'openedAt',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  openedAtLessThan(DateTime? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'openedAt',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  openedAtBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'openedAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'openedAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openingAmountEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
+  openingAmountEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'openingAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'openingAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openingAmountGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'openingAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openingAmountLessThan(
+  openingAmountGreaterThan(
     double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'openingAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'openingAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      openingAmountBetween(
+  openingAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'openingAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  openingAmountBetween(
     double lower,
     double upper, {
     bool includeLower = true,
@@ -742,65 +773,74 @@ extension CashRegisterQueryFilter
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'openingAmount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'openingAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashInEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
+  totalCashInEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'totalCashIn',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'totalCashIn',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashInGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'totalCashIn',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashInLessThan(
+  totalCashInGreaterThan(
     double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'totalCashIn',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'totalCashIn',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashInBetween(
+  totalCashInLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'totalCashIn',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  totalCashInBetween(
     double lower,
     double upper, {
     bool includeLower = true,
@@ -808,65 +848,74 @@ extension CashRegisterQueryFilter
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'totalCashIn',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'totalCashIn',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashOutEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
+  totalCashOutEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'totalCashOut',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'totalCashOut',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashOutGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'totalCashOut',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashOutLessThan(
+  totalCashOutGreaterThan(
     double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'totalCashOut',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'totalCashOut',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalCashOutBetween(
+  totalCashOutLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'totalCashOut',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  totalCashOutBetween(
     double lower,
     double upper, {
     bool includeLower = true,
@@ -874,65 +923,74 @@ extension CashRegisterQueryFilter
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'totalCashOut',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'totalCashOut',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalExpensesEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
+  totalExpensesEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'totalExpenses',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'totalExpenses',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalExpensesGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'totalExpenses',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalExpensesLessThan(
+  totalExpensesGreaterThan(
     double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'totalExpenses',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'totalExpenses',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalExpensesBetween(
+  totalExpensesLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'totalExpenses',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  totalExpensesBetween(
     double lower,
     double upper, {
     bool includeLower = true,
@@ -940,65 +998,74 @@ extension CashRegisterQueryFilter
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'totalExpenses',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'totalExpenses',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalSalesEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
+  totalSalesEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'totalSales',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'totalSales',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalSalesGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'totalSales',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalSalesLessThan(
+  totalSalesGreaterThan(
     double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'totalSales',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'totalSales',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
-      totalSalesBetween(
+  totalSalesLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'totalSales',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CashRegister, CashRegister, QAfterFilterCondition>
+  totalSalesBetween(
     double lower,
     double upper, {
     bool includeLower = true,
@@ -1006,14 +1073,17 @@ extension CashRegisterQueryFilter
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'totalSales',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'totalSales',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 }
@@ -1045,7 +1115,7 @@ extension CashRegisterQuerySortBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      sortByClosingAmountDesc() {
+  sortByClosingAmountDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'closingAmount', Sort.desc);
     });
@@ -1094,7 +1164,7 @@ extension CashRegisterQuerySortBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      sortByOpeningAmountDesc() {
+  sortByOpeningAmountDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'openingAmount', Sort.desc);
     });
@@ -1107,7 +1177,7 @@ extension CashRegisterQuerySortBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      sortByTotalCashInDesc() {
+  sortByTotalCashInDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalCashIn', Sort.desc);
     });
@@ -1120,7 +1190,7 @@ extension CashRegisterQuerySortBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      sortByTotalCashOutDesc() {
+  sortByTotalCashOutDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalCashOut', Sort.desc);
     });
@@ -1133,7 +1203,7 @@ extension CashRegisterQuerySortBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      sortByTotalExpensesDesc() {
+  sortByTotalExpensesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalExpenses', Sort.desc);
     });
@@ -1146,7 +1216,7 @@ extension CashRegisterQuerySortBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      sortByTotalSalesDesc() {
+  sortByTotalSalesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalSales', Sort.desc);
     });
@@ -1174,7 +1244,7 @@ extension CashRegisterQuerySortThenBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      thenByClosingAmountDesc() {
+  thenByClosingAmountDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'closingAmount', Sort.desc);
     });
@@ -1235,7 +1305,7 @@ extension CashRegisterQuerySortThenBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      thenByOpeningAmountDesc() {
+  thenByOpeningAmountDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'openingAmount', Sort.desc);
     });
@@ -1248,7 +1318,7 @@ extension CashRegisterQuerySortThenBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      thenByTotalCashInDesc() {
+  thenByTotalCashInDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalCashIn', Sort.desc);
     });
@@ -1261,7 +1331,7 @@ extension CashRegisterQuerySortThenBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      thenByTotalCashOutDesc() {
+  thenByTotalCashOutDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalCashOut', Sort.desc);
     });
@@ -1274,7 +1344,7 @@ extension CashRegisterQuerySortThenBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      thenByTotalExpensesDesc() {
+  thenByTotalExpensesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalExpenses', Sort.desc);
     });
@@ -1287,7 +1357,7 @@ extension CashRegisterQuerySortThenBy
   }
 
   QueryBuilder<CashRegister, CashRegister, QAfterSortBy>
-      thenByTotalSalesDesc() {
+  thenByTotalSalesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'totalSales', Sort.desc);
     });
@@ -1303,7 +1373,7 @@ extension CashRegisterQueryWhereDistinct
   }
 
   QueryBuilder<CashRegister, CashRegister, QDistinct>
-      distinctByClosingAmount() {
+  distinctByClosingAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'closingAmount');
     });
@@ -1315,8 +1385,9 @@ extension CashRegisterQueryWhereDistinct
     });
   }
 
-  QueryBuilder<CashRegister, CashRegister, QDistinct> distinctByNotes(
-      {bool caseSensitive = true}) {
+  QueryBuilder<CashRegister, CashRegister, QDistinct> distinctByNotes({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
     });
@@ -1329,7 +1400,7 @@ extension CashRegisterQueryWhereDistinct
   }
 
   QueryBuilder<CashRegister, CashRegister, QDistinct>
-      distinctByOpeningAmount() {
+  distinctByOpeningAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'openingAmount');
     });
@@ -1348,7 +1419,7 @@ extension CashRegisterQueryWhereDistinct
   }
 
   QueryBuilder<CashRegister, CashRegister, QDistinct>
-      distinctByTotalExpenses() {
+  distinctByTotalExpenses() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'totalExpenses');
     });
@@ -1376,7 +1447,7 @@ extension CashRegisterQueryProperty
   }
 
   QueryBuilder<CashRegister, double?, QQueryOperations>
-      closingAmountProperty() {
+  closingAmountProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'closingAmount');
     });
@@ -1436,22 +1507,22 @@ extension CashRegisterQueryProperty
 // **************************************************************************
 
 CashRegister _$CashRegisterFromJson(Map<String, dynamic> json) => CashRegister(
-      id: (json['id'] as num?)?.toInt() ?? Isar.autoIncrement,
-      openingAmount: (json['openingAmount'] as num?)?.toDouble() ?? 0.0,
-      closingAmount: (json['closingAmount'] as num?)?.toDouble(),
-      totalSales: (json['totalSales'] as num?)?.toDouble() ?? 0.0,
-      totalExpenses: (json['totalExpenses'] as num?)?.toDouble() ?? 0.0,
-      totalCashIn: (json['totalCashIn'] as num?)?.toDouble() ?? 0.0,
-      totalCashOut: (json['totalCashOut'] as num?)?.toDouble() ?? 0.0,
-      notes: json['notes'] as String? ?? '',
-      isClosed: json['isClosed'] as bool? ?? false,
-      openedAt: json['openedAt'] == null
-          ? null
-          : DateTime.parse(json['openedAt'] as String),
-      closedAt: json['closedAt'] == null
-          ? null
-          : DateTime.parse(json['closedAt'] as String),
-    );
+  id: (json['id'] as num?)?.toInt() ?? Isar.autoIncrement,
+  openingAmount: (json['openingAmount'] as num?)?.toDouble() ?? 0.0,
+  closingAmount: (json['closingAmount'] as num?)?.toDouble(),
+  totalSales: (json['totalSales'] as num?)?.toDouble() ?? 0.0,
+  totalExpenses: (json['totalExpenses'] as num?)?.toDouble() ?? 0.0,
+  totalCashIn: (json['totalCashIn'] as num?)?.toDouble() ?? 0.0,
+  totalCashOut: (json['totalCashOut'] as num?)?.toDouble() ?? 0.0,
+  notes: json['notes'] as String? ?? '',
+  isClosed: json['isClosed'] as bool? ?? false,
+  openedAt: json['openedAt'] == null
+      ? null
+      : DateTime.parse(json['openedAt'] as String),
+  closedAt: json['closedAt'] == null
+      ? null
+      : DateTime.parse(json['closedAt'] as String),
+);
 
 Map<String, dynamic> _$CashRegisterToJson(CashRegister instance) =>
     <String, dynamic>{

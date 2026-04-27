@@ -6,35 +6,88 @@ part of 'expense_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$expensesHash() => r'7e297ce626b71c8a8fa1e3152b66b8d2ef62b08d';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [expenses].
 @ProviderFor(expenses)
-final expensesProvider = AutoDisposeStreamProvider<List<Expense>>.internal(
-  expenses,
-  name: r'expensesProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$expensesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final expensesProvider = ExpensesProvider._();
 
-typedef ExpensesRef = AutoDisposeStreamProviderRef<List<Expense>>;
+final class ExpensesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Expense>>,
+          List<Expense>,
+          Stream<List<Expense>>
+        >
+    with $FutureModifier<List<Expense>>, $StreamProvider<List<Expense>> {
+  ExpensesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'expensesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$expensesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Expense>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Expense>> create(Ref ref) {
+    return expenses(ref);
+  }
+}
+
+String _$expensesHash() => r'45382a7460ac7c2b122160e1d338413038e6dc28';
+
+@ProviderFor(ExpenseNotifier)
+final expenseProvider = ExpenseNotifierProvider._();
+
+final class ExpenseNotifierProvider
+    extends $AsyncNotifierProvider<ExpenseNotifier, void> {
+  ExpenseNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'expenseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$expenseNotifierHash();
+
+  @$internal
+  @override
+  ExpenseNotifier create() => ExpenseNotifier();
+}
+
 String _$expenseNotifierHash() => r'251dd3d164876e95aecfe08ad728a33261868ecd';
 
-/// See also [ExpenseNotifier].
-@ProviderFor(ExpenseNotifier)
-final expenseNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<ExpenseNotifier, void>.internal(
-  ExpenseNotifier.new,
-  name: r'expenseNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$expenseNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$ExpenseNotifier = AutoDisposeAsyncNotifier<void>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+abstract class _$ExpenseNotifier extends $AsyncNotifier<void> {
+  FutureOr<void> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

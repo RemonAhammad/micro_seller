@@ -6,465 +6,356 @@ part of 'supplier_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$suppliersHash() => r'aedfdd9fbe072585bbcd71a307a1f8043855671f';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [suppliers].
 @ProviderFor(suppliers)
-final suppliersProvider = AutoDisposeStreamProvider<List<Supplier>>.internal(
-  suppliers,
-  name: r'suppliersProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$suppliersHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final suppliersProvider = SuppliersProvider._();
 
-typedef SuppliersRef = AutoDisposeStreamProviderRef<List<Supplier>>;
-String _$purchasesHash() => r'8c031385b06fb5a792da5820d52c6d2fd320a76a';
+final class SuppliersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Supplier>>,
+          List<Supplier>,
+          Stream<List<Supplier>>
+        >
+    with $FutureModifier<List<Supplier>>, $StreamProvider<List<Supplier>> {
+  SuppliersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'suppliersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [purchases].
+  @override
+  String debugGetCreateSourceHash() => _$suppliersHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Supplier>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Supplier>> create(Ref ref) {
+    return suppliers(ref);
+  }
+}
+
+String _$suppliersHash() => r'7470e8abe6ab3d2ad6a09b1356e5e94e346018ff';
+
 @ProviderFor(purchases)
-final purchasesProvider = AutoDisposeStreamProvider<List<Purchase>>.internal(
-  purchases,
-  name: r'purchasesProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$purchasesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final purchasesProvider = PurchasesProvider._();
 
-typedef PurchasesRef = AutoDisposeStreamProviderRef<List<Purchase>>;
-String _$supplierPurchasesHash() => r'0f730842cedf3d66a38d263b5773b3e32042bc49';
+final class PurchasesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Purchase>>,
+          List<Purchase>,
+          Stream<List<Purchase>>
+        >
+    with $FutureModifier<List<Purchase>>, $StreamProvider<List<Purchase>> {
+  PurchasesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'purchasesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
+  @override
+  String debugGetCreateSourceHash() => _$purchasesHash();
 
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
+  @$internal
+  @override
+  $StreamProviderElement<List<Purchase>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  @override
+  Stream<List<Purchase>> create(Ref ref) {
+    return purchases(ref);
   }
 }
 
-/// See also [supplierPurchases].
+String _$purchasesHash() => r'476862a41c51fd3bb1093f2c657750338e2c1f8b';
+
 @ProviderFor(supplierPurchases)
-const supplierPurchasesProvider = SupplierPurchasesFamily();
+final supplierPurchasesProvider = SupplierPurchasesFamily._();
 
-/// See also [supplierPurchases].
-class SupplierPurchasesFamily extends Family<AsyncValue<List<Purchase>>> {
-  /// See also [supplierPurchases].
-  const SupplierPurchasesFamily();
+final class SupplierPurchasesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Purchase>>,
+          List<Purchase>,
+          Stream<List<Purchase>>
+        >
+    with $FutureModifier<List<Purchase>>, $StreamProvider<List<Purchase>> {
+  SupplierPurchasesProvider._({
+    required SupplierPurchasesFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'supplierPurchasesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [supplierPurchases].
-  SupplierPurchasesProvider call(
-    int supplierId,
-  ) {
-    return SupplierPurchasesProvider(
-      supplierId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$supplierPurchasesHash();
+
+  @override
+  String toString() {
+    return r'supplierPurchasesProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  SupplierPurchasesProvider getProviderOverride(
-    covariant SupplierPurchasesProvider provider,
-  ) {
-    return call(
-      provider.supplierId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $StreamProviderElement<List<Purchase>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'supplierPurchasesProvider';
-}
-
-/// See also [supplierPurchases].
-class SupplierPurchasesProvider
-    extends AutoDisposeStreamProvider<List<Purchase>> {
-  /// See also [supplierPurchases].
-  SupplierPurchasesProvider(
-    int supplierId,
-  ) : this._internal(
-          (ref) => supplierPurchases(
-            ref as SupplierPurchasesRef,
-            supplierId,
-          ),
-          from: supplierPurchasesProvider,
-          name: r'supplierPurchasesProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$supplierPurchasesHash,
-          dependencies: SupplierPurchasesFamily._dependencies,
-          allTransitiveDependencies:
-              SupplierPurchasesFamily._allTransitiveDependencies,
-          supplierId: supplierId,
-        );
-
-  SupplierPurchasesProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.supplierId,
-  }) : super.internal();
-
-  final int supplierId;
-
-  @override
-  Override overrideWith(
-    Stream<List<Purchase>> Function(SupplierPurchasesRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: SupplierPurchasesProvider._internal(
-        (ref) => create(ref as SupplierPurchasesRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        supplierId: supplierId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeStreamProviderElement<List<Purchase>> createElement() {
-    return _SupplierPurchasesProviderElement(this);
+  Stream<List<Purchase>> create(Ref ref) {
+    final argument = this.argument as int;
+    return supplierPurchases(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SupplierPurchasesProvider && other.supplierId == supplierId;
+    return other is SupplierPurchasesProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, supplierId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin SupplierPurchasesRef on AutoDisposeStreamProviderRef<List<Purchase>> {
-  /// The parameter `supplierId` of this provider.
-  int get supplierId;
-}
+String _$supplierPurchasesHash() => r'a4d2229007d6a7375b4c52821420e9c9c2c461d1';
 
-class _SupplierPurchasesProviderElement
-    extends AutoDisposeStreamProviderElement<List<Purchase>>
-    with SupplierPurchasesRef {
-  _SupplierPurchasesProviderElement(super.provider);
+final class SupplierPurchasesFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Purchase>>, int> {
+  SupplierPurchasesFamily._()
+    : super(
+        retry: null,
+        name: r'supplierPurchasesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SupplierPurchasesProvider call(int supplierId) =>
+      SupplierPurchasesProvider._(argument: supplierId, from: this);
 
   @override
-  int get supplierId => (origin as SupplierPurchasesProvider).supplierId;
+  String toString() => r'supplierPurchasesProvider';
 }
 
-String _$supplierProductsHash() => r'4ad3052ccb76a951146b82834625911b429bb2b9';
-
-/// See also [supplierProducts].
 @ProviderFor(supplierProducts)
-const supplierProductsProvider = SupplierProductsFamily();
+final supplierProductsProvider = SupplierProductsFamily._();
 
-/// See also [supplierProducts].
-class SupplierProductsFamily extends Family<AsyncValue<List<Product>>> {
-  /// See also [supplierProducts].
-  const SupplierProductsFamily();
+final class SupplierProductsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Product>>,
+          List<Product>,
+          Stream<List<Product>>
+        >
+    with $FutureModifier<List<Product>>, $StreamProvider<List<Product>> {
+  SupplierProductsProvider._({
+    required SupplierProductsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'supplierProductsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [supplierProducts].
-  SupplierProductsProvider call(
-    int supplierId,
-  ) {
-    return SupplierProductsProvider(
-      supplierId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$supplierProductsHash();
+
+  @override
+  String toString() {
+    return r'supplierProductsProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  SupplierProductsProvider getProviderOverride(
-    covariant SupplierProductsProvider provider,
-  ) {
-    return call(
-      provider.supplierId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $StreamProviderElement<List<Product>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'supplierProductsProvider';
-}
-
-/// See also [supplierProducts].
-class SupplierProductsProvider
-    extends AutoDisposeStreamProvider<List<Product>> {
-  /// See also [supplierProducts].
-  SupplierProductsProvider(
-    int supplierId,
-  ) : this._internal(
-          (ref) => supplierProducts(
-            ref as SupplierProductsRef,
-            supplierId,
-          ),
-          from: supplierProductsProvider,
-          name: r'supplierProductsProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$supplierProductsHash,
-          dependencies: SupplierProductsFamily._dependencies,
-          allTransitiveDependencies:
-              SupplierProductsFamily._allTransitiveDependencies,
-          supplierId: supplierId,
-        );
-
-  SupplierProductsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.supplierId,
-  }) : super.internal();
-
-  final int supplierId;
-
-  @override
-  Override overrideWith(
-    Stream<List<Product>> Function(SupplierProductsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: SupplierProductsProvider._internal(
-        (ref) => create(ref as SupplierProductsRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        supplierId: supplierId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeStreamProviderElement<List<Product>> createElement() {
-    return _SupplierProductsProviderElement(this);
+  Stream<List<Product>> create(Ref ref) {
+    final argument = this.argument as int;
+    return supplierProducts(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SupplierProductsProvider && other.supplierId == supplierId;
+    return other is SupplierProductsProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, supplierId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin SupplierProductsRef on AutoDisposeStreamProviderRef<List<Product>> {
-  /// The parameter `supplierId` of this provider.
-  int get supplierId;
-}
+String _$supplierProductsHash() => r'dd423261a9919454d74b6066d81dab0ccf9de43b';
 
-class _SupplierProductsProviderElement
-    extends AutoDisposeStreamProviderElement<List<Product>>
-    with SupplierProductsRef {
-  _SupplierProductsProviderElement(super.provider);
-
-  @override
-  int get supplierId => (origin as SupplierProductsProvider).supplierId;
-}
-
-String _$supplierStockMovementsHash() =>
-    r'c7f2e26948c5ef2f94eaf5c33b1c962d42565c15';
-
-/// See also [supplierStockMovements].
-@ProviderFor(supplierStockMovements)
-const supplierStockMovementsProvider = SupplierStockMovementsFamily();
-
-/// See also [supplierStockMovements].
-class SupplierStockMovementsFamily
-    extends Family<AsyncValue<List<StockMovement>>> {
-  /// See also [supplierStockMovements].
-  const SupplierStockMovementsFamily();
-
-  /// See also [supplierStockMovements].
-  SupplierStockMovementsProvider call(
-    int supplierId,
-  ) {
-    return SupplierStockMovementsProvider(
-      supplierId,
-    );
-  }
-
-  @override
-  SupplierStockMovementsProvider getProviderOverride(
-    covariant SupplierStockMovementsProvider provider,
-  ) {
-    return call(
-      provider.supplierId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'supplierStockMovementsProvider';
-}
-
-/// See also [supplierStockMovements].
-class SupplierStockMovementsProvider
-    extends AutoDisposeStreamProvider<List<StockMovement>> {
-  /// See also [supplierStockMovements].
-  SupplierStockMovementsProvider(
-    int supplierId,
-  ) : this._internal(
-          (ref) => supplierStockMovements(
-            ref as SupplierStockMovementsRef,
-            supplierId,
-          ),
-          from: supplierStockMovementsProvider,
-          name: r'supplierStockMovementsProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$supplierStockMovementsHash,
-          dependencies: SupplierStockMovementsFamily._dependencies,
-          allTransitiveDependencies:
-              SupplierStockMovementsFamily._allTransitiveDependencies,
-          supplierId: supplierId,
-        );
-
-  SupplierStockMovementsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.supplierId,
-  }) : super.internal();
-
-  final int supplierId;
-
-  @override
-  Override overrideWith(
-    Stream<List<StockMovement>> Function(SupplierStockMovementsRef provider)
-        create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: SupplierStockMovementsProvider._internal(
-        (ref) => create(ref as SupplierStockMovementsRef),
-        from: from,
-        name: null,
+final class SupplierProductsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Product>>, int> {
+  SupplierProductsFamily._()
+    : super(
+        retry: null,
+        name: r'supplierProductsProvider',
         dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        supplierId: supplierId,
-      ),
-    );
-  }
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SupplierProductsProvider call(int supplierId) =>
+      SupplierProductsProvider._(argument: supplierId, from: this);
 
   @override
-  AutoDisposeStreamProviderElement<List<StockMovement>> createElement() {
-    return _SupplierStockMovementsProviderElement(this);
+  String toString() => r'supplierProductsProvider';
+}
+
+@ProviderFor(supplierStockMovements)
+final supplierStockMovementsProvider = SupplierStockMovementsFamily._();
+
+final class SupplierStockMovementsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<StockMovement>>,
+          List<StockMovement>,
+          Stream<List<StockMovement>>
+        >
+    with
+        $FutureModifier<List<StockMovement>>,
+        $StreamProvider<List<StockMovement>> {
+  SupplierStockMovementsProvider._({
+    required SupplierStockMovementsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'supplierStockMovementsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$supplierStockMovementsHash();
+
+  @override
+  String toString() {
+    return r'supplierStockMovementsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<StockMovement>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<StockMovement>> create(Ref ref) {
+    final argument = this.argument as int;
+    return supplierStockMovements(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
     return other is SupplierStockMovementsProvider &&
-        other.supplierId == supplierId;
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, supplierId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin SupplierStockMovementsRef
-    on AutoDisposeStreamProviderRef<List<StockMovement>> {
-  /// The parameter `supplierId` of this provider.
-  int get supplierId;
-}
+String _$supplierStockMovementsHash() =>
+    r'd83718b21934131580d7647040fd0089384344ab';
 
-class _SupplierStockMovementsProviderElement
-    extends AutoDisposeStreamProviderElement<List<StockMovement>>
-    with SupplierStockMovementsRef {
-  _SupplierStockMovementsProviderElement(super.provider);
+final class SupplierStockMovementsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<StockMovement>>, int> {
+  SupplierStockMovementsFamily._()
+    : super(
+        retry: null,
+        name: r'supplierStockMovementsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SupplierStockMovementsProvider call(int supplierId) =>
+      SupplierStockMovementsProvider._(argument: supplierId, from: this);
 
   @override
-  int get supplierId => (origin as SupplierStockMovementsProvider).supplierId;
+  String toString() => r'supplierStockMovementsProvider';
+}
+
+@ProviderFor(SupplierNotifier)
+final supplierProvider = SupplierNotifierProvider._();
+
+final class SupplierNotifierProvider
+    extends $AsyncNotifierProvider<SupplierNotifier, void> {
+  SupplierNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'supplierProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$supplierNotifierHash();
+
+  @$internal
+  @override
+  SupplierNotifier create() => SupplierNotifier();
 }
 
 String _$supplierNotifierHash() => r'5971587e4147eb94abbe612fdcc44d513ce52a98';
 
-/// See also [SupplierNotifier].
-@ProviderFor(SupplierNotifier)
-final supplierNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<SupplierNotifier, void>.internal(
-  SupplierNotifier.new,
-  name: r'supplierNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$supplierNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$SupplierNotifier = AutoDisposeAsyncNotifier<void>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+abstract class _$SupplierNotifier extends $AsyncNotifier<void> {
+  FutureOr<void> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/order.dart';
@@ -10,7 +10,7 @@ import '../../../data/services/isar_service.dart';
 part 'order_provider.g.dart';
 
 @riverpod
-Stream<List<Order>> orders(OrdersRef ref) async* {
+Stream<List<Order>> orders(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.orders
       .where()
@@ -19,7 +19,7 @@ Stream<List<Order>> orders(OrdersRef ref) async* {
 }
 
 @riverpod
-Stream<List<Order>> pendingOrders(PendingOrdersRef ref) async* {
+Stream<List<Order>> pendingOrders(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.orders
       .filter()
@@ -30,7 +30,7 @@ Stream<List<Order>> pendingOrders(PendingOrdersRef ref) async* {
 }
 
 @riverpod
-Stream<List<Order>> unpaidOrders(UnpaidOrdersRef ref) async* {
+Stream<List<Order>> unpaidOrders(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.orders
       .filter()

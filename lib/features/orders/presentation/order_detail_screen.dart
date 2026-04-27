@@ -444,7 +444,7 @@ class _OrderDetailBody extends ConsumerWidget {
         );
         if (ok == true && context.mounted) {
           await ref
-              .read(orderNotifierProvider.notifier)
+              .read(orderProvider.notifier)
               .updateStatus(order.id, OrderStatus.cancelled);
         }
         break;
@@ -462,7 +462,7 @@ class _OrderDetailBody extends ConsumerWidget {
         );
         if (ok == true && context.mounted) {
           await ref
-              .read(orderNotifierProvider.notifier)
+              .read(orderProvider.notifier)
               .deleteOrder(order.id);
           context.pop();
         }
@@ -508,7 +508,7 @@ class _OrderDetailBody extends ConsumerWidget {
               final amount = double.tryParse(ctrl.text) ?? 0;
               if (amount <= 0) return;
               await ref
-                  .read(orderNotifierProvider.notifier)
+                  .read(orderProvider.notifier)
                   .recordPayment(order.id, amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },
@@ -549,7 +549,7 @@ class _StatusActions extends ConsumerWidget {
       child: OutlinedButton.icon(
         onPressed: () async {
           await ref
-              .read(orderNotifierProvider.notifier)
+              .read(orderProvider.notifier)
               .updateStatus(order.id, nextStatus);
         },
         icon: const Icon(Icons.arrow_forward_rounded),
@@ -737,7 +737,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  await ref.read(orderNotifierProvider.notifier).updateOrder(
+                  await ref.read(orderProvider.notifier).updateOrder(
                         order.copyWith(
                           actualDeliveryDate: DateTime.now(),
                           orderStatus: OrderStatus.completed,
@@ -852,7 +852,7 @@ class _StatusStepperBar extends StatelessWidget {
   bool get _canGoForward => _currentIndex < _flow.length - 1;
 
   Future<void> _changeStatus(BuildContext context, OrderStatus newStatus) async {
-    await ref.read(orderNotifierProvider.notifier).updateStatus(order.id, newStatus);
+    await ref.read(orderProvider.notifier).updateStatus(order.id, newStatus);
   }
 
   @override
@@ -1124,7 +1124,7 @@ class _ReturnFlowCard extends StatelessWidget {
                       );
                       if (ok == true) {
                         await ref
-                            .read(orderNotifierProvider.notifier)
+                            .read(orderProvider.notifier)
                             .rejectReturn(order.id);
                       }
                     },
@@ -1146,7 +1146,7 @@ class _ReturnFlowCard extends StatelessWidget {
                       );
                       if (ok == true) {
                         await ref
-                            .read(orderNotifierProvider.notifier)
+                            .read(orderProvider.notifier)
                             .approveReturn(order.id);
                       }
                     },
@@ -1177,7 +1177,7 @@ class _ReturnFlowCard extends StatelessWidget {
                   );
                   if (ok == true) {
                     await ref
-                        .read(orderNotifierProvider.notifier)
+                        .read(orderProvider.notifier)
                         .processRefund(order.id);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

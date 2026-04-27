@@ -6,20 +6,57 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$settingsHash() => r'a514a1501da146fee85ff639134cf0ddb40630b3';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [Settings].
 @ProviderFor(Settings)
-final settingsProvider =
-    NotifierProvider<Settings, Map<String, dynamic>>.internal(
-  Settings.new,
-  name: r'settingsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$settingsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final settingsProvider = SettingsProvider._();
 
-typedef _$Settings = Notifier<Map<String, dynamic>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class SettingsProvider
+    extends $NotifierProvider<Settings, Map<String, dynamic>> {
+  SettingsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'settingsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$settingsHash();
+
+  @$internal
+  @override
+  Settings create() => Settings();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, dynamic> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, dynamic>>(value),
+    );
+  }
+}
+
+String _$settingsHash() => r'7465dc12aee3244fa112bd03652d6d5fad0e833d';
+
+abstract class _$Settings extends $Notifier<Map<String, dynamic>> {
+  Map<String, dynamic> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Map<String, dynamic>, Map<String, dynamic>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, dynamic>, Map<String, dynamic>>,
+              Map<String, dynamic>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

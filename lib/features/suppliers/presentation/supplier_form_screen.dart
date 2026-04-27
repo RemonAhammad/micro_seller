@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/supplier.dart';
 import '../providers/supplier_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -91,9 +91,9 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
         createdAt: _existing?.createdAt,
       );
       if (_existing != null) {
-        await ref.read(supplierNotifierProvider.notifier).updateSupplier(supplier);
+        await ref.read(supplierProvider.notifier).updateSupplier(supplier);
       } else {
-        await ref.read(supplierNotifierProvider.notifier).addSupplier(supplier);
+        await ref.read(supplierProvider.notifier).addSupplier(supplier);
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

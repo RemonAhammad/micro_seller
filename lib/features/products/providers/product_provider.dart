@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
@@ -10,13 +10,13 @@ import '../../../data/services/isar_service.dart';
 part 'product_provider.g.dart';
 
 @riverpod
-ProductRepository productRepository(ProductRepositoryRef ref) {
+ProductRepository productRepository(Ref ref) {
   final isar = ref.watch(isarProvider).requireValue;
   return ProductRepository(isar);
 }
 
 @riverpod
-Stream<List<Product>> products(ProductsRef ref) async* {
+Stream<List<Product>> products(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   // Debug: print raw DB count
   final allCount = await isar.products.count();
@@ -34,7 +34,7 @@ Stream<List<Product>> products(ProductsRef ref) async* {
 }
 
 @riverpod
-Stream<List<Product>> lowStockProducts(LowStockProductsRef ref) async* {
+Stream<List<Product>> lowStockProducts(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.products
       .where()

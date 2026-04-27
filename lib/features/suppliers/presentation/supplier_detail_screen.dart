@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/supplier.dart';
 import '../providers/supplier_provider.dart';
@@ -70,7 +70,7 @@ class _Body extends ConsumerWidget {
                     icon: Icons.delete_rounded,
                   );
                   if (ok == true && context.mounted) {
-                    await ref.read(supplierNotifierProvider.notifier).deleteSupplier(supplier.id);
+                    await ref.read(supplierProvider.notifier).deleteSupplier(supplier.id);
                     if (context.mounted) context.pop();
                   }
                 },
@@ -235,7 +235,7 @@ class _Body extends ConsumerWidget {
             onPressed: () async {
               final amount = double.tryParse(ctrl.text);
               if (amount == null || amount <= 0) return;
-              await ref.read(supplierNotifierProvider.notifier)
+              await ref.read(supplierProvider.notifier)
                   .recordSupplierPayment(supplier.id, amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },

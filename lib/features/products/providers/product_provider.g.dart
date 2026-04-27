@@ -6,67 +6,174 @@ part of 'product_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$productRepositoryHash() => r'8cfc1f55cd302ac09c0a1db034607d4561b52501';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [productRepository].
 @ProviderFor(productRepository)
-final productRepositoryProvider =
-    AutoDisposeProvider<ProductRepository>.internal(
-  productRepository,
-  name: r'productRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$productRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final productRepositoryProvider = ProductRepositoryProvider._();
 
-typedef ProductRepositoryRef = AutoDisposeProviderRef<ProductRepository>;
-String _$productsHash() => r'662bae39b4d61acf0c9b6240ef1cf5873bc8ccfc';
+final class ProductRepositoryProvider
+    extends
+        $FunctionalProvider<
+          ProductRepository,
+          ProductRepository,
+          ProductRepository
+        >
+    with $Provider<ProductRepository> {
+  ProductRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productRepositoryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [products].
+  @override
+  String debugGetCreateSourceHash() => _$productRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProductRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ProductRepository create(Ref ref) {
+    return productRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProductRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProductRepository>(value),
+    );
+  }
+}
+
+String _$productRepositoryHash() => r'f028ab092d9e19d35c9cbbc997c08c6d7b8b76e9';
+
 @ProviderFor(products)
-final productsProvider = AutoDisposeStreamProvider<List<Product>>.internal(
-  products,
-  name: r'productsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$productsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final productsProvider = ProductsProvider._();
 
-typedef ProductsRef = AutoDisposeStreamProviderRef<List<Product>>;
-String _$lowStockProductsHash() => r'66c79bb70e515b68f912919d64bc0d7a7b836801';
+final class ProductsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Product>>,
+          List<Product>,
+          Stream<List<Product>>
+        >
+    with $FutureModifier<List<Product>>, $StreamProvider<List<Product>> {
+  ProductsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [lowStockProducts].
+  @override
+  String debugGetCreateSourceHash() => _$productsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Product>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Product>> create(Ref ref) {
+    return products(ref);
+  }
+}
+
+String _$productsHash() => r'bc6211e6e988bca5786d0e2a6f50fb48c207df30';
+
 @ProviderFor(lowStockProducts)
-final lowStockProductsProvider =
-    AutoDisposeStreamProvider<List<Product>>.internal(
-  lowStockProducts,
-  name: r'lowStockProductsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$lowStockProductsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final lowStockProductsProvider = LowStockProductsProvider._();
 
-typedef LowStockProductsRef = AutoDisposeStreamProviderRef<List<Product>>;
+final class LowStockProductsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Product>>,
+          List<Product>,
+          Stream<List<Product>>
+        >
+    with $FutureModifier<List<Product>>, $StreamProvider<List<Product>> {
+  LowStockProductsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lowStockProductsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$lowStockProductsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Product>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Product>> create(Ref ref) {
+    return lowStockProducts(ref);
+  }
+}
+
+String _$lowStockProductsHash() => r'14bfced71e35d5003813c6712b706e0cc86d8ec6';
+
+@ProviderFor(ProductNotifier)
+final productProvider = ProductNotifierProvider._();
+
+final class ProductNotifierProvider
+    extends $AsyncNotifierProvider<ProductNotifier, void> {
+  ProductNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$productNotifierHash();
+
+  @$internal
+  @override
+  ProductNotifier create() => ProductNotifier();
+}
+
 String _$productNotifierHash() => r'c46a3340e119a3c58f3966f8031832ecf0f727da';
 
-/// See also [ProductNotifier].
-@ProviderFor(ProductNotifier)
-final productNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<ProductNotifier, void>.internal(
-  ProductNotifier.new,
-  name: r'productNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$productNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$ProductNotifier = AutoDisposeAsyncNotifier<void>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+abstract class _$ProductNotifier extends $AsyncNotifier<void> {
+  FutureOr<void> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/product.dart';
 import '../providers/product_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -82,7 +82,7 @@ class _ProductDetailBody extends ConsumerWidget {
                         icon: Icons.delete_rounded,
                       );
                       if (ok == true && context.mounted) {
-                        await ref.read(productNotifierProvider.notifier).deleteProduct(product.id);
+                        await ref.read(productProvider.notifier).deleteProduct(product.id);
                         if (context.mounted) context.pop();
                       }
                     },

@@ -6,35 +6,88 @@ part of 'category_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$categoriesHash() => r'bcfca9b29ce17c5d7ef364670e8180618ac87d60';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [categories].
 @ProviderFor(categories)
-final categoriesProvider = AutoDisposeStreamProvider<List<Category>>.internal(
-  categories,
-  name: r'categoriesProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$categoriesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final categoriesProvider = CategoriesProvider._();
 
-typedef CategoriesRef = AutoDisposeStreamProviderRef<List<Category>>;
+final class CategoriesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Category>>,
+          List<Category>,
+          Stream<List<Category>>
+        >
+    with $FutureModifier<List<Category>>, $StreamProvider<List<Category>> {
+  CategoriesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'categoriesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$categoriesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Category>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Category>> create(Ref ref) {
+    return categories(ref);
+  }
+}
+
+String _$categoriesHash() => r'cead5e1f38e8f9b7c261f11ff15095f5b5d023f4';
+
+@ProviderFor(CategoryNotifier)
+final categoryProvider = CategoryNotifierProvider._();
+
+final class CategoryNotifierProvider
+    extends $AsyncNotifierProvider<CategoryNotifier, void> {
+  CategoryNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'categoryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$categoryNotifierHash();
+
+  @$internal
+  @override
+  CategoryNotifier create() => CategoryNotifier();
+}
+
 String _$categoryNotifierHash() => r'806e3fb1d85262e83cfdc2c1b19912190ea47d1b';
 
-/// See also [CategoryNotifier].
-@ProviderFor(CategoryNotifier)
-final categoryNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<CategoryNotifier, void>.internal(
-  CategoryNotifier.new,
-  name: r'categoryNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$categoryNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$CategoryNotifier = AutoDisposeAsyncNotifier<void>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+abstract class _$CategoryNotifier extends $AsyncNotifier<void> {
+  FutureOr<void> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

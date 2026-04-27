@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
@@ -244,7 +244,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final notifier = ref.read(orderNotifierProvider.notifier);
+      final notifier = ref.read(orderProvider.notifier);
       final amountPaid = double.tryParse(_amountPaidCtrl.text) ?? 0;
 
       final paymentStatus = amountPaid >= _total

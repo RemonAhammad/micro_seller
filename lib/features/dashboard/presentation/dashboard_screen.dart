@@ -71,7 +71,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       // Compute order status counts
                       final statusCounts = <String, int>{};
                       final allOrders =
-                          ordersAsync.valueOrNull ?? <Order>[];
+                          ordersAsync.value ?? <Order>[];
                       for (final o in allOrders) {
                         final label = o.orderStatus.name[0].toUpperCase() +
                             o.orderStatus.name.substring(1);
@@ -81,7 +81,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
                       // Compute daily expenses for last 7 days
                       final allExpenses =
-                          expensesAsync.valueOrNull ?? <Expense>[];
+                          expensesAsync.value ?? <Expense>[];
                       final dailyExpenses = <int, double>{};
                       for (int i = 0; i < stats.weeklySales.length; i++) {
                         final day = stats.weeklySales[i].date;
@@ -123,7 +123,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: statsAsync.whenOrNull(
                         data: (stats) {
                           final unpaidOrders =
-                              unpaidOrdersAsync.valueOrNull ?? [];
+                              unpaidOrdersAsync.value ?? [];
                           if (stats.lowStockProducts.isEmpty &&
                               unpaidOrders.isEmpty) {
                             return const SizedBox(height: 24);

@@ -6,40 +6,116 @@ part of 'dashboard_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dashboardStatsHash() => r'b1d6db563f8622f55a35906a93c5ef32273739b8';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [dashboardStats].
-@ProviderFor(dashboardStats)
-final dashboardStatsProvider =
-    AutoDisposeFutureProvider<DashboardStats>.internal(
-  dashboardStats,
-  name: r'dashboardStatsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$dashboardStatsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+@ProviderFor(DashboardDateRange)
+final dashboardDateRangeProvider = DashboardDateRangeProvider._();
 
-typedef DashboardStatsRef = AutoDisposeFutureProviderRef<DashboardStats>;
+final class DashboardDateRangeProvider
+    extends
+        $NotifierProvider<
+          DashboardDateRange,
+          ({DateTime end, DateRangePreset preset, DateTime start})
+        > {
+  DashboardDateRangeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dashboardDateRangeProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dashboardDateRangeHash();
+
+  @$internal
+  @override
+  DashboardDateRange create() => DashboardDateRange();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(
+    ({DateTime end, DateRangePreset preset, DateTime start}) value,
+  ) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride:
+          $SyncValueProvider<
+            ({DateTime end, DateRangePreset preset, DateTime start})
+          >(value),
+    );
+  }
+}
+
 String _$dashboardDateRangeHash() =>
     r'3104e875bb99ec012c1510bd7a89028d6b7fb67c';
 
-/// See also [DashboardDateRange].
-@ProviderFor(DashboardDateRange)
-final dashboardDateRangeProvider = AutoDisposeNotifierProvider<
-    DashboardDateRange,
-    ({DateTime start, DateTime end, DateRangePreset preset})>.internal(
-  DashboardDateRange.new,
-  name: r'dashboardDateRangeProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$dashboardDateRangeHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+abstract class _$DashboardDateRange
+    extends
+        $Notifier<({DateTime end, DateRangePreset preset, DateTime start})> {
+  ({DateTime end, DateRangePreset preset, DateTime start}) build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              ({DateTime end, DateRangePreset preset, DateTime start}),
+              ({DateTime end, DateRangePreset preset, DateTime start})
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                ({DateTime end, DateRangePreset preset, DateTime start}),
+                ({DateTime end, DateRangePreset preset, DateTime start})
+              >,
+              ({DateTime end, DateRangePreset preset, DateTime start}),
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
 
-typedef _$DashboardDateRange = AutoDisposeNotifier<
-    ({DateTime start, DateTime end, DateRangePreset preset})>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+@ProviderFor(dashboardStats)
+final dashboardStatsProvider = DashboardStatsProvider._();
+
+final class DashboardStatsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<DashboardStats>,
+          DashboardStats,
+          FutureOr<DashboardStats>
+        >
+    with $FutureModifier<DashboardStats>, $FutureProvider<DashboardStats> {
+  DashboardStatsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dashboardStatsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dashboardStatsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<DashboardStats> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<DashboardStats> create(Ref ref) {
+    return dashboardStats(ref);
+  }
+}
+
+String _$dashboardStatsHash() => r'9cfb17a38c771bc4784b5f8350e1b83161e0addc';

@@ -84,11 +84,11 @@ class CategoryScreen extends ConsumerWidget {
     if (name.isEmpty) return;
     if (existing == null) {
       ref
-          .read(categoryNotifierProvider.notifier)
+          .read(categoryProvider.notifier)
           .addCategory(Category(name: name));
     } else {
       ref
-          .read(categoryNotifierProvider.notifier)
+          .read(categoryProvider.notifier)
           .updateCategory(existing.copyWith(name: name));
     }
     Navigator.pop(ctx);
@@ -140,7 +140,7 @@ class _CategoryTile extends StatelessWidget {
         );
       },
       onDismissed: (_) => ref
-          .read(categoryNotifierProvider.notifier)
+          .read(categoryProvider.notifier)
           .deleteCategory(category.id),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -212,7 +212,7 @@ class _CategoryTile extends StatelessWidget {
     final name = ctrl.text.trim();
     if (name.isEmpty) return;
     ref
-        .read(categoryNotifierProvider.notifier)
+        .read(categoryProvider.notifier)
         .updateCategory(category.copyWith(name: name));
     Navigator.pop(ctx);
   }

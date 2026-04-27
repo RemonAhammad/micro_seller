@@ -32,16 +32,8 @@ const StockMovementSchema = CollectionSchema(
       name: r'productName',
       type: IsarType.string,
     ),
-    r'qty': PropertySchema(
-      id: 3,
-      name: r'qty',
-      type: IsarType.long,
-    ),
-    r'reason': PropertySchema(
-      id: 4,
-      name: r'reason',
-      type: IsarType.string,
-    ),
+    r'qty': PropertySchema(id: 3, name: r'qty', type: IsarType.long),
+    r'reason': PropertySchema(id: 4, name: r'reason', type: IsarType.string),
     r'supplierId': PropertySchema(
       id: 5,
       name: r'supplierId',
@@ -52,8 +44,9 @@ const StockMovementSchema = CollectionSchema(
       name: r'type',
       type: IsarType.string,
       enumMap: _StockMovementtypeEnumValueMap,
-    )
+    ),
   },
+
   estimateSize: _stockMovementEstimateSize,
   serialize: _stockMovementSerialize,
   deserialize: _stockMovementDeserialize,
@@ -62,10 +55,11 @@ const StockMovementSchema = CollectionSchema(
   indexes: {},
   links: {},
   embeddedSchemas: {},
+
   getId: _stockMovementGetId,
   getLinks: _stockMovementGetLinks,
   attach: _stockMovementAttach,
-  version: '3.1.0+1',
+  version: '3.3.2',
 );
 
 int _stockMovementEstimateSize(
@@ -109,7 +103,8 @@ StockMovement _stockMovementDeserialize(
     qty: reader.readLongOrNull(offsets[3]) ?? 0,
     reason: reader.readStringOrNull(offsets[4]) ?? '',
     supplierId: reader.readLongOrNull(offsets[5]) ?? 0,
-    type: _StockMovementtypeValueEnumMap[reader.readStringOrNull(offsets[6])] ??
+    type:
+        _StockMovementtypeValueEnumMap[reader.readStringOrNull(offsets[6])] ??
         StockMovementType.adjustment,
   );
   return object;
@@ -136,7 +131,8 @@ P _stockMovementDeserializeProp<P>(
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 6:
       return (_StockMovementtypeValueEnumMap[reader.readStringOrNull(offset)] ??
-          StockMovementType.adjustment) as P;
+              StockMovementType.adjustment)
+          as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -164,7 +160,10 @@ List<IsarLinkBase<dynamic>> _stockMovementGetLinks(StockMovement object) {
 }
 
 void _stockMovementAttach(
-    IsarCollection<dynamic> col, Id id, StockMovement object) {
+  IsarCollection<dynamic> col,
+  Id id,
+  StockMovement object,
+) {
   object.id = id;
 }
 
@@ -180,17 +179,16 @@ extension StockMovementQueryWhereSort
 extension StockMovementQueryWhere
     on QueryBuilder<StockMovement, StockMovement, QWhereClause> {
   QueryBuilder<StockMovement, StockMovement, QAfterWhereClause> idEqualTo(
-      Id id) {
+    Id id,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: id,
-        upper: id,
-      ));
+      return query.addWhereClause(IdWhereClause.between(lower: id, upper: id));
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterWhereClause> idNotEqualTo(
-      Id id) {
+    Id id,
+  ) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -213,8 +211,9 @@ extension StockMovementQueryWhere
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterWhereClause> idGreaterThan(
-      Id id,
-      {bool include = false}) {
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.greaterThan(lower: id, includeLower: include),
@@ -223,8 +222,9 @@ extension StockMovementQueryWhere
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterWhereClause> idLessThan(
-      Id id,
-      {bool include = false}) {
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.lessThan(upper: id, includeUpper: include),
@@ -239,12 +239,14 @@ extension StockMovementQueryWhere
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: lowerId,
-        includeLower: includeLower,
-        upper: upperId,
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IdWhereClause.between(
+          lower: lowerId,
+          includeLower: includeLower,
+          upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
@@ -252,100 +254,98 @@ extension StockMovementQueryWhere
 extension StockMovementQueryFilter
     on QueryBuilder<StockMovement, StockMovement, QFilterCondition> {
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      createdAtIsNull() {
+  createdAtIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'createdAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'createdAt'),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      createdAtIsNotNull() {
+  createdAtIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'createdAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'createdAt'),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      createdAtEqualTo(DateTime? value) {
+  createdAtEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'createdAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'createdAt', value: value),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      createdAtGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  createdAtGreaterThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'createdAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'createdAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      createdAtLessThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  createdAtLessThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'createdAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'createdAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      createdAtBetween(
+  createdAtBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'createdAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'createdAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> idEqualTo(
-      Id value) {
+    Id value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'id', value: value),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      idGreaterThan(
-    Id value, {
-    bool include = false,
-  }) {
+  idGreaterThan(Id value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -354,11 +354,13 @@ extension StockMovementQueryFilter
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -369,120 +371,124 @@ extension StockMovementQueryFilter
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'id',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productIdEqualTo(int value) {
+  productIdEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'productId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'productId', value: value),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productIdGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  productIdGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'productId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'productId',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productIdLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  productIdLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'productId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'productId',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productIdBetween(
+  productIdBetween(
     int lower,
     int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'productId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'productId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  productNameEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'productName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'productName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'productName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameLessThan(
+  productNameGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'productName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'productName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameBetween(
+  productNameLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'productName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+  productNameBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -490,108 +496,109 @@ extension StockMovementQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'productName',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'productName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  productNameStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'productName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'productName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  productNameEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'productName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'productName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameContains(String value, {bool caseSensitive = true}) {
+  productNameContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'productName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'productName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameMatches(String pattern, {bool caseSensitive = true}) {
+  productNameMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'productName',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'productName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameIsEmpty() {
+  productNameIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'productName',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'productName', value: ''),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      productNameIsNotEmpty() {
+  productNameIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'productName',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'productName', value: ''),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> qtyEqualTo(
-      int value) {
+    int value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'qty',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'qty', value: value),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      qtyGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  qtyGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'qty',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'qty',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -600,11 +607,13 @@ extension StockMovementQueryFilter
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'qty',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'qty',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -615,64 +624,69 @@ extension StockMovementQueryFilter
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'qty',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'qty',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  reasonEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'reason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'reason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'reason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonLessThan(
+  reasonGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'reason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'reason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonBetween(
+  reasonLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'reason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+  reasonBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -680,140 +694,141 @@ extension StockMovementQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'reason',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'reason',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  reasonStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'reason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'reason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  reasonEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'reason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'reason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonContains(String value, {bool caseSensitive = true}) {
+  reasonContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'reason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'reason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonMatches(String pattern, {bool caseSensitive = true}) {
+  reasonMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'reason',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'reason',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonIsEmpty() {
+  reasonIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'reason',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'reason', value: ''),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      reasonIsNotEmpty() {
+  reasonIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'reason',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'reason', value: ''),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      supplierIdEqualTo(int value) {
+  supplierIdEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'supplierId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'supplierId', value: value),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      supplierIdGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  supplierIdGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'supplierId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'supplierId',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      supplierIdLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  supplierIdLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'supplierId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'supplierId',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      supplierIdBetween(
+  supplierIdBetween(
     int lower,
     int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'supplierId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'supplierId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
@@ -822,43 +837,49 @@ extension StockMovementQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'type',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      typeGreaterThan(
+  typeGreaterThan(
     StockMovementType value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'type',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      typeLessThan(
+  typeLessThan(
     StockMovementType value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'type',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -870,85 +891,88 @@ extension StockMovementQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'type',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'type',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      typeStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  typeStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'type',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      typeEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  typeEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'type',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      typeContains(String value, {bool caseSensitive = true}) {
+  typeContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'type',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> typeMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'type',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'type',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      typeIsEmpty() {
+  typeIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'type',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'type', value: ''),
+      );
     });
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-      typeIsNotEmpty() {
+  typeIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'type',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'type', value: ''),
+      );
     });
   }
 }
@@ -968,7 +992,7 @@ extension StockMovementQuerySortBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      sortByCreatedAtDesc() {
+  sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
     });
@@ -981,7 +1005,7 @@ extension StockMovementQuerySortBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      sortByProductIdDesc() {
+  sortByProductIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'productId', Sort.desc);
     });
@@ -994,7 +1018,7 @@ extension StockMovementQuerySortBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      sortByProductNameDesc() {
+  sortByProductNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'productName', Sort.desc);
     });
@@ -1031,7 +1055,7 @@ extension StockMovementQuerySortBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      sortBySupplierIdDesc() {
+  sortBySupplierIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'supplierId', Sort.desc);
     });
@@ -1059,7 +1083,7 @@ extension StockMovementQuerySortThenBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      thenByCreatedAtDesc() {
+  thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
     });
@@ -1084,7 +1108,7 @@ extension StockMovementQuerySortThenBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      thenByProductIdDesc() {
+  thenByProductIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'productId', Sort.desc);
     });
@@ -1097,7 +1121,7 @@ extension StockMovementQuerySortThenBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      thenByProductNameDesc() {
+  thenByProductNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'productName', Sort.desc);
     });
@@ -1134,7 +1158,7 @@ extension StockMovementQuerySortThenBy
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
-      thenBySupplierIdDesc() {
+  thenBySupplierIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'supplierId', Sort.desc);
     });
@@ -1167,8 +1191,9 @@ extension StockMovementQueryWhereDistinct
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByProductName(
-      {bool caseSensitive = true}) {
+  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByProductName({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'productName', caseSensitive: caseSensitive);
     });
@@ -1180,8 +1205,9 @@ extension StockMovementQueryWhereDistinct
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByReason(
-      {bool caseSensitive = true}) {
+  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByReason({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'reason', caseSensitive: caseSensitive);
     });
@@ -1193,8 +1219,9 @@ extension StockMovementQueryWhereDistinct
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByType(
-      {bool caseSensitive = true}) {
+  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByType({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'type', caseSensitive: caseSensitive);
     });
@@ -1246,7 +1273,7 @@ extension StockMovementQueryProperty
   }
 
   QueryBuilder<StockMovement, StockMovementType, QQueryOperations>
-      typeProperty() {
+  typeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'type');
     });
@@ -1262,7 +1289,8 @@ StockMovement _$StockMovementFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num?)?.toInt() ?? Isar.autoIncrement,
       productId: (json['productId'] as num?)?.toInt() ?? 0,
       productName: json['productName'] as String? ?? '',
-      type: $enumDecodeNullable(_$StockMovementTypeEnumMap, json['type']) ??
+      type:
+          $enumDecodeNullable(_$StockMovementTypeEnumMap, json['type']) ??
           StockMovementType.adjustment,
       qty: (json['qty'] as num?)?.toInt() ?? 0,
       reason: json['reason'] as String? ?? '',

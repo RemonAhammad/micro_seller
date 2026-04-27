@@ -69,7 +69,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
             icon: const Icon(Icons.file_download_outlined),
             tooltip: s.exportCsv,
             onPressed: () async {
-              final orders = ref.read(ordersProvider).valueOrNull ?? [];
+              final orders = ref.read(ordersProvider).value ?? [];
               if (orders.isEmpty) return;
               await CsvExportService().exportOrders(orders);
             },
@@ -209,7 +209,7 @@ class _OrderList extends ConsumerWidget {
           order: order,
           onStatusChange: (status) {
             ref
-                .read(orderNotifierProvider.notifier)
+                .read(orderProvider.notifier)
                 .updateStatus(order.id, status);
           },
         );

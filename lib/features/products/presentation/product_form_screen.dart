@@ -7,7 +7,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/variant_attribute.dart';
@@ -365,7 +365,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final categoryName = _categoryCtrl.text.trim();
 
       await ref
-          .read(categoryNotifierProvider.notifier)
+          .read(categoryProvider.notifier)
           .ensureExists(categoryName);
 
       final isEdit = _existingProduct != null || widget.product != null;
@@ -416,10 +416,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
       if (isEdit) {
         await ref
-            .read(productNotifierProvider.notifier)
+            .read(productProvider.notifier)
             .updateProduct(product);
       } else {
-        await ref.read(productNotifierProvider.notifier).addProduct(product);
+        await ref.read(productProvider.notifier).addProduct(product);
       }
 
       if (mounted) {

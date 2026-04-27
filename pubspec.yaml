@@ -1,26 +1,29 @@
 name: micro_seller
 description: Inventory and order manager for micro sellers
 publish_to: 'none'
-version: 1.0.0+3
+version: 1.0.2+6
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
   # State management
-  flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
+  flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^4.0.2
 
   # Database
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  # Migrated from abandoned `isar` 3.1.0+1 to community fork.
+  # 3.2.0+ ships 16 KB page-aligned native binaries (required for Play Store
+  # on Android 15+).
+  isar_community: ^3.3.2
+  isar_community_flutter_libs: ^3.3.2
   path_provider: ^2.1.4
 
   # Code generation helpers
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
 
   # Google auth & Drive
@@ -81,9 +84,9 @@ dev_dependencies:
 
   # Code generation
   build_runner: ^2.4.12
-  riverpod_generator: ^2.3.9
-  freezed: ">=2.4.6 <2.5.3"
-  isar_generator: ^3.1.0+1
+  riverpod_generator: ^4.0.3
+  freezed: ^3.2.5
+  isar_community_generator: ^3.3.2
   json_serializable: ^6.7.1
 
   # Launcher icon generation

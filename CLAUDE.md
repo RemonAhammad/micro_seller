@@ -14,8 +14,9 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **Charts:** fl_chart for dashboard sales visualization + reports + customer history
 - **Notifications:** flutter_local_notifications for low stock & payment alerts
 - **CSV:** `csv` + `file_picker` for import/export
-- **Localization:** flutter_localizations + custom delegate (English + Bengali)
+- **Localization:** flutter_localizations + custom delegate (12 languages: en, bn, ar, es, fr, pt, tr, id, th, vi, ur, ms)
 - **Persistence:** SharedPreferences for app settings
+- **Env config:** `flutter_dotenv` loads `.env` at startup (OAuth client IDs, gitignored; `.env.example` is the tracked template)
 - **Onboarding:** showcaseview v5 for first-time guided tour
 - **In-App Update:** in_app_update for Play Store auto-update prompts
 - **Other:** image_picker, mobile_scanner v6 (QR), share_plus, url_launcher, intl, package_info_plus
@@ -36,9 +37,9 @@ lib/
 │   ├── extensions/
 │   │   └── context_extensions.dart  # Theme, snackbar, confirm dialog shortcuts
 │   ├── l10n/
-│   │   ├── app_localizations.dart   # Custom LocalizationsDelegate (en, bn)
-│   │   ├── translations_en.dart     # English translation map (160+ keys)
-│   │   └── translations_bn.dart     # Bengali translation map (160+ keys)
+│   │   ├── app_localizations.dart   # Custom LocalizationsDelegate (12 locales)
+│   │   ├── translations_en.dart     # English (~180 keys, source of truth) + parameterized helpers
+│   │   └── translations_<bn|ar|es|fr|pt|tr|id|th|vi|ur|ms>.dart  # Same keys, translated
 │   ├── router/
 │   │   └── app_router.dart       # GoRouter config, 12-branch sidebar navigation shell, SafeArea wrapper
 │   ├── theme/
@@ -74,9 +75,9 @@ lib/
 │       ├── csv_export_service.dart  # Export orders/products/expenses as CSV via share_plus
 │       ├── csv_import_service.dart  # Import products from CSV via file_picker
 │       ├── migration_service.dart  # One-time migration: flat variants → hierarchical VariantAttribute + VariantCombination
-│       ├── drive_service.dart       # Google Drive backup/restore (safe restore with rollback), max 5 backups, OAuth
+│       ├── drive_service.dart       # Google Drive backup/restore — delegates JSON to LocalBackupService (all 9 collections); typed DriveBackupException + DriveErrorCode; max 5 backups; safe restore with rollback; full error/stack logging via dart:developer
 │       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 9 collection schemas
-│       ├── local_backup_service.dart # Export/import all 9 collections as JSON to/from local files
+│       ├── local_backup_service.dart # Public encodeAll(Isar)/decodeAll(Isar,String) — single source of truth for backup JSON shape (v2). exportBackup/importBackup/exportToDirectory delegate to these. All 9 collections.
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
 │       ├── tutorial_service.dart    # SharedPreferences flags: splash_shown, tour_completed; resetAll()
 │       ├── update_service.dart      # In-app update via Play Store (immediate for critical, flexible for normal)
@@ -341,10 +342,14 @@ Products support **multi-attribute variant combinations**:
 
 ### Backup/Restore (Google Drive, safe)
 
-- Exports all 6 collections as timestamped JSON to Drive appDataFolder
+- Exports **all 9 collections** as timestamped JSON to Drive appDataFolder (uses `LocalBackupService.encodeAll`)
 - Keeps max 5 backups, cleans up old ones (cleanup failure doesn't break upload)
 - **Safe restore:** creates local safety backup before clearing → if import fails, rolls back to safety backup
-- Validates backup structure before touching local data
+- Validates backup structure (`version`, `timestamp`) before touching local data
+- **Typed errors:** `DriveBackupException` with `DriveErrorCode` (`notSignedIn`, `signInFailed`, `developerError` for ApiException 10, `network`, `invalidBackup`, `uploadFailed`, `downloadFailed`, `restoreFailed`, `rolledBack`). UI switches on the code instead of substring-matching messages.
+- **Logging:** every failure logs the error + stack via `dart:developer` and `debugPrintStack` in debug builds.
+- **OAuth scope:** `drive.appdata` — backups live in a hidden app-data folder; not visible at drive.google.com.
+- **OAuth client IDs** are stored in `.env` (gitignored) for documentation. Note: Android `google_sign_in` does NOT read these at runtime — it matches the running APK's package + signing-cert SHA-1 against the Cloud project automatically. The `.env` becomes functional once iOS/web client IDs are wired into `GoogleSignIn(clientId: ...)`.
 
 ### CSV Export
 
@@ -480,8 +485,9 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 ## UI Design
 
 - Material 3, teal primary (#00897B), light/dark theme support with **user-selectable toggle** (Light/Dark/System)
-- **Status bar** color matches appbar (white in light theme, #1C1C2E in dark theme)
-- **Language:** English + Bengali with in-app language switcher
+- **Dark scaffold:** `Colors.blueGrey.shade900` (#263238); light scaffold: `#F8F9FA`
+- **Status bar** color matches appbar (white in light theme, blueGrey.shade900 in dark theme)
+- **Language:** 12 languages with in-app language switcher (English, Bengali, Arabic, Spanish, French, Portuguese, Turkish, Indonesian, Thai, Vietnamese, Urdu, Malay)
 - **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons. Wrapped in SafeArea.
 - **Responsive layouts throughout**:
   - Dashboard: stat cards via `Wrap` + `LayoutBuilder` (2-6 cols based on `width/170`); charts side-by-side on wide screens; date-range filter bar
@@ -489,7 +495,9 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
   - Order card: compact column on phone, single-row layout on tablet (>=600px)
   - Inventory: category filter + sort dropdown bar; **per-variant stock display**
 - **Dashboard charts**: Weekly sales bar chart, order status pie chart, revenue vs expenses line chart
+- **Dashboard SliverAppBar**: `title:` ("Micro Seller") always shown; `expandedHeight: 160`; `flexibleSpace` holds greeting + date pill + today's revenue/total-orders stats with top padding `kToolbarHeight + 8` so content sits below the toolbar layer. Title remains visible when collapsed.
 - **Reports screen**: Date range picker, summary stat cards, top products bar chart, category sales, top customers ranking
+- **Reports SliverAppBar**: `title:` ("Reports") always shown; `expandedHeight: 120`; `flexibleSpace` holds the start/end date chips with same `kToolbarHeight + 8` top padding pattern.
 - **Customer detail chart**: 6-month purchase history bar chart
 - **FABs**: Icon-only `+` with tooltip, rounded-square shape (16px radius)
 - Cards with 14px radius, subtle shadows
@@ -499,6 +507,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 - Currency: Bangladeshi Taka (৳) by default
 - **Search debouncing** (400ms) on product and customer list screens
 - **User-friendly error messages** in all form screens (no raw exceptions)
+- **Localization-first**: visible UI strings go through `AppStrings.of(context).<getter>` or `AppLocalizations.tr(key)`. Parameterized strings use `{count}`/`{stock}`/`{item}` placeholders resolved by helper methods on `_L10nStrings` (e.g. `productsFoundToImport(int)`, `notEnoughStock(int, String)`, `rowsSkipped(int)`, `andMore(int)`).
 
 ## Code Generation
 
@@ -514,13 +523,17 @@ Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (
 
 ### Android Release Config
 
+- **App label:** `Micro Seller` (with space — in `AndroidManifest.xml` `android:label`)
 - **Application ID:** `com.blackshadowsoftware.micro_seller`
+- **Kotlin source path:** `android/app/src/main/kotlin/com/blackshadowsoftware/micro_seller/MainActivity.kt` — must match the `package` declaration. (A previous package rename left the file at `…/blackshadowsoftwareltd/…`; the release Kotlin compiler refuses that mismatch with "Unresolved reference 'embedding'".)
 - **Keystore:** Shared upload keystore at `/Users/remon/Documents/upload-keystore.jks` (same as Fuel Cost app)
 - **Signing:** `android/key.properties` → read by `build.gradle.kts` → `signingConfigs.release`
 - **R8/ProGuard:** enabled (`isMinifyEnabled = true`, `isShrinkResources = true`) with rules in `android/app/proguard-rules.pro`
 - **Core library desugaring:** enabled for `flutter_local_notifications`
 - **NDK version:** `27.0.12077973`
-- **Subprojects fix:** Forces `compileSdk = 35` on older plugins (isar_flutter_libs) to resolve `android:attr/lStar not found`
+- **Subprojects fixes** (in root `android/build.gradle.kts`, applied via `afterEvaluate` for any `com.android.library` plugin):
+  1. Forces `compileSdk = 35` on plugins that hardcode older versions (resolves `android:attr/lStar not found`).
+  2. Injects `namespace` from each plugin's `AndroidManifest.xml` `package` attribute when missing — required by AGP 8+, fixes `isar_flutter_libs` 3.1.0+1 and any other plugin still relying on the deprecated manifest `package` attribute.
 - **Launcher icon:** Generated via `flutter_launcher_icons` from `assets/icons/app_icon.png`, named `launcher_icon`
 - **Predictive back:** `android:enableOnBackInvokedCallback="true"` in manifest
 

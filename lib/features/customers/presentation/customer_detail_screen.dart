@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/order.dart';
 import '../providers/customer_provider.dart';
@@ -85,7 +85,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                   );
                   if (ok == true && context.mounted) {
                     await ref
-                        .read(customerNotifierProvider.notifier)
+                        .read(customerProvider.notifier)
                         .deleteCustomer(customer.id);
                     context.pop();
                   }

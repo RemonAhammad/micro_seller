@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/customer.dart';
 import '../providers/customer_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -88,9 +88,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       );
 
       if (existing != null) {
-        await ref.read(customerNotifierProvider.notifier).updateCustomer(customer);
+        await ref.read(customerProvider.notifier).updateCustomer(customer);
       } else {
-        await ref.read(customerNotifierProvider.notifier).addCustomer(customer);
+        await ref.read(customerProvider.notifier).addCustomer(customer);
       }
 
       if (mounted) {

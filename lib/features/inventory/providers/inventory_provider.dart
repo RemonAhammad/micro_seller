@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/services/isar_service.dart';
@@ -6,7 +6,7 @@ import '../../../data/services/isar_service.dart';
 part 'inventory_provider.g.dart';
 
 @riverpod
-Stream<List<StockMovement>> stockMovements(StockMovementsRef ref) async* {
+Stream<List<StockMovement>> stockMovements(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.stockMovements
       .where()
@@ -16,7 +16,7 @@ Stream<List<StockMovement>> stockMovements(StockMovementsRef ref) async* {
 
 @riverpod
 Stream<List<StockMovement>> productStockMovements(
-    ProductStockMovementsRef ref, int productId) async* {
+    Ref ref, int productId) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.stockMovements
       .filter()

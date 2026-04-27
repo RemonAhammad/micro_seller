@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/purchase.dart';
@@ -11,7 +11,7 @@ import '../../../data/services/isar_service.dart';
 part 'supplier_provider.g.dart';
 
 @riverpod
-Stream<List<Supplier>> suppliers(SuppliersRef ref) async* {
+Stream<List<Supplier>> suppliers(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.suppliers
       .where()
@@ -20,7 +20,7 @@ Stream<List<Supplier>> suppliers(SuppliersRef ref) async* {
 }
 
 @riverpod
-Stream<List<Purchase>> purchases(PurchasesRef ref) async* {
+Stream<List<Purchase>> purchases(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.purchases
       .where()
@@ -29,7 +29,7 @@ Stream<List<Purchase>> purchases(PurchasesRef ref) async* {
 }
 
 @riverpod
-Stream<List<Purchase>> supplierPurchases(SupplierPurchasesRef ref, int supplierId) async* {
+Stream<List<Purchase>> supplierPurchases(Ref ref, int supplierId) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.purchases
       .filter()
@@ -39,7 +39,7 @@ Stream<List<Purchase>> supplierPurchases(SupplierPurchasesRef ref, int supplierI
 }
 
 @riverpod
-Stream<List<Product>> supplierProducts(SupplierProductsRef ref, int supplierId) async* {
+Stream<List<Product>> supplierProducts(Ref ref, int supplierId) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.products
       .filter()
@@ -52,7 +52,7 @@ Stream<List<Product>> supplierProducts(SupplierProductsRef ref, int supplierId) 
 
 @riverpod
 Stream<List<StockMovement>> supplierStockMovements(
-    SupplierStockMovementsRef ref, int supplierId) async* {
+    Ref ref, int supplierId) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.stockMovements
       .filter()

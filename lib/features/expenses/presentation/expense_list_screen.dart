@@ -26,7 +26,7 @@ class ExpenseListScreen extends ConsumerWidget {
             icon: const Icon(Icons.file_download_outlined),
             tooltip: s.exportCsv,
             onPressed: () async {
-              final expenses = ref.read(expensesProvider).valueOrNull ?? [];
+              final expenses = ref.read(expensesProvider).value ?? [];
               if (expenses.isEmpty) return;
               await CsvExportService().exportExpenses(expenses);
             },
@@ -126,7 +126,7 @@ class ExpenseListScreen extends ConsumerWidget {
                         );
                         if (ok == true) {
                           await ref
-                              .read(expenseNotifierProvider.notifier)
+                              .read(expenseProvider.notifier)
                               .deleteExpense(expense.id);
                         }
                       },

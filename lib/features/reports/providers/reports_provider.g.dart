@@ -6,170 +6,79 @@ part of 'reports_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$reportDataHash() => r'60b164e4e2f1d0f20333f39c93034863405288bd';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// See also [reportData].
 @ProviderFor(reportData)
-const reportDataProvider = ReportDataFamily();
+final reportDataProvider = ReportDataFamily._();
 
-/// See also [reportData].
-class ReportDataFamily extends Family<AsyncValue<ReportData>> {
-  /// See also [reportData].
-  const ReportDataFamily();
+final class ReportDataProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ReportData>,
+          ReportData,
+          FutureOr<ReportData>
+        >
+    with $FutureModifier<ReportData>, $FutureProvider<ReportData> {
+  ReportDataProvider._({
+    required ReportDataFamily super.from,
+    required (DateTime, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'reportDataProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [reportData].
-  ReportDataProvider call(
-    DateTime startDate,
-    DateTime endDate,
-  ) {
-    return ReportDataProvider(
-      startDate,
-      endDate,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$reportDataHash();
+
+  @override
+  String toString() {
+    return r'reportDataProvider'
+        ''
+        '$argument';
   }
 
+  @$internal
   @override
-  ReportDataProvider getProviderOverride(
-    covariant ReportDataProvider provider,
-  ) {
-    return call(
-      provider.startDate,
-      provider.endDate,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<ReportData> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'reportDataProvider';
-}
-
-/// See also [reportData].
-class ReportDataProvider extends AutoDisposeFutureProvider<ReportData> {
-  /// See also [reportData].
-  ReportDataProvider(
-    DateTime startDate,
-    DateTime endDate,
-  ) : this._internal(
-          (ref) => reportData(
-            ref as ReportDataRef,
-            startDate,
-            endDate,
-          ),
-          from: reportDataProvider,
-          name: r'reportDataProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$reportDataHash,
-          dependencies: ReportDataFamily._dependencies,
-          allTransitiveDependencies:
-              ReportDataFamily._allTransitiveDependencies,
-          startDate: startDate,
-          endDate: endDate,
-        );
-
-  ReportDataProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.startDate,
-    required this.endDate,
-  }) : super.internal();
-
-  final DateTime startDate;
-  final DateTime endDate;
-
-  @override
-  Override overrideWith(
-    FutureOr<ReportData> Function(ReportDataRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ReportDataProvider._internal(
-        (ref) => create(ref as ReportDataRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        startDate: startDate,
-        endDate: endDate,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<ReportData> createElement() {
-    return _ReportDataProviderElement(this);
+  FutureOr<ReportData> create(Ref ref) {
+    final argument = this.argument as (DateTime, DateTime);
+    return reportData(ref, argument.$1, argument.$2);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ReportDataProvider &&
-        other.startDate == startDate &&
-        other.endDate == endDate;
+    return other is ReportDataProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, startDate.hashCode);
-    hash = _SystemHash.combine(hash, endDate.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin ReportDataRef on AutoDisposeFutureProviderRef<ReportData> {
-  /// The parameter `startDate` of this provider.
-  DateTime get startDate;
+String _$reportDataHash() => r'3bb640f78e565cf90bb5284f6b7886dd448f481e';
 
-  /// The parameter `endDate` of this provider.
-  DateTime get endDate;
-}
+final class ReportDataFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<ReportData>, (DateTime, DateTime)> {
+  ReportDataFamily._()
+    : super(
+        retry: null,
+        name: r'reportDataProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
-class _ReportDataProviderElement
-    extends AutoDisposeFutureProviderElement<ReportData> with ReportDataRef {
-  _ReportDataProviderElement(super.provider);
+  ReportDataProvider call(DateTime startDate, DateTime endDate) =>
+      ReportDataProvider._(argument: (startDate, endDate), from: this);
 
   @override
-  DateTime get startDate => (origin as ReportDataProvider).startDate;
-  @override
-  DateTime get endDate => (origin as ReportDataProvider).endDate;
+  String toString() => r'reportDataProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

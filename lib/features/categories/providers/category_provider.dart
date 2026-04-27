@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/category.dart';
 import '../../../data/services/isar_service.dart';
@@ -6,7 +6,7 @@ import '../../../data/services/isar_service.dart';
 part 'category_provider.g.dart';
 
 @riverpod
-Stream<List<Category>> categories(CategoriesRef ref) async* {
+Stream<List<Category>> categories(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.categories.where().sortByName().watch(fireImmediately: true);
 }

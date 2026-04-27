@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -97,9 +97,9 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       );
 
       if (isEdit) {
-        await ref.read(expenseNotifierProvider.notifier).updateExpense(expense);
+        await ref.read(expenseProvider.notifier).updateExpense(expense);
       } else {
-        await ref.read(expenseNotifierProvider.notifier).addExpense(expense);
+        await ref.read(expenseProvider.notifier).addExpense(expense);
       }
 
       if (mounted) {

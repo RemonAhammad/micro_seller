@@ -1,5 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../models/product.dart';
 import '../models/order.dart';
 

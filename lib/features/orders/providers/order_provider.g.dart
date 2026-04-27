@@ -6,64 +6,166 @@ part of 'order_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$ordersHash() => r'c1971fcd5dcd8d079f2a85a5e365b54e4f9960e0';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [orders].
 @ProviderFor(orders)
-final ordersProvider = AutoDisposeStreamProvider<List<Order>>.internal(
-  orders,
-  name: r'ordersProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$ordersHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final ordersProvider = OrdersProvider._();
 
-typedef OrdersRef = AutoDisposeStreamProviderRef<List<Order>>;
-String _$pendingOrdersHash() => r'9d70a1fcab97dd6e6c090a440d5c989e7d9b18ec';
+final class OrdersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Order>>,
+          List<Order>,
+          Stream<List<Order>>
+        >
+    with $FutureModifier<List<Order>>, $StreamProvider<List<Order>> {
+  OrdersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ordersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [pendingOrders].
+  @override
+  String debugGetCreateSourceHash() => _$ordersHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Order>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Order>> create(Ref ref) {
+    return orders(ref);
+  }
+}
+
+String _$ordersHash() => r'472ceeaf6df416c4ee199ddd25280ed749f27366';
+
 @ProviderFor(pendingOrders)
-final pendingOrdersProvider = AutoDisposeStreamProvider<List<Order>>.internal(
-  pendingOrders,
-  name: r'pendingOrdersProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$pendingOrdersHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final pendingOrdersProvider = PendingOrdersProvider._();
 
-typedef PendingOrdersRef = AutoDisposeStreamProviderRef<List<Order>>;
-String _$unpaidOrdersHash() => r'6cc3a246e47c4d991b1f47851de49d28bcca0fea';
+final class PendingOrdersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Order>>,
+          List<Order>,
+          Stream<List<Order>>
+        >
+    with $FutureModifier<List<Order>>, $StreamProvider<List<Order>> {
+  PendingOrdersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingOrdersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [unpaidOrders].
+  @override
+  String debugGetCreateSourceHash() => _$pendingOrdersHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Order>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Order>> create(Ref ref) {
+    return pendingOrders(ref);
+  }
+}
+
+String _$pendingOrdersHash() => r'6e1c02fdda068ea21a49dcb33145c5a50e67dc70';
+
 @ProviderFor(unpaidOrders)
-final unpaidOrdersProvider = AutoDisposeStreamProvider<List<Order>>.internal(
-  unpaidOrders,
-  name: r'unpaidOrdersProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$unpaidOrdersHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final unpaidOrdersProvider = UnpaidOrdersProvider._();
 
-typedef UnpaidOrdersRef = AutoDisposeStreamProviderRef<List<Order>>;
+final class UnpaidOrdersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Order>>,
+          List<Order>,
+          Stream<List<Order>>
+        >
+    with $FutureModifier<List<Order>>, $StreamProvider<List<Order>> {
+  UnpaidOrdersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'unpaidOrdersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$unpaidOrdersHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Order>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Order>> create(Ref ref) {
+    return unpaidOrders(ref);
+  }
+}
+
+String _$unpaidOrdersHash() => r'4735e84dba7ca4d954add30fdbe6f099262c259a';
+
+@ProviderFor(OrderNotifier)
+final orderProvider = OrderNotifierProvider._();
+
+final class OrderNotifierProvider
+    extends $AsyncNotifierProvider<OrderNotifier, void> {
+  OrderNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'orderProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$orderNotifierHash();
+
+  @$internal
+  @override
+  OrderNotifier create() => OrderNotifier();
+}
+
 String _$orderNotifierHash() => r'9a734acd4d0db70b2ed72949cbb6fc0091299672';
 
-/// See also [OrderNotifier].
-@ProviderFor(OrderNotifier)
-final orderNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<OrderNotifier, void>.internal(
-  OrderNotifier.new,
-  name: r'orderNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$orderNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$OrderNotifier = AutoDisposeAsyncNotifier<void>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+abstract class _$OrderNotifier extends $AsyncNotifier<void> {
+  FutureOr<void> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

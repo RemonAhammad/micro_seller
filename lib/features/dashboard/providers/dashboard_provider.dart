@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
@@ -10,7 +10,7 @@ part 'dashboard_provider.freezed.dart';
 part 'dashboard_provider.g.dart';
 
 @freezed
-class DailySales with _$DailySales {
+abstract class DailySales with _$DailySales {
   const factory DailySales({
     required DateTime date,
     required double revenue,
@@ -19,7 +19,7 @@ class DailySales with _$DailySales {
 }
 
 @freezed
-class DashboardStats with _$DashboardStats {
+abstract class DashboardStats with _$DashboardStats {
   const factory DashboardStats({
     @Default(0.0) double todayRevenue,
     @Default(0.0) double thisMonthRevenue,
@@ -91,7 +91,7 @@ double _calcProfit(List<Order> orders) {
 }
 
 @riverpod
-Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
+Future<DashboardStats> dashboardStats(Ref ref) async {
   final isar = await ref.watch(isarProvider.future);
   final dateRange = ref.watch(dashboardDateRangeProvider);
   final startDate = dateRange.start;

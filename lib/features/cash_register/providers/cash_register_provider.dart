@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/cash_register.dart';
 import '../../../data/services/isar_service.dart';
@@ -6,7 +6,7 @@ import '../../../data/services/isar_service.dart';
 part 'cash_register_provider.g.dart';
 
 @riverpod
-Stream<List<CashRegister>> cashRegisters(CashRegistersRef ref) async* {
+Stream<List<CashRegister>> cashRegisters(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.cashRegisters
       .where()
@@ -16,7 +16,7 @@ Stream<List<CashRegister>> cashRegisters(CashRegistersRef ref) async* {
 
 /// Returns the currently open register (if any)
 @riverpod
-Future<CashRegister?> openRegister(OpenRegisterRef ref) async {
+Future<CashRegister?> openRegister(Ref ref) async {
   final isar = await ref.watch(isarProvider.future);
   return isar.cashRegisters
       .filter()

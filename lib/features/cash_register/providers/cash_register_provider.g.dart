@@ -6,54 +6,135 @@ part of 'cash_register_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$cashRegistersHash() => r'73e2c5336385fdaa660777cd0143e90f0697c92b';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [cashRegisters].
 @ProviderFor(cashRegisters)
-final cashRegistersProvider =
-    AutoDisposeStreamProvider<List<CashRegister>>.internal(
-  cashRegisters,
-  name: r'cashRegistersProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$cashRegistersHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final cashRegistersProvider = CashRegistersProvider._();
 
-typedef CashRegistersRef = AutoDisposeStreamProviderRef<List<CashRegister>>;
-String _$openRegisterHash() => r'e8cec326723bf674034077a2a77fedddea736827';
+final class CashRegistersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<CashRegister>>,
+          List<CashRegister>,
+          Stream<List<CashRegister>>
+        >
+    with
+        $FutureModifier<List<CashRegister>>,
+        $StreamProvider<List<CashRegister>> {
+  CashRegistersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cashRegistersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cashRegistersHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<CashRegister>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<CashRegister>> create(Ref ref) {
+    return cashRegisters(ref);
+  }
+}
+
+String _$cashRegistersHash() => r'b4012dfbc7a2883e49d32d77cd3ad18f800876a9';
 
 /// Returns the currently open register (if any)
-///
-/// Copied from [openRegister].
-@ProviderFor(openRegister)
-final openRegisterProvider = AutoDisposeFutureProvider<CashRegister?>.internal(
-  openRegister,
-  name: r'openRegisterProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$openRegisterHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef OpenRegisterRef = AutoDisposeFutureProviderRef<CashRegister?>;
+@ProviderFor(openRegister)
+final openRegisterProvider = OpenRegisterProvider._();
+
+/// Returns the currently open register (if any)
+
+final class OpenRegisterProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<CashRegister?>,
+          CashRegister?,
+          FutureOr<CashRegister?>
+        >
+    with $FutureModifier<CashRegister?>, $FutureProvider<CashRegister?> {
+  /// Returns the currently open register (if any)
+  OpenRegisterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'openRegisterProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$openRegisterHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<CashRegister?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<CashRegister?> create(Ref ref) {
+    return openRegister(ref);
+  }
+}
+
+String _$openRegisterHash() => r'5162a3f8176a50079b4aed5096448802d41b3f39';
+
+@ProviderFor(CashRegisterNotifier)
+final cashRegisterProvider = CashRegisterNotifierProvider._();
+
+final class CashRegisterNotifierProvider
+    extends $AsyncNotifierProvider<CashRegisterNotifier, void> {
+  CashRegisterNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cashRegisterProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cashRegisterNotifierHash();
+
+  @$internal
+  @override
+  CashRegisterNotifier create() => CashRegisterNotifier();
+}
+
 String _$cashRegisterNotifierHash() =>
     r'aa72aa2e8118b5216f8757596b4707c8d9f7b47d';
 
-/// See also [CashRegisterNotifier].
-@ProviderFor(CashRegisterNotifier)
-final cashRegisterNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<CashRegisterNotifier, void>.internal(
-  CashRegisterNotifier.new,
-  name: r'cashRegisterNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$cashRegisterNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$CashRegisterNotifier = AutoDisposeAsyncNotifier<void>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+abstract class _$CashRegisterNotifier extends $AsyncNotifier<void> {
+  FutureOr<void> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

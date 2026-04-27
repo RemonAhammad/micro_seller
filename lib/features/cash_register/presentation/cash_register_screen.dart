@@ -276,11 +276,11 @@ class _OpenRegisterCard extends StatelessWidget {
               if (amount == null || amount <= 0) return;
               if (isIn) {
                 await ref
-                    .read(cashRegisterNotifierProvider.notifier)
+                    .read(cashRegisterProvider.notifier)
                     .addCashIn(register.id, amount);
               } else {
                 await ref
-                    .read(cashRegisterNotifierProvider.notifier)
+                    .read(cashRegisterProvider.notifier)
                     .addCashOut(register.id, amount);
               }
               if (ctx.mounted) Navigator.pop(ctx);
@@ -336,7 +336,7 @@ class _OpenRegisterCard extends StatelessWidget {
               final amount = double.tryParse(ctrl.text);
               if (amount == null) return;
               await ref
-                  .read(cashRegisterNotifierProvider.notifier)
+                  .read(cashRegisterProvider.notifier)
                   .closeRegister(register.id, amount,
                       notes: notesCtrl.text.trim());
               if (ctx.mounted) Navigator.pop(ctx);
@@ -420,7 +420,7 @@ class _ClosedStateCard extends StatelessWidget {
             onPressed: () async {
               final amount = double.tryParse(ctrl.text) ?? 0;
               await ref
-                  .read(cashRegisterNotifierProvider.notifier)
+                  .read(cashRegisterProvider.notifier)
                   .openRegister(amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },

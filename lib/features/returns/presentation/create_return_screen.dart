@@ -82,7 +82,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      await ref.read(orderNotifierProvider.notifier).createReturnOrder(
+      await ref.read(orderProvider.notifier).createReturnOrder(
             originalOrder: widget.originalOrder,
             returnItems: returnItems,
             reason: _reason,

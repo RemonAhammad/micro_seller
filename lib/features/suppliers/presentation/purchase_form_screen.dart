@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/purchase.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/product.dart';
@@ -154,7 +154,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
       );
 
       await ref
-          .read(supplierNotifierProvider.notifier)
+          .read(supplierProvider.notifier)
           .createPurchase(purchase);
 
       if (mounted) {

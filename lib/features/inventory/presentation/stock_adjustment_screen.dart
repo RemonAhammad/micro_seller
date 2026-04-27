@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/models/supplier.dart';
@@ -96,7 +96,7 @@ class _StockAdjustmentScreenState
           ? -qty
           : qty;
 
-      await ref.read(productNotifierProvider.notifier).adjustStock(
+      await ref.read(productProvider.notifier).adjustStock(
             widget.productId,
             delta,
             _reasonCtrl.text.trim(),

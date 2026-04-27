@@ -72,15 +72,12 @@ const OrderSchema = CollectionSchema(
       name: r'isRecurring',
       type: IsarType.bool,
     ),
-    r'isReturn': PropertySchema(
-      id: 11,
-      name: r'isReturn',
-      type: IsarType.bool,
-    ),
+    r'isReturn': PropertySchema(id: 11, name: r'isReturn', type: IsarType.bool),
     r'items': PropertySchema(
       id: 12,
       name: r'items',
       type: IsarType.objectList,
+
       target: r'OrderItem',
     ),
     r'nextRecurringDate': PropertySchema(
@@ -88,11 +85,7 @@ const OrderSchema = CollectionSchema(
       name: r'nextRecurringDate',
       type: IsarType.dateTime,
     ),
-    r'notes': PropertySchema(
-      id: 14,
-      name: r'notes',
-      type: IsarType.string,
-    ),
+    r'notes': PropertySchema(id: 14, name: r'notes', type: IsarType.string),
     r'orderNumber': PropertySchema(
       id: 15,
       name: r'orderNumber',
@@ -167,8 +160,9 @@ const OrderSchema = CollectionSchema(
       id: 28,
       name: r'updatedAt',
       type: IsarType.dateTime,
-    )
+    ),
   },
+
   estimateSize: _orderEstimateSize,
   serialize: _orderSerialize,
   deserialize: _orderDeserialize,
@@ -177,10 +171,11 @@ const OrderSchema = CollectionSchema(
   indexes: {},
   links: {},
   embeddedSchemas: {r'OrderItem': OrderItemSchema},
+
   getId: _orderGetId,
   getLinks: _orderGetLinks,
   attach: _orderAttach,
-  version: '3.1.0+1',
+  version: '3.3.2',
 );
 
 int _orderEstimateSize(
@@ -273,7 +268,8 @@ Order _orderDeserialize(
     id: id,
     isRecurring: reader.readBoolOrNull(offsets[10]) ?? false,
     isReturn: reader.readBoolOrNull(offsets[11]) ?? false,
-    items: reader.readObjectList<OrderItem>(
+    items:
+        reader.readObjectList<OrderItem>(
           offsets[12],
           OrderItemSchema.deserialize,
           allOffsets,
@@ -285,23 +281,23 @@ Order _orderDeserialize(
     orderNumber: reader.readStringOrNull(offsets[15]) ?? '',
     orderStatus:
         _OrderorderStatusValueEnumMap[reader.readStringOrNull(offsets[16])] ??
-            OrderStatus.pending,
+        OrderStatus.pending,
     originalOrderId: reader.readLongOrNull(offsets[17]) ?? 0,
     paymentMethod:
         _OrderpaymentMethodValueEnumMap[reader.readStringOrNull(offsets[18])] ??
-            PaymentMethod.cash,
+        PaymentMethod.cash,
     paymentStatus:
         _OrderpaymentStatusValueEnumMap[reader.readStringOrNull(offsets[19])] ??
-            PaymentStatus.unpaid,
+        PaymentStatus.unpaid,
     recurringIntervalDays: reader.readLongOrNull(offsets[20]) ?? 0,
     refundAmount: reader.readDoubleOrNull(offsets[21]) ?? 0.0,
     returnNotes: reader.readStringOrNull(offsets[22]) ?? '',
     returnReason:
         _OrderreturnReasonValueEnumMap[reader.readStringOrNull(offsets[23])] ??
-            ReturnReason.other,
+        ReturnReason.other,
     returnStatus:
         _OrderreturnStatusValueEnumMap[reader.readStringOrNull(offsets[24])] ??
-            ReturnStatus.none,
+        ReturnStatus.none,
     subtotal: reader.readDoubleOrNull(offsets[25]) ?? 0.0,
     taxAmount: reader.readDoubleOrNull(offsets[26]) ?? 0.0,
     totalAmount: reader.readDoubleOrNull(offsets[27]) ?? 0.0,
@@ -343,12 +339,13 @@ P _orderDeserializeProp<P>(
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 12:
       return (reader.readObjectList<OrderItem>(
-            offset,
-            OrderItemSchema.deserialize,
-            allOffsets,
-            OrderItem(),
-          ) ??
-          const []) as P;
+                offset,
+                OrderItemSchema.deserialize,
+                allOffsets,
+                OrderItem(),
+              ) ??
+              const [])
+          as P;
     case 13:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
@@ -357,17 +354,22 @@ P _orderDeserializeProp<P>(
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 16:
       return (_OrderorderStatusValueEnumMap[reader.readStringOrNull(offset)] ??
-          OrderStatus.pending) as P;
+              OrderStatus.pending)
+          as P;
     case 17:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 18:
-      return (_OrderpaymentMethodValueEnumMap[
-              reader.readStringOrNull(offset)] ??
-          PaymentMethod.cash) as P;
+      return (_OrderpaymentMethodValueEnumMap[reader.readStringOrNull(
+                offset,
+              )] ??
+              PaymentMethod.cash)
+          as P;
     case 19:
-      return (_OrderpaymentStatusValueEnumMap[
-              reader.readStringOrNull(offset)] ??
-          PaymentStatus.unpaid) as P;
+      return (_OrderpaymentStatusValueEnumMap[reader.readStringOrNull(
+                offset,
+              )] ??
+              PaymentStatus.unpaid)
+          as P;
     case 20:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 21:
@@ -376,10 +378,12 @@ P _orderDeserializeProp<P>(
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 23:
       return (_OrderreturnReasonValueEnumMap[reader.readStringOrNull(offset)] ??
-          ReturnReason.other) as P;
+              ReturnReason.other)
+          as P;
     case 24:
       return (_OrderreturnStatusValueEnumMap[reader.readStringOrNull(offset)] ??
-          ReturnStatus.none) as P;
+              ReturnStatus.none)
+          as P;
     case 25:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 26:
@@ -485,10 +489,7 @@ extension OrderQueryWhereSort on QueryBuilder<Order, Order, QWhere> {
 extension OrderQueryWhere on QueryBuilder<Order, Order, QWhereClause> {
   QueryBuilder<Order, Order, QAfterWhereClause> idEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: id,
-        upper: id,
-      ));
+      return query.addWhereClause(IdWhereClause.between(lower: id, upper: id));
     });
   }
 
@@ -514,8 +515,10 @@ extension OrderQueryWhere on QueryBuilder<Order, Order, QWhereClause> {
     });
   }
 
-  QueryBuilder<Order, Order, QAfterWhereClause> idGreaterThan(Id id,
-      {bool include = false}) {
+  QueryBuilder<Order, Order, QAfterWhereClause> idGreaterThan(
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.greaterThan(lower: id, includeLower: include),
@@ -523,8 +526,10 @@ extension OrderQueryWhere on QueryBuilder<Order, Order, QWhereClause> {
     });
   }
 
-  QueryBuilder<Order, Order, QAfterWhereClause> idLessThan(Id id,
-      {bool include = false}) {
+  QueryBuilder<Order, Order, QAfterWhereClause> idLessThan(
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.lessThan(upper: id, includeUpper: include),
@@ -539,12 +544,14 @@ extension OrderQueryWhere on QueryBuilder<Order, Order, QWhereClause> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: lowerId,
-        includeLower: includeLower,
-        upper: upperId,
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IdWhereClause.between(
+          lower: lowerId,
+          includeLower: includeLower,
+          upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
@@ -552,42 +559,41 @@ extension OrderQueryWhere on QueryBuilder<Order, Order, QWhereClause> {
 extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
   QueryBuilder<Order, Order, QAfterFilterCondition> actualDeliveryDateIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'actualDeliveryDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'actualDeliveryDate'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      actualDeliveryDateIsNotNull() {
+  actualDeliveryDateIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'actualDeliveryDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'actualDeliveryDate'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> actualDeliveryDateEqualTo(
-      DateTime? value) {
+    DateTime? value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'actualDeliveryDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'actualDeliveryDate', value: value),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      actualDeliveryDateGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  actualDeliveryDateGreaterThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'actualDeliveryDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'actualDeliveryDate',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -596,11 +602,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'actualDeliveryDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'actualDeliveryDate',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -611,13 +619,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'actualDeliveryDate',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'actualDeliveryDate',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
@@ -626,11 +636,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'amountPaid',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'amountPaid',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -640,12 +653,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'amountPaid',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'amountPaid',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -655,12 +671,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'amountPaid',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'amountPaid',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -672,40 +691,43 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'amountPaid',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'amountPaid',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> createdAtIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'createdAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'createdAt'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> createdAtIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'createdAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'createdAt'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> createdAtEqualTo(
-      DateTime? value) {
+    DateTime? value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'createdAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'createdAt', value: value),
+      );
     });
   }
 
@@ -714,11 +736,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'createdAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'createdAt',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -727,11 +751,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'createdAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'createdAt',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -742,23 +768,25 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'createdAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'createdAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerIdEqualTo(
-      int value) {
+    int value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'customerId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'customerId', value: value),
+      );
     });
   }
 
@@ -767,11 +795,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'customerId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'customerId',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -780,11 +810,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'customerId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'customerId',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -795,13 +827,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'customerId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'customerId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
@@ -810,11 +844,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'customerName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'customerName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -824,12 +860,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'customerName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'customerName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -839,12 +877,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'customerName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'customerName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -856,14 +896,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'customerName',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'customerName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -872,11 +914,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'customerName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'customerName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -885,53 +929,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'customerName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'customerName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerNameContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'customerName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'customerName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerNameMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'customerName',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'customerName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerNameIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'customerName',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'customerName', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerNameIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'customerName',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'customerName', value: ''),
+      );
     });
   }
 
@@ -940,11 +990,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'customerPhone',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'customerPhone',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -954,12 +1006,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'customerPhone',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'customerPhone',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -969,12 +1023,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'customerPhone',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'customerPhone',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -986,14 +1042,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'customerPhone',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'customerPhone',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1002,11 +1060,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'customerPhone',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'customerPhone',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1015,53 +1075,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'customerPhone',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'customerPhone',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerPhoneContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'customerPhone',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'customerPhone',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerPhoneMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'customerPhone',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'customerPhone',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerPhoneIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'customerPhone',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'customerPhone', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> customerPhoneIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'customerPhone',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'customerPhone', value: ''),
+      );
     });
   }
 
@@ -1070,11 +1136,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'deliveryAddress',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'deliveryAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1084,12 +1152,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'deliveryAddress',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'deliveryAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1099,12 +1169,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'deliveryAddress',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'deliveryAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1116,14 +1188,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'deliveryAddress',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'deliveryAddress',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1132,11 +1206,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'deliveryAddress',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'deliveryAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1145,54 +1221,60 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'deliveryAddress',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'deliveryAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> deliveryAddressContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'deliveryAddress',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'deliveryAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> deliveryAddressMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'deliveryAddress',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'deliveryAddress',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> deliveryAddressIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'deliveryAddress',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'deliveryAddress', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      deliveryAddressIsNotEmpty() {
+  deliveryAddressIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'deliveryAddress',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'deliveryAddress', value: ''),
+      );
     });
   }
 
@@ -1201,11 +1283,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'deliveryFee',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'deliveryFee',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -1215,12 +1300,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'deliveryFee',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'deliveryFee',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -1230,12 +1318,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'deliveryFee',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'deliveryFee',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -1247,14 +1338,17 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'deliveryFee',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'deliveryFee',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -1263,11 +1357,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'discountAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'discountAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -1277,12 +1374,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'discountAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'discountAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -1292,12 +1392,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'discountAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'discountAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -1309,97 +1412,101 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'discountAmount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'discountAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      estimatedDeliveryDateIsNull() {
+  estimatedDeliveryDateIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'estimatedDeliveryDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'estimatedDeliveryDate'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      estimatedDeliveryDateIsNotNull() {
+  estimatedDeliveryDateIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'estimatedDeliveryDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'estimatedDeliveryDate'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      estimatedDeliveryDateEqualTo(DateTime? value) {
+  estimatedDeliveryDateEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'estimatedDeliveryDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'estimatedDeliveryDate',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      estimatedDeliveryDateGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  estimatedDeliveryDateGreaterThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'estimatedDeliveryDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'estimatedDeliveryDate',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      estimatedDeliveryDateLessThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  estimatedDeliveryDateLessThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'estimatedDeliveryDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'estimatedDeliveryDate',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      estimatedDeliveryDateBetween(
+  estimatedDeliveryDateBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'estimatedDeliveryDate',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'estimatedDeliveryDate',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'id', value: value),
+      );
     });
   }
 
@@ -1408,11 +1515,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -1421,11 +1530,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -1436,70 +1547,55 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'id',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> isRecurringEqualTo(
-      bool value) {
+    bool value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isRecurring',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isRecurring', value: value),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> isReturnEqualTo(
-      bool value) {
+    bool value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isReturn',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isReturn', value: value),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> itemsLengthEqualTo(
-      int length) {
+    int length,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'items',
-        length,
-        true,
-        length,
-        true,
-      );
+      return query.listLength(r'items', length, true, length, true);
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> itemsIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'items',
-        0,
-        true,
-        0,
-        true,
-      );
+      return query.listLength(r'items', 0, true, 0, true);
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> itemsIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'items',
-        0,
-        false,
-        999999,
-        true,
-      );
+      return query.listLength(r'items', 0, false, 999999, true);
     });
   }
 
@@ -1508,13 +1604,7 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'items',
-        0,
-        true,
-        length,
-        include,
-      );
+      return query.listLength(r'items', 0, true, length, include);
     });
   }
 
@@ -1523,13 +1613,7 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'items',
-        length,
-        include,
-        999999,
-        true,
-      );
+      return query.listLength(r'items', length, include, 999999, true);
     });
   }
 
@@ -1552,42 +1636,41 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
 
   QueryBuilder<Order, Order, QAfterFilterCondition> nextRecurringDateIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'nextRecurringDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'nextRecurringDate'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      nextRecurringDateIsNotNull() {
+  nextRecurringDateIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'nextRecurringDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'nextRecurringDate'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> nextRecurringDateEqualTo(
-      DateTime? value) {
+    DateTime? value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'nextRecurringDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'nextRecurringDate', value: value),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      nextRecurringDateGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  nextRecurringDateGreaterThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'nextRecurringDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'nextRecurringDate',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -1596,11 +1679,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'nextRecurringDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'nextRecurringDate',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -1611,13 +1696,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'nextRecurringDate',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'nextRecurringDate',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
@@ -1626,11 +1713,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1640,12 +1729,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1655,12 +1746,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1672,14 +1765,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'notes',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'notes',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1688,11 +1783,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1701,51 +1798,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
-  QueryBuilder<Order, Order, QAfterFilterCondition> notesContains(String value,
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QAfterFilterCondition> notesContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'notes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'notes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
-  QueryBuilder<Order, Order, QAfterFilterCondition> notesMatches(String pattern,
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QAfterFilterCondition> notesMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'notes',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'notes',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> notesIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'notes',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'notes', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> notesIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'notes',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'notes', value: ''),
+      );
     });
   }
 
@@ -1754,11 +1859,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'orderNumber',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'orderNumber',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1768,12 +1875,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'orderNumber',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'orderNumber',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1783,12 +1892,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'orderNumber',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'orderNumber',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1800,14 +1911,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'orderNumber',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'orderNumber',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1816,11 +1929,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'orderNumber',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'orderNumber',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1829,53 +1944,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'orderNumber',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'orderNumber',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderNumberContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'orderNumber',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'orderNumber',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderNumberMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'orderNumber',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'orderNumber',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderNumberIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'orderNumber',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'orderNumber', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderNumberIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'orderNumber',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'orderNumber', value: ''),
+      );
     });
   }
 
@@ -1884,11 +2005,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'orderStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'orderStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1898,12 +2021,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'orderStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'orderStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1913,12 +2038,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'orderStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'orderStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1930,14 +2057,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'orderStatus',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'orderStatus',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1946,11 +2075,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'orderStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'orderStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -1959,63 +2090,69 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'orderStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'orderStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderStatusContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'orderStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'orderStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderStatusMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'orderStatus',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'orderStatus',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderStatusIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'orderStatus',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'orderStatus', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> orderStatusIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'orderStatus',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'orderStatus', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> originalOrderIdEqualTo(
-      int value) {
+    int value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'originalOrderId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'originalOrderId', value: value),
+      );
     });
   }
 
@@ -2024,11 +2161,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'originalOrderId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'originalOrderId',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -2037,11 +2176,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'originalOrderId',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'originalOrderId',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -2052,13 +2193,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'originalOrderId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'originalOrderId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
@@ -2067,11 +2210,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'paymentMethod',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'paymentMethod',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2081,12 +2226,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'paymentMethod',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'paymentMethod',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2096,12 +2243,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'paymentMethod',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'paymentMethod',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2113,14 +2262,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'paymentMethod',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'paymentMethod',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2129,11 +2280,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'paymentMethod',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'paymentMethod',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2142,53 +2295,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'paymentMethod',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'paymentMethod',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentMethodContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'paymentMethod',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'paymentMethod',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentMethodMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'paymentMethod',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'paymentMethod',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentMethodIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'paymentMethod',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'paymentMethod', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentMethodIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'paymentMethod',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'paymentMethod', value: ''),
+      );
     });
   }
 
@@ -2197,11 +2356,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'paymentStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'paymentStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2211,12 +2372,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'paymentStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'paymentStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2226,12 +2389,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'paymentStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'paymentStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2243,14 +2408,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'paymentStatus',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'paymentStatus',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2259,11 +2426,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'paymentStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'paymentStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2272,109 +2441,117 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'paymentStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'paymentStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentStatusContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'paymentStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'paymentStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentStatusMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'paymentStatus',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'paymentStatus',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentStatusIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'paymentStatus',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'paymentStatus', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> paymentStatusIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'paymentStatus',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'paymentStatus', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      recurringIntervalDaysEqualTo(int value) {
+  recurringIntervalDaysEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'recurringIntervalDays',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'recurringIntervalDays',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      recurringIntervalDaysGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  recurringIntervalDaysGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'recurringIntervalDays',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'recurringIntervalDays',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      recurringIntervalDaysLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  recurringIntervalDaysLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'recurringIntervalDays',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'recurringIntervalDays',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition>
-      recurringIntervalDaysBetween(
+  recurringIntervalDaysBetween(
     int lower,
     int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'recurringIntervalDays',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'recurringIntervalDays',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
@@ -2383,11 +2560,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'refundAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'refundAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2397,12 +2577,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'refundAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'refundAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2412,12 +2595,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'refundAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'refundAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2429,14 +2615,17 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'refundAmount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'refundAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2445,11 +2634,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'returnNotes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'returnNotes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2459,12 +2650,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'returnNotes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'returnNotes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2474,12 +2667,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'returnNotes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'returnNotes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2491,14 +2686,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'returnNotes',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'returnNotes',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2507,11 +2704,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'returnNotes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'returnNotes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2520,53 +2719,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'returnNotes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'returnNotes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnNotesContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'returnNotes',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'returnNotes',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnNotesMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'returnNotes',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'returnNotes',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnNotesIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'returnNotes',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'returnNotes', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnNotesIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'returnNotes',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'returnNotes', value: ''),
+      );
     });
   }
 
@@ -2575,11 +2780,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'returnReason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'returnReason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2589,12 +2796,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'returnReason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'returnReason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2604,12 +2813,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'returnReason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'returnReason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2621,14 +2832,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'returnReason',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'returnReason',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2637,11 +2850,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'returnReason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'returnReason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2650,53 +2865,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'returnReason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'returnReason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnReasonContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'returnReason',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'returnReason',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnReasonMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'returnReason',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'returnReason',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnReasonIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'returnReason',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'returnReason', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnReasonIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'returnReason',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'returnReason', value: ''),
+      );
     });
   }
 
@@ -2705,11 +2926,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'returnStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'returnStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2719,12 +2942,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'returnStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'returnStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2734,12 +2959,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'returnStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'returnStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2751,14 +2978,16 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'returnStatus',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'returnStatus',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2767,11 +2996,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'returnStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'returnStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
@@ -2780,53 +3011,59 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'returnStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'returnStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnStatusContains(
-      String value,
-      {bool caseSensitive = true}) {
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'returnStatus',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'returnStatus',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnStatusMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'returnStatus',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'returnStatus',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnStatusIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'returnStatus',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'returnStatus', value: ''),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> returnStatusIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'returnStatus',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'returnStatus', value: ''),
+      );
     });
   }
 
@@ -2835,11 +3072,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'subtotal',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'subtotal',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2849,12 +3089,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'subtotal',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'subtotal',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2864,12 +3107,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'subtotal',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'subtotal',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2881,14 +3127,17 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'subtotal',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'subtotal',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2897,11 +3146,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'taxAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'taxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2911,12 +3163,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'taxAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'taxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2926,12 +3181,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'taxAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'taxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2943,14 +3201,17 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'taxAmount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'taxAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2959,11 +3220,14 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'totalAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'totalAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2973,12 +3237,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'totalAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'totalAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -2988,12 +3255,15 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'totalAmount',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'totalAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
@@ -3005,40 +3275,43 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'totalAmount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'totalAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> updatedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'updatedAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'updatedAt'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> updatedAtIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'updatedAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'updatedAt'),
+      );
     });
   }
 
   QueryBuilder<Order, Order, QAfterFilterCondition> updatedAtEqualTo(
-      DateTime? value) {
+    DateTime? value,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'updatedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'updatedAt', value: value),
+      );
     });
   }
 
@@ -3047,11 +3320,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'updatedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'updatedAt',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -3060,11 +3335,13 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'updatedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'updatedAt',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -3075,20 +3352,23 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'updatedAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'updatedAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
 
 extension OrderQueryObject on QueryBuilder<Order, Order, QFilterCondition> {
   QueryBuilder<Order, Order, QAfterFilterCondition> itemsElement(
-      FilterQuery<OrderItem> q) {
+    FilterQuery<OrderItem> q,
+  ) {
     return QueryBuilder.apply(this, (query) {
       return query.object(q, r'items');
     });
@@ -3810,26 +4090,33 @@ extension OrderQueryWhereDistinct on QueryBuilder<Order, Order, QDistinct> {
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByCustomerName(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByCustomerName({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'customerName', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByCustomerPhone(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByCustomerPhone({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'customerPhone',
-          caseSensitive: caseSensitive);
+      return query.addDistinctBy(
+        r'customerPhone',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByDeliveryAddress(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByDeliveryAddress({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'deliveryAddress',
-          caseSensitive: caseSensitive);
+      return query.addDistinctBy(
+        r'deliveryAddress',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
@@ -3869,22 +4156,25 @@ extension OrderQueryWhereDistinct on QueryBuilder<Order, Order, QDistinct> {
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByNotes(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByNotes({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByOrderNumber(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByOrderNumber({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'orderNumber', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByOrderStatus(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByOrderStatus({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'orderStatus', caseSensitive: caseSensitive);
     });
@@ -3896,19 +4186,25 @@ extension OrderQueryWhereDistinct on QueryBuilder<Order, Order, QDistinct> {
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByPaymentMethod(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByPaymentMethod({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'paymentMethod',
-          caseSensitive: caseSensitive);
+      return query.addDistinctBy(
+        r'paymentMethod',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByPaymentStatus(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByPaymentStatus({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'paymentStatus',
-          caseSensitive: caseSensitive);
+      return query.addDistinctBy(
+        r'paymentStatus',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
@@ -3924,22 +4220,25 @@ extension OrderQueryWhereDistinct on QueryBuilder<Order, Order, QDistinct> {
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByReturnNotes(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByReturnNotes({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'returnNotes', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByReturnReason(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByReturnReason({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'returnReason', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<Order, Order, QDistinct> distinctByReturnStatus(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Order, Order, QDistinct> distinctByReturnStatus({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'returnStatus', caseSensitive: caseSensitive);
     });
@@ -3978,7 +4277,7 @@ extension OrderQueryProperty on QueryBuilder<Order, Order, QQueryProperty> {
   }
 
   QueryBuilder<Order, DateTime?, QQueryOperations>
-      actualDeliveryDateProperty() {
+  actualDeliveryDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'actualDeliveryDate');
     });
@@ -4033,7 +4332,7 @@ extension OrderQueryProperty on QueryBuilder<Order, Order, QQueryProperty> {
   }
 
   QueryBuilder<Order, DateTime?, QQueryOperations>
-      estimatedDeliveryDateProperty() {
+  estimatedDeliveryDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'estimatedDeliveryDate');
     });
@@ -4159,95 +4458,94 @@ extension OrderQueryProperty on QueryBuilder<Order, Order, QQueryProperty> {
 // **************************************************************************
 
 Order _$OrderFromJson(Map<String, dynamic> json) => Order(
-      id: (json['id'] as num?)?.toInt() ?? Isar.autoIncrement,
-      orderNumber: json['orderNumber'] as String? ?? '',
-      customerId: (json['customerId'] as num?)?.toInt() ?? 0,
-      customerName: json['customerName'] as String? ?? '',
-      customerPhone: json['customerPhone'] as String? ?? '',
-      items: (json['items'] as List<dynamic>?)
-              ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
-      discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
-      deliveryFee: (json['deliveryFee'] as num?)?.toDouble() ?? 0.0,
-      taxAmount: (json['taxAmount'] as num?)?.toDouble() ?? 0.0,
-      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
-      amountPaid: (json['amountPaid'] as num?)?.toDouble() ?? 0.0,
-      paymentStatus:
-          $enumDecodeNullable(_$PaymentStatusEnumMap, json['paymentStatus']) ??
-              PaymentStatus.unpaid,
-      paymentMethod:
-          $enumDecodeNullable(_$PaymentMethodEnumMap, json['paymentMethod']) ??
-              PaymentMethod.cash,
-      orderStatus:
-          $enumDecodeNullable(_$OrderStatusEnumMap, json['orderStatus']) ??
-              OrderStatus.pending,
-      notes: json['notes'] as String? ?? '',
-      deliveryAddress: json['deliveryAddress'] as String? ?? '',
-      estimatedDeliveryDate: json['estimatedDeliveryDate'] == null
-          ? null
-          : DateTime.parse(json['estimatedDeliveryDate'] as String),
-      actualDeliveryDate: json['actualDeliveryDate'] == null
-          ? null
-          : DateTime.parse(json['actualDeliveryDate'] as String),
-      isReturn: json['isReturn'] as bool? ?? false,
-      originalOrderId: (json['originalOrderId'] as num?)?.toInt() ?? 0,
-      returnStatus:
-          $enumDecodeNullable(_$ReturnStatusEnumMap, json['returnStatus']) ??
-              ReturnStatus.none,
-      returnReason:
-          $enumDecodeNullable(_$ReturnReasonEnumMap, json['returnReason']) ??
-              ReturnReason.other,
-      returnNotes: json['returnNotes'] as String? ?? '',
-      refundAmount: (json['refundAmount'] as num?)?.toDouble() ?? 0.0,
-      isRecurring: json['isRecurring'] as bool? ?? false,
-      recurringIntervalDays:
-          (json['recurringIntervalDays'] as num?)?.toInt() ?? 0,
-      nextRecurringDate: json['nextRecurringDate'] == null
-          ? null
-          : DateTime.parse(json['nextRecurringDate'] as String),
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] == null
-          ? null
-          : DateTime.parse(json['updatedAt'] as String),
-    );
+  id: (json['id'] as num?)?.toInt() ?? Isar.autoIncrement,
+  orderNumber: json['orderNumber'] as String? ?? '',
+  customerId: (json['customerId'] as num?)?.toInt() ?? 0,
+  customerName: json['customerName'] as String? ?? '',
+  customerPhone: json['customerPhone'] as String? ?? '',
+  items:
+      (json['items'] as List<dynamic>?)
+          ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
+  discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
+  deliveryFee: (json['deliveryFee'] as num?)?.toDouble() ?? 0.0,
+  taxAmount: (json['taxAmount'] as num?)?.toDouble() ?? 0.0,
+  totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
+  amountPaid: (json['amountPaid'] as num?)?.toDouble() ?? 0.0,
+  paymentStatus:
+      $enumDecodeNullable(_$PaymentStatusEnumMap, json['paymentStatus']) ??
+      PaymentStatus.unpaid,
+  paymentMethod:
+      $enumDecodeNullable(_$PaymentMethodEnumMap, json['paymentMethod']) ??
+      PaymentMethod.cash,
+  orderStatus:
+      $enumDecodeNullable(_$OrderStatusEnumMap, json['orderStatus']) ??
+      OrderStatus.pending,
+  notes: json['notes'] as String? ?? '',
+  deliveryAddress: json['deliveryAddress'] as String? ?? '',
+  estimatedDeliveryDate: json['estimatedDeliveryDate'] == null
+      ? null
+      : DateTime.parse(json['estimatedDeliveryDate'] as String),
+  actualDeliveryDate: json['actualDeliveryDate'] == null
+      ? null
+      : DateTime.parse(json['actualDeliveryDate'] as String),
+  isReturn: json['isReturn'] as bool? ?? false,
+  originalOrderId: (json['originalOrderId'] as num?)?.toInt() ?? 0,
+  returnStatus:
+      $enumDecodeNullable(_$ReturnStatusEnumMap, json['returnStatus']) ??
+      ReturnStatus.none,
+  returnReason:
+      $enumDecodeNullable(_$ReturnReasonEnumMap, json['returnReason']) ??
+      ReturnReason.other,
+  returnNotes: json['returnNotes'] as String? ?? '',
+  refundAmount: (json['refundAmount'] as num?)?.toDouble() ?? 0.0,
+  isRecurring: json['isRecurring'] as bool? ?? false,
+  recurringIntervalDays: (json['recurringIntervalDays'] as num?)?.toInt() ?? 0,
+  nextRecurringDate: json['nextRecurringDate'] == null
+      ? null
+      : DateTime.parse(json['nextRecurringDate'] as String),
+  createdAt: json['createdAt'] == null
+      ? null
+      : DateTime.parse(json['createdAt'] as String),
+  updatedAt: json['updatedAt'] == null
+      ? null
+      : DateTime.parse(json['updatedAt'] as String),
+);
 
 Map<String, dynamic> _$OrderToJson(Order instance) => <String, dynamic>{
-      'id': instance.id,
-      'orderNumber': instance.orderNumber,
-      'customerId': instance.customerId,
-      'customerName': instance.customerName,
-      'customerPhone': instance.customerPhone,
-      'items': instance.items,
-      'subtotal': instance.subtotal,
-      'discountAmount': instance.discountAmount,
-      'deliveryFee': instance.deliveryFee,
-      'taxAmount': instance.taxAmount,
-      'totalAmount': instance.totalAmount,
-      'amountPaid': instance.amountPaid,
-      'paymentStatus': _$PaymentStatusEnumMap[instance.paymentStatus]!,
-      'paymentMethod': _$PaymentMethodEnumMap[instance.paymentMethod]!,
-      'orderStatus': _$OrderStatusEnumMap[instance.orderStatus]!,
-      'notes': instance.notes,
-      'deliveryAddress': instance.deliveryAddress,
-      'estimatedDeliveryDate':
-          instance.estimatedDeliveryDate?.toIso8601String(),
-      'actualDeliveryDate': instance.actualDeliveryDate?.toIso8601String(),
-      'isReturn': instance.isReturn,
-      'originalOrderId': instance.originalOrderId,
-      'returnStatus': _$ReturnStatusEnumMap[instance.returnStatus]!,
-      'returnReason': _$ReturnReasonEnumMap[instance.returnReason]!,
-      'returnNotes': instance.returnNotes,
-      'refundAmount': instance.refundAmount,
-      'isRecurring': instance.isRecurring,
-      'recurringIntervalDays': instance.recurringIntervalDays,
-      'nextRecurringDate': instance.nextRecurringDate?.toIso8601String(),
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
-    };
+  'id': instance.id,
+  'orderNumber': instance.orderNumber,
+  'customerId': instance.customerId,
+  'customerName': instance.customerName,
+  'customerPhone': instance.customerPhone,
+  'items': instance.items,
+  'subtotal': instance.subtotal,
+  'discountAmount': instance.discountAmount,
+  'deliveryFee': instance.deliveryFee,
+  'taxAmount': instance.taxAmount,
+  'totalAmount': instance.totalAmount,
+  'amountPaid': instance.amountPaid,
+  'paymentStatus': _$PaymentStatusEnumMap[instance.paymentStatus]!,
+  'paymentMethod': _$PaymentMethodEnumMap[instance.paymentMethod]!,
+  'orderStatus': _$OrderStatusEnumMap[instance.orderStatus]!,
+  'notes': instance.notes,
+  'deliveryAddress': instance.deliveryAddress,
+  'estimatedDeliveryDate': instance.estimatedDeliveryDate?.toIso8601String(),
+  'actualDeliveryDate': instance.actualDeliveryDate?.toIso8601String(),
+  'isReturn': instance.isReturn,
+  'originalOrderId': instance.originalOrderId,
+  'returnStatus': _$ReturnStatusEnumMap[instance.returnStatus]!,
+  'returnReason': _$ReturnReasonEnumMap[instance.returnReason]!,
+  'returnNotes': instance.returnNotes,
+  'refundAmount': instance.refundAmount,
+  'isRecurring': instance.isRecurring,
+  'recurringIntervalDays': instance.recurringIntervalDays,
+  'nextRecurringDate': instance.nextRecurringDate?.toIso8601String(),
+  'createdAt': instance.createdAt?.toIso8601String(),
+  'updatedAt': instance.updatedAt?.toIso8601String(),
+};
 
 const _$PaymentStatusEnumMap = {
   PaymentStatus.unpaid: 'unpaid',

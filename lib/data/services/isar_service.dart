@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/cash_register.dart';
@@ -15,7 +15,7 @@ import 'migration_service.dart';
 part 'isar_service.g.dart';
 
 @Riverpod(keepAlive: true)
-Future<Isar> isar(IsarRef ref) async {
+Future<Isar> isar(Ref ref) async {
   final dir = await getApplicationDocumentsDirectory();
   final db = await Isar.open(
     [

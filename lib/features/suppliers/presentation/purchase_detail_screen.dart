@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../../data/models/purchase.dart';
 import '../providers/supplier_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -78,7 +78,7 @@ class _Body extends ConsumerWidget {
                   );
                   if (ok == true && context.mounted) {
                     await ref
-                        .read(supplierNotifierProvider.notifier)
+                        .read(supplierProvider.notifier)
                         .deletePurchase(p.id);
                     if (context.mounted) context.pop();
                   }
@@ -308,7 +308,7 @@ class _Body extends ConsumerWidget {
               final amount = double.tryParse(ctrl.text);
               if (amount == null || amount <= 0) return;
               await ref
-                  .read(supplierNotifierProvider.notifier)
+                  .read(supplierProvider.notifier)
                   .recordPurchasePayment(purchase.id, amount);
               if (ctx.mounted) Navigator.pop(ctx);
             },

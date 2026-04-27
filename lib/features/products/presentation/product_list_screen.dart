@@ -128,7 +128,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             icon: const Icon(Icons.file_download_outlined),
             tooltip: s.exportCsv,
             onPressed: () async {
-              final products = ref.read(productsProvider).valueOrNull ?? [];
+              final products = ref.read(productsProvider).value ?? [];
               if (products.isEmpty) return;
               await CsvExportService().exportProducts(products);
             },
