@@ -186,7 +186,35 @@ class OrderNotifier extends _$OrderNotifier {
           }
         }
 
-        await isar.orders.put(order.copyWith(
+        // Cancel-into transition: reverse the customer ledger fully and zero
+        // out amountPaid (treats cancel as auto-refund — micro-seller context).
+        // The opposite (un-cancel) is intentionally NOT supported here; the
+        // user would have to recreate the order to re-bill.
+        var cancelledOrder = order;
+        if (oldStatus != OrderStatus.cancelled &&
+            status == OrderStatus.cancelled) {
+          if (order.customerId > 0) {
+            final customer = await isar.customers.get(order.customerId);
+            if (customer != null) {
+              // createOrder added: totalOrders+1, totalSpent+totalAmount,
+              // outstandingBalance + balanceDue. Reverse all three exactly.
+              await isar.customers.put(customer.copyWith(
+                totalOrders: (customer.totalOrders - 1).clamp(0, 999999),
+                totalSpent: (customer.totalSpent - order.totalAmount)
+                    .clamp(0, double.infinity),
+                outstandingBalance:
+                    (customer.outstandingBalance - order.balanceDue)
+                        .clamp(0, double.infinity),
+              ));
+            }
+          }
+          cancelledOrder = order.copyWith(
+            amountPaid: 0,
+            paymentStatus: PaymentStatus.unpaid,
+          );
+        }
+
+        await isar.orders.put(cancelledOrder.copyWith(
           orderStatus: status,
           updatedAt: DateTime.now(),
         ));
@@ -194,7 +222,12 @@ class OrderNotifier extends _$OrderNotifier {
     });
   }
 
-  Future<void> recordPayment(int orderId, double paymentAmount) async {
+  Future<void> recordPayment(
+    int orderId,
+    double paymentAmount, {
+    PaymentMethod? method,
+    String transactionId = '',
+  }) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
@@ -209,6 +242,13 @@ class OrderNotifier extends _$OrderNotifier {
         await isar.orders.put(order.copyWith(
           amountPaid: newAmountPaid,
           paymentStatus: paymentStatus,
+          paymentMethod: method ?? order.paymentMethod,
+          // Only overwrite transactionId if a new one was supplied — empty
+          // string preserves the previous value (audit trail across multiple
+          // partial payments still loses earlier IDs; consider a Payment
+          // entity if that becomes a real requirement).
+          transactionId:
+              transactionId.isNotEmpty ? transactionId : order.transactionId,
           updatedAt: DateTime.now(),
         ));
 
@@ -362,7 +402,15 @@ class OrderNotifier extends _$OrderNotifier {
 
   /// Step 3: Process refund. Considers partial payment on original order.
   /// refundAmount = min(requested refund, what customer actually paid on original).
-  Future<void> processRefund(int returnOrderId) async {
+  ///
+  /// [refundMethod] is how the cash is going back to the customer (cash / bKash
+  /// / etc.); stored on the return order's `paymentMethod` field.
+  /// [refundTransactionId] is the receipt/reference for the refund payout.
+  Future<void> processRefund(
+    int returnOrderId, {
+    PaymentMethod? refundMethod,
+    String refundTransactionId = '',
+  }) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
@@ -386,6 +434,10 @@ class OrderNotifier extends _$OrderNotifier {
           refundAmount: actualRefund,
           amountPaid: actualRefund,
           paymentStatus: PaymentStatus.paid,
+          paymentMethod: refundMethod ?? returnOrder.paymentMethod,
+          transactionId: refundTransactionId.isNotEmpty
+              ? refundTransactionId
+              : returnOrder.transactionId,
           returnStatus: ReturnStatus.refunded,
           orderStatus: OrderStatus.completed,
           updatedAt: DateTime.now(),
@@ -409,13 +461,25 @@ class OrderNotifier extends _$OrderNotifier {
         }
 
         // Update customer stats
+        // - totalSpent decreases by the cash actually refunded (lifetime spend
+        //   reflects what's been kept).
+        // - outstandingBalance decreases by (returnedItemsValue - actualRefund):
+        //   the customer no longer owes for the returned items, but they did
+        //   get back the refund cash, so the net debt reduction is the
+        //   difference. For a 1:1 refund (cash=goods value) this is zero — the
+        //   customer's debt position on the original order is unchanged. For
+        //   an exchange (refund=0) it's the full goods value.
         if (returnOrder.customerId > 0) {
           final customer =
               await isar.customers.get(returnOrder.customerId);
           if (customer != null) {
+            final balanceChange = returnOrder.totalAmount - actualRefund;
             await isar.customers.put(customer.copyWith(
               totalSpent: (customer.totalSpent - actualRefund)
                   .clamp(0, double.infinity),
+              outstandingBalance:
+                  (customer.outstandingBalance - balanceChange)
+                      .clamp(0, double.infinity),
             ));
           }
         }

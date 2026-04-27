@@ -4,11 +4,11 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 
 ## Tech Stack
 
-- **Flutter** (SDK >=3.5.0 <4.0.0)
-- **State Management:** Riverpod (`flutter_riverpod` + `riverpod_annotation` + code generation)
-- **Database:** Isar 3.1 (embedded NoSQL, local-first)
+- **Flutter** (SDK >=3.8.0 <4.0.0)
+- **State Management:** Riverpod 3 (`flutter_riverpod ^3.0` + `riverpod_annotation ^4.0` + `riverpod_generator ^4.0`). Note: Riverpod 3 uses plain `Ref` everywhere (no per-provider `XxxRef` typedefs), and `@riverpod class XxxNotifier` generates `xxxProvider` (no `Notifier` infix). `AsyncValue.value` is now nullable; `valueOrNull` is gone.
+- **Database:** Isar 3.3 via the community fork — `isar_community` + `isar_community_flutter_libs` + `isar_community_generator` ^3.3.2. The original `isar` package was abandoned in 2023 and shipped 4 KB-aligned native binaries that Play Store rejects on Android 15+. The community fork is API-identical; storage format is byte-compatible (no on-device migration).
 - **Navigation:** GoRouter with `StatefulShellRoute` (12-branch sidebar navigation)
-- **Code Generation:** Freezed (immutable classes), JSON serializable, Isar schema generator
+- **Code Generation:** Freezed 3 (`freezed ^3.2.5` + `freezed_annotation ^3.1`). Note: freezed 3 requires `abstract class Foo with _$Foo` (the `abstract` keyword is mandatory). JSON serializable + isar_community schema generator.
 - **PDF:** `pdf` + `printing` packages for receipt generation
 - **Cloud:** Google Sign-In + Google Drive API for backup/restore
 - **Charts:** fl_chart for dashboard sales visualization + reports + customer history
@@ -519,6 +519,8 @@ dart run build_runner build --delete-conflicting-outputs
 
 Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (dashboard stats)
 
+**All Isar imports use `package:isar_community/isar.dart`** — never `package:isar/isar.dart`. The `isar_community_generator` produces the same `.g.dart` shape as the abandoned `isar_generator` ever did, so existing schemas, queries, and `IsarCollection<T>` extensions still work unchanged.
+
 ## Build & Release
 
 ### Android Release Config
@@ -531,9 +533,10 @@ Generates: `.g.dart` (Isar schemas, JSON, Riverpod providers), `.freezed.dart` (
 - **R8/ProGuard:** enabled (`isMinifyEnabled = true`, `isShrinkResources = true`) with rules in `android/app/proguard-rules.pro`
 - **Core library desugaring:** enabled for `flutter_local_notifications`
 - **NDK version:** `27.0.12077973`
+- **16 KB page size compliance:** Every `.so` in the AAB must use ELF program-header alignment ≥ `0x4000` (16 KB) so it can be `mmap`'d on Android 15 devices that run with 16 KB pages. Verified at build time with `llvm-readelf -lW` looking at the first `LOAD` segment's alignment. The legacy `isar_flutter_libs` 3.1.0+1 shipped a 4 KB-aligned `libisar.so` and was the sole blocker; switching to `isar_community_flutter_libs` resolved it. Together with NDK 27 + `useLegacyPackaging = false`, all 7 arm64 libs in the AAB are now ≥ 16 KB aligned.
 - **Subprojects fixes** (in root `android/build.gradle.kts`, applied via `afterEvaluate` for any `com.android.library` plugin):
   1. Forces `compileSdk = 35` on plugins that hardcode older versions (resolves `android:attr/lStar not found`).
-  2. Injects `namespace` from each plugin's `AndroidManifest.xml` `package` attribute when missing — required by AGP 8+, fixes `isar_flutter_libs` 3.1.0+1 and any other plugin still relying on the deprecated manifest `package` attribute.
+  2. Injects `namespace` from each plugin's `AndroidManifest.xml` `package` attribute when missing — required by AGP 8+. (Originally added to fix `isar_flutter_libs` 3.1.0+1; still useful for any other plugin relying on the deprecated manifest `package` attribute.)
 - **Launcher icon:** Generated via `flutter_launcher_icons` from `assets/icons/app_icon.png`, named `launcher_icon`
 - **Predictive back:** `android:enableOnBackInvokedCallback="true"` in manifest
 
@@ -550,9 +553,18 @@ flutter run
 # Release APK (for testing)
 flutter build apk --release
 
-# Release AAB (for Play Store upload)
-flutter build appbundle --release
+# Release AAB (for Play Store upload) — preferred form
+flutter build appbundle --release --obfuscate \
+  --split-debug-info=build/debug-info --tree-shake-icons
 # Output: build/app/outputs/bundle/release/app-release.aab
+
+# Verify 16 KB alignment of every native library in the AAB
+LREAD=$ANDROID_HOME/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-readelf
+cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/arm64-v8a
+for f in *.so; do
+  align=$("$LREAD" -lW "$f" | awk '/^  LOAD/ {print $NF; exit}')
+  printf "%-35s %s\n" "$f" "$align"   # want 0x4000 or 0x10000 for every row
+done
 
 # Generate launcher icons (after placing icon in assets/icons/app_icon.png)
 dart run flutter_launcher_icons

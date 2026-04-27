@@ -473,51 +473,82 @@ class _OrderDetailBody extends ConsumerWidget {
   void _showPaymentDialog(
       BuildContext context, WidgetRef ref, Order order) {
     final s = AppStrings.of(context);
-    final ctrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    final txnCtrl = TextEditingController();
+    PaymentMethod method = order.paymentMethod;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(s.recordPayment),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${s.balanceDue}: ${CurrencyFormatter.format(order.balanceDue)}'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              autofocus: true,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(s.recordPayment),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                    '${s.balanceDue}: ${CurrencyFormatter.format(order.balanceDue)}'),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: amountCtrl,
+                  autofocus: true,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
+                  ],
+                  decoration: InputDecoration(
+                    labelText: s.paymentAmount,
+                    prefixText: '${CurrencyFormatter.symbol} ',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  children: PaymentMethod.values
+                      .map((m) => ChoiceChip(
+                            label: Text(_paymentMethodLabel(context, m)),
+                            selected: method == m,
+                            onSelected: (_) => setLocal(() => method = m),
+                          ))
+                      .toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: txnCtrl,
+                  decoration: InputDecoration(
+                    labelText: s.transactionId,
+                    hintText: s.transactionIdHint,
+                  ),
+                ),
               ],
-              decoration: InputDecoration(
-                labelText: s.paymentAmount,
-                prefixText: '${CurrencyFormatter.symbol} ',
-              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx), child: Text(s.cancel)),
+            FilledButton(
+              onPressed: () async {
+                final amount = double.tryParse(amountCtrl.text) ?? 0;
+                if (amount <= 0) return;
+                await ref.read(orderProvider.notifier).recordPayment(
+                      order.id,
+                      amount,
+                      method: method,
+                      transactionId: txnCtrl.text.trim(),
+                    );
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: Text(s.save),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(s.cancel)),
-          FilledButton(
-            onPressed: () async {
-              final amount = double.tryParse(ctrl.text) ?? 0;
-              if (amount <= 0) return;
-              await ref
-                  .read(orderProvider.notifier)
-                  .recordPayment(order.id, amount);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: Text(s.save),
-          ),
-        ],
       ),
     );
   }
+
 }
 
 class _StatusActions extends ConsumerWidget {
@@ -980,6 +1011,12 @@ class _StatusStepperBar extends StatelessWidget {
 
 // ─── Return Flow Card (3-step: Requested → Received → Refunded) ─────────────
 
+class _RefundDialogResult {
+  final PaymentMethod method;
+  final String transactionId;
+  _RefundDialogResult({required this.method, required this.transactionId});
+}
+
 class _ReturnFlowCard extends StatelessWidget {
   final Order order;
   final WidgetRef ref;
@@ -995,6 +1032,81 @@ class _ReturnFlowCard extends StatelessWidget {
       ReturnReason.changedMind: s.changedMind,
       ReturnReason.other: s.other,
     };
+  }
+
+  String _paymentMethodLabel(BuildContext context, PaymentMethod method) {
+    final s = AppStrings.of(context);
+    return switch (method) {
+      PaymentMethod.cash => s.cash,
+      PaymentMethod.card => s.card,
+      PaymentMethod.mfs => s.mfs,
+      PaymentMethod.bank => s.bank,
+      PaymentMethod.other => s.other,
+    };
+  }
+
+  Future<_RefundDialogResult?> _showRefundDialog(
+      BuildContext context, Order returnOrder) {
+    final s = AppStrings.of(context);
+    final txnCtrl = TextEditingController();
+    PaymentMethod method = returnOrder.paymentMethod;
+    return showDialog<_RefundDialogResult>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(s.processRefund),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '${s.tr("refund")} ${CurrencyFormatter.format(returnOrder.refundAmount)}'
+                  '${returnOrder.customerName.isNotEmpty ? " → ${returnOrder.customerName}" : ""}',
+                ),
+                const SizedBox(height: 16),
+                Text(s.refundMethod,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  children: PaymentMethod.values
+                      .map((m) => ChoiceChip(
+                            label: Text(_paymentMethodLabel(context, m)),
+                            selected: method == m,
+                            onSelected: (_) => setLocal(() => method = m),
+                          ))
+                      .toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: txnCtrl,
+                  decoration: InputDecoration(
+                    labelText: s.refundTransactionId,
+                    hintText: s.transactionIdHint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx), child: Text(s.cancel)),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(
+                  ctx,
+                  _RefundDialogResult(
+                      method: method, transactionId: txnCtrl.text.trim())),
+              icon: const Icon(Icons.currency_exchange_rounded, size: 16),
+              label: Text(s.tr('refund')),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Map<ReturnStatus, String> _statusLabels(BuildContext context) {
@@ -1167,26 +1279,20 @@ class _ReturnFlowCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () async {
-                  final ok = await ConfirmDialog.show(
-                    context,
-                    title: s.processRefund,
-                    message:
-                        '${s.tr("refund")} ${CurrencyFormatter.format(order.refundAmount)} ${order.customerName.isNotEmpty ? order.customerName : s.customer}?',
-                    confirmText: s.tr('refund'),
-                    icon: Icons.currency_exchange_rounded,
-                  );
-                  if (ok == true) {
-                    await ref
-                        .read(orderProvider.notifier)
-                        .processRefund(order.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(s.tr('refundProcessed')),
-                          backgroundColor: Colors.green,
-                        ),
+                  final result = await _showRefundDialog(context, order);
+                  if (result == null) return;
+                  await ref.read(orderProvider.notifier).processRefund(
+                        order.id,
+                        refundMethod: result.method,
+                        refundTransactionId: result.transactionId,
                       );
-                    }
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(s.tr('refundProcessed')),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                   }
                 },
                 icon: const Icon(Icons.currency_exchange_rounded, size: 16),

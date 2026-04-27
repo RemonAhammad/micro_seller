@@ -416,4 +416,10 @@ const translationsTh = <String, String>{
   'notEnoughStock': 'มีเพียง {stock} ในสต็อกสำหรับ {item}',
   'rowsSkipped': 'ข้าม {count} แถว:',
   'andMore': '...และอีก {count}',
+
+  // Payments / refunds
+  'transactionId': 'รหัสธุรกรรม',
+  'transactionIdHint': 'bKash / Nagad / เลขที่ใบเสร็จ',
+  'refundMethod': 'วิธีคืนเงิน',
+  'refundTransactionId': 'รหัสธุรกรรมการคืนเงิน',
 };

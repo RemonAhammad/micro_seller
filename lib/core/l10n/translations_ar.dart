@@ -415,4 +415,10 @@ const translationsAr = <String, String>{
   'notEnoughStock': 'يتوفر {stock} فقط من {item}',
   'rowsSkipped': 'تم تخطي {count} صف:',
   'andMore': '...و{count} آخر',
+
+  // Payments / refunds
+  'transactionId': 'رقم المعاملة',
+  'transactionIdHint': 'bKash / Nagad / رقم الإيصال',
+  'refundMethod': 'طريقة الاسترداد',
+  'refundTransactionId': 'رقم معاملة الاسترداد',
 };

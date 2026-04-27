@@ -156,8 +156,13 @@ const OrderSchema = CollectionSchema(
       name: r'totalAmount',
       type: IsarType.double,
     ),
-    r'updatedAt': PropertySchema(
+    r'transactionId': PropertySchema(
       id: 28,
+      name: r'transactionId',
+      type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 29,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -203,6 +208,7 @@ int _orderEstimateSize(
   bytesCount += 3 + object.returnNotes.length * 3;
   bytesCount += 3 + object.returnReason.name.length * 3;
   bytesCount += 3 + object.returnStatus.name.length * 3;
+  bytesCount += 3 + object.transactionId.length * 3;
   return bytesCount;
 }
 
@@ -245,7 +251,8 @@ void _orderSerialize(
   writer.writeDouble(offsets[25], object.subtotal);
   writer.writeDouble(offsets[26], object.taxAmount);
   writer.writeDouble(offsets[27], object.totalAmount);
-  writer.writeDateTime(offsets[28], object.updatedAt);
+  writer.writeString(offsets[28], object.transactionId);
+  writer.writeDateTime(offsets[29], object.updatedAt);
 }
 
 Order _orderDeserialize(
@@ -301,7 +308,8 @@ Order _orderDeserialize(
     subtotal: reader.readDoubleOrNull(offsets[25]) ?? 0.0,
     taxAmount: reader.readDoubleOrNull(offsets[26]) ?? 0.0,
     totalAmount: reader.readDoubleOrNull(offsets[27]) ?? 0.0,
-    updatedAt: reader.readDateTimeOrNull(offsets[28]),
+    transactionId: reader.readStringOrNull(offsets[28]) ?? '',
+    updatedAt: reader.readDateTimeOrNull(offsets[29]),
   );
   return object;
 }
@@ -391,6 +399,8 @@ P _orderDeserializeProp<P>(
     case 27:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 28:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 29:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -3289,6 +3299,152 @@ extension OrderQueryFilter on QueryBuilder<Order, Order, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'transactionId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'transactionId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'transactionId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'transactionId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'transactionId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'transactionId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'transactionId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'transactionId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'transactionId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterFilterCondition> transactionIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'transactionId', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<Order, Order, QAfterFilterCondition> updatedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -3702,6 +3858,18 @@ extension OrderQuerySortBy on QueryBuilder<Order, Order, QSortBy> {
     });
   }
 
+  QueryBuilder<Order, Order, QAfterSortBy> sortByTransactionId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'transactionId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterSortBy> sortByTransactionIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'transactionId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Order, Order, QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -4052,6 +4220,18 @@ extension OrderQuerySortThenBy on QueryBuilder<Order, Order, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Order, Order, QAfterSortBy> thenByTransactionId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'transactionId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterSortBy> thenByTransactionIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'transactionId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Order, Order, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -4262,6 +4442,17 @@ extension OrderQueryWhereDistinct on QueryBuilder<Order, Order, QDistinct> {
     });
   }
 
+  QueryBuilder<Order, Order, QDistinct> distinctByTransactionId({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'transactionId',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
   QueryBuilder<Order, Order, QDistinct> distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
@@ -4446,6 +4637,12 @@ extension OrderQueryProperty on QueryBuilder<Order, Order, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Order, String, QQueryOperations> transactionIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'transactionId');
+    });
+  }
+
   QueryBuilder<Order, DateTime?, QQueryOperations> updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'updatedAt');
@@ -4480,6 +4677,7 @@ Order _$OrderFromJson(Map<String, dynamic> json) => Order(
   paymentMethod:
       $enumDecodeNullable(_$PaymentMethodEnumMap, json['paymentMethod']) ??
       PaymentMethod.cash,
+  transactionId: json['transactionId'] as String? ?? '',
   orderStatus:
       $enumDecodeNullable(_$OrderStatusEnumMap, json['orderStatus']) ??
       OrderStatus.pending,
@@ -4529,6 +4727,7 @@ Map<String, dynamic> _$OrderToJson(Order instance) => <String, dynamic>{
   'amountPaid': instance.amountPaid,
   'paymentStatus': _$PaymentStatusEnumMap[instance.paymentStatus]!,
   'paymentMethod': _$PaymentMethodEnumMap[instance.paymentMethod]!,
+  'transactionId': instance.transactionId,
   'orderStatus': _$OrderStatusEnumMap[instance.orderStatus]!,
   'notes': instance.notes,
   'deliveryAddress': instance.deliveryAddress,

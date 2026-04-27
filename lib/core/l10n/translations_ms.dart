@@ -416,4 +416,10 @@ const translationsMs = <String, String>{
   'notEnoughStock': 'Hanya {stock} dalam stok untuk {item}',
   'rowsSkipped': '{count} baris dilangkau:',
   'andMore': '...dan {count} lagi',
+
+  // Payments / refunds
+  'transactionId': 'ID Transaksi',
+  'transactionIdHint': 'bKash / Nagad / no. resit',
+  'refundMethod': 'Kaedah Pemulangan',
+  'refundTransactionId': 'ID Transaksi Pemulangan',
 };

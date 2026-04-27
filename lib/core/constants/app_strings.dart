@@ -475,4 +475,10 @@ class _L10nStrings {
       _l10n.tr('notEnoughStock').replaceAll('{stock}', '$stock').replaceAll('{item}', item);
   String rowsSkipped(int count) => _l10n.tr('rowsSkipped').replaceAll('{count}', '$count');
   String andMore(int count) => _l10n.tr('andMore').replaceAll('{count}', '$count');
+
+  // Payments / refunds
+  String get transactionId => _l10n.tr('transactionId');
+  String get transactionIdHint => _l10n.tr('transactionIdHint');
+  String get refundMethod => _l10n.tr('refundMethod');
+  String get refundTransactionId => _l10n.tr('refundTransactionId');
 }

@@ -416,4 +416,10 @@ const translationsTr = <String, String>{
   'notEnoughStock': '{item} için yalnızca {stock} stokta',
   'rowsSkipped': '{count} satır atlandı:',
   'andMore': '...ve {count} tane daha',
+
+  // Payments / refunds
+  'transactionId': 'İşlem Kimliği',
+  'transactionIdHint': 'bKash / Nagad / makbuz no',
+  'refundMethod': 'İade Yöntemi',
+  'refundTransactionId': 'İade İşlem Kimliği',
 };

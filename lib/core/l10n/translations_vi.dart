@@ -416,4 +416,10 @@ const translationsVi = <String, String>{
   'notEnoughStock': 'Chỉ còn {stock} trong kho cho {item}',
   'rowsSkipped': 'Đã bỏ qua {count} hàng:',
   'andMore': '...và thêm {count}',
+
+  // Payments / refunds
+  'transactionId': 'Mã giao dịch',
+  'transactionIdHint': 'bKash / Nagad / số hóa đơn',
+  'refundMethod': 'Phương thức hoàn tiền',
+  'refundTransactionId': 'Mã giao dịch hoàn tiền',
 };

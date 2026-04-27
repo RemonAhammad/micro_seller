@@ -416,4 +416,10 @@ const translationsFr = <String, String>{
   'notEnoughStock': 'Seulement {stock} en stock pour {item}',
   'rowsSkipped': '{count} ligne(s) ignorée(s) :',
   'andMore': '...et {count} de plus',
+
+  // Payments / refunds
+  'transactionId': 'ID de transaction',
+  'transactionIdHint': 'bKash / Nagad / N° de reçu',
+  'refundMethod': 'Méthode de remboursement',
+  'refundTransactionId': 'ID de transaction du remboursement',
 };

@@ -30,6 +30,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   final _discountCtrl = TextEditingController(text: '0');
   final _deliveryCtrl = TextEditingController(text: '0');
   final _amountPaidCtrl = TextEditingController();
+  final _transactionIdCtrl = TextEditingController();
   final _deliveryAddressCtrl = TextEditingController();
   final _taxRateCtrl = TextEditingController();
 
@@ -95,6 +96,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         ? order.amountPaid.toStringAsFixed(
             order.amountPaid == order.amountPaid.roundToDouble() ? 0 : 2)
         : '';
+    _transactionIdCtrl.text = order.transactionId;
     // Back-calculate tax rate from stored taxAmount
     if (order.taxAmount > 0) {
       final taxableAmount = order.subtotal - order.discountAmount;
@@ -120,6 +122,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _discountCtrl.dispose();
     _deliveryCtrl.dispose();
     _amountPaidCtrl.dispose();
+    _transactionIdCtrl.dispose();
     _deliveryAddressCtrl.dispose();
     _taxRateCtrl.dispose();
     super.dispose();
@@ -267,6 +270,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           amountPaid: amountPaid,
           paymentStatus: paymentStatus,
           paymentMethod: _paymentMethod,
+          transactionId: _transactionIdCtrl.text.trim(),
           orderStatus: _orderStatus,
           notes: _notesCtrl.text.trim(),
           deliveryAddress: _deliveryAddressCtrl.text.trim(),
@@ -305,6 +309,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           amountPaid: amountPaid,
           paymentStatus: paymentStatus,
           paymentMethod: _paymentMethod,
+          transactionId: _transactionIdCtrl.text.trim(),
           orderStatus: _orderStatus,
           notes: _notesCtrl.text.trim(),
           deliveryAddress: _deliveryAddressCtrl.text.trim(),
@@ -779,6 +784,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          label: s.transactionId,
+          hint: s.transactionIdHint,
+          controller: _transactionIdCtrl,
         ),
       ],
     );

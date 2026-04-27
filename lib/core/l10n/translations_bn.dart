@@ -416,4 +416,10 @@ const translationsBn = <String, String>{
   'notEnoughStock': '{item} এর জন্য মাত্র {stock} স্টকে আছে',
   'rowsSkipped': '{count} সারি বাদ দেওয়া হয়েছে:',
   'andMore': '...এবং আরও {count}',
+
+  // Payments / refunds
+  'transactionId': 'লেনদেন আইডি',
+  'transactionIdHint': 'বিকাশ / নগদ / রসিদ নং',
+  'refundMethod': 'ফেরত পদ্ধতি',
+  'refundTransactionId': 'ফেরত লেনদেন আইডি',
 };

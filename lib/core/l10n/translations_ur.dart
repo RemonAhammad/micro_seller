@@ -416,4 +416,10 @@ const translationsUr = <String, String>{
   'notEnoughStock': '{item} کے لیے صرف {stock} اسٹاک میں ہے',
   'rowsSkipped': '{count} قطار(یں) چھوڑ دی گئیں:',
   'andMore': '...اور {count} مزید',
+
+  // Payments / refunds
+  'transactionId': 'لین دین آئی ڈی',
+  'transactionIdHint': 'bKash / Nagad / رسید نمبر',
+  'refundMethod': 'واپسی کا طریقہ',
+  'refundTransactionId': 'واپسی لین دین آئی ڈی',
 };

@@ -32,6 +32,7 @@ class Order {
     this.amountPaid = 0.0,
     this.paymentStatus = PaymentStatus.unpaid,
     this.paymentMethod = PaymentMethod.cash,
+    this.transactionId = '',
     this.orderStatus = OrderStatus.pending,
     this.notes = '',
     this.deliveryAddress = '',
@@ -68,6 +69,12 @@ class Order {
 
   @Enumerated(EnumType.name)
   PaymentMethod paymentMethod;
+
+  /// Reference / receipt number for the latest payment or refund transaction.
+  /// On a regular order it stores the customer's payment txn ID (bKash/Nagad
+  /// reference, card auth code, etc.). On a return order (`isReturn = true`)
+  /// it stores the refund txn ID. Free-form, optional.
+  String transactionId;
 
   @Enumerated(EnumType.name)
   OrderStatus orderStatus;
@@ -125,6 +132,7 @@ class Order {
     double? amountPaid,
     PaymentStatus? paymentStatus,
     PaymentMethod? paymentMethod,
+    String? transactionId,
     OrderStatus? orderStatus,
     String? notes,
     String? deliveryAddress,
@@ -157,6 +165,7 @@ class Order {
         amountPaid: amountPaid ?? this.amountPaid,
         paymentStatus: paymentStatus ?? this.paymentStatus,
         paymentMethod: paymentMethod ?? this.paymentMethod,
+        transactionId: transactionId ?? this.transactionId,
         orderStatus: orderStatus ?? this.orderStatus,
         notes: notes ?? this.notes,
         deliveryAddress: deliveryAddress ?? this.deliveryAddress,

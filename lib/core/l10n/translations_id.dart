@@ -416,4 +416,10 @@ const translationsId = <String, String>{
   'notEnoughStock': 'Hanya {stock} stok tersedia untuk {item}',
   'rowsSkipped': '{count} baris dilewati:',
   'andMore': '...dan {count} lagi',
+
+  // Payments / refunds
+  'transactionId': 'ID Transaksi',
+  'transactionIdHint': 'bKash / Nagad / nomor struk',
+  'refundMethod': 'Metode Pengembalian',
+  'refundTransactionId': 'ID Transaksi Pengembalian',
 };
