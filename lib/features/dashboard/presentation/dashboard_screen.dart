@@ -242,42 +242,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       AsyncValue<DashboardStats> statsAsync, ThemeData theme) {
     final s = AppStrings.of(context);
     return SliverAppBar(
-      expandedHeight: 140,
+      expandedHeight: 160,
       pinned: true,
       stretch: true,
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
+      centerTitle: false,
+      title: const Text(
+        AppStrings.appName,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground],
         background: Container(
           decoration: const BoxDecoration(gradient: AppColors.dashboardGradient),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 8, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _getGreeting(),
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 12),
-                          ),
-                          const Text(
-                            AppStrings.appName,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        _getGreeting(),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -296,7 +292,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   statsAsync.when(
                     data: (stats) => Row(
                       children: [
