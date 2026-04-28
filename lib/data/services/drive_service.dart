@@ -188,12 +188,18 @@ class DriveService {
     }
   }
 
-  Future<void> backupToDrive(Isar isar) async {
+  /// [settings] — pass the user's exported preferences map (theme, currency,
+  /// sidebar order, etc.) to include them in the backup. Pass null to back
+  /// up data only.
+  Future<void> backupToDrive(
+    Isar isar, {
+    Map<String, dynamic>? settings,
+  }) async {
     final driveApi = await _getDriveApi();
 
     final String jsonStr;
     try {
-      jsonStr = await _localBackup.encodeAll(isar);
+      jsonStr = await _localBackup.encodeAll(isar, settings: settings);
     } catch (e, st) {
       _logError('encodeAll', e, st);
       throw DriveBackupException(
@@ -284,7 +290,17 @@ class DriveService {
     }
   }
 
-  Future<void> restoreFromDrive(Isar isar, String fileId) async {
+  /// [currentSettings] — snapshot of the user's current preferences, used
+  /// for the rollback safety backup. Pass via `Settings.exportSettings()`.
+  /// [onSettingsRestored] — called with the imported settings map (if the
+  /// backup contained one) after a successful restore. The caller should
+  /// apply it via `Settings.importSettings`.
+  Future<void> restoreFromDrive(
+    Isar isar,
+    String fileId, {
+    Map<String, dynamic>? currentSettings,
+    Future<void> Function(Map<String, dynamic>)? onSettingsRestored,
+  }) async {
     final driveApi = await _getDriveApi();
 
     String jsonStr;
@@ -330,10 +346,11 @@ class DriveService {
       );
     }
 
-    // Snapshot current DB so we can roll back if import fails halfway.
+    // Snapshot current DB + settings so we can roll back if import fails.
     String safetyBackup;
     try {
-      safetyBackup = await _localBackup.encodeAll(isar);
+      safetyBackup =
+          await _localBackup.encodeAll(isar, settings: currentSettings);
     } catch (e, st) {
       _logError('safetySnapshot', e, st);
       throw DriveBackupException(
@@ -345,7 +362,10 @@ class DriveService {
     }
 
     try {
-      await _localBackup.decodeAll(isar, jsonStr);
+      final restoredSettings = await _localBackup.decodeAll(isar, jsonStr);
+      if (restoredSettings != null && onSettingsRestored != null) {
+        await onSettingsRestored(restoredSettings);
+      }
     } catch (e, st) {
       _logError('restoreImport', e, st);
       // Roll back to the safety snapshot.

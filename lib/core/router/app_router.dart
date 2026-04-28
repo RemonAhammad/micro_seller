@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:showcaseview/showcaseview.dart';
 import '../../data/services/tutorial_service.dart';
+import '../../features/settings/providers/settings_provider.dart';
+import '../../features/settings/presentation/sidebar_order_screen.dart';
+import '../constants/sidebar_items.dart';
 import '../../features/categories/presentation/category_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
@@ -28,8 +32,6 @@ import '../../features/suppliers/presentation/purchase_detail_screen.dart';
 import '../../features/cash_register/presentation/cash_register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
-import '../constants/app_strings.dart';
-
 /// Fade-through transition for pushed routes (form, detail, edit screens).
 /// Branch root routes use the shell's built-in indexed-stack switch, so they
 /// don't go through this helper.
@@ -258,7 +260,17 @@ final appRouter = GoRouter(
           GoRoute(path: '/reports', builder: (_, __) => const ReportsScreen()),
         ]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+            path: '/settings',
+            builder: (_, __) => const SettingsScreen(),
+            routes: [
+              GoRoute(
+                path: 'sidebar-order',
+                pageBuilder: (_, s) =>
+                    _fadePage(const SidebarOrderScreen(), s),
+              ),
+            ],
+          ),
         ]),
       ],
     ),
@@ -362,10 +374,19 @@ class _NavigationShellState extends State<_NavigationShell> {
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-class _Sidebar extends StatelessWidget {
+class _Sidebar extends ConsumerWidget {
   final bool expanded;
+
+  /// The active branch index in `StatefulShellRoute.indexedStack`.
   final int currentIndex;
-  final void Function(int) onNavigate;
+
+  /// Called with the branch index of the tapped item — NOT the visual index.
+  /// The shell handles routing to that branch.
+  final void Function(int branchIndex) onNavigate;
+
+  /// Showcase keys keyed by branch index (matches the original branch
+  /// numbering — survives user reordering since the underlying branch index
+  /// of each item never changes).
   final Map<int, GlobalKey> showcaseKeys;
 
   const _Sidebar({
@@ -375,23 +396,19 @@ class _Sidebar extends StatelessWidget {
     this.showcaseKeys = const {},
   });
 
-  static const _items = <({IconData icon, IconData selectedIcon, String label})>[
-    (icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard, label: AppStrings.navDashboard),
-    (icon: Icons.inventory_2_outlined, selectedIcon: Icons.inventory_2, label: AppStrings.navProducts),
-    (icon: Icons.receipt_long_outlined, selectedIcon: Icons.receipt_long, label: AppStrings.navOrders),
-    (icon: Icons.assignment_return_outlined, selectedIcon: Icons.assignment_return, label: 'Returns'),
-    (icon: Icons.people_outline, selectedIcon: Icons.people, label: AppStrings.navCustomers),
-    (icon: Icons.warehouse_outlined, selectedIcon: Icons.warehouse, label: AppStrings.navInventory),
-    (icon: Icons.local_shipping_outlined, selectedIcon: Icons.local_shipping, label: 'Suppliers'),
-    (icon: Icons.account_balance_wallet_outlined, selectedIcon: Icons.account_balance_wallet, label: AppStrings.navExpenses),
-    (icon: Icons.point_of_sale_outlined, selectedIcon: Icons.point_of_sale, label: 'Cash Register'),
-    (icon: Icons.category_outlined, selectedIcon: Icons.category, label: 'Categories'),
-    (icon: Icons.analytics_outlined, selectedIcon: Icons.analytics, label: 'Reports'),
-    (icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: AppStrings.navSettings),
-  ];
+  static const _showcaseDescriptions = <int, ({String title, String desc})>{
+    9: (title: 'Categories', desc: 'Start here! Create product categories like Clothing, Electronics, Food, etc.'),
+    1: (title: 'Products', desc: 'Add your products with prices, stock, variants (sizes/colors), and images.'),
+    2: (title: 'Orders', desc: 'Create and manage customer orders. Track payment, delivery, and order status.'),
+    3: (title: 'Returns', desc: 'Handle product returns and refunds with a simple 3-step flow.'),
+  };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watching the whole settings map keeps the sidebar live: any
+    // updateSidebarOrder call rebuilds it.
+    ref.watch(settingsProvider);
+    final order = ref.read(settingsProvider.notifier).sidebarOrder;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? colorScheme.surfaceContainerHigh : colorScheme.surfaceContainerLow;
@@ -408,47 +425,30 @@ class _Sidebar extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  for (int i = 0; i < 7; i++)
-                    _tile(i, _items[i], selectedColor, unselectedColor),
-                  Divider(
-                    indent: 12,
-                    endIndent: 12,
-                    height: 16,
-                    color: unselectedColor.withValues(alpha: 0.2),
-                  ),
-                  for (int i = 7; i < 11; i++)
-                    _tile(i, _items[i], selectedColor, unselectedColor),
+                  for (final key in order)
+                    _tile(
+                      context,
+                      sidebarItemByKey(key),
+                      selectedColor,
+                      unselectedColor,
+                    ),
                 ],
               ),
             ),
           ),
-          Divider(
-            indent: 12,
-            endIndent: 12,
-            height: 1,
-            color: unselectedColor.withValues(alpha: 0.15),
-          ),
-          _tile(11, _items[11], selectedColor, unselectedColor),
           const SizedBox(height: 12),
         ],
       ),
     );
   }
 
-  static const _showcaseDescriptions = <int, ({String title, String desc})>{
-    9: (title: 'Categories', desc: 'Start here! Create product categories like Clothing, Electronics, Food, etc.'),
-    1: (title: 'Products', desc: 'Add your products with prices, stock, variants (sizes/colors), and images.'),
-    2: (title: 'Orders', desc: 'Create and manage customer orders. Track payment, delivery, and order status.'),
-    3: (title: 'Returns', desc: 'Handle product returns and refunds with a simple 3-step flow.'),
-  };
-
   Widget _tile(
-    int index,
-    ({IconData icon, IconData selectedIcon, String label}) item,
+    BuildContext context,
+    SidebarItem item,
     Color selectedColor,
     Color unselectedColor,
   ) {
-    final selected = currentIndex == index;
+    final selected = currentIndex == item.branchIndex;
     final icon = Icon(
       selected ? item.selectedIcon : item.icon,
       size: 22,
@@ -456,6 +456,7 @@ class _Sidebar extends StatelessWidget {
     );
     final bg = selected ? selectedColor.withValues(alpha: 0.12) : Colors.transparent;
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+    final label = item.label(context);
 
     Widget tile;
 
@@ -466,7 +467,7 @@ class _Sidebar extends StatelessWidget {
           color: bg,
           shape: shape,
           child: InkWell(
-            onTap: () => onNavigate(index),
+            onTap: () => onNavigate(item.branchIndex),
             borderRadius: BorderRadius.circular(12),
             child: SizedBox(
               height: 44,
@@ -477,7 +478,7 @@ class _Sidebar extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      item.label,
+                      label,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
@@ -496,11 +497,11 @@ class _Sidebar extends StatelessWidget {
       tile = Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: Tooltip(
-          message: item.label,
+          message: label,
           preferBelow: false,
           waitDuration: const Duration(milliseconds: 400),
           child: IconButton(
-            onPressed: () => onNavigate(index),
+            onPressed: () => onNavigate(item.branchIndex),
             icon: icon,
             style: IconButton.styleFrom(
               backgroundColor: bg,
@@ -512,13 +513,13 @@ class _Sidebar extends StatelessWidget {
       );
     }
 
-    // Wrap with Showcase if this tile has a showcase key
-    final key = showcaseKeys[index];
+    // Showcase keys are keyed by the original branch index, not visual order.
+    final key = showcaseKeys[item.branchIndex];
     if (key != null) {
-      final info = _showcaseDescriptions[index];
+      final info = _showcaseDescriptions[item.branchIndex];
       return Showcase(
         key: key,
-        title: info?.title ?? item.label,
+        title: info?.title ?? label,
         description: info?.desc ?? '',
         child: tile,
       );

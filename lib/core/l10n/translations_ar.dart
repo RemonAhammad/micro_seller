@@ -421,4 +421,9 @@ const translationsAr = <String, String>{
   'transactionIdHint': 'bKash / Nagad / رقم الإيصال',
   'refundMethod': 'طريقة الاسترداد',
   'refundTransactionId': 'رقم معاملة الاسترداد',
+
+  // Sidebar customization
+  'sidebarOrder': 'ترتيب الشريط الجانبي',
+  'sidebarOrderDesc': 'اسحب لإعادة ترتيب علامات تبويب الشريط الجانبي',
+  'resetToDefault': 'إعادة التعيين إلى الافتراضي',
 };

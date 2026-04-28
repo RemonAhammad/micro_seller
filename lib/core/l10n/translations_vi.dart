@@ -422,4 +422,9 @@ const translationsVi = <String, String>{
   'transactionIdHint': 'bKash / Nagad / số hóa đơn',
   'refundMethod': 'Phương thức hoàn tiền',
   'refundTransactionId': 'Mã giao dịch hoàn tiền',
+
+  // Sidebar customization
+  'sidebarOrder': 'Thứ tự thanh bên',
+  'sidebarOrderDesc': 'Kéo để sắp xếp lại các tab thanh bên',
+  'resetToDefault': 'Đặt lại mặc định',
 };

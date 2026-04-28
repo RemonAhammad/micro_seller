@@ -422,4 +422,9 @@ const translationsMs = <String, String>{
   'transactionIdHint': 'bKash / Nagad / no. resit',
   'refundMethod': 'Kaedah Pemulangan',
   'refundTransactionId': 'ID Transaksi Pemulangan',
+
+  // Sidebar customization
+  'sidebarOrder': 'Susunan Bar Sisi',
+  'sidebarOrderDesc': 'Seret untuk menyusun semula tab bar sisi',
+  'resetToDefault': 'Tetapkan Semula kepada Lalai',
 };

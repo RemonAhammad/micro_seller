@@ -422,4 +422,9 @@ const translationsUr = <String, String>{
   'transactionIdHint': 'bKash / Nagad / رسید نمبر',
   'refundMethod': 'واپسی کا طریقہ',
   'refundTransactionId': 'واپسی لین دین آئی ڈی',
+
+  // Sidebar customization
+  'sidebarOrder': 'سائڈبار کی ترتیب',
+  'sidebarOrderDesc': 'سائڈبار ٹیبز کو دوبارہ ترتیب دینے کے لیے گھسیٹیں',
+  'resetToDefault': 'پہلے سے طے شدہ پر ری سیٹ کریں',
 };

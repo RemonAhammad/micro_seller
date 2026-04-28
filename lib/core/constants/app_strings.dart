@@ -481,4 +481,9 @@ class _L10nStrings {
   String get transactionIdHint => _l10n.tr('transactionIdHint');
   String get refundMethod => _l10n.tr('refundMethod');
   String get refundTransactionId => _l10n.tr('refundTransactionId');
+
+  // Sidebar customization
+  String get sidebarOrder => _l10n.tr('sidebarOrder');
+  String get sidebarOrderDesc => _l10n.tr('sidebarOrderDesc');
+  String get resetToDefault => _l10n.tr('resetToDefault');
 }

@@ -422,4 +422,9 @@ const translationsFr = <String, String>{
   'transactionIdHint': 'bKash / Nagad / N° de reçu',
   'refundMethod': 'Méthode de remboursement',
   'refundTransactionId': 'ID de transaction du remboursement',
+
+  // Sidebar customization
+  'sidebarOrder': 'Ordre de la barre latérale',
+  'sidebarOrderDesc': 'Faites glisser pour réorganiser les onglets',
+  'resetToDefault': 'Réinitialiser par défaut',
 };

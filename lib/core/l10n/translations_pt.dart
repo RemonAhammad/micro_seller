@@ -422,4 +422,9 @@ const translationsPt = <String, String>{
   'transactionIdHint': 'bKash / Nagad / N.º do recibo',
   'refundMethod': 'Método de reembolso',
   'refundTransactionId': 'ID da transação do reembolso',
+
+  // Sidebar customization
+  'sidebarOrder': 'Ordem da barra lateral',
+  'sidebarOrderDesc': 'Arraste para reorganizar as abas da barra lateral',
+  'resetToDefault': 'Restaurar padrão',
 };

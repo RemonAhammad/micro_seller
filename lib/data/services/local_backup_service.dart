@@ -14,10 +14,14 @@ import '../models/purchase.dart';
 import '../models/cash_register.dart';
 
 class LocalBackupService {
-  static const _backupVersion = 2;
+  /// Bumped to v3 when the `settings` payload was added. Older v2 backups
+  /// (collections only) still restore cleanly — settings field is optional.
+  static const _backupVersion = 3;
 
-  /// Serialize all 9 collections to a JSON string.
-  Future<String> encodeAll(Isar isar) async {
+  /// Serialize all 9 collections + (optionally) the user's settings to a
+  /// JSON string. Pass `settings` from `Settings.exportSettings()` to include
+  /// preferences (theme, currency, sidebar order, etc.) in the backup.
+  Future<String> encodeAll(Isar isar, {Map<String, dynamic>? settings}) async {
     final products = await isar.products.where().findAll();
     final orders = await isar.orders.where().findAll();
     final customers = await isar.customers.where().findAll();
@@ -41,11 +45,16 @@ class LocalBackupService {
       'suppliers': suppliers.map((e) => e.toJson()).toList(),
       'purchases': purchases.map((e) => e.toJson()).toList(),
       'cashRegisters': cashRegisters.map((e) => e.toJson()).toList(),
+      if (settings != null) 'settings': settings,
     });
   }
 
   /// Validate + clear + import all 9 collections from a JSON string.
-  Future<void> decodeAll(Isar isar, String jsonStr) async {
+  /// Returns the embedded `settings` map if the backup contained one
+  /// (caller is responsible for applying it via `Settings.importSettings`),
+  /// otherwise null. Kept decoupled from the Riverpod settings provider so
+  /// LocalBackupService stays a leaf-level service.
+  Future<Map<String, dynamic>?> decodeAll(Isar isar, String jsonStr) async {
     final data = jsonDecode(jsonStr) as Map<String, dynamic>;
 
     if (data['products'] == null && data['orders'] == null) {
@@ -100,11 +109,16 @@ class LocalBackupService {
             (data['cashRegisters'] as List).map((e) => CashRegister.fromJson(e as Map<String, dynamic>)).toList());
       }
     });
+
+    final settings = data['settings'];
+    if (settings is Map<String, dynamic>) return settings;
+    return null;
   }
 
   /// Export all data as a JSON file and share it.
-  Future<String?> exportBackup(Isar isar) async {
-    final json = await encodeAll(isar);
+  Future<String?> exportBackup(Isar isar,
+      {Map<String, dynamic>? settings}) async {
+    final json = await encodeAll(isar, settings: settings);
 
     final dir = await Directory.systemTemp.createTemp('microseller_backup');
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
@@ -117,8 +131,9 @@ class LocalBackupService {
   }
 
   /// Export to a specific directory (no share sheet).
-  Future<String?> exportToDirectory(Isar isar, String directoryPath) async {
-    final json = await encodeAll(isar);
+  Future<String?> exportToDirectory(Isar isar, String directoryPath,
+      {Map<String, dynamic>? settings}) async {
+    final json = await encodeAll(isar, settings: settings);
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
     final file = File('$directoryPath/microseller_backup_$timestamp.json');
     await file.writeAsString(json);
@@ -126,20 +141,21 @@ class LocalBackupService {
   }
 
   /// Pick a JSON backup file and restore data from it.
-  /// Returns true if successful.
-  Future<bool> importBackup(Isar isar) async {
+  /// Returns the embedded settings map (if any) on success so the caller can
+  /// apply preferences via `Settings.importSettings`. Returns null when the
+  /// user cancels the file picker.
+  Future<Map<String, dynamic>?> importBackup(Isar isar) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
-    if (result == null || result.files.isEmpty) return false;
+    if (result == null || result.files.isEmpty) return null;
 
     final filePath = result.files.single.path;
-    if (filePath == null) return false;
+    if (filePath == null) return null;
 
     final file = File(filePath);
     final jsonStr = await file.readAsString();
-    await decodeAll(isar, jsonStr);
-    return true;
+    return await decodeAll(isar, jsonStr);
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
 import '../../../data/models/category.dart';
@@ -92,7 +93,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _isBackingUp = true);
     try {
       final isar = await ref.read(isarProvider.future);
-      await _driveService.backupToDrive(isar);
+      final settingsSnapshot =
+          ref.read(settingsProvider.notifier).exportSettings();
+      await _driveService.backupToDrive(isar, settings: settingsSnapshot);
       ref.read(settingsProvider.notifier).updateLastBackupTime(DateTime.now());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +162,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (confirmed != true || !mounted) return;
 
       final isar = await ref.read(isarProvider.future);
-      await _driveService.restoreFromDrive(isar, selected.fileId);
+      await _driveService.restoreFromDrive(
+        isar,
+        selected.fileId,
+        currentSettings: ref.read(settingsProvider.notifier).exportSettings(),
+        onSettingsRestored: (map) =>
+            ref.read(settingsProvider.notifier).importSettings(map),
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -277,6 +286,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   setState(() {});
                 }
               },
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // Sidebar customization
+          _SettingsCard(children: [
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.view_sidebar_rounded,
+                    color: AppColors.primary, size: 20),
+              ),
+              title: Text(s.sidebarOrder),
+              subtitle: Text(
+                s.sidebarOrderDesc,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+              onTap: () => context.push('/settings/sidebar-order'),
             ),
           ]),
           const SizedBox(height: 16),
@@ -422,7 +458,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       setState(() => _isLocalExporting = true);
                       try {
                         final isar = await ref.read(isarProvider.future);
-                        await _localBackupService.exportBackup(isar);
+                        final settingsSnapshot = ref
+                            .read(settingsProvider.notifier)
+                            .exportSettings();
+                        await _localBackupService.exportBackup(
+                          isar,
+                          settings: settingsSnapshot,
+                        );
                       } catch (e) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -472,11 +514,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       setState(() => _isLocalImporting = true);
                       try {
                         final isar = await ref.read(isarProvider.future);
-                        final success = await _localBackupService.importBackup(isar);
+                        final restoredSettings =
+                            await _localBackupService.importBackup(isar);
+                        // null = user cancelled the picker; non-null map (even
+                        // empty) = backup was decoded successfully.
+                        final success = restoredSettings != null;
+                        if (success) {
+                          await ref
+                              .read(settingsProvider.notifier)
+                              .importSettings(restoredSettings);
+                        }
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(success ? s.tr('dataRestoredSuccess') : s.tr('noFileSelected')),
+                              content: Text(success
+                                  ? s.tr('dataRestoredSuccess')
+                                  : s.tr('noFileSelected')),
                               backgroundColor: success ? Colors.green : null,
                             ),
                           );

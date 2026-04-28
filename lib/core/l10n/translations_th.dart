@@ -422,4 +422,9 @@ const translationsTh = <String, String>{
   'transactionIdHint': 'bKash / Nagad / เลขที่ใบเสร็จ',
   'refundMethod': 'วิธีคืนเงิน',
   'refundTransactionId': 'รหัสธุรกรรมการคืนเงิน',
+
+  // Sidebar customization
+  'sidebarOrder': 'ลำดับแถบด้านข้าง',
+  'sidebarOrderDesc': 'ลากเพื่อจัดเรียงแท็บแถบด้านข้างใหม่',
+  'resetToDefault': 'รีเซ็ตเป็นค่าเริ่มต้น',
 };

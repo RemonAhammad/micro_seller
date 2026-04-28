@@ -422,4 +422,9 @@ const translationsBn = <String, String>{
   'transactionIdHint': 'বিকাশ / নগদ / রসিদ নং',
   'refundMethod': 'ফেরত পদ্ধতি',
   'refundTransactionId': 'ফেরত লেনদেন আইডি',
+
+  // Sidebar customization
+  'sidebarOrder': 'সাইডবার ক্রম',
+  'sidebarOrderDesc': 'সাইডবারের ট্যাব পুনর্বিন্যাস করতে টেনে আনুন',
+  'resetToDefault': 'ডিফল্টে রিসেট করুন',
 };

@@ -422,4 +422,9 @@ const translationsTr = <String, String>{
   'transactionIdHint': 'bKash / Nagad / makbuz no',
   'refundMethod': 'İade Yöntemi',
   'refundTransactionId': 'İade İşlem Kimliği',
+
+  // Sidebar customization
+  'sidebarOrder': 'Kenar Çubuğu Sırası',
+  'sidebarOrderDesc': 'Kenar çubuğu sekmelerini yeniden düzenlemek için sürükleyin',
+  'resetToDefault': 'Varsayılana Sıfırla',
 };
