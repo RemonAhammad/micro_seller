@@ -7,6 +7,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 
 class CashRegisterScreen extends ConsumerWidget {
   const CashRegisterScreen({super.key});
@@ -54,7 +55,16 @@ class CashRegisterScreen extends ConsumerWidget {
                     ),
                   )
                 else
-                  ...registers.where((r) => r.isClosed).map((r) => Container(
+                  ...registers
+                      .where((r) => r.isClosed)
+                      .toList()
+                      .asMap()
+                      .entries
+                      .map((entry) {
+                    final r = entry.value;
+                    return AnimatedEntrance(
+                            index: entry.key,
+                            child: Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -112,7 +122,8 @@ class CashRegisterScreen extends ConsumerWidget {
                               ),
                           ],
                         ),
-                      )),
+                      ));
+                  }),
               ],
             ),
           );

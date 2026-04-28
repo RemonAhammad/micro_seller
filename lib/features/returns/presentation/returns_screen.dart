@@ -7,6 +7,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 
 class ReturnsScreen extends ConsumerStatefulWidget {
   const ReturnsScreen({super.key});
@@ -188,7 +189,10 @@ class _ReturnList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: orders.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _ReturnCard(order: orders[i]),
+      itemBuilder: (_, i) => AnimatedEntrance(
+        index: i,
+        child: _ReturnCard(order: orders[i]),
+      ),
     );
   }
 }

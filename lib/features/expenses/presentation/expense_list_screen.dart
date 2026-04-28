@@ -8,6 +8,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/expense_card.dart';
 
 class ExpenseListScreen extends ConsumerWidget {
@@ -112,7 +113,9 @@ class ExpenseListScreen extends ConsumerWidget {
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (ctx, i) {
                     final expense = expenses[i];
-                    return ExpenseCard(
+                    return AnimatedEntrance(
+                      index: i,
+                      child: ExpenseCard(
                       expense: expense,
                       onTap: () => context.push('/expenses/${expense.id}/edit'),
                       onDelete: () async {
@@ -130,6 +133,7 @@ class ExpenseListScreen extends ConsumerWidget {
                               .deleteExpense(expense.id);
                         }
                       },
+                      ),
                     );
                   },
                 ),

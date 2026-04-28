@@ -7,6 +7,7 @@ import '../../../features/categories/providers/category_provider.dart';
 import '../../../data/models/product.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/stock_movement_tile.dart';
 
 enum _StockSort { lowStock, name, stockAsc, stockDesc }
@@ -278,8 +279,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                       itemCount: sorted.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (ctx, i) =>
-                          _StockTile(product: sorted[i], theme: theme, cs: cs),
+                      itemBuilder: (ctx, i) => AnimatedEntrance(
+                        index: i,
+                        child: _StockTile(
+                            product: sorted[i], theme: theme, cs: cs),
+                      ),
                     ),
                   ),
                 ],
@@ -301,8 +305,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: movements.length,
-                itemBuilder: (ctx, i) =>
-                    StockMovementTile(movement: movements[i]),
+                itemBuilder: (ctx, i) => AnimatedEntrance(
+                  index: i,
+                  child: StockMovementTile(movement: movements[i]),
+                ),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),

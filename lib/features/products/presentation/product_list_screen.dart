@@ -3,14 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
-import '../../../data/models/product.dart';
-import '../../../data/services/csv_export_service.dart';
-import '../../../data/services/csv_import_service.dart';
-import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/product_card.dart';
 
 class ProductListScreen extends ConsumerStatefulWidget {
@@ -34,80 +31,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     super.dispose();
   }
 
-  Future<void> _importProducts(BuildContext context, WidgetRef ref) async {
-    final result = await CsvImportService().importProducts();
-    if (result == null || !context.mounted) return;
-
-    if (result.products.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(result.errors.isNotEmpty
-                ? result.errors.first
-                : AppStrings.of(context).noProductsFound)),
-      );
-      return;
-    }
-
-    // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(AppStrings.of(context).importProducts),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppStrings.of(context)
-                .productsFoundToImport(result.products.length)),
-            if (result.errors.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(AppStrings.of(context).rowsSkipped(result.errors.length),
-                  style:
-                      const TextStyle(color: Colors.orange, fontSize: 12)),
-              ...result.errors.take(3).map((e) =>
-                  Text(e, style: const TextStyle(fontSize: 11))),
-              if (result.errors.length > 3)
-                Text(
-                    AppStrings.of(context).andMore(result.errors.length - 3),
-                    style: const TextStyle(fontSize: 11)),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(AppStrings.of(context).cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(AppStrings.of(context).importCsv)),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !context.mounted) return;
-
-    // Import products
-    final isar = await ref.read(isarProvider.future);
-    await isar.writeTxn(() async {
-      for (final product in result.products) {
-        await isar.products.put(product);
-      }
-    });
-
-    ref.invalidate(productsProvider);
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              AppStrings.of(context).productsImported(result.products.length)),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,20 +42,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       appBar: AppBar(
         title: Text(s.products),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.file_upload_outlined),
-            tooltip: s.importCsv,
-            onPressed: () => _importProducts(context, ref),
-          ),
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: s.exportCsv,
-            onPressed: () async {
-              final products = ref.read(productsProvider).value ?? [];
-              if (products.isEmpty) return;
-              await CsvExportService().exportProducts(products);
-            },
-          ),
           IconButton(
             icon: Icon(
                 _showGrid ? Icons.view_list_rounded : Icons.grid_view_rounded),
@@ -249,7 +158,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                     childAspectRatio: 0.78,
                   ),
                   itemCount: products.length,
-                  itemBuilder: (ctx, i) => ProductCard(product: products[i]),
+                  itemBuilder: (ctx, i) => AnimatedEntrance(
+                    index: i,
+                    child: ProductCard(product: products[i]),
+                  ),
                 );
               },
             );
@@ -261,7 +173,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (ctx, i) {
               final product = products[i];
-              return _ProductListTile(product: product);
+              return AnimatedEntrance(
+                index: i,
+                child: _ProductListTile(product: product),
+              );
             },
           );
         },

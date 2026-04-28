@@ -5,6 +5,7 @@ import '../providers/customer_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/customer_card.dart';
 
 class CustomerListScreen extends ConsumerStatefulWidget {
@@ -84,7 +85,10 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: customers.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (ctx, i) => CustomerCard(customer: customers[i]),
+            itemBuilder: (ctx, i) => AnimatedEntrance(
+              index: i,
+              child: CustomerCard(customer: customers[i]),
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

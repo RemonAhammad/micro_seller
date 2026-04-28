@@ -4,6 +4,7 @@ import '../../../data/models/category.dart';
 import '../providers/category_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 
 class CategoryScreen extends ConsumerWidget {
   const CategoryScreen({super.key});
@@ -32,8 +33,10 @@ class CategoryScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: cats.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, i) =>
-                _CategoryTile(category: cats[i], ref: ref),
+            itemBuilder: (context, i) => AnimatedEntrance(
+              index: i,
+              child: _CategoryTile(category: cats[i], ref: ref),
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

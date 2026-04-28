@@ -460,22 +460,27 @@ class OrderNotifier extends _$OrderNotifier {
           ));
         }
 
-        // Update customer stats
-        // - totalSpent decreases by the cash actually refunded (lifetime spend
-        //   reflects what's been kept).
+        // Update customer stats.
+        //
+        // - totalSpent decreases by the BILLED value of returned goods
+        //   (returnOrder.totalAmount) — symmetric with createOrder which adds
+        //   `order.totalAmount`. This makes totalSpent stable across exchange
+        //   ($0 refund), partial refund, and full cash refund: all three end
+        //   with totalSpent = lifetime value of goods the customer kept.
+        //
         // - outstandingBalance decreases by (returnedItemsValue - actualRefund):
         //   the customer no longer owes for the returned items, but they did
         //   get back the refund cash, so the net debt reduction is the
-        //   difference. For a 1:1 refund (cash=goods value) this is zero — the
-        //   customer's debt position on the original order is unchanged. For
-        //   an exchange (refund=0) it's the full goods value.
+        //   difference. For a 1:1 cash refund this is zero (kept-goods debt
+        //   matches kept-goods value); for an exchange (refund=0) it's the
+        //   full goods value (customer's debt drops by what they returned).
         if (returnOrder.customerId > 0) {
           final customer =
               await isar.customers.get(returnOrder.customerId);
           if (customer != null) {
             final balanceChange = returnOrder.totalAmount - actualRefund;
             await isar.customers.put(customer.copyWith(
-              totalSpent: (customer.totalSpent - actualRefund)
+              totalSpent: (customer.totalSpent - returnOrder.totalAmount)
                   .clamp(0, double.infinity),
               outstandingBalance:
                   (customer.outstandingBalance - balanceChange)

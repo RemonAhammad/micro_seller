@@ -5,6 +5,7 @@ import '../providers/supplier_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 
 class SupplierListScreen extends ConsumerWidget {
   const SupplierListScreen({super.key});
@@ -62,7 +63,9 @@ class SupplierListScreen extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final s = suppliers[i];
-              return Container(
+              return AnimatedEntrance(
+                index: i,
+                child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: cs.surface,
@@ -123,6 +126,7 @@ class SupplierListScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+              ),
               );
             },
           );

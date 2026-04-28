@@ -6,6 +6,7 @@ import '../../../data/models/order.dart';
 import '../../../data/services/csv_export_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/order_card.dart';
 
 class OrderListScreen extends ConsumerStatefulWidget {
@@ -205,13 +206,16 @@ class _OrderList extends ConsumerWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (ctx, i) {
         final order = orders[i];
-        return OrderCard(
-          order: order,
-          onStatusChange: (status) {
-            ref
-                .read(orderProvider.notifier)
-                .updateStatus(order.id, status);
-          },
+        return AnimatedEntrance(
+          index: i,
+          child: OrderCard(
+            order: order,
+            onStatusChange: (status) {
+              ref
+                  .read(orderProvider.notifier)
+                  .updateStatus(order.id, status);
+            },
+          ),
         );
       },
     );

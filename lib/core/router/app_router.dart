@@ -30,6 +30,32 @@ import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../constants/app_strings.dart';
 
+/// Fade-through transition for pushed routes (form, detail, edit screens).
+/// Branch root routes use the shell's built-in indexed-stack switch, so they
+/// don't go through this helper.
+CustomTransitionPage<T> _fadePage<T>(Widget child, GoRouterState state) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 240),
+    reverseTransitionDuration: const Duration(milliseconds: 200),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      // Fade combined with a subtle slide — feels like Material 3 "shared axis Y".
+      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.04),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 final appRouter = GoRouter(
   initialLocation: '/splash',
   routes: [
@@ -50,15 +76,22 @@ final appRouter = GoRouter(
             routes: [
               GoRoute(
                 path: 'add',
-                builder: (_, __) => const ProductFormScreen(product: null),
+                pageBuilder: (_, s) =>
+                    _fadePage(const ProductFormScreen(product: null), s),
               ),
               GoRoute(
                 path: ':id',
-                builder: (_, s) => ProductDetailScreen(productId: int.parse(s.pathParameters['id']!)),
+                pageBuilder: (_, s) => _fadePage(
+                    ProductDetailScreen(
+                        productId: int.parse(s.pathParameters['id']!)),
+                    s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    builder: (_, s) => ProductFormScreen(productId: int.parse(s.pathParameters['id']!)),
+                    pageBuilder: (_, s) => _fadePage(
+                        ProductFormScreen(
+                            productId: int.parse(s.pathParameters['id']!)),
+                        s),
                   ),
                 ],
               ),
@@ -70,14 +103,23 @@ final appRouter = GoRouter(
             path: '/orders',
             builder: (_, __) => const OrderListScreen(),
             routes: [
-              GoRoute(path: 'add', builder: (_, __) => const OrderFormScreen()),
+              GoRoute(
+                path: 'add',
+                pageBuilder: (_, s) => _fadePage(const OrderFormScreen(), s),
+              ),
               GoRoute(
                 path: ':id',
-                builder: (_, s) => OrderDetailScreen(orderId: int.parse(s.pathParameters['id']!)),
+                pageBuilder: (_, s) => _fadePage(
+                    OrderDetailScreen(
+                        orderId: int.parse(s.pathParameters['id']!)),
+                    s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    builder: (_, s) => OrderFormScreen(orderId: int.parse(s.pathParameters['id']!)),
+                    pageBuilder: (_, s) => _fadePage(
+                        OrderFormScreen(
+                            orderId: int.parse(s.pathParameters['id']!)),
+                        s),
                   ),
                 ],
               ),
@@ -94,15 +136,22 @@ final appRouter = GoRouter(
             routes: [
               GoRoute(
                 path: 'add',
-                builder: (_, __) => const CustomerFormScreen(customer: null),
+                pageBuilder: (_, s) =>
+                    _fadePage(const CustomerFormScreen(customer: null), s),
               ),
               GoRoute(
                 path: ':id',
-                builder: (_, s) => CustomerDetailScreen(customerId: int.parse(s.pathParameters['id']!)),
+                pageBuilder: (_, s) => _fadePage(
+                    CustomerDetailScreen(
+                        customerId: int.parse(s.pathParameters['id']!)),
+                    s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    builder: (_, s) => CustomerFormScreen(customerId: int.parse(s.pathParameters['id']!)),
+                    pageBuilder: (_, s) => _fadePage(
+                        CustomerFormScreen(
+                            customerId: int.parse(s.pathParameters['id']!)),
+                        s),
                   ),
                 ],
               ),
@@ -116,7 +165,10 @@ final appRouter = GoRouter(
             routes: [
               GoRoute(
                 path: 'adjust/:id',
-                builder: (_, s) => StockAdjustmentScreen(productId: int.parse(s.pathParameters['id']!)),
+                pageBuilder: (_, s) => _fadePage(
+                    StockAdjustmentScreen(
+                        productId: int.parse(s.pathParameters['id']!)),
+                    s),
               ),
             ],
           ),
@@ -128,34 +180,48 @@ final appRouter = GoRouter(
             routes: [
               GoRoute(
                 path: 'add',
-                builder: (_, __) => const SupplierFormScreen(),
+                pageBuilder: (_, s) =>
+                    _fadePage(const SupplierFormScreen(), s),
               ),
               GoRoute(
                 path: 'purchases',
-                builder: (_, __) => const PurchaseListScreen(),
+                pageBuilder: (_, s) =>
+                    _fadePage(const PurchaseListScreen(), s),
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (_, __) => const PurchaseFormScreen(),
+                    pageBuilder: (_, s) =>
+                        _fadePage(const PurchaseFormScreen(), s),
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (_, s) => PurchaseDetailScreen(
-                        purchaseId: int.parse(s.pathParameters['id']!)),
+                    pageBuilder: (_, s) => _fadePage(
+                        PurchaseDetailScreen(
+                            purchaseId: int.parse(s.pathParameters['id']!)),
+                        s),
                   ),
                 ],
               ),
               GoRoute(
                 path: ':id',
-                builder: (_, s) => SupplierDetailScreen(supplierId: int.parse(s.pathParameters['id']!)),
+                pageBuilder: (_, s) => _fadePage(
+                    SupplierDetailScreen(
+                        supplierId: int.parse(s.pathParameters['id']!)),
+                    s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    builder: (_, s) => SupplierFormScreen(supplierId: int.parse(s.pathParameters['id']!)),
+                    pageBuilder: (_, s) => _fadePage(
+                        SupplierFormScreen(
+                            supplierId: int.parse(s.pathParameters['id']!)),
+                        s),
                   ),
                   GoRoute(
                     path: 'purchase/add',
-                    builder: (_, s) => PurchaseFormScreen(supplierId: int.parse(s.pathParameters['id']!)),
+                    pageBuilder: (_, s) => _fadePage(
+                        PurchaseFormScreen(
+                            supplierId: int.parse(s.pathParameters['id']!)),
+                        s),
                   ),
                 ],
               ),
@@ -167,10 +233,17 @@ final appRouter = GoRouter(
             path: '/expenses',
             builder: (_, __) => const ExpenseListScreen(),
             routes: [
-              GoRoute(path: 'add', builder: (_, __) => const ExpenseFormScreen(expense: null)),
+              GoRoute(
+                path: 'add',
+                pageBuilder: (_, s) =>
+                    _fadePage(const ExpenseFormScreen(expense: null), s),
+              ),
               GoRoute(
                 path: ':id/edit',
-                builder: (_, s) => ExpenseFormScreen(expenseId: int.parse(s.pathParameters['id']!)),
+                pageBuilder: (_, s) => _fadePage(
+                    ExpenseFormScreen(
+                        expenseId: int.parse(s.pathParameters['id']!)),
+                    s),
               ),
             ],
           ),

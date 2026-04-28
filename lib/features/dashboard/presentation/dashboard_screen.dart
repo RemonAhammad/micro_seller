@@ -14,6 +14,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import 'widgets/stat_card.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/sales_chart.dart';
 import 'widgets/low_stock_list.dart';
 import 'widgets/unpaid_orders_widget.dart';
@@ -522,18 +523,22 @@ class _DashboardBody extends StatelessWidget {
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: items.map((item) {
-            return SizedBox(
-              width: cardWidth,
-              height: 110,
-              child: StatCard(
-                label: item.label,
-                value: item.value,
-                icon: item.icon,
-                color: item.color,
+          children: List.generate(items.length, (i) {
+            final item = items[i];
+            return AnimatedEntrance(
+              index: i,
+              child: SizedBox(
+                width: cardWidth,
+                height: 110,
+                child: StatCard(
+                  label: item.label,
+                  value: item.value,
+                  icon: item.icon,
+                  color: item.color,
+                ),
               ),
             );
-          }).toList(),
+          }),
         );
       },
     );

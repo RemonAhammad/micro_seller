@@ -6,6 +6,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/animated_entrance.dart';
 
 class PurchaseListScreen extends ConsumerWidget {
   const PurchaseListScreen({super.key});
@@ -40,7 +41,9 @@ class PurchaseListScreen extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final p = purchases[i];
-              return InkWell(
+              return AnimatedEntrance(
+                index: i,
+                child: InkWell(
                 onTap: () => context.push('/suppliers/purchases/${p.id}'),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
@@ -135,6 +138,7 @@ class PurchaseListScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+              ),
               );
             },
           );
