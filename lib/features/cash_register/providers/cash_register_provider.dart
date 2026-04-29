@@ -25,7 +25,7 @@ Future<CashRegister?> openRegister(Ref ref) async {
       .findFirst();
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class CashRegisterNotifier extends _$CashRegisterNotifier {
   @override
   FutureOr<void> build() {}

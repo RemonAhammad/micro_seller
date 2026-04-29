@@ -191,7 +191,7 @@ class _OrderDetailBody extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Customer info
-                if (order.customerName.isNotEmpty)
+                if (order.customerName.isNotEmpty) ...[
                   _InfoCard(children: [
                     _InfoRow(label: s.customer, value: order.customerName),
                     if (order.customerPhone.isNotEmpty)
@@ -230,6 +230,8 @@ class _OrderDetailBody extends ConsumerWidget {
                         ),
                       ),
                   ]),
+                  const SizedBox(height: 12),
+                ],
                 // Delivery tracking
                 if (order.deliveryAddress.isNotEmpty || order.estimatedDeliveryDate != null)
                   _DeliveryTrackingCard(order: order, ref: ref),
@@ -598,6 +600,7 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -606,7 +609,10 @@ class _InfoCard extends StatelessWidget {
           BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)
         ],
       ),
-      child: Column(children: children),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
     );
   }
 }

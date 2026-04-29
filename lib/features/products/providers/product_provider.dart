@@ -44,7 +44,12 @@ Stream<List<Product>> lowStockProducts(Ref ref) async* {
       .map((list) => list.where((p) => p.isLowStock || p.isOutOfStock).toList());
 }
 
-@riverpod
+// keepAlive: a CRUD notifier whose methods do `state = ...` after async writes
+// must outlive the call site, otherwise `ref.read(...notifier).method()` from
+// a screen disposes the provider during the await and the post-await
+// `state = ...` throws UnmountedRefException. Same pattern applied to every
+// other CRUD notifier in this project.
+@Riverpod(keepAlive: true)
 class ProductNotifier extends _$ProductNotifier {
   @override
   FutureOr<void> build() {}

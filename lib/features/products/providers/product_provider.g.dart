@@ -145,7 +145,7 @@ final class ProductNotifierProvider
         argument: null,
         retry: null,
         name: r'productProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -158,7 +158,7 @@ final class ProductNotifierProvider
   ProductNotifier create() => ProductNotifier();
 }
 
-String _$productNotifierHash() => r'c46a3340e119a3c58f3966f8031832ecf0f727da';
+String _$productNotifierHash() => r'4776bc277b1ce3e3f519f09720dacf996d125061';
 
 abstract class _$ProductNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

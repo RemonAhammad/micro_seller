@@ -105,7 +105,7 @@ final class CashRegisterNotifierProvider
         argument: null,
         retry: null,
         name: r'cashRegisterProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -119,7 +119,7 @@ final class CashRegisterNotifierProvider
 }
 
 String _$cashRegisterNotifierHash() =>
-    r'aa72aa2e8118b5216f8757596b4707c8d9f7b47d';
+    r'fe8aa4913315a74fe5eac94b362722c876902d14';
 
 abstract class _$CashRegisterNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

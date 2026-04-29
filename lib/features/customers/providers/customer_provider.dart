@@ -12,7 +12,7 @@ Stream<List<Customer>> customers(Ref ref) async* {
   yield* isar.customers.where().sortByName().watch(fireImmediately: true);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class CustomerNotifier extends _$CustomerNotifier {
   @override
   FutureOr<void> build() {}

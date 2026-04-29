@@ -191,21 +191,33 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF2A2A3E),
+      fillColor: Colors.blueGrey.shade800,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF3A3A4E)),
+        borderSide: BorderSide(color: Colors.blueGrey.shade700),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
       ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      labelStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+      labelStyle: TextStyle(color: Colors.blueGrey.shade200),
+      hintStyle: TextStyle(color: Colors.blueGrey.shade400),
+      prefixIconColor: Colors.blueGrey.shade300,
+      suffixIconColor: Colors.blueGrey.shade300,
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: AppColors.primaryLight,
+      selectionColor: AppColors.primaryLight.withValues(alpha: 0.3),
+      selectionHandleColor: AppColors.primaryLight,
     ),
     scaffoldBackgroundColor: Colors.blueGrey.shade900,
     floatingActionButtonTheme: FloatingActionButtonThemeData(

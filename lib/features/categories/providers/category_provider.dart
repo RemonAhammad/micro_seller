@@ -11,7 +11,7 @@ Stream<List<Category>> categories(Ref ref) async* {
   yield* isar.categories.where().sortByName().watch(fireImmediately: true);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class CategoryNotifier extends _$CategoryNotifier {
   @override
   FutureOr<void> build() {}

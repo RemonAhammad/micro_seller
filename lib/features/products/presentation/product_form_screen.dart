@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -422,21 +424,37 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         await ref.read(productProvider.notifier).addProduct(product);
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEdit ? AppStrings.of(context).productUpdated : AppStrings.of(context).productAdded),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.pop();
+      // Show success snackbar via the root messenger BEFORE popping —
+      // ScaffoldMessenger.of(context) reads from the local widget tree, which
+      // disappears when we pop. Using rootScaffoldMessengerKey-equivalent
+      // here would be cleaner, but capturing the messenger reference first
+      // works without app-wide setup.
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final successMsg = isEdit
+          ? AppStrings.of(context).productUpdated
+          : AppStrings.of(context).productAdded;
+      context.pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text(successMsg), backgroundColor: Colors.green),
+      );
+    } catch (e, st) {
+      // Log to both the IDE/DevTools (dart:developer) and terminal
+      // (debugPrint) so silent failures stop being silent.
+      developer.log('Product save failed', name: 'ProductForm', error: e, stackTrace: st);
+      if (kDebugMode) {
+        debugPrint('[ProductForm] save failed: $e');
+        debugPrintStack(stackTrace: st, label: 'ProductForm._submit');
       }
-    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppStrings.of(context).failedToSaveProduct),
+            content: Text(
+                kDebugMode
+                    ? 'Save failed: $e'
+                    : AppStrings.of(context).failedToSaveProduct),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
           ),
         );
       }

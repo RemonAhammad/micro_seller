@@ -327,7 +327,7 @@ final class SupplierNotifierProvider
         argument: null,
         retry: null,
         name: r'supplierProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -340,7 +340,7 @@ final class SupplierNotifierProvider
   SupplierNotifier create() => SupplierNotifier();
 }
 
-String _$supplierNotifierHash() => r'5971587e4147eb94abbe612fdcc44d513ce52a98';
+String _$supplierNotifierHash() => r'c8e52bed241644a5e4918ed4bc7858977610f4a7';
 
 abstract class _$SupplierNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

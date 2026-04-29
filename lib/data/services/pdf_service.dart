@@ -6,7 +6,44 @@ import '../models/order.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
 
+class _PdfFonts {
+  final pw.Font base;
+  final pw.Font bold;
+  final List<pw.Font> fallback;
+  _PdfFonts(this.base, this.bold, this.fallback);
+}
+
 class PdfService {
+  // Cached across calls so subsequent invoice generation is instant.
+  static _PdfFonts? _cachedFonts;
+
+  static Future<_PdfFonts> _loadFonts() async {
+    if (_cachedFonts != null) return _cachedFonts!;
+
+    // Noto Sans covers Latin, Cyrillic, Greek, Vietnamese diacritics.
+    // The fallback list extends coverage to every other script a seller
+    // might type into a product/customer/category field.
+    final base = await PdfGoogleFonts.notoSansRegular();
+    final bold = await PdfGoogleFonts.notoSansBold();
+
+    // Order matters: pdf walks the chain in order until a glyph matches.
+    final fallback = await Future.wait<pw.Font>([
+      PdfGoogleFonts.notoSansBengaliRegular(),     // bn
+      PdfGoogleFonts.notoSansArabicRegular(),      // ar
+      PdfGoogleFonts.notoNastaliqUrduRegular(),    // ur
+      PdfGoogleFonts.notoSansThaiRegular(),        // th
+      PdfGoogleFonts.notoSansDevanagariRegular(),  // hi
+      PdfGoogleFonts.notoSansSCRegular(),          // zh-CN
+      PdfGoogleFonts.notoSansTCRegular(),          // zh-TW
+      PdfGoogleFonts.notoSansJPRegular(),          // ja
+      PdfGoogleFonts.notoSansKRRegular(),          // ko
+      PdfGoogleFonts.notoColorEmoji(),             // 🙏 ✅ ⚠️
+    ]);
+
+    _cachedFonts = _PdfFonts(base, bold, fallback);
+    return _cachedFonts!;
+  }
+
   Future<Uint8List> generateOrderReceipt(
     Order order, {
     String shopName = 'SellerBook',
@@ -14,9 +51,14 @@ class PdfService {
     double taxRate = 0.0,
   }) async {
     final sym = currencySymbol ?? CurrencyFormatter.symbol;
-    final pdf = pw.Document();
-    final font = await PdfGoogleFonts.robotoRegular();
-    final boldFont = await PdfGoogleFonts.robotoBold();
+    final fonts = await _loadFonts();
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: fonts.base,
+        bold: fonts.bold,
+        fontFallback: fonts.fallback,
+      ),
+    );
 
     pdf.addPage(
       pw.Page(
@@ -41,16 +83,15 @@ class PdfService {
                       pw.Text(
                         shopName,
                         style: pw.TextStyle(
-                          font: boldFont,
+                          fontWeight: pw.FontWeight.bold,
                           fontSize: 20,
                           color: PdfColors.white,
                         ),
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
-                        'Receipt',
-                        style: pw.TextStyle(
-                          font: font,
+                        'Invoice',
+                        style: const pw.TextStyle(
                           fontSize: 12,
                           color: PdfColors.white,
                         ),
@@ -63,7 +104,7 @@ class PdfService {
                       pw.Text(
                         order.orderNumber,
                         style: pw.TextStyle(
-                          font: boldFont,
+                          fontWeight: pw.FontWeight.bold,
                           fontSize: 14,
                           color: PdfColors.white,
                         ),
@@ -71,8 +112,7 @@ class PdfService {
                       pw.SizedBox(height: 4),
                       pw.Text(
                         DateFormatter.format(order.createdAt),
-                        style: pw.TextStyle(
-                          font: font,
+                        style: const pw.TextStyle(
                           fontSize: 10,
                           color: PdfColors.white,
                         ),
@@ -97,7 +137,7 @@ class PdfService {
                   pw.Text(
                     'Bill To:',
                     style: pw.TextStyle(
-                      font: boldFont,
+                      fontWeight: pw.FontWeight.bold,
                       fontSize: 10,
                       color: PdfColors.grey600,
                     ),
@@ -107,12 +147,21 @@ class PdfService {
                     order.customerName.isNotEmpty
                         ? order.customerName
                         : 'Walk-in Customer',
-                    style: pw.TextStyle(font: boldFont, fontSize: 13),
+                    style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold, fontSize: 13),
                   ),
                   if (order.customerPhone.isNotEmpty)
                     pw.Text(
                       order.customerPhone,
-                      style: pw.TextStyle(font: font, fontSize: 11),
+                      style: const pw.TextStyle(fontSize: 11),
+                    ),
+                  if (order.deliveryAddress.isNotEmpty)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(top: 2),
+                      child: pw.Text(
+                        order.deliveryAddress,
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
                     ),
                 ],
               ),
@@ -122,7 +171,8 @@ class PdfService {
             // Items table
             pw.Text(
               'Order Items',
-              style: pw.TextStyle(font: boldFont, fontSize: 13),
+              style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold, fontSize: 13),
             ),
             pw.SizedBox(height: 8),
             pw.Table(
@@ -140,27 +190,23 @@ class PdfService {
                     color: PdfColors.grey200,
                   ),
                   children: [
-                    _tableCell('Item', boldFont, isHeader: true),
-                    _tableCell('Qty', boldFont, isHeader: true),
-                    _tableCell('Unit Price', boldFont, isHeader: true),
-                    _tableCell('Total', boldFont, isHeader: true),
+                    _tableCell('Item', isHeader: true),
+                    _tableCell('Qty', isHeader: true),
+                    _tableCell('Unit Price', isHeader: true),
+                    _tableCell('Total', isHeader: true),
                   ],
                 ),
                 // Item rows
                 ...order.items.map(
                   (item) => pw.TableRow(
                     children: [
-                      _tableCell(item.productName, font),
-                      _tableCell('${item.qty}', font),
+                      _tableCell(item.displayName),
+                      _tableCell('${item.qty}'),
                       _tableCell(
-                        CurrencyFormatter.format(item.unitPrice,
-                            symbol: sym),
-                        font,
+                        CurrencyFormatter.format(item.unitPrice, symbol: sym),
                       ),
                       _tableCell(
-                        CurrencyFormatter.format(item.totalPrice,
-                            symbol: sym),
-                        font,
+                        CurrencyFormatter.format(item.totalPrice, symbol: sym),
                       ),
                     ],
                   ),
@@ -177,26 +223,26 @@ class PdfService {
                 child: pw.Column(
                   children: [
                     _summaryRow('Subtotal',
-                        CurrencyFormatter.format(order.subtotal, symbol: sym), font, boldFont),
+                        CurrencyFormatter.format(order.subtotal, symbol: sym)),
                     if (order.discountAmount > 0)
                       _summaryRow('Discount',
-                          '- ${CurrencyFormatter.format(order.discountAmount, symbol: sym)}', font, boldFont),
+                          '- ${CurrencyFormatter.format(order.discountAmount, symbol: sym)}'),
                     if (order.deliveryFee > 0)
                       _summaryRow('Delivery Fee',
-                          CurrencyFormatter.format(order.deliveryFee, symbol: sym), font, boldFont),
+                          CurrencyFormatter.format(order.deliveryFee, symbol: sym)),
                     if (taxRate > 0 && order.taxAmount > 0)
                       _summaryRow('Tax ($taxRate%)',
-                          CurrencyFormatter.format(order.taxAmount, symbol: sym), font, boldFont),
+                          CurrencyFormatter.format(order.taxAmount, symbol: sym)),
                     pw.Divider(),
                     _summaryRow('Total',
-                        CurrencyFormatter.format(order.totalAmount, symbol: sym), boldFont, boldFont,
+                        CurrencyFormatter.format(order.totalAmount, symbol: sym),
                         isTotal: true),
                     _summaryRow('Paid',
-                        CurrencyFormatter.format(order.amountPaid, symbol: sym), font, boldFont),
+                        CurrencyFormatter.format(order.amountPaid, symbol: sym)),
                     if (order.balanceDue > 0)
                       _summaryRow('Balance Due',
-                          CurrencyFormatter.format(order.balanceDue, symbol: sym), boldFont, boldFont,
-                          isRed: true),
+                          CurrencyFormatter.format(order.balanceDue, symbol: sym),
+                          isTotal: true, isRed: true),
                   ],
                 ),
               ),
@@ -205,7 +251,8 @@ class PdfService {
 
             // Payment status badge
             pw.Container(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: pw.BoxDecoration(
                 color: order.paymentStatus == PaymentStatus.paid
                     ? PdfColor.fromHex('#4CAF50')
@@ -221,21 +268,46 @@ class PdfService {
                         ? 'PARTIALLY PAID'
                         : 'UNPAID',
                 style: pw.TextStyle(
-                  font: boldFont,
+                  fontWeight: pw.FontWeight.bold,
                   fontSize: 11,
                   color: PdfColors.white,
                 ),
               ),
             ),
+
+            if (order.notes.isNotEmpty) ...[
+              pw.SizedBox(height: 16),
+              pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey100,
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text('Notes',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 10,
+                          color: PdfColors.grey600,
+                        )),
+                    pw.SizedBox(height: 2),
+                    pw.Text(order.notes,
+                        style: const pw.TextStyle(fontSize: 10)),
+                  ],
+                ),
+              ),
+            ],
+
             pw.Spacer(),
 
             // Footer
             pw.Divider(),
             pw.Center(
               child: pw.Text(
-                'Thank you for your business! 🙏',
-                style: pw.TextStyle(
-                  font: font,
+                'Thank you for your business!',
+                style: const pw.TextStyle(
                   fontSize: 11,
                   color: PdfColors.grey600,
                 ),
@@ -249,13 +321,12 @@ class PdfService {
     return pdf.save();
   }
 
-  pw.Widget _tableCell(String text, pw.Font font, {bool isHeader = false}) {
+  pw.Widget _tableCell(String text, {bool isHeader = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: pw.Text(
         text,
         style: pw.TextStyle(
-          font: font,
           fontSize: isHeader ? 11 : 10,
           fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
         ),
@@ -263,8 +334,7 @@ class PdfService {
     );
   }
 
-  pw.Widget _summaryRow(
-      String label, String value, pw.Font labelFont, pw.Font valueFont,
+  pw.Widget _summaryRow(String label, String value,
       {bool isTotal = false, bool isRed = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 3),
@@ -273,13 +343,15 @@ class PdfService {
         children: [
           pw.Text(label,
               style: pw.TextStyle(
-                font: labelFont,
                 fontSize: isTotal ? 13 : 11,
+                fontWeight:
+                    isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
               )),
           pw.Text(value,
               style: pw.TextStyle(
-                font: valueFont,
                 fontSize: isTotal ? 13 : 11,
+                fontWeight:
+                    isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
                 color: isRed ? PdfColors.red : null,
               )),
         ],
@@ -299,7 +371,7 @@ class PdfService {
     sb.writeln('Products:');
     for (final item in order.items) {
       sb.writeln(
-          '• ${item.productName} x${item.qty} — ${CurrencyFormatter.format(item.totalPrice, symbol: waSym)}');
+          '• ${item.displayName} x${item.qty} — ${CurrencyFormatter.format(item.totalPrice, symbol: waSym)}');
     }
     sb.writeln();
     sb.writeln('Subtotal: ${CurrencyFormatter.format(order.subtotal, symbol: waSym)}');

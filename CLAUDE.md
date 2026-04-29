@@ -81,7 +81,7 @@ lib/
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
 │       ├── tutorial_service.dart    # SharedPreferences flags: splash_shown, tour_completed; resetAll()
 │       ├── update_service.dart      # In-app update via Play Store (immediate for critical, flexible for normal)
-│       └── pdf_service.dart         # Order receipt PDF (with tax line), WhatsApp text generation
+│       └── pdf_service.dart         # Order invoice PDF (with tax line), WhatsApp text generation. Unicode-safe: Noto Sans base + cached fallback chain (Bengali, Arabic, Urdu Nastaliq, Thai, Devanagari, zh-SC/TC, JP, KR, ColorEmoji) applied once via pw.ThemeData.withFont, so any user-typed script renders correctly without per-Text font overrides. Uses OrderItem.displayName so variant info appears in line items and WhatsApp text.
 ├── features/
 │   ├── categories/
 │   │   ├── presentation/category_screen.dart      # List + add/edit/delete dialogs
@@ -239,6 +239,14 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 - **Sticky footer:** Live subtotal/discount/tax/delivery/total summary + "Create Order" / "Update Order" button
 
+- **Post-creation invoice sheet:** After a *new* order is saved, an `AppBottomSheet` opens titled "Order created · {orderNumber}" with four tappable action tiles before the form pops:
+  - **Share PDF** — generates the invoice and opens the system share sheet
+  - **Download PDF** — saves to the user's chosen download directory (asked once, persisted in settings); snackbar with "Share" action confirms the path
+  - **Print** — opens the system print dialog via `Printing.layoutPdf`
+  - **Share via WhatsApp** — sends the formatted text version
+  - **Done** dismisses; the form then pops back to the order list
+  Edit-mode is unchanged (still pops directly).
+
 ## Key Business Flows
 
 ### Order Creation (transactional)
@@ -249,6 +257,7 @@ The order creation/edit screen is designed for fast, frictionless use:
 4. Tax amount is calculated from the per-order tax rate field and stored on the order
 5. If status == confirmed: deduct stock per item (**both base `stockQty` and variant `stockQty`**) + create StockMovement records
 6. If customerId > 0: update customer totalOrders, totalSpent, outstandingBalance
+7. `createOrder` returns `Future<int>` (the new order's Isar id) so the form can hand the saved order to the post-creation invoice sheet without a follow-up query
 
 ### Order Editing
 

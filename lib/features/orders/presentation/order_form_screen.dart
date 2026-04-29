@@ -1,19 +1,26 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/customer.dart';
 import '../providers/order_provider.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../settings/providers/settings_provider.dart';
 class OrderFormScreen extends ConsumerStatefulWidget {
   final Order? order;
@@ -321,16 +328,19 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           updatedAt: DateTime.now(),
         );
 
-        await notifier.createOrder(order);
+        final newId = await notifier.createOrder(order);
+        final saved = order.copyWith(id: newId);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppStrings.of(context).orderCreated),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
             ),
           );
-          context.pop();
+          await _showInvoiceActions(saved);
+          if (mounted) context.pop();
         }
       }
     } catch (e) {
@@ -345,6 +355,129 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  // ─── Post-creation invoice actions ───────────────────────────────────
+
+  Future<void> _showInvoiceActions(Order order) async {
+    final s = AppStrings.of(context);
+    final pdfService = PdfService();
+    final settings = ref.read(settingsProvider.notifier);
+    final shopName = settings.shopName;
+    final currencySymbol = settings.currencySymbol;
+    final taxRate = settings.taxRate;
+
+    Future<void> withProgress(Future<void> Function() task) async {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      try {
+        await task();
+      } finally {
+        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+
+    await AppBottomSheet.show<void>(
+      context,
+      title: '${s.orderCreated}  ·  ${order.orderNumber}',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _InvoiceActionTile(
+            icon: Icons.picture_as_pdf_rounded,
+            label: s.sharePdf,
+            color: Colors.teal,
+            onTap: () async {
+              await withProgress(() async {
+                final bytes = await pdfService.generateOrderReceipt(order,
+                    shopName: shopName,
+                    currencySymbol: currencySymbol,
+                    taxRate: taxRate);
+                final dir = await getTemporaryDirectory();
+                final file = File('${dir.path}/${order.orderNumber}.pdf');
+                await file.writeAsBytes(bytes);
+                await Share.shareXFiles([XFile(file.path)]);
+              });
+            },
+          ),
+          const SizedBox(height: 8),
+          _InvoiceActionTile(
+            icon: Icons.download_rounded,
+            label: s.downloadPdf,
+            color: Colors.blue,
+            onTap: () async {
+              final bytes = await pdfService.generateOrderReceipt(order,
+                  shopName: shopName,
+                  currencySymbol: currencySymbol,
+                  taxRate: taxRate);
+
+              var downloadDir = settings.downloadDirectory;
+              if (downloadDir.isEmpty) {
+                if (!mounted) return;
+                final picked = await FilePicker.platform.getDirectoryPath(
+                  dialogTitle: 'Choose download folder',
+                );
+                if (picked == null) return;
+                downloadDir = picked;
+                await ref
+                    .read(settingsProvider.notifier)
+                    .updateDownloadDirectory(downloadDir);
+              }
+
+              final file =
+                  File('$downloadDir/${order.orderNumber}_invoice.pdf');
+              await file.writeAsBytes(bytes);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${s.pdfSavedTo} $downloadDir'),
+                    backgroundColor: Colors.green,
+                    action: SnackBarAction(
+                      label: s.share,
+                      textColor: Colors.white,
+                      onPressed: () =>
+                          Share.shareXFiles([XFile(file.path)]),
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+          _InvoiceActionTile(
+            icon: Icons.print_rounded,
+            label: s.print,
+            color: Colors.indigo,
+            onTap: () async {
+              final bytes = await pdfService.generateOrderReceipt(order,
+                  shopName: shopName,
+                  currencySymbol: currencySymbol,
+                  taxRate: taxRate);
+              await Printing.layoutPdf(onLayout: (_) async => bytes);
+            },
+          ),
+          const SizedBox(height: 8),
+          _InvoiceActionTile(
+            icon: Icons.message_rounded,
+            label: s.shareViaWhatsApp,
+            color: Colors.green,
+            onTap: () async {
+              final text = pdfService.generateWhatsAppText(order,
+                  currencySymbol: currencySymbol);
+              await Share.share(text);
+            },
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s.done),
+          ),
+        ],
+      ),
+    );
   }
 
   // ─── Build ───────────────────────────────────────────────────────────
@@ -1752,6 +1885,62 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _InvoiceActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Future<void> Function() onTap;
+
+  const _InvoiceActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          await onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+            ],
+          ),
+        ),
       ),
     );
   }

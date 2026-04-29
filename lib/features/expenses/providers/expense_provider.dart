@@ -14,7 +14,7 @@ Stream<List<Expense>> expenses(Ref ref) async* {
       .watch(fireImmediately: true);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ExpenseNotifier extends _$ExpenseNotifier {
   @override
   FutureOr<void> build() {}

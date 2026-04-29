@@ -59,7 +59,7 @@ final class CustomerNotifierProvider
         argument: null,
         retry: null,
         name: r'customerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -72,7 +72,7 @@ final class CustomerNotifierProvider
   CustomerNotifier create() => CustomerNotifier();
 }
 
-String _$customerNotifierHash() => r'e1cfadba633c34cac3f8351653df47b3c99b66ca';
+String _$customerNotifierHash() => r'4694839c2194945c6cf0b82dacc2979752b4f62a';
 
 abstract class _$CustomerNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

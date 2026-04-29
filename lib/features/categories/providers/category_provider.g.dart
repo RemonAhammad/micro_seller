@@ -59,7 +59,7 @@ final class CategoryNotifierProvider
         argument: null,
         retry: null,
         name: r'categoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -72,7 +72,7 @@ final class CategoryNotifierProvider
   CategoryNotifier create() => CategoryNotifier();
 }
 
-String _$categoryNotifierHash() => r'806e3fb1d85262e83cfdc2c1b19912190ea47d1b';
+String _$categoryNotifierHash() => r'fd7cefc9cf6401a7afbcc6f9a25c56903875510b';
 
 abstract class _$CategoryNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

@@ -59,7 +59,7 @@ final class ExpenseNotifierProvider
         argument: null,
         retry: null,
         name: r'expenseProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -72,7 +72,7 @@ final class ExpenseNotifierProvider
   ExpenseNotifier create() => ExpenseNotifier();
 }
 
-String _$expenseNotifierHash() => r'251dd3d164876e95aecfe08ad728a33261868ecd';
+String _$expenseNotifierHash() => r'd85cab33042b89a92ab73f6a33d8539357d57e92';
 
 abstract class _$ExpenseNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

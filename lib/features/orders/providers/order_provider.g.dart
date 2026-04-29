@@ -137,7 +137,7 @@ final class OrderNotifierProvider
         argument: null,
         retry: null,
         name: r'orderProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -150,7 +150,7 @@ final class OrderNotifierProvider
   OrderNotifier create() => OrderNotifier();
 }
 
-String _$orderNotifierHash() => r'8c0f05a7a31e05ad975a5816b652915e57d56350';
+String _$orderNotifierHash() => r'fb226e3bee4355f0c119d34bf651a3c97b564efc';
 
 abstract class _$OrderNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

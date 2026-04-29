@@ -40,7 +40,7 @@ Stream<List<Order>> unpaidOrders(Ref ref) async* {
       .watch(fireImmediately: true);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class OrderNotifier extends _$OrderNotifier {
   @override
   FutureOr<void> build() {}
@@ -71,11 +71,12 @@ class OrderNotifier extends _$OrderNotifier {
     return 'ORD-$num';
   }
 
-  Future<void> createOrder(Order order) async {
-    state = await AsyncValue.guard(() async {
-      final isar = await ref.read(isarProvider.future);
+  Future<int> createOrder(Order order) async {
+    final isar = await ref.read(isarProvider.future);
+    int newId = 0;
+    try {
       await isar.writeTxn(() async {
-        await isar.orders.put(order);
+        newId = await isar.orders.put(order);
 
         // Deduct stock and create movements for confirmed orders
         if (order.orderStatus == OrderStatus.confirmed) {
@@ -114,7 +115,12 @@ class OrderNotifier extends _$OrderNotifier {
           }
         }
       });
-    });
+      state = const AsyncValue.data(null);
+      return newId;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
   }
 
   Future<void> updateOrder(Order order) async {

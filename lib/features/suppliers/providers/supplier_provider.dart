@@ -61,7 +61,7 @@ Stream<List<StockMovement>> supplierStockMovements(
       .watch(fireImmediately: true);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class SupplierNotifier extends _$SupplierNotifier {
   @override
   FutureOr<void> build() {}
