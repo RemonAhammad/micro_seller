@@ -294,15 +294,15 @@ final appRouter = GoRouter(
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-class _NavigationShell extends StatefulWidget {
+class _NavigationShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
   const _NavigationShell({required this.navigationShell});
 
   @override
-  State<_NavigationShell> createState() => _NavigationShellState();
+  ConsumerState<_NavigationShell> createState() => _NavigationShellState();
 }
 
-class _NavigationShellState extends State<_NavigationShell> {
+class _NavigationShellState extends ConsumerState<_NavigationShell> {
   // Showcase keys for sidebar items
   final GlobalKey _categoriesKey = GlobalKey();
   final GlobalKey _productsKey = GlobalKey();
@@ -364,23 +364,29 @@ class _NavigationShellState extends State<_NavigationShell> {
     final width = MediaQuery.sizeOf(context).width;
     final expanded = width >= 600;
 
+    // Watch settings so the Row swaps live when sidebar position changes.
+    ref.watch(settingsProvider);
+    final position = ref.read(settingsProvider.notifier).sidebarPosition;
+    final isRight = position == Settings.sidebarPositionRight;
+
+    final sidebar = _Sidebar(
+      expanded: expanded,
+      currentIndex: widget.navigationShell.currentIndex,
+      onNavigate: _navigate,
+      showcaseKeys: {
+        9: _categoriesKey,   // Categories
+        1: _productsKey,     // Products
+        2: _ordersKey,       // Orders
+        3: _returnsKey,      // Returns
+      },
+    );
+    final content = Expanded(child: widget.navigationShell);
+
     return Scaffold(
       body: SafeArea(
         child: Row(
-          children: [
-            _Sidebar(
-              expanded: expanded,
-              currentIndex: widget.navigationShell.currentIndex,
-              onNavigate: _navigate,
-              showcaseKeys: {
-                9: _categoriesKey,   // Categories
-                1: _productsKey,     // Products
-                2: _ordersKey,       // Orders
-                3: _returnsKey,      // Returns
-              },
-            ),
-            Expanded(child: widget.navigationShell),
-          ],
+          children:
+              isRight ? [content, sidebar] : [sidebar, content],
         ),
       ),
     );
@@ -423,7 +429,12 @@ class _Sidebar extends ConsumerWidget {
     // Watching the whole settings map keeps the sidebar live: any
     // updateSidebarOrder call rebuilds it.
     ref.watch(settingsProvider);
-    final order = ref.read(settingsProvider.notifier).sidebarOrder;
+    final notifier = ref.read(settingsProvider.notifier);
+    final order = notifier.sidebarOrder;
+    // Items the user has toggled off in Settings → Sidebar Order. Settings
+    // tab is force-included regardless (the provider already strips it).
+    final hidden = notifier.hiddenSidebarItems.toSet();
+    final visibleOrder = order.where((k) => !hidden.contains(k)).toList();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? colorScheme.surfaceContainerHigh : colorScheme.surfaceContainerLow;
@@ -440,7 +451,7 @@ class _Sidebar extends ConsumerWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  for (final key in order)
+                  for (final key in visibleOrder)
                     _tile(
                       context,
                       sidebarItemByKey(key),

@@ -155,7 +155,7 @@ lib/
 │   │   └── providers/cash_register_provider.dart   # openRegister, closeRegister, addCashIn, addCashOut
 │   └── settings/
 │       ├── presentation/settings_screen.dart       # Theme toggle, language picker, currency picker (38+ currencies), shop config, tax rate, local backup export/import, Drive backup, clear data
-│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language, downloadDirectory, sidebarOrder. Exposes `exportSettings()`/`importSettings(map)` so backup/restore round-trips preferences alongside the 9 Isar collections.
+│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language, downloadDirectory, sidebarOrder, sidebarPosition ('left' | 'right'), hiddenSidebarItems (list of keys the user toggled off). Exposes `exportSettings()`/`importSettings(map)` so backup/restore round-trips preferences alongside the 9 Isar collections. `toggleSidebarItemHidden('settings', _)` is a no-op — the Settings tab is force-visible to prevent soft-lockout.
 └── shared/
     ├── screens/qr_scanner_screen.dart
     └── widgets/
@@ -355,7 +355,7 @@ Products support **multi-attribute variant combinations**:
 - Exports **all 9 collections** as timestamped JSON to Drive appDataFolder (uses `LocalBackupService.encodeAll`)
 - Keeps max 5 backups, cleans up old ones (cleanup failure doesn't break upload)
 - **Safe restore:** creates local safety backup before clearing → if import fails, rolls back to safety backup
-- **Settings round-trip:** backup payload includes a `settings` field built from `Settings.exportSettings()` (theme, currency, sidebar order, shop name, etc.). Restore re-applies via `Settings.importSettings(map)`. v2 backups (collections only) still restore correctly — `settings` is optional on decode.
+- **Settings round-trip:** backup payload includes a `settings` field built from `Settings.exportSettings()` (theme, currency, sidebar order/position/hidden items, shop name, etc.). Restore re-applies via `Settings.importSettings(map)`. v2 backups (collections only) still restore correctly — `settings` is optional on decode.
 - Validates backup structure (`version`, `timestamp`) before touching local data
 - **Typed errors:** `DriveBackupException` with `DriveErrorCode` (`notSignedIn`, `signInFailed`, `developerError` for ApiException 10, `network`, `invalidBackup`, `uploadFailed`, `downloadFailed`, `restoreFailed`, `rolledBack`). UI switches on the code instead of substring-matching messages.
 - **Logging:** every failure logs the error + stack via `dart:developer` and `debugPrintStack` in debug builds.
@@ -501,6 +501,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 - **Shop name as primary brand:** `Settings.shopName` (default "My Shop") replaces `AppStrings.appName` in three live-rendering surfaces — `MaterialApp.title` (OS task switcher), Splash Screen hero text, Dashboard SliverAppBar title — each falls back to "Micro Seller" if the shop name is empty. The PDF invoice watermark intentionally stays as "Powered by Micro Seller" (brand attribution, not the user's shop).
 - **Language:** 12 languages with in-app language switcher (English, Bengali, Arabic, Spanish, French, Portuguese, Turkish, Indonesian, Thai, Vietnamese, Urdu, Malay)
 - **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons. Wrapped in SafeArea.
+- **Sidebar customization** (Settings → Sidebar Order screen): drag-reorder tabs, per-tab visibility toggle (`CupertinoSwitch`), and **left/right position** segmented control on the main Settings screen. The position swap is a `Row.children` reorder in `_NavigationShell` — not two separate layouts. `Settings.toggleSidebarItemHidden('settings', _)` is a hard no-op and the Settings switch is rendered disabled, so the user can never lock themselves out. All three knobs (`sidebarOrder`, `hiddenSidebarItems`, `sidebarPosition`) are part of the backup payload via `exportSettings()` / `importSettings(map)`.
 - **Responsive layouts throughout**:
   - Dashboard: stat cards via `Wrap` + `LayoutBuilder` (2-6 cols based on `width/170`); charts side-by-side on wide screens; date-range filter bar
   - Product grid: responsive columns via `LayoutBuilder` (`width/180`, clamp 2-6)

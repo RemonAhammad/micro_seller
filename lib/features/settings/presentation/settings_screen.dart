@@ -93,34 +93,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _isBackingUp = true);
     try {
       final isar = await ref.read(isarProvider.future);
-      final settingsSnapshot =
-          ref.read(settingsProvider.notifier).exportSettings();
+      final settingsSnapshot = ref.read(settingsProvider.notifier).exportSettings();
       await _driveService.backupToDrive(isar, settings: settingsSnapshot);
       ref.read(settingsProvider.notifier).updateLastBackupTime(DateTime.now());
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(AppStrings.of(context).backupSuccess),
-              backgroundColor: Colors.green),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).backupSuccess), backgroundColor: Colors.green));
       }
     } on DriveBackupException catch (e, st) {
       _logFailure('backup', e, st);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_driveErrorMessage(e)),
-              backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_driveErrorMessage(e)), backgroundColor: Colors.red));
       }
     } catch (e, st) {
       _logFailure('backup.unexpected', e, st);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Backup failed: $e'),
-              backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Backup failed: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isBackingUp = false);
@@ -134,17 +127,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
 
       if (backups.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).tr('noBackupsFound'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).tr('noBackupsFound'))));
         return;
       }
 
       final selected = await showModalBottomSheet<DriveBackupInfo>(
         context: context,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (ctx) => _BackupPickerSheet(backups: backups),
       );
 
@@ -166,34 +157,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         isar,
         selected.fileId,
         currentSettings: ref.read(settingsProvider.notifier).exportSettings(),
-        onSettingsRestored: (map) =>
-            ref.read(settingsProvider.notifier).importSettings(map),
+        onSettingsRestored: (map) => ref.read(settingsProvider.notifier).importSettings(map),
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(AppStrings.of(context).restoreSuccess),
-              backgroundColor: Colors.green),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).restoreSuccess), backgroundColor: Colors.green));
       }
     } on DriveBackupException catch (e, st) {
       _logFailure('restore', e, st);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_driveErrorMessage(e)),
-              backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_driveErrorMessage(e)), backgroundColor: Colors.red));
       }
     } catch (e, st) {
       _logFailure('restore.unexpected', e, st);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Restore failed: $e'),
-              backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Restore failed: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
@@ -225,9 +209,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).allDataCleared)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).allDataCleared)));
     }
   }
 
@@ -238,9 +220,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s.settings),
-      ),
+      appBar: AppBar(title: Text(s.settings)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -254,431 +234,483 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Language
           _SectionHeader(s.language),
-          _SettingsCard(children: [
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.language_rounded, color: AppColors.primary, size: 20),
-              ),
-              title: Text(s.language),
-              subtitle: Text(
-                AppLocalizations.languageNames[ref.read(settingsProvider.notifier).language] ?? 'English',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-              onTap: () async {
-                final currentLang = ref.read(settingsProvider.notifier).language;
-                final selected = await showModalBottomSheet<String>(
-                  context: context,
-                  isScrollControlled: true,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  builder: (_) => _LanguagePickerSheet(currentCode: currentLang),
-                );
-                if (selected != null) {
-                  ref.read(settingsProvider.notifier).updateLanguage(selected);
-                  setState(() {});
-                }
-              },
-            ),
-          ]),
+                  child: const Icon(Icons.language_rounded, color: AppColors.primary, size: 20),
+                ),
+                title: Text(s.language),
+                subtitle: Text(
+                  AppLocalizations.languageNames[ref.read(settingsProvider.notifier).language] ?? 'English',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                onTap: () async {
+                  final currentLang = ref.read(settingsProvider.notifier).language;
+                  final selected = await showModalBottomSheet<String>(
+                    context: context,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                    builder: (_) => _LanguagePickerSheet(currentCode: currentLang),
+                  );
+                  if (selected != null) {
+                    ref.read(settingsProvider.notifier).updateLanguage(selected);
+                    setState(() {});
+                  }
+                },
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Sidebar customization
-          _SettingsCard(children: [
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.view_sidebar_rounded, color: AppColors.primary, size: 20),
                 ),
-                child: const Icon(Icons.view_sidebar_rounded,
-                    color: AppColors.primary, size: 20),
-              ),
-              title: Text(s.sidebarOrder),
-              subtitle: Text(
-                s.sidebarOrderDesc,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                title: Text(s.sidebarOrder),
+                subtitle: Text(
+                  s.sidebarOrderDesc,
+                  style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.6)),
                 ),
+                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                onTap: () => context.push('/settings/sidebar-order'),
               ),
-              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-              onTap: () => context.push('/settings/sidebar-order'),
-            ),
-          ]),
+              const Divider(height: 1, indent: 56),
+              Builder(
+                builder: (_) {
+                  final currentPos = ref.read(settingsProvider.notifier).sidebarPosition;
+                  final isLeft = currentPos == Settings.sidebarPositionLeft;
+                  return ListTile(
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary, size: 20),
+                    ),
+                    title: Text(s.sidebarPosition),
+                    trailing: _SidebarPositionToggle(
+                      isLeft: isLeft,
+                      onChanged: (toLeft) async {
+                        if (toLeft == isLeft) return;
+                        await ref
+                            .read(settingsProvider.notifier)
+                            .updateSidebarPosition(
+                              toLeft ? Settings.sidebarPositionLeft : Settings.sidebarPositionRight,
+                            );
+                        setState(() {});
+                      },
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Shop
           _SectionHeader(s.shop),
-          _SettingsCard(children: [
-            _EditableTile(
-              icon: Icons.store_rounded,
-              label: s.shopName,
-              value: ref.read(settingsProvider.notifier).shopName,
-              onEdit: (val) => ref.read(settingsProvider.notifier).updateShopName(val),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          _SettingsCard(
+            children: [
+              _EditableTile(
+                icon: Icons.store_rounded,
+                label: s.shopName,
+                value: ref.read(settingsProvider.notifier).shopName,
+                onEdit: (val) => ref.read(settingsProvider.notifier).updateShopName(val),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.attach_money_rounded, color: AppColors.primary, size: 20),
                 ),
-                child: const Icon(Icons.attach_money_rounded, color: AppColors.primary, size: 20),
+                title: Text(s.currencySymbol),
+                subtitle: Text(
+                  ref.read(settingsProvider.notifier).currencySymbol,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                onTap: () async {
+                  final selected = await showModalBottomSheet<String>(
+                    context: context,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                    builder: (_) =>
+                        _CurrencyPickerSheet(currentSymbol: ref.read(settingsProvider.notifier).currencySymbol),
+                  );
+                  if (selected != null) {
+                    ref.read(settingsProvider.notifier).updateCurrencySymbol(selected);
+                    setState(() {});
+                  }
+                },
               ),
-              title: Text(s.currencySymbol),
-              subtitle: Text(
-                ref.read(settingsProvider.notifier).currencySymbol,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              const Divider(height: 1),
+              _EditableTile(
+                icon: Icons.inventory_2_rounded,
+                label: s.defaultLowStockThreshold,
+                value: ref.read(settingsProvider.notifier).lowStockThreshold.toString(),
+                onEdit: (val) {
+                  final n = int.tryParse(val);
+                  if (n != null) {
+                    ref.read(settingsProvider.notifier).updateLowStockThreshold(n);
+                  }
+                },
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
-              trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-              onTap: () async {
-                final selected = await showModalBottomSheet<String>(
-                  context: context,
-                  isScrollControlled: true,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                  ),
-                  builder: (_) => _CurrencyPickerSheet(
-                    currentSymbol: ref.read(settingsProvider.notifier).currencySymbol,
-                  ),
-                );
-                if (selected != null) {
-                  ref.read(settingsProvider.notifier).updateCurrencySymbol(selected);
-                  setState(() {});
-                }
-              },
-            ),
-            const Divider(height: 1),
-            _EditableTile(
-              icon: Icons.inventory_2_rounded,
-              label: s.defaultLowStockThreshold,
-              value: ref.read(settingsProvider.notifier).lowStockThreshold.toString(),
-              onEdit: (val) {
-                final n = int.tryParse(val);
-                if (n != null) {
-                  ref.read(settingsProvider.notifier).updateLowStockThreshold(n);
-                }
-              },
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            ),
-            const Divider(height: 1),
-            _EditableTile(
-              icon: Icons.percent_rounded,
-              label: s.taxRate,
-              value: ref.read(settingsProvider.notifier).taxRate.toString(),
-              onEdit: (val) {
-                final rate = double.tryParse(val);
-                if (rate != null) {
-                  ref.read(settingsProvider.notifier).updateTaxRate(rate);
-                }
-              },
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-              ],
-            ),
-          ]),
+              const Divider(height: 1),
+              _EditableTile(
+                icon: Icons.percent_rounded,
+                label: s.taxRate,
+                value: ref.read(settingsProvider.notifier).taxRate.toString(),
+                onEdit: (val) {
+                  final rate = double.tryParse(val);
+                  if (rate != null) {
+                    ref.read(settingsProvider.notifier).updateTaxRate(rate);
+                  }
+                },
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Downloads
           _SectionHeader(s.downloads),
-          _SettingsCard(children: [
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.folder_rounded, color: AppColors.primary, size: 20),
                 ),
-                child: const Icon(Icons.folder_rounded, color: AppColors.primary, size: 20),
-              ),
-              title: Text(s.pdfDownloadFolder),
-              subtitle: Text(
-                ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
-                    ? s.tr('notSetWillAsk')
-                    : ref.read(settingsProvider.notifier).downloadDirectory,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
-                      ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
-                      : null,
+                title: Text(s.pdfDownloadFolder),
+                subtitle: Text(
+                  ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
+                      ? s.tr('notSetWillAsk')
+                      : ref.read(settingsProvider.notifier).downloadDirectory,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
+                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                        : null,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                trailing: const Icon(Icons.edit_rounded, size: 18),
+                onTap: () async {
+                  final dir = await FilePicker.platform.getDirectoryPath();
+                  if (dir != null) {
+                    ref.read(settingsProvider.notifier).updateDownloadDirectory(dir);
+                    setState(() {});
+                  }
+                },
               ),
-              trailing: const Icon(Icons.edit_rounded, size: 18),
-              onTap: () async {
-                final dir = await FilePicker.platform.getDirectoryPath();
-                if (dir != null) {
-                  ref.read(settingsProvider.notifier).updateDownloadDirectory(dir);
-                  setState(() {});
-                }
-              },
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Local Backup
           _SectionHeader(s.localBackup),
-          _SettingsCard(children: [
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _isLocalExporting
+                      ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.upload_file_rounded, color: Colors.blue, size: 20),
                 ),
-                child: _isLocalExporting
-                    ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.upload_file_rounded, color: Colors.blue, size: 20),
+                title: Text(s.exportBackup),
+                subtitle: Text(s.exportBackupDesc, style: TextStyle(fontSize: 12)),
+                onTap: _isLocalExporting
+                    ? null
+                    : () async {
+                        setState(() => _isLocalExporting = true);
+                        try {
+                          final isar = await ref.read(isarProvider.future);
+                          final settingsSnapshot = ref.read(settingsProvider.notifier).exportSettings();
+                          await _localBackupService.exportBackup(isar, settings: settingsSnapshot);
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${s.tr("exportFailed")}: $e'), backgroundColor: Colors.red),
+                            );
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() => _isLocalExporting = false);
+                          }
+                        }
+                      },
               ),
-              title: Text(s.exportBackup),
-              subtitle: Text(
-                s.exportBackupDesc,
-                style: TextStyle(fontSize: 12),
-              ),
-              onTap: _isLocalExporting
-                  ? null
-                  : () async {
-                      setState(() => _isLocalExporting = true);
-                      try {
-                        final isar = await ref.read(isarProvider.future);
-                        final settingsSnapshot = ref
-                            .read(settingsProvider.notifier)
-                            .exportSettings();
-                        await _localBackupService.exportBackup(
-                          isar,
-                          settings: settingsSnapshot,
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _isLocalImporting
+                      ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.download_rounded, color: Colors.orange, size: 20),
+                ),
+                title: Text(s.importBackup),
+                subtitle: Text(s.importBackupDesc, style: const TextStyle(fontSize: 12)),
+                onTap: _isLocalImporting
+                    ? null
+                    : () async {
+                        final ok = await ConfirmDialog.show(
+                          context,
+                          title: s.importBackup,
+                          message: s.importBackupConfirm,
+                          confirmText: s.importBackup,
+                          isDestructive: true,
+                          icon: Icons.warning_rounded,
                         );
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${s.tr("exportFailed")}: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                        if (ok != true) return;
+                        setState(() => _isLocalImporting = true);
+                        try {
+                          final isar = await ref.read(isarProvider.future);
+                          final restoredSettings = await _localBackupService.importBackup(isar);
+                          // null = user cancelled the picker; non-null map (even
+                          // empty) = backup was decoded successfully.
+                          final success = restoredSettings != null;
+                          if (success) {
+                            await ref.read(settingsProvider.notifier).importSettings(restoredSettings);
+                          }
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(success ? s.tr('dataRestoredSuccess') : s.tr('noFileSelected')),
+                                backgroundColor: success ? Colors.green : null,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${s.tr("importFailed")}: $e'), backgroundColor: Colors.red),
+                            );
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() => _isLocalImporting = false);
+                          }
                         }
-                      } finally {
-                        if (mounted) {
-                          setState(() => _isLocalExporting = false);
-                        }
-                      }
-                    },
-            ),
-            const Divider(height: 1, indent: 56),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: _isLocalImporting
-                    ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.download_rounded, color: Colors.orange, size: 20),
+                      },
               ),
-              title: Text(s.importBackup),
-              subtitle: Text(
-                s.importBackupDesc,
-                style: const TextStyle(fontSize: 12),
-              ),
-              onTap: _isLocalImporting
-                  ? null
-                  : () async {
-                      final ok = await ConfirmDialog.show(
-                        context,
-                        title: s.importBackup,
-                        message: s.importBackupConfirm,
-                        confirmText: s.importBackup,
-                        isDestructive: true,
-                        icon: Icons.warning_rounded,
-                      );
-                      if (ok != true) return;
-                      setState(() => _isLocalImporting = true);
-                      try {
-                        final isar = await ref.read(isarProvider.future);
-                        final restoredSettings =
-                            await _localBackupService.importBackup(isar);
-                        // null = user cancelled the picker; non-null map (even
-                        // empty) = backup was decoded successfully.
-                        final success = restoredSettings != null;
-                        if (success) {
-                          await ref
-                              .read(settingsProvider.notifier)
-                              .importSettings(restoredSettings);
-                        }
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(success
-                                  ? s.tr('dataRestoredSuccess')
-                                  : s.tr('noFileSelected')),
-                              backgroundColor: success ? Colors.green : null,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${s.tr("importFailed")}: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      } finally {
-                        if (mounted) {
-                          setState(() => _isLocalImporting = false);
-                        }
-                      }
-                    },
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Google Drive
           _SectionHeader(s.googleDriveBackup),
-          _SettingsCard(children: [
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.account_circle_rounded, color: AppColors.primary),
                 ),
-                child: const Icon(Icons.account_circle_rounded, color: AppColors.primary),
-              ),
-              title: Text(s.googleAccount),
-              subtitle: Text(
-                _googleAccountEmail ?? s.signIn,
-                style: TextStyle(
-                  color: _googleAccountEmail != null ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.5),
+                title: Text(s.googleAccount),
+                subtitle: Text(
+                  _googleAccountEmail ?? s.signIn,
+                  style: TextStyle(
+                    color: _googleAccountEmail != null
+                        ? AppColors.primary
+                        : theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ),
+                trailing: TextButton(
+                  onPressed: () async {
+                    if (_googleAccountEmail != null) {
+                      await _driveService.signOut();
+                      setState(() => _googleAccountEmail = null);
+                    } else {
+                      final account = await _driveService.signIn();
+                      setState(() => _googleAccountEmail = account?.email);
+                    }
+                  },
+                  child: Text(_googleAccountEmail != null ? s.signOut : s.signIn),
                 ),
               ),
-              trailing: TextButton(
-                onPressed: () async {
-                  if (_googleAccountEmail != null) {
-                    await _driveService.signOut();
-                    setState(() => _googleAccountEmail = null);
-                  } else {
-                    final account = await _driveService.signIn();
-                    setState(() => _googleAccountEmail = account?.email);
-                  }
-                },
-                child: Text(_googleAccountEmail != null ? s.signOut : s.signIn),
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _isBackingUp
+                      ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.cloud_upload_rounded, color: Colors.blue),
                 ),
-                child: _isBackingUp
-                    ? const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                title: Text(s.backupToDrive),
+                subtitle: ref.read(settingsProvider.notifier).lastBackupTime != null
+                    ? Text(
+                        '${s.lastBackup}: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}',
                       )
-                    : const Icon(Icons.cloud_upload_rounded, color: Colors.blue),
+                    : null,
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: _isBackingUp ? null : _backup,
               ),
-              title: Text(s.backupToDrive),
-              subtitle: ref.read(settingsProvider.notifier).lastBackupTime != null
-                  ? Text('${s.lastBackup}: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}')
-                  : null,
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: _isBackingUp ? null : _backup,
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _isRestoring
+                      ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.cloud_download_rounded, color: Colors.green),
                 ),
-                child: _isRestoring
-                    ? const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.cloud_download_rounded, color: Colors.green),
+                title: Text(s.restoreFromDrive),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: _isRestoring ? null : _restore,
               ),
-              title: Text(s.restoreFromDrive),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: _isRestoring ? null : _restore,
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // About
           _SectionHeader(s.tr('about')),
-          _SettingsCard(children: [
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
                 ),
-                child: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
-              ),
-              title: Text(s.appVersion),
-              trailing: Text(
-                '1.0.0',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                title: Text(s.appVersion),
+                trailing: Text(
+                  '1.0.0',
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5)),
                 ),
               ),
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Danger zone
           _SectionHeader(s.dangerZone),
-          _SettingsCard(children: [
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.delete_forever_rounded, color: Colors.red),
                 ),
-                child: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+                title: Text(s.clearAllData, style: const TextStyle(color: Colors.red)),
+                onTap: _clearData,
+                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.red),
               ),
-              title: Text(
-                s.clearAllData,
-                style: const TextStyle(color: Colors.red),
-              ),
-              onTap: _clearData,
-              trailing: const Icon(Icons.chevron_right_rounded, color: Colors.red),
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+}
+
+/// Compact two-icon segmented toggle for picking sidebar Left vs Right.
+/// Each side is a 36×32 rounded square; the active one fills with the
+/// primary colour, the other ghosts to onSurface-medium. Tapping the
+/// inactive side flips. Designed to fit in a `ListTile.trailing` without
+/// pushing the title onto a second line.
+class _SidebarPositionToggle extends StatelessWidget {
+  final bool isLeft;
+  final ValueChanged<bool> onChanged;
+
+  const _SidebarPositionToggle({required this.isLeft, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _segment(cs, icon: Icons.align_horizontal_left_rounded, active: isLeft, onTap: () => onChanged(true)),
+          _segment(cs, icon: Icons.align_horizontal_right_rounded, active: !isLeft, onTap: () => onChanged(false)),
+        ],
+      ),
+    );
+  }
+
+  Widget _segment(ColorScheme cs, {required IconData icon, required bool active, required VoidCallback onTap}) {
+    return Material(
+      color: active ? cs.primary : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 36,
+          height: 30,
+          child: Icon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
+        ),
       ),
     );
   }
@@ -717,12 +749,7 @@ class _SettingsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)],
       ),
       child: Column(children: children),
     );
@@ -754,10 +781,7 @@ class _EditableTile extends StatelessWidget {
       leading: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: AppColors.primary, size: 20),
       ),
       title: Text(label),
@@ -799,10 +823,7 @@ class _ThemeModeSelector extends StatelessWidget {
   final String currentMode;
   final ValueChanged<String> onChanged;
 
-  const _ThemeModeSelector({
-    required this.currentMode,
-    required this.onChanged,
-  });
+  const _ThemeModeSelector({required this.currentMode, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -885,15 +906,14 @@ class _BackupPickerSheet extends StatelessWidget {
           width: 40,
           height: 4,
           margin: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(2),
-          ),
+          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Text(AppStrings.of(context).selectBackupToRestore,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          child: Text(
+            AppStrings.of(context).selectBackupToRestore,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
         ),
         ListView.builder(
           shrinkWrap: true,
@@ -984,11 +1004,13 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
     final filtered = _query.isEmpty
         ? _currencies
         : _currencies
-            .where((c) =>
-                c.name.toLowerCase().contains(_query) ||
-                c.code.toLowerCase().contains(_query) ||
-                c.symbol.contains(_query))
-            .toList();
+              .where(
+                (c) =>
+                    c.name.toLowerCase().contains(_query) ||
+                    c.code.toLowerCase().contains(_query) ||
+                    c.symbol.contains(_query),
+              )
+              .toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -1001,14 +1023,14 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
             width: 36,
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: cs.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
+            decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(AppStrings.of(context).selectCurrency, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+            child: Text(
+              AppStrings.of(context).selectCurrency,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -1064,17 +1086,15 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                       ),
                     ),
                   ),
-                  title: Text(c.name,
-                      style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        fontSize: 14,
-                        color: isSelected ? cs.primary : null,
-                      )),
-                  subtitle: Text(c.code,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: cs.onSurface.withValues(alpha: 0.5),
-                      )),
+                  title: Text(
+                    c.name,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      fontSize: 14,
+                      color: isSelected ? cs.primary : null,
+                    ),
+                  ),
+                  subtitle: Text(c.code, style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5))),
                   trailing: isSelected ? Icon(Icons.check_circle, color: cs.primary, size: 20) : null,
                   dense: true,
                 );
@@ -1111,16 +1131,14 @@ class _LanguagePickerSheet extends StatelessWidget {
             width: 36,
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: cs.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
+            decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(AppStrings.of(context).selectLanguage,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            child: Text(
+              AppStrings.of(context).selectLanguage,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -1128,8 +1146,7 @@ class _LanguagePickerSheet extends StatelessWidget {
               controller: ctrl,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: languages.length,
-              separatorBuilder: (_, __) =>
-                  Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
+              separatorBuilder: (_, __) => Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
               itemBuilder: (_, i) {
                 final entry = languages[i];
                 final isSelected = entry.key == currentCode;
@@ -1140,9 +1157,7 @@ class _LanguagePickerSheet extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? cs.primary.withValues(alpha: 0.15)
-                          : cs.onSurface.withValues(alpha: 0.06),
+                      color: isSelected ? cs.primary.withValues(alpha: 0.15) : cs.onSurface.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
@@ -1156,16 +1171,15 @@ class _LanguagePickerSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-                  title: Text(entry.value,
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w400,
-                        fontSize: 15,
-                        color: isSelected ? cs.primary : null,
-                      )),
-                  trailing: isSelected
-                      ? Icon(Icons.check_circle, color: cs.primary, size: 20)
-                      : null,
+                  title: Text(
+                    entry.value,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      fontSize: 15,
+                      color: isSelected ? cs.primary : null,
+                    ),
+                  ),
+                  trailing: isSelected ? Icon(Icons.check_circle, color: cs.primary, size: 20) : null,
                   dense: true,
                 );
               },

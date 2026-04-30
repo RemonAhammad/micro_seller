@@ -435,4 +435,7 @@ const translationsEn = <String, String>{
   'sidebarOrder': 'Sidebar Order',
   'sidebarOrderDesc': 'Drag to rearrange the sidebar tabs',
   'resetToDefault': 'Reset to Default',
+  'sidebarPosition': 'Sidebar Position',
+  'left': 'Left',
+  'right': 'Right',
 };

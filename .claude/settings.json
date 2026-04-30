@@ -5,7 +5,8 @@
       "Read(//Users/remon/Library/Android/sdk/build-tools/**)",
       "Bash(~/Library/Android/sdk/build-tools/35.0.0/apksigner verify:*)",
       "Bash(rg -n \"^@riverpod\\\\s*$\" lib/features --glob \"*.dart\" --glob \"!*.g.dart\")",
-      "Bash(find ~/.pub-cache/hosted/pub.dev/printing-* -name \"*.dart\" -path \"*/src/*\")"
+      "Bash(find ~/.pub-cache/hosted/pub.dev/printing-* -name \"*.dart\" -path \"*/src/*\")",
+      "Bash(rg -n \"_Sidebar\\\\\\(|Row\\\\\\(\\\\s*$|children: \\\\[\\\\s*$\" lib/core/router/app_router.dart)"
     ]
   }
 }

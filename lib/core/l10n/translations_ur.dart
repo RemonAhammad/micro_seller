@@ -427,4 +427,7 @@ const translationsUr = <String, String>{
   'sidebarOrder': 'سائڈبار کی ترتیب',
   'sidebarOrderDesc': 'سائڈبار ٹیبز کو دوبارہ ترتیب دینے کے لیے گھسیٹیں',
   'resetToDefault': 'پہلے سے طے شدہ پر ری سیٹ کریں',
+  'sidebarPosition': 'سائڈبار کی پوزیشن',
+  'left': 'بائیں',
+  'right': 'دائیں',
 };

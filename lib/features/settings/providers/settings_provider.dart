@@ -17,6 +17,12 @@ class Settings extends _$Settings {
   static const _keyLanguage = 'language';
   static const _keyDownloadDir = 'downloadDirectory';
   static const _keySidebarOrder = 'sidebarOrder';
+  static const _keySidebarPosition = 'sidebarPosition';
+  static const _keyHiddenSidebarItems = 'hiddenSidebarItems';
+
+  /// 'left' (default) or 'right'.
+  static const sidebarPositionLeft = 'left';
+  static const sidebarPositionRight = 'right';
 
   @override
   Map<String, dynamic> build() {
@@ -31,6 +37,8 @@ class Settings extends _$Settings {
       'language': 'en',
       'downloadDirectory': '',
       'sidebarOrder': List<String>.from(defaultSidebarOrder),
+      'sidebarPosition': sidebarPositionLeft,
+      'hiddenSidebarItems': const <String>[],
     };
   }
 
@@ -53,6 +61,25 @@ class Settings extends _$Settings {
       }
     }
 
+    // Hidden sidebar items: JSON-encoded list of keys. The user can never
+    // hide the Settings tab — that would be a soft-lockout — so we always
+    // strip it from the hidden list before storing or returning.
+    final hiddenRaw = prefs.getString(_keyHiddenSidebarItems);
+    List<String> hidden = const [];
+    if (hiddenRaw != null && hiddenRaw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(hiddenRaw);
+        if (decoded is List) {
+          hidden = decoded
+              .map((e) => e.toString())
+              .where((k) => k != 'settings')
+              .toList();
+        }
+      } catch (_) {/* fall back to empty */}
+    }
+
+    final position = prefs.getString(_keySidebarPosition);
+
     state = {
       'shopName': prefs.getString(_keyShopName) ?? 'My Shop',
       'currencySymbol': currency,
@@ -64,6 +91,10 @@ class Settings extends _$Settings {
       'language': prefs.getString(_keyLanguage) ?? 'en',
       'downloadDirectory': prefs.getString(_keyDownloadDir) ?? '',
       'sidebarOrder': order,
+      'sidebarPosition': position == sidebarPositionRight
+          ? sidebarPositionRight
+          : sidebarPositionLeft,
+      'hiddenSidebarItems': hidden,
     };
   }
 
@@ -115,6 +146,34 @@ class Settings extends _$Settings {
     await updateSidebarOrder(List<String>.from(defaultSidebarOrder));
   }
 
+  Future<void> updateSidebarPosition(String position) async {
+    final normalised = position == sidebarPositionRight
+        ? sidebarPositionRight
+        : sidebarPositionLeft;
+    state = {...state, 'sidebarPosition': normalised};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySidebarPosition, normalised);
+  }
+
+  /// Toggle whether [key] is hidden from the sidebar. Settings tab is always
+  /// visible (calling this with 'settings' is a no-op) so the user can never
+  /// lock themselves out of the configuration UI.
+  Future<void> toggleSidebarItemHidden(String key, bool hidden) async {
+    if (key == 'settings') return;
+    final current = List<String>.from(state['hiddenSidebarItems'] as List? ?? const []);
+    final next = current.toSet();
+    if (hidden) {
+      next.add(key);
+    } else {
+      next.remove(key);
+    }
+    next.remove('settings');
+    final list = next.toList();
+    state = {...state, 'hiddenSidebarItems': list};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyHiddenSidebarItems, jsonEncode(list));
+  }
+
   String get shopName => state['shopName'] as String? ?? 'My Shop';
   String get currencySymbol => state['currencySymbol'] as String? ?? '\$';
   int get lowStockThreshold => state['lowStockThreshold'] as int? ?? 10;
@@ -124,6 +183,10 @@ class Settings extends _$Settings {
   String get language => state['language'] as String? ?? 'en';
   List<String> get sidebarOrder =>
       List<String>.from(state['sidebarOrder'] as List? ?? defaultSidebarOrder);
+  String get sidebarPosition =>
+      state['sidebarPosition'] as String? ?? sidebarPositionLeft;
+  List<String> get hiddenSidebarItems =>
+      List<String>.from(state['hiddenSidebarItems'] as List? ?? const []);
 
   Future<void> updateLanguage(String lang) async {
     state = {...state, 'language': lang};
@@ -153,6 +216,8 @@ class Settings extends _$Settings {
       'language': language,
       'downloadDirectory': downloadDirectory,
       'sidebarOrder': sidebarOrder,
+      'sidebarPosition': sidebarPosition,
+      'hiddenSidebarItems': hiddenSidebarItems,
     };
   }
 
@@ -191,6 +256,24 @@ class Settings extends _$Settings {
     final order = data['sidebarOrder'];
     if (order is List) {
       await updateSidebarOrder(order.map((e) => e.toString()).toList());
+    }
+    final position = data['sidebarPosition'];
+    if (position is String &&
+        (position == sidebarPositionLeft || position == sidebarPositionRight)) {
+      await updateSidebarPosition(position);
+    }
+    final hidden = data['hiddenSidebarItems'];
+    if (hidden is List) {
+      // Reset & re-apply: clear current hidden set, then add each key from
+      // backup. toggleSidebarItemHidden auto-strips 'settings'.
+      final current = hiddenSidebarItems.toSet();
+      for (final k in current) {
+        await toggleSidebarItemHidden(k, false);
+      }
+      for (final raw in hidden) {
+        final k = raw.toString();
+        if (k.isNotEmpty) await toggleSidebarItemHidden(k, true);
+      }
     }
   }
 }

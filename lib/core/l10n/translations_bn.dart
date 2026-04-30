@@ -427,4 +427,7 @@ const translationsBn = <String, String>{
   'sidebarOrder': 'সাইডবার ক্রম',
   'sidebarOrderDesc': 'সাইডবারের ট্যাব পুনর্বিন্যাস করতে টেনে আনুন',
   'resetToDefault': 'ডিফল্টে রিসেট করুন',
+  'sidebarPosition': 'সাইডবারের অবস্থান',
+  'left': 'বামে',
+  'right': 'ডানে',
 };

@@ -427,4 +427,7 @@ const translationsId = <String, String>{
   'sidebarOrder': 'Urutan Sidebar',
   'sidebarOrderDesc': 'Seret untuk mengatur ulang tab sidebar',
   'resetToDefault': 'Atur ulang ke Default',
+  'sidebarPosition': 'Posisi Sidebar',
+  'left': 'Kiri',
+  'right': 'Kanan',
 };

@@ -427,4 +427,7 @@ const translationsVi = <String, String>{
   'sidebarOrder': 'Thứ tự thanh bên',
   'sidebarOrderDesc': 'Kéo để sắp xếp lại các tab thanh bên',
   'resetToDefault': 'Đặt lại mặc định',
+  'sidebarPosition': 'Vị trí thanh bên',
+  'left': 'Trái',
+  'right': 'Phải',
 };

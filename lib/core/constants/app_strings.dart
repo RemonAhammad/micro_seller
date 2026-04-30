@@ -494,4 +494,7 @@ class _L10nStrings {
   String get sidebarOrder => _l10n.tr('sidebarOrder');
   String get sidebarOrderDesc => _l10n.tr('sidebarOrderDesc');
   String get resetToDefault => _l10n.tr('resetToDefault');
+  String get sidebarPosition => _l10n.tr('sidebarPosition');
+  String get left => _l10n.tr('left');
+  String get right => _l10n.tr('right');
 }

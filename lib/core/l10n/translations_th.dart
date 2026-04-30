@@ -427,4 +427,7 @@ const translationsTh = <String, String>{
   'sidebarOrder': 'ลำดับแถบด้านข้าง',
   'sidebarOrderDesc': 'ลากเพื่อจัดเรียงแท็บแถบด้านข้างใหม่',
   'resetToDefault': 'รีเซ็ตเป็นค่าเริ่มต้น',
+  'sidebarPosition': 'ตำแหน่งแถบด้านข้าง',
+  'left': 'ซ้าย',
+  'right': 'ขวา',
 };
