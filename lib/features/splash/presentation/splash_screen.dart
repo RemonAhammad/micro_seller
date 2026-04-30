@@ -1,9 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../data/services/tutorial_service.dart';
+import '../../settings/providers/settings_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -289,14 +292,26 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                     ],
                                   ).createShader(b);
                                 },
-                                child: Text(
-                                  'Micro Seller',
-                                  style: TextStyle(
-                                    fontSize: titleSize,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    letterSpacing: 3,
-                                  ),
+                                child: Consumer(
+                                  builder: (context, ref, _) {
+                                    // Watch settings so the title updates
+                                    // live if the user changes shop name.
+                                    ref.watch(settingsProvider);
+                                    final name = ref
+                                            .read(settingsProvider.notifier)
+                                            .shopName;
+                                    return Text(
+                                      name.isNotEmpty
+                                          ? name
+                                          : AppStrings.appName,
+                                      style: TextStyle(
+                                        fontSize: titleSize,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        letterSpacing: 3,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ),

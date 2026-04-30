@@ -25,9 +25,12 @@ class SellerBookApp extends ConsumerWidget {
     };
 
     final langCode = settings['language'] as String? ?? 'en';
+    final shopName = settings['shopName'] as String? ?? '';
 
     return MaterialApp.router(
-      title: AppStrings.appName,
+      // OS task switcher / browser tab title — show the user's shop name when
+      // they've set one, fall back to the app's brand name otherwise.
+      title: shopName.isNotEmpty ? shopName : AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

@@ -10,6 +10,7 @@ import '../../../data/models/expense.dart';
 import '../../../data/services/update_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../settings/providers/settings_provider.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -249,14 +250,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       centerTitle: false,
-      title: const Text(
-        AppStrings.appName,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-        ),
+      title: Builder(
+        builder: (_) {
+          // Watch the settings map so a shop-name change rebuilds this title.
+          ref.watch(settingsProvider);
+          final shopName = ref.read(settingsProvider.notifier).shopName;
+          return Text(
+            shopName.isNotEmpty ? shopName : AppStrings.appName,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
+          );
+        },
       ),
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground],

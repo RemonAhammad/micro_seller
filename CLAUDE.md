@@ -5,11 +5,12 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 ## Tech Stack
 
 - **Flutter** (SDK >=3.8.0 <4.0.0)
-- **State Management:** Riverpod 3 (`flutter_riverpod ^3.0` + `riverpod_annotation ^4.0` + `riverpod_generator ^4.0`). Note: Riverpod 3 uses plain `Ref` everywhere (no per-provider `XxxRef` typedefs), and `@riverpod class XxxNotifier` generates `xxxProvider` (no `Notifier` infix). `AsyncValue.value` is now nullable; `valueOrNull` is gone.
+- **State Management:** Riverpod 3 (`flutter_riverpod ^3.0` + `riverpod_annotation ^4.0` + `riverpod_generator ^4.0`). Notes: (1) Riverpod 3 uses plain `Ref` everywhere (no per-provider `XxxRef` typedefs), and `@riverpod class XxxNotifier` generates `xxxProvider` (no `Notifier` infix). `AsyncValue.value` is now nullable; `valueOrNull` is gone. (2) **All CRUD notifiers must be `@Riverpod(keepAlive: true)`** — Riverpod 3 auto-disposes by default, and a `ref.read(xxxProvider.notifier).method()` call from a screen disposes the provider during the await. Post-await `state = ...` then throws `UnmountedRefException`. This applies to product / order / customer / supplier / expense / category / cash_register notifiers.
 - **Database:** Isar 3.3 via the community fork — `isar_community` + `isar_community_flutter_libs` + `isar_community_generator` ^3.3.2. The original `isar` package was abandoned in 2023 and shipped 4 KB-aligned native binaries that Play Store rejects on Android 15+. The community fork is API-identical; storage format is byte-compatible (no on-device migration).
 - **Navigation:** GoRouter with `StatefulShellRoute` (12-branch sidebar navigation)
 - **Code Generation:** Freezed 3 (`freezed ^3.2.5` + `freezed_annotation ^3.1`). Note: freezed 3 requires `abstract class Foo with _$Foo` (the `abstract` keyword is mandatory). JSON serializable + isar_community schema generator.
-- **PDF:** `pdf` + `printing` packages for receipt generation
+- **PDF:** `pdf` + `printing` + `screenshot` (Flutter widget → PNG capture for guaranteed Unicode shaping, embedded into a single-page A4 `pw.Document`)
+- **File open:** `open_file` package — used by the post-download bottom sheet to hand a saved invoice PDF to the system PDF viewer. Replaced an earlier SnackBar-based flow because Material's SnackBar duration was unreliable on MIUI / Xiaomi devices (timer paused indefinitely); the new `lib/shared/widgets/pdf_saved_sheet.dart` modal sheet owns its own `Timer(Duration(seconds: 5))` for guaranteed auto-dismiss.
 - **Cloud:** Google Sign-In + Google Drive API for backup/restore
 - **Charts:** fl_chart for dashboard sales visualization + reports + customer history
 - **Notifications:** flutter_local_notifications for low stock & payment alerts
@@ -81,7 +82,7 @@ lib/
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
 │       ├── tutorial_service.dart    # SharedPreferences flags: splash_shown, tour_completed; resetAll()
 │       ├── update_service.dart      # In-app update via Play Store (immediate for critical, flexible for normal)
-│       └── pdf_service.dart         # Order invoice PDF (with tax line), WhatsApp text generation. Unicode-safe: Noto Sans base + cached fallback chain (Bengali, Arabic, Urdu Nastaliq, Thai, Devanagari, zh-SC/TC, JP, KR, ColorEmoji) applied once via pw.ThemeData.withFont, so any user-typed script renders correctly without per-Text font overrides. Uses OrderItem.displayName so variant info appears in line items and WhatsApp text.
+│       └── pdf_service.dart         # Order invoice PDF + WhatsApp text. Renders the receipt as a Flutter widget tree (`_ReceiptWidget`) and captures it to a PNG via `screenshot.captureFromWidget` (Skia + HarfBuzz → full Unicode shaping for Bengali conjuncts, Arabic ligatures, Thai/Devanagari/CJK, color emoji), then embeds the PNG into a single-page A4 `pw.Document`. Bottom-right "Powered by ⬡ Micro Seller" watermark. Trade-off: PDF text is rasterised, not selectable — accepted for guaranteed Unicode correctness. Earlier `pw.Document`-only and `Printing.convertHtml` paths were tried and failed (broken Indic shaping / WebView hangs respectively).
 ├── features/
 │   ├── categories/
 │   │   ├── presentation/category_screen.dart      # List + add/edit/delete dialogs
@@ -154,7 +155,7 @@ lib/
 │   │   └── providers/cash_register_provider.dart   # openRegister, closeRegister, addCashIn, addCashOut
 │   └── settings/
 │       ├── presentation/settings_screen.dart       # Theme toggle, language picker, currency picker (38+ currencies), shop config, tax rate, local backup export/import, Drive backup, clear data
-│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language
+│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language, downloadDirectory, sidebarOrder. Exposes `exportSettings()`/`importSettings(map)` so backup/restore round-trips preferences alongside the 9 Isar collections.
 └── shared/
     ├── screens/qr_scanner_screen.dart
     └── widgets/
@@ -354,6 +355,7 @@ Products support **multi-attribute variant combinations**:
 - Exports **all 9 collections** as timestamped JSON to Drive appDataFolder (uses `LocalBackupService.encodeAll`)
 - Keeps max 5 backups, cleans up old ones (cleanup failure doesn't break upload)
 - **Safe restore:** creates local safety backup before clearing → if import fails, rolls back to safety backup
+- **Settings round-trip:** backup payload includes a `settings` field built from `Settings.exportSettings()` (theme, currency, sidebar order, shop name, etc.). Restore re-applies via `Settings.importSettings(map)`. v2 backups (collections only) still restore correctly — `settings` is optional on decode.
 - Validates backup structure (`version`, `timestamp`) before touching local data
 - **Typed errors:** `DriveBackupException` with `DriveErrorCode` (`notSignedIn`, `signInFailed`, `developerError` for ApiException 10, `network`, `invalidBackup`, `uploadFailed`, `downloadFailed`, `restoreFailed`, `rolledBack`). UI switches on the code instead of substring-matching messages.
 - **Logging:** every failure logs the error + stack via `dart:developer` and `debugPrintStack` in debug builds.
@@ -496,6 +498,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 - Material 3, teal primary (#00897B), light/dark theme support with **user-selectable toggle** (Light/Dark/System)
 - **Dark scaffold:** `Colors.blueGrey.shade900` (#263238); light scaffold: `#F8F9FA`
 - **Status bar** color matches appbar (white in light theme, blueGrey.shade900 in dark theme)
+- **Shop name as primary brand:** `Settings.shopName` (default "My Shop") replaces `AppStrings.appName` in three live-rendering surfaces — `MaterialApp.title` (OS task switcher), Splash Screen hero text, Dashboard SliverAppBar title — each falls back to "Micro Seller" if the shop name is empty. The PDF invoice watermark intentionally stays as "Powered by Micro Seller" (brand attribution, not the user's shop).
 - **Language:** 12 languages with in-app language switcher (English, Bengali, Arabic, Spanish, French, Portuguese, Turkish, Indonesian, Thai, Vietnamese, Urdu, Malay)
 - **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons. Wrapped in SafeArea.
 - **Responsive layouts throughout**:
