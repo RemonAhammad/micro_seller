@@ -39,6 +39,7 @@ class SidebarItem {
       'cash_register' => s.cashRegister,
       'categories' => s.categories,
       'reports' => s.reports,
+      'scanner' => s.scanner,
       'settings' => s.settings,
       _ => key,
     };
@@ -115,6 +116,11 @@ const sidebarItems = <SidebarItem>[
     branchIndex: 10,
     icon: Icons.analytics_outlined,
     selectedIcon: Icons.analytics,
+  ),SidebarItem(
+    key: 'scanner',
+    branchIndex: 12,
+    icon: Icons.qr_code_scanner_outlined,
+    selectedIcon: Icons.qr_code_scanner,
   ),
   SidebarItem(
     key: 'settings',

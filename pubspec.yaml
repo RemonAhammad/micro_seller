@@ -68,6 +68,12 @@ dependencies:
   uuid: ^4.5.1
   share_plus: ^10.0.2
   url_launcher: ^6.3.0
+  open_file: ^3.5.10
+  # Renders a Flutter widget tree off-screen to a PNG. Used by pdf_service to
+  # capture the invoice via Skia (full Unicode shaping for Bengali / Arabic /
+  # CJK) before embedding into the PDF — bypasses the unreliable
+  # Printing.convertHtml WebView path.
+  screenshot: ^3.0.0
 
   # Showcase & Updates
   showcaseview: ^5.0.1

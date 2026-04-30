@@ -147,6 +147,14 @@ class _L10nStrings {
   String get categories => _l10n.tr('categories');
   String get settings => _l10n.tr('settings');
   String get reports => _l10n.tr('reports');
+  String get scanner => _l10n.tr('scanner');
+  String get scannedCode => _l10n.tr('scannedCode');
+  String get productMatched => _l10n.tr('productMatched');
+  String get noProductMatched => _l10n.tr('noProductMatched');
+  String get addAsNewProduct => _l10n.tr('addAsNewProduct');
+  String get viewProduct => _l10n.tr('viewProduct');
+  String get scanAgain => _l10n.tr('scanAgain');
+  String get pointCameraAtCode => _l10n.tr('pointCameraAtCode');
   String get todayRevenue => _l10n.tr('todayRevenue');
   String get monthRevenue => _l10n.tr('monthRevenue');
   String get monthProfit => _l10n.tr('monthProfit');

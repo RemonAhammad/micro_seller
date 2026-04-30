@@ -28,7 +28,20 @@ class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? product;
   final int? productId;
 
-  const ProductFormScreen({super.key, this.product, this.productId});
+  /// Pre-fill the QR code field when creating a new product (e.g. from the
+  /// scanner screen after a code wasn't matched). Ignored when editing.
+  final String? initialQrCode;
+
+  /// Pre-fill the SKU field when creating a new product. Ignored when editing.
+  final String? initialSku;
+
+  const ProductFormScreen({
+    super.key,
+    this.product,
+    this.productId,
+    this.initialQrCode,
+    this.initialSku,
+  });
 
   @override
   ConsumerState<ProductFormScreen> createState() => _ProductFormScreenState();
@@ -71,6 +84,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (product != null && mounted) {
         _existingProduct = product;
         _populateForm(product);
+      }
+    } else {
+      // New product — apply optional pre-fills from the scanner flow.
+      if (widget.initialQrCode != null && widget.initialQrCode!.isNotEmpty) {
+        _qrCtrl.text = widget.initialQrCode!;
+      }
+      if (widget.initialSku != null && widget.initialSku!.isNotEmpty) {
+        _skuCtrl.text = widget.initialSku!;
       }
     }
   }

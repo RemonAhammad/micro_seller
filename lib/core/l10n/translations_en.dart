@@ -13,6 +13,14 @@ const translationsEn = <String, String>{
   'returns': 'Returns',
   'cashRegister': 'Cash Register',
   'purchases': 'Purchases',
+  'scanner': 'Scanner',
+  'scannedCode': 'Scanned code',
+  'productMatched': 'Product matched',
+  'noProductMatched': 'No product matched this code',
+  'addAsNewProduct': 'Add as new product',
+  'viewProduct': 'View product',
+  'scanAgain': 'Scan again',
+  'pointCameraAtCode': 'Point the camera at a QR code or barcode',
 
   // Dashboard
   'todayRevenue': "Today's Revenue",

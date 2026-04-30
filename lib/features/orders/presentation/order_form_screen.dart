@@ -21,7 +21,9 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
+
 class OrderFormScreen extends ConsumerStatefulWidget {
   final Order? order;
   final int? orderId;
@@ -65,8 +67,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     try {
       final settingsTaxRate = ref.read(settingsProvider.notifier).taxRate;
       if (settingsTaxRate > 0) {
-        _taxRateCtrl.text = settingsTaxRate.toStringAsFixed(
-            settingsTaxRate == settingsTaxRate.roundToDouble() ? 0 : 2);
+        _taxRateCtrl.text = settingsTaxRate.toStringAsFixed(settingsTaxRate == settingsTaxRate.roundToDouble() ? 0 : 2);
       }
     } catch (_) {}
 
@@ -83,25 +84,18 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   void _populateForm(Order order) {
     _existingOrder = order;
-    _selectedCustomer = Customer(
-      id: order.customerId,
-      name: order.customerName,
-      phone: order.customerPhone,
-    );
+    _selectedCustomer = Customer(id: order.customerId, name: order.customerName, phone: order.customerPhone);
     _items
       ..clear()
       ..addAll(order.items.map((i) => i.copyWith()));
     _discountCtrl.text = order.discountAmount > 0
-        ? order.discountAmount.toStringAsFixed(
-            order.discountAmount == order.discountAmount.roundToDouble() ? 0 : 2)
+        ? order.discountAmount.toStringAsFixed(order.discountAmount == order.discountAmount.roundToDouble() ? 0 : 2)
         : '0';
     _deliveryCtrl.text = order.deliveryFee > 0
-        ? order.deliveryFee.toStringAsFixed(
-            order.deliveryFee == order.deliveryFee.roundToDouble() ? 0 : 2)
+        ? order.deliveryFee.toStringAsFixed(order.deliveryFee == order.deliveryFee.roundToDouble() ? 0 : 2)
         : '0';
     _amountPaidCtrl.text = order.amountPaid > 0
-        ? order.amountPaid.toStringAsFixed(
-            order.amountPaid == order.amountPaid.roundToDouble() ? 0 : 2)
+        ? order.amountPaid.toStringAsFixed(order.amountPaid == order.amountPaid.roundToDouble() ? 0 : 2)
         : '';
     _transactionIdCtrl.text = order.transactionId;
     // Back-calculate tax rate from stored taxAmount
@@ -109,8 +103,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       final taxableAmount = order.subtotal - order.discountAmount;
       if (taxableAmount > 0) {
         final rate = order.taxAmount / taxableAmount * 100;
-        _taxRateCtrl.text = rate.toStringAsFixed(
-            rate == rate.roundToDouble() ? 0 : 2);
+        _taxRateCtrl.text = rate.toStringAsFixed(rate == rate.roundToDouble() ? 0 : 2);
       }
     }
     _notesCtrl.text = order.notes;
@@ -135,18 +128,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     super.dispose();
   }
 
-  double get _subtotal =>
-      _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  double get _subtotal => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
   double get _discount => double.tryParse(_discountCtrl.text) ?? 0;
   double get _delivery => double.tryParse(_deliveryCtrl.text) ?? 0;
 
   double get _taxRate => double.tryParse(_taxRateCtrl.text) ?? 0;
 
-  double get _taxAmount =>
-      _taxRate > 0 ? (_subtotal - _discount).clamp(0, double.infinity) * _taxRate / 100 : 0;
+  double get _taxAmount => _taxRate > 0 ? (_subtotal - _discount).clamp(0, double.infinity) * _taxRate / 100 : 0;
 
-  double get _total =>
-      (_subtotal - _discount + _taxAmount + _delivery).clamp(0, double.infinity);
+  double get _total => (_subtotal - _discount + _taxAmount + _delivery).clamp(0, double.infinity);
 
   // ─── Customer ────────────────────────────────────────────────────────
 
@@ -158,13 +148,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final result = await showModalBottomSheet<Customer>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => _CustomerPickerSheet(
-        customers: customers,
-        isar: isar,
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => _CustomerPickerSheet(customers: customers, isar: isar),
     );
 
     if (result != null) setState(() => _selectedCustomer = result);
@@ -179,9 +164,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => _ProductPickerSheet(
         isar: isar,
         currentItems: _items,
@@ -214,21 +197,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         }
         if (newQty > stock) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(AppStrings.of(context)
-                      .notEnoughStock(stock, item.displayName))),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).notEnoughStock(stock, item.displayName))));
           }
           return;
         }
       }
     }
     setState(() {
-      _items[index] = item.copyWith(
-        qty: newQty,
-        totalPrice: item.unitPrice * newQty,
-      );
+      _items[index] = item.copyWith(qty: newQty, totalPrice: item.unitPrice * newQty);
     });
   }
 
@@ -238,16 +216,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   Future<void> _submit() async {
     if (_selectedCustomer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).pleaseSelectCustomer)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).pleaseSelectCustomer)));
       return;
     }
 
     if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
       return;
     }
 
@@ -260,8 +234,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       final paymentStatus = amountPaid >= _total
           ? PaymentStatus.paid
           : amountPaid > 0
-              ? PaymentStatus.partial
-              : PaymentStatus.unpaid;
+          ? PaymentStatus.partial
+          : PaymentStatus.unpaid;
 
       if (_isEditing) {
         final order = _existingOrder!.copyWith(
@@ -291,12 +265,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         await notifier.updateOrder(order);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppStrings.of(context).orderUpdated),
-              backgroundColor: Colors.green,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).orderUpdated), backgroundColor: Colors.green));
           context.pop();
         }
       } else {
@@ -345,12 +316,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppStrings.of(context).errorOccurred),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).errorOccurred), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -392,10 +360,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             color: Colors.teal,
             onTap: () async {
               await withProgress(() async {
-                final bytes = await pdfService.generateOrderReceipt(order,
-                    shopName: shopName,
-                    currencySymbol: currencySymbol,
-                    taxRate: taxRate);
+                final bytes = await pdfService.generateOrderReceipt(
+                  order,
+                  shopName: shopName,
+                  currencySymbol: currencySymbol,
+                  taxRate: taxRate,
+                );
                 final dir = await getTemporaryDirectory();
                 final file = File('${dir.path}/${order.orderNumber}.pdf');
                 await file.writeAsBytes(bytes);
@@ -409,39 +379,29 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.downloadPdf,
             color: Colors.blue,
             onTap: () async {
-              final bytes = await pdfService.generateOrderReceipt(order,
-                  shopName: shopName,
-                  currencySymbol: currencySymbol,
-                  taxRate: taxRate);
+              final bytes = await pdfService.generateOrderReceipt(
+                order,
+                shopName: shopName,
+                currencySymbol: currencySymbol,
+                taxRate: taxRate,
+              );
 
               var downloadDir = settings.downloadDirectory;
               if (downloadDir.isEmpty) {
                 if (!mounted) return;
-                final picked = await FilePicker.platform.getDirectoryPath(
-                  dialogTitle: 'Choose download folder',
-                );
+                final picked = await FilePicker.platform.getDirectoryPath(dialogTitle: 'Choose download folder');
                 if (picked == null) return;
                 downloadDir = picked;
-                await ref
-                    .read(settingsProvider.notifier)
-                    .updateDownloadDirectory(downloadDir);
+                await ref.read(settingsProvider.notifier).updateDownloadDirectory(downloadDir);
               }
 
-              final file =
-                  File('$downloadDir/${order.orderNumber}_invoice.pdf');
+              final file = File('$downloadDir/${order.orderNumber}_invoice.pdf');
               await file.writeAsBytes(bytes);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${s.pdfSavedTo} $downloadDir'),
-                    backgroundColor: Colors.green,
-                    action: SnackBarAction(
-                      label: s.share,
-                      textColor: Colors.white,
-                      onPressed: () =>
-                          Share.shareXFiles([XFile(file.path)]),
-                    ),
-                  ),
+                await showPdfSavedSheet(
+                  context: context,
+                  filePath: file.path,
+                  savedToDirectory: downloadDir,
                 );
               }
             },
@@ -452,10 +412,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.print,
             color: Colors.indigo,
             onTap: () async {
-              final bytes = await pdfService.generateOrderReceipt(order,
-                  shopName: shopName,
-                  currencySymbol: currencySymbol,
-                  taxRate: taxRate);
+              final bytes = await pdfService.generateOrderReceipt(
+                order,
+                shopName: shopName,
+                currencySymbol: currencySymbol,
+                taxRate: taxRate,
+              );
               await Printing.layoutPdf(onLayout: (_) async => bytes);
             },
           ),
@@ -465,16 +427,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.shareViaWhatsApp,
             color: Colors.green,
             onTap: () async {
-              final text = pdfService.generateWhatsAppText(order,
-                  currencySymbol: currencySymbol);
+              final text = pdfService.generateWhatsAppText(order, currencySymbol: currencySymbol);
               await Share.share(text);
             },
           ),
           const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(s.done),
-          ),
+          OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: Text(s.done)),
         ],
       ),
     );
@@ -527,7 +485,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
                 // ── Delivery ──
                 const SizedBox(height: 16),
-                Text(s.delivery, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.primary)),
+                Text(
+                  s.delivery,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.primary),
+                ),
                 const SizedBox(height: 8),
                 AppTextField(
                   label: s.deliveryAddress,
@@ -641,16 +602,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _selectedCustomer!.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
+                        Text(_selectedCustomer!.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                         if (_selectedCustomer!.phone.isNotEmpty)
                           Text(
                             _selectedCustomer!.phone,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.6),
-                            ),
+                            style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
                           ),
                       ],
                     )
@@ -680,9 +636,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       children: [
         Row(
           children: [
-            Text(AppStrings.of(context).items,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              AppStrings.of(context).items,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
             if (_items.isNotEmpty) ...[
               const SizedBox(width: 6),
               Container(
@@ -693,11 +650,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 ),
                 child: Text(
                   '${_items.fold<int>(0, (s, i) => s + i.qty)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: cs.primary,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
                 ),
               ),
             ],
@@ -716,22 +669,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 32),
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: cs.outline.withValues(alpha: 0.2),
-                ),
+                border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.add_shopping_cart,
-                      size: 28, color: cs.onSurface.withValues(alpha: 0.3)),
+                  Icon(Icons.add_shopping_cart, size: 28, color: cs.onSurface.withValues(alpha: 0.3)),
                   const SizedBox(height: 6),
                   Text(
                     AppStrings.of(context).tapToAddProducts,
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.4),
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: cs.onSurface.withValues(alpha: 0.4), fontSize: 13),
                   ),
                 ],
               ),
@@ -767,14 +714,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.displayName,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                Text(item.displayName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 Text(
                   CurrencyFormatter.format(item.unitPrice),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurface.withValues(alpha: 0.5),
-                  ),
+                  style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5)),
                 ),
               ],
             ),
@@ -792,10 +735,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 _qtyButton(Icons.remove, () => _updateQty(index, -1), cs),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    '${item.qty}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  child: Text('${item.qty}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 ),
                 _qtyButton(Icons.add, () => _updateQty(index, 1), cs),
               ],
@@ -809,11 +749,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: Text(
               CurrencyFormatter.format(item.totalPrice),
               textAlign: TextAlign.right,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: cs.primary,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: cs.primary),
             ),
           ),
 
@@ -851,11 +787,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               child: AppTextField(
                 label: s.discount,
                 controller: _discountCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-                ],
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -864,11 +797,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               child: AppTextField(
                 label: s.deliveryFee,
                 controller: _deliveryCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-                ],
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -878,16 +808,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         AppTextField(
           label: s.taxVat,
           controller: _taxRateCtrl,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-          ],
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
           onChanged: (_) => setState(() {}),
           prefixIcon: const Icon(Icons.percent, size: 18),
-          helperText: _taxAmount > 0
-              ? 'Tax: ${CurrencyFormatter.format(_taxAmount)}'
-              : null,
+          helperText: _taxAmount > 0 ? 'Tax: ${CurrencyFormatter.format(_taxAmount)}' : null,
         ),
         const SizedBox(height: 12),
         Row(
@@ -897,11 +822,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               child: AppTextField(
                 label: s.amountPaid,
                 controller: _amountPaidCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-                ],
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -910,8 +832,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               padding: const EdgeInsets.only(bottom: 4),
               child: TextButton(
                 onPressed: _total > 0
-                    ? () => setState(() => _amountPaidCtrl.text =
-                        _total.toStringAsFixed(_total == _total.roundToDouble() ? 0 : 2))
+                    ? () => setState(
+                        () => _amountPaidCtrl.text = _total.toStringAsFixed(_total == _total.roundToDouble() ? 0 : 2),
+                      )
                     : null,
                 child: Text(s.payFull),
               ),
@@ -919,11 +842,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          label: s.transactionId,
-          hint: s.transactionIdHint,
-          controller: _transactionIdCtrl,
-        ),
+        AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
       ],
     );
   }
@@ -935,9 +854,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppStrings.of(context).tr('status'),
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          AppStrings.of(context).tr('status'),
+          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 8),
         Row(
           children: statuses.map((s) {
@@ -978,9 +898,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(s.paymentMethod,
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(s.paymentMethod, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -1011,13 +929,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       decoration: BoxDecoration(
         color: cs.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, -2))],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1025,34 +937,22 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           // Summary rows
           _summaryRow(s.subtotal, CurrencyFormatter.format(_subtotal), theme),
           if (_discount > 0)
-            _summaryRow(
-              s.discount,
-              '- ${CurrencyFormatter.format(_discount)}',
-              theme,
-              valueColor: Colors.green,
-            ),
+            _summaryRow(s.discount, '- ${CurrencyFormatter.format(_discount)}', theme, valueColor: Colors.green),
           if (_taxRate > 0)
             _summaryRow(
               '${s.tax} (${_taxRate.toStringAsFixed(_taxRate == _taxRate.roundToDouble() ? 0 : 1)}%)',
               CurrencyFormatter.format(_taxAmount),
               theme,
             ),
-          if (_delivery > 0)
-            _summaryRow(s.delivery, CurrencyFormatter.format(_delivery), theme),
+          if (_delivery > 0) _summaryRow(s.delivery, CurrencyFormatter.format(_delivery), theme),
           const Divider(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(s.total,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Text(s.total, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
               Text(
                 CurrencyFormatter.format(_total),
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                  color: cs.primary,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: cs.primary),
               ),
             ],
           ),
@@ -1070,17 +970,17 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  Widget _summaryRow(String label, String value, ThemeData theme,
-      {Color? valueColor}) {
+  Widget _summaryRow(String label, String value, ThemeData theme, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: theme.textTheme.bodySmall),
-          Text(value,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: valueColor, fontWeight: FontWeight.w500)),
+          Text(
+            value,
+            style: theme.textTheme.bodySmall?.copyWith(color: valueColor, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -1096,11 +996,7 @@ class _ProductPickerSheet extends StatefulWidget {
   final List<OrderItem> currentItems;
   final ValueChanged<List<OrderItem>> onChanged;
 
-  const _ProductPickerSheet({
-    required this.isar,
-    required this.currentItems,
-    required this.onChanged,
-  });
+  const _ProductPickerSheet({required this.isar, required this.currentItems, required this.onChanged});
 
   @override
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
@@ -1127,41 +1023,41 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   }
 
   int _qtyOf(int productId, {String combinationKey = ''}) {
-    final idx = _items.indexWhere((i) =>
-        i.productId == productId &&
-        i.variantCombinationKey == combinationKey);
+    final idx = _items.indexWhere((i) => i.productId == productId && i.variantCombinationKey == combinationKey);
     return idx >= 0 ? _items[idx].qty : 0;
   }
 
-  void _setQty(Product product, int qty,
-      {String combinationKey = '', String displayLabel = '',
-       double? priceOverride, String? skuOverride,
-       required int availableStock}) {
+  void _setQty(
+    Product product,
+    int qty, {
+    String combinationKey = '',
+    String displayLabel = '',
+    double? priceOverride,
+    String? skuOverride,
+    required int availableStock,
+  }) {
     if (qty > availableStock) qty = availableStock;
     setState(() {
-      final idx = _items.indexWhere((i) =>
-          i.productId == product.id &&
-          i.variantCombinationKey == combinationKey);
+      final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey == combinationKey);
       final unitPrice = priceOverride ?? product.sellingPrice;
       if (qty <= 0) {
         if (idx >= 0) _items.removeAt(idx);
       } else if (idx >= 0) {
-        _items[idx] = _items[idx].copyWith(
-          qty: qty,
-          totalPrice: _items[idx].unitPrice * qty,
-        );
+        _items[idx] = _items[idx].copyWith(qty: qty, totalPrice: _items[idx].unitPrice * qty);
       } else {
-        _items.add(OrderItem(
-          productId: product.id,
-          productName: product.name,
-          productSku: skuOverride ?? product.sku,
-          qty: qty,
-          unitPrice: unitPrice,
-          costPrice: product.costPrice,
-          totalPrice: unitPrice * qty,
-          variantCombinationKey: combinationKey,
-          variantDisplayLabel: displayLabel,
-        ));
+        _items.add(
+          OrderItem(
+            productId: product.id,
+            productName: product.name,
+            productSku: skuOverride ?? product.sku,
+            qty: qty,
+            unitPrice: unitPrice,
+            costPrice: product.costPrice,
+            totalPrice: unitPrice * qty,
+            variantCombinationKey: combinationKey,
+            variantDisplayLabel: displayLabel,
+          ),
+        );
       }
     });
     widget.onChanged(_items);
@@ -1173,12 +1069,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     final cs = theme.colorScheme;
 
     return StreamBuilder<List<Product>>(
-      stream: widget.isar.products
-          .where()
-          .filter()
-          .isActiveEqualTo(true)
-          .sortByName()
-          .watch(fireImmediately: true),
+      stream: widget.isar.products.where().filter().isActiveEqualTo(true).sortByName().watch(fireImmediately: true),
       builder: (context, snapshot) {
         final allProducts = snapshot.data ?? [];
         return _buildSheet(context, theme, cs, allProducts);
@@ -1190,10 +1081,8 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     final filtered = _query.isEmpty
         ? allProducts
         : allProducts
-            .where((p) =>
-                p.name.toLowerCase().contains(_query) ||
-                p.sku.toLowerCase().contains(_query))
-            .toList();
+              .where((p) => p.name.toLowerCase().contains(_query) || p.sku.toLowerCase().contains(_query))
+              .toList();
 
     final totalItems = _items.fold<int>(0, (s, i) => s + i.qty);
 
@@ -1206,12 +1095,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
         children: [
           // Handle
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: cs.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
+            decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
           ),
 
           // Title row
@@ -1219,32 +1106,26 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Text(AppStrings.of(context).addItems,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  AppStrings.of(context).addItems,
+                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
                 if (totalItems > 0) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: cs.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '$totalItems item${totalItems == 1 ? '' : 's'}',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: cs.primary),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
                     ),
                   ),
                 ],
                 const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text(AppStrings.of(context).done),
-                ),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.of(context).done)),
               ],
             ),
           ),
@@ -1278,15 +1159,16 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           Expanded(
             child: filtered.isEmpty
                 ? Center(
-                    child: Text(AppStrings.of(context).noProductsFound,
-                        style: TextStyle(
-                            color: cs.onSurface.withValues(alpha: 0.4))))
+                    child: Text(
+                      AppStrings.of(context).noProductsFound,
+                      style: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
+                    ),
+                  )
                 : ListView.separated(
                     controller: ctrl,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) =>
-                        Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
+                    separatorBuilder: (_, __) => Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
                     itemBuilder: (_, i) {
                       final p = filtered[i];
 
@@ -1319,16 +1201,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(p.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 13,
-                                              )),
+                                          Text(
+                                            p.name,
+                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                          ),
                                           Text(
                                             '${activeCombos.length} combination${activeCombos.length == 1 ? '' : 's'}',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: cs.onSurface.withValues(alpha: 0.5)),
+                                            style: TextStyle(fontSize: 11, color: cs.onSurface.withValues(alpha: 0.5)),
                                           ),
                                         ],
                                       ),
@@ -1348,14 +1227,12 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 final comboPrice = p.sellingPrice + c.priceAdjustment;
                                 final comboSku = c.sku.isNotEmpty ? c.sku : p.sku;
                                 final outOfStock = c.stockQty <= 0;
-                                final qty = _qtyOf(p.id,
-                                    combinationKey: c.combinationKey);
+                                final qty = _qtyOf(p.id, combinationKey: c.combinationKey);
 
                                 return Padding(
                                   padding: const EdgeInsets.only(left: 16, bottom: 6),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                     decoration: BoxDecoration(
                                       color: cs.primary.withValues(alpha: 0.03),
                                       borderRadius: BorderRadius.circular(8),
@@ -1364,34 +1241,29 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(c.displayLabel,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: 13,
-                                                    color: outOfStock
-                                                        ? cs.onSurface
-                                                            .withValues(alpha: 0.4)
-                                                        : null,
-                                                  )),
+                                              Text(
+                                                c.displayLabel,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 13,
+                                                  color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
+                                                ),
+                                              ),
                                               Row(
                                                 children: [
                                                   Text(
-                                                      CurrencyFormatter.format(
-                                                          comboPrice),
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: cs.primary)),
+                                                    CurrencyFormatter.format(comboPrice),
+                                                    style: TextStyle(fontSize: 12, color: cs.primary),
+                                                  ),
                                                   Text(
                                                     '  ·  ${c.stockQty} in stock',
                                                     style: TextStyle(
                                                       fontSize: 11,
                                                       color: outOfStock
                                                           ? cs.error
-                                                          : cs.onSurface
-                                                              .withValues(alpha: 0.5),
+                                                          : cs.onSurface.withValues(alpha: 0.5),
                                                     ),
                                                   ),
                                                 ],
@@ -1403,41 +1275,46 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                           Container(
                                             decoration: BoxDecoration(
                                               borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(
-                                                  color: cs.primary
-                                                      .withValues(alpha: 0.3)),
+                                              border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 _sheetQtyBtn(
-                                                    Icons.remove,
-                                                    () => _setQty(p, qty - 1,
-                                                        combinationKey: c.combinationKey,
-                                                        displayLabel: c.displayLabel,
-                                                        priceOverride: comboPrice,
-                                                        skuOverride: comboSku,
-                                                        availableStock: c.stockQty),
-                                                    cs),
+                                                  Icons.remove,
+                                                  () => _setQty(
+                                                    p,
+                                                    qty - 1,
+                                                    combinationKey: c.combinationKey,
+                                                    displayLabel: c.displayLabel,
+                                                    priceOverride: comboPrice,
+                                                    skuOverride: comboSku,
+                                                    availableStock: c.stockQty,
+                                                  ),
+                                                  cs,
+                                                ),
                                                 Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                          horizontal: 10),
-                                                  child: Text('$qty',
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: cs.primary)),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                  child: Text(
+                                                    '$qty',
+                                                    style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+                                                  ),
                                                 ),
                                                 _sheetQtyBtn(
-                                                    Icons.add,
-                                                    qty >= c.stockQty ? null : () => _setQty(p, qty + 1,
-                                                        combinationKey: c.combinationKey,
-                                                        displayLabel: c.displayLabel,
-                                                        priceOverride: comboPrice,
-                                                        skuOverride: comboSku,
-                                                        availableStock: c.stockQty),
-                                                    cs),
+                                                  Icons.add,
+                                                  qty >= c.stockQty
+                                                      ? null
+                                                      : () => _setQty(
+                                                          p,
+                                                          qty + 1,
+                                                          combinationKey: c.combinationKey,
+                                                          displayLabel: c.displayLabel,
+                                                          priceOverride: comboPrice,
+                                                          skuOverride: comboSku,
+                                                          availableStock: c.stockQty,
+                                                        ),
+                                                  cs,
+                                                ),
                                               ],
                                             ),
                                           )
@@ -1447,20 +1324,19 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                             child: FilledButton.tonal(
                                               onPressed: outOfStock
                                                   ? null
-                                                  : () => _setQty(p, 1,
+                                                  : () => _setQty(
+                                                      p,
+                                                      1,
                                                       combinationKey: c.combinationKey,
                                                       displayLabel: c.displayLabel,
                                                       priceOverride: comboPrice,
                                                       skuOverride: comboSku,
-                                                      availableStock: c.stockQty),
+                                                      availableStock: c.stockQty,
+                                                    ),
                                               style: FilledButton.styleFrom(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 16),
+                                                padding: const EdgeInsets.symmetric(horizontal: 16),
                                               ),
-                                              child: Text(outOfStock
-                                                  ? 'Out of stock'
-                                                  : 'Add'),
+                                              child: Text(outOfStock ? 'Out of stock' : 'Add'),
                                             ),
                                           ),
                                       ],
@@ -1484,30 +1360,25 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(p.name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                        color: outOfStock
-                                            ? cs.onSurface.withValues(alpha: 0.4)
-                                            : null,
-                                      )),
+                                  Text(
+                                    p.name,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
+                                    ),
+                                  ),
                                   Row(
                                     children: [
                                       Text(
-                                          CurrencyFormatter.format(
-                                              p.sellingPrice),
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: cs.primary)),
+                                        CurrencyFormatter.format(p.sellingPrice),
+                                        style: TextStyle(fontSize: 12, color: cs.primary),
+                                      ),
                                       Text(
                                         '  ·  ${p.stockQty} in stock',
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: outOfStock
-                                              ? cs.error
-                                              : cs.onSurface
-                                                  .withValues(alpha: 0.5),
+                                          color: outOfStock ? cs.error : cs.onSurface.withValues(alpha: 0.5),
                                         ),
                                       ),
                                     ],
@@ -1519,24 +1390,28 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: cs.primary.withValues(alpha: 0.3)),
+                                  border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    _sheetQtyBtn(Icons.remove,
-                                        () => _setQty(p, qty - 1, availableStock: p.stockQty), cs),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10),
-                                      child: Text('$qty',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              color: cs.primary)),
+                                    _sheetQtyBtn(
+                                      Icons.remove,
+                                      () => _setQty(p, qty - 1, availableStock: p.stockQty),
+                                      cs,
                                     ),
-                                    _sheetQtyBtn(Icons.add,
-                                        qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty), cs),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      child: Text(
+                                        '$qty',
+                                        style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+                                      ),
+                                    ),
+                                    _sheetQtyBtn(
+                                      Icons.add,
+                                      qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty),
+                                      cs,
+                                    ),
                                   ],
                                 ),
                               )
@@ -1544,14 +1419,9 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                               SizedBox(
                                 height: 34,
                                 child: FilledButton.tonal(
-                                  onPressed:
-                                      outOfStock ? null : () => _setQty(p, 1, availableStock: p.stockQty),
-                                  style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16),
-                                  ),
-                                  child: Text(
-                                      outOfStock ? 'Out of stock' : 'Add'),
+                                  onPressed: outOfStock ? null : () => _setQty(p, 1, availableStock: p.stockQty),
+                                  style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
+                                  child: Text(outOfStock ? 'Out of stock' : 'Add'),
                                 ),
                               ),
                           ],
@@ -1571,8 +1441,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 16,
-            color: onTap != null ? cs.primary : cs.onSurface.withValues(alpha: 0.25)),
+        child: Icon(icon, size: 16, color: onTap != null ? cs.primary : cs.onSurface.withValues(alpha: 0.25)),
       ),
     );
   }
@@ -1614,11 +1483,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
 
   List<Customer> get _filtered => _query.isEmpty
       ? widget.customers
-      : widget.customers
-          .where((c) =>
-              c.name.toLowerCase().contains(_query) ||
-              c.phone.contains(_query))
-          .toList();
+      : widget.customers.where((c) => c.name.toLowerCase().contains(_query) || c.phone.contains(_query)).toList();
 
   void _openForm() {
     // Pre-fill from search query
@@ -1653,15 +1518,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
         createdAt: DateTime.now(),
       );
 
-      await widget.isar
-          .writeTxn(() async => widget.isar.customers.put(customer));
+      await widget.isar.writeTxn(() async => widget.isar.customers.put(customer));
       final saved = await widget.isar.customers.get(customer.id);
       if (mounted) Navigator.pop(context, saved ?? customer);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).failedToSaveCustomer)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).failedToSaveCustomer)));
         setState(() => _saving = false);
       }
     }
@@ -1682,12 +1546,10 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
         children: [
           // Handle
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: cs.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
+            decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
           ),
 
           // Title
@@ -1705,8 +1567,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   ),
                 Text(
                   _showForm ? s.createNewCustomer : s.selectCustomer,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -1736,9 +1597,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   TextField(
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]')),
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]'))],
                     decoration: InputDecoration(
                       labelText: s.phone,
                       prefixIcon: const Icon(Icons.phone_outlined, size: 20),
@@ -1760,15 +1619,13 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     onPressed: _saving ? null : _saveCustomer,
                     icon: _saving
                         ? const SizedBox(
-                            width: 18, height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.check, size: 18),
                     label: Text(_saving ? s.tr('loading') : s.addAndSelect),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(46),
-                    ),
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
                   ),
                 ],
               ),
@@ -1815,20 +1672,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.person_add_outlined,
-                          size: 20, color: cs.primary),
+                      Icon(Icons.person_add_outlined, size: 20, color: cs.primary),
                       const SizedBox(width: 10),
                       Text(
                         s.createNewCustomer,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: cs.primary,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: cs.primary),
                       ),
                       const Spacer(),
-                      Icon(Icons.arrow_forward_ios,
-                          size: 14, color: cs.primary.withValues(alpha: 0.6)),
+                      Icon(Icons.arrow_forward_ios, size: 14, color: cs.primary.withValues(alpha: 0.6)),
                     ],
                   ),
                 ),
@@ -1841,16 +1692,13 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             Expanded(
               child: _filtered.isEmpty
                   ? Center(
-                      child: Text(s.noCustomersFound,
-                          style: TextStyle(
-                              color: cs.onSurface.withValues(alpha: 0.4))))
+                      child: Text(s.noCustomersFound, style: TextStyle(color: cs.onSurface.withValues(alpha: 0.4))),
+                    )
                   : ListView.separated(
                       controller: ctrl,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _filtered.length,
-                      separatorBuilder: (_, __) => Divider(
-                          height: 1,
-                          color: cs.outline.withValues(alpha: 0.1)),
+                      separatorBuilder: (_, __) => Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
                       itemBuilder: (_, i) {
                         final c = _filtered[i];
                         return ListTile(
@@ -1858,25 +1706,18 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                           onTap: () => Navigator.pop(ctx, c),
                           leading: CircleAvatar(
                             radius: 18,
-                            backgroundColor:
-                                cs.primary.withValues(alpha: 0.1),
+                            backgroundColor: cs.primary.withValues(alpha: 0.1),
                             child: Text(
                               c.name[0].toUpperCase(),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: cs.primary,
-                                  fontSize: 14),
+                              style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary, fontSize: 14),
                             ),
                           ),
-                          title: Text(c.name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w500, fontSize: 14)),
+                          title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
                           subtitle: c.phone.isNotEmpty
-                              ? Text(c.phone,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: cs.onSurface
-                                          .withValues(alpha: 0.5)))
+                              ? Text(
+                                  c.phone,
+                                  style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5)),
+                                )
                               : null,
                           dense: true,
                         );
@@ -1896,12 +1737,7 @@ class _InvoiceActionTile extends StatelessWidget {
   final Color color;
   final Future<void> Function() onTap;
 
-  const _InvoiceActionTile({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+  const _InvoiceActionTile({required this.icon, required this.label, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1929,15 +1765,9 @@ class _InvoiceActionTile extends StatelessWidget {
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Text(label, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+              Icon(Icons.chevron_right_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
             ],
           ),
         ),

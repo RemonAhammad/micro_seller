@@ -30,6 +30,7 @@ import '../../features/suppliers/presentation/purchase_list_screen.dart';
 import '../../features/suppliers/presentation/purchase_form_screen.dart';
 import '../../features/suppliers/presentation/purchase_detail_screen.dart';
 import '../../features/cash_register/presentation/cash_register_screen.dart';
+import '../../features/scanner/presentation/scanner_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 /// Fade-through transition for pushed routes (form, detail, edit screens).
@@ -78,8 +79,19 @@ final appRouter = GoRouter(
             routes: [
               GoRoute(
                 path: 'add',
-                pageBuilder: (_, s) =>
-                    _fadePage(const ProductFormScreen(product: null), s),
+                pageBuilder: (_, s) {
+                  // From scanner: prefill the qr/sku of the new product.
+                  final extra = s.extra;
+                  final prefill = extra is ScannerPrefill ? extra : null;
+                  return _fadePage(
+                    ProductFormScreen(
+                      product: null,
+                      initialQrCode: prefill?.qrCode,
+                      initialSku: prefill?.sku,
+                    ),
+                    s,
+                  );
+                },
               ),
               GoRoute(
                 path: ':id',
@@ -271,6 +283,9 @@ final appRouter = GoRouter(
               ),
             ],
           ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/scanner', builder: (_, __) => const ScannerScreen()),
         ]),
       ],
     ),

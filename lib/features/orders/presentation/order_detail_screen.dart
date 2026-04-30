@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,8 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
+import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../../data/models/order.dart';
 import '../providers/order_provider.dart';
 import '../../../data/services/isar_service.dart';
@@ -358,6 +362,7 @@ class _OrderDetailBody extends ConsumerWidget {
     final currencySymbol = settings.currencySymbol;
     final taxRate = settings.taxRate;
 
+    try {
     switch (action) {
       case 'share_text':
         final text = pdfService.generateWhatsAppText(order,
@@ -401,16 +406,10 @@ class _OrderDetailBody extends ConsumerWidget {
         final file = File('$downloadDir/$fileName');
         await file.writeAsBytes(bytes);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${AppStrings.of(context).pdfSavedTo} $downloadDir'),
-              backgroundColor: Colors.green,
-              action: SnackBarAction(
-                label: AppStrings.of(context).share,
-                textColor: Colors.white,
-                onPressed: () => Share.shareXFiles([XFile(file.path)]),
-              ),
-            ),
+          await showPdfSavedSheet(
+            context: context,
+            filePath: file.path,
+            savedToDirectory: downloadDir,
           );
         }
         break;
@@ -469,6 +468,33 @@ class _OrderDetailBody extends ConsumerWidget {
           context.pop();
         }
         break;
+    }
+    } catch (e, st) {
+      // The whole action handler used to swallow errors silently — every PDF
+      // failure (WebView crash, file write denied, etc.) just looked like
+      // "nothing happened". Log + show the actual error so future regressions
+      // are visible.
+      developer.log(
+        'Order action "$action" failed',
+        name: 'OrderDetail',
+        error: e,
+        stackTrace: st,
+      );
+      if (kDebugMode) {
+        debugPrint('[OrderDetail] action="$action" failed: $e');
+        debugPrintStack(stackTrace: st, label: 'OrderDetail._handleAction');
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(kDebugMode
+                ? 'Action failed: $e'
+                : AppStrings.of(context).errorOccurred),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
     }
   }
 
