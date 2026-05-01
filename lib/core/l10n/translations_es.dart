@@ -430,4 +430,11 @@ const translationsEs = <String, String>{
   'sidebarPosition': 'Posición de la barra lateral',
   'left': 'Izquierda',
   'right': 'Derecha',
+
+  // Auth gate
+  'createPin': 'Crea un PIN de 4 dígitos',
+  'confirmPin': 'Confirma tu PIN',
+  'enterPin': 'Ingresa tu PIN',
+  'pinDoesNotMatch': 'Los PIN no coinciden. Inténtalo de nuevo.',
+  'incorrectPin': 'PIN incorrecto. Inténtalo de nuevo.',
 };

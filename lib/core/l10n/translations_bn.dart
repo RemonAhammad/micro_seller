@@ -431,4 +431,11 @@ const translationsBn = <String, String>{
   'sidebarPosition': 'সাইডবারের অবস্থান',
   'left': 'বামে',
   'right': 'ডানে',
+
+  // Auth gate
+  'createPin': '৪ অঙ্কের পিন তৈরি করুন',
+  'confirmPin': 'পিন নিশ্চিত করুন',
+  'enterPin': 'পিন লিখুন',
+  'pinDoesNotMatch': 'পিন মিলছে না। আবার চেষ্টা করুন।',
+  'incorrectPin': 'ভুল পিন। আবার চেষ্টা করুন।',
 };

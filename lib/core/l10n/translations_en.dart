@@ -439,4 +439,11 @@ const translationsEn = <String, String>{
   'sidebarPosition': 'Sidebar Position',
   'left': 'Left',
   'right': 'Right',
+
+  // Auth gate (biometric / PIN before destructive actions)
+  'createPin': 'Create a 4-digit PIN',
+  'confirmPin': 'Confirm your PIN',
+  'enterPin': 'Enter your PIN',
+  'pinDoesNotMatch': 'PINs do not match. Try again.',
+  'incorrectPin': 'Incorrect PIN. Try again.',
 };

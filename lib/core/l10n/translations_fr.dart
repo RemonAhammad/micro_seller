@@ -431,4 +431,11 @@ const translationsFr = <String, String>{
   'sidebarPosition': 'Position de la barre latérale',
   'left': 'Gauche',
   'right': 'Droite',
+
+  // Auth gate
+  'createPin': 'Créer un code PIN à 4 chiffres',
+  'confirmPin': 'Confirmer le code PIN',
+  'enterPin': 'Entrer le code PIN',
+  'pinDoesNotMatch': 'Les codes PIN ne correspondent pas. Réessayez.',
+  'incorrectPin': 'Code PIN incorrect. Réessayez.',
 };

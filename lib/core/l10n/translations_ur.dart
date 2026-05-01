@@ -431,4 +431,11 @@ const translationsUr = <String, String>{
   'sidebarPosition': 'سائڈبار کی پوزیشن',
   'left': 'بائیں',
   'right': 'دائیں',
+
+  // Auth gate
+  'createPin': '4 ہندسوں کا PIN بنائیں',
+  'confirmPin': 'PIN کی تصدیق کریں',
+  'enterPin': 'PIN درج کریں',
+  'pinDoesNotMatch': 'PIN مماثل نہیں ہے۔ دوبارہ کوشش کریں۔',
+  'incorrectPin': 'غلط PIN۔ دوبارہ کوشش کریں۔',
 };

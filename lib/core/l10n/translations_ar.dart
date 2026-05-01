@@ -430,4 +430,11 @@ const translationsAr = <String, String>{
   'sidebarPosition': 'موضع الشريط الجانبي',
   'left': 'يسار',
   'right': 'يمين',
+
+  // Auth gate
+  'createPin': 'أنشئ رمز PIN من 4 أرقام',
+  'confirmPin': 'أكد رمز PIN',
+  'enterPin': 'أدخل رمز PIN',
+  'pinDoesNotMatch': 'رموز PIN غير متطابقة. حاول مرة أخرى.',
+  'incorrectPin': 'رمز PIN غير صحيح. حاول مرة أخرى.',
 };

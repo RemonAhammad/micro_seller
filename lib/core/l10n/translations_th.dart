@@ -431,4 +431,11 @@ const translationsTh = <String, String>{
   'sidebarPosition': 'ตำแหน่งแถบด้านข้าง',
   'left': 'ซ้าย',
   'right': 'ขวา',
+
+  // Auth gate
+  'createPin': 'สร้าง PIN 4 หลัก',
+  'confirmPin': 'ยืนยัน PIN',
+  'enterPin': 'ใส่ PIN',
+  'pinDoesNotMatch': 'PIN ไม่ตรงกัน ลองอีกครั้ง',
+  'incorrectPin': 'PIN ไม่ถูกต้อง ลองอีกครั้ง',
 };

@@ -431,4 +431,11 @@ const translationsVi = <String, String>{
   'sidebarPosition': 'Vị trí thanh bên',
   'left': 'Trái',
   'right': 'Phải',
+
+  // Auth gate
+  'createPin': 'Tạo mã PIN 4 chữ số',
+  'confirmPin': 'Xác nhận mã PIN',
+  'enterPin': 'Nhập mã PIN',
+  'pinDoesNotMatch': 'Mã PIN không khớp. Thử lại.',
+  'incorrectPin': 'Mã PIN không đúng. Thử lại.',
 };

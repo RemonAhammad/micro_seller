@@ -83,6 +83,11 @@ dependencies:
   # Env
   flutter_dotenv: ^5.2.1
 
+  # Security gate for destructive actions (Clear All Data, etc.). Falls back
+  # to a 4-digit PIN stored as a SHA-256 hash when biometrics aren't set up.
+  local_auth: ^2.3.0
+  crypto: ^3.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

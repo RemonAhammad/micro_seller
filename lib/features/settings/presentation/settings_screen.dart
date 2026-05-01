@@ -23,6 +23,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/auth_gate.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -194,6 +195,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       icon: Icons.warning_rounded,
     );
     if (ok != true || !mounted) return;
+
+    // Security gate: biometric prompt if available, otherwise a 4-digit PIN
+    // (set up on first use). User must pass before any data is wiped.
+    final passed = await runAuthGate(
+      context,
+      reason: AppStrings.of(context).clearAllData,
+    );
+    if (!passed || !mounted) return;
 
     final isar = await ref.read(isarProvider.future);
     await isar.writeTxn(() async {

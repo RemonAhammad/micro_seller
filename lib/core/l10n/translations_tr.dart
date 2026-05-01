@@ -431,4 +431,11 @@ const translationsTr = <String, String>{
   'sidebarPosition': 'Kenar Çubuğu Konumu',
   'left': 'Sol',
   'right': 'Sağ',
+
+  // Auth gate
+  'createPin': '4 haneli PIN oluştur',
+  'confirmPin': 'PIN’i onayla',
+  'enterPin': 'PIN’i gir',
+  'pinDoesNotMatch': 'PIN’ler eşleşmiyor. Tekrar deneyin.',
+  'incorrectPin': 'Yanlış PIN. Tekrar deneyin.',
 };

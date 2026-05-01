@@ -431,4 +431,11 @@ const translationsMs = <String, String>{
   'sidebarPosition': 'Kedudukan Bar Sisi',
   'left': 'Kiri',
   'right': 'Kanan',
+
+  // Auth gate
+  'createPin': 'Cipta PIN 4 digit',
+  'confirmPin': 'Sahkan PIN',
+  'enterPin': 'Masukkan PIN',
+  'pinDoesNotMatch': 'PIN tidak sepadan. Cuba lagi.',
+  'incorrectPin': 'PIN salah. Cuba lagi.',
 };
