@@ -438,4 +438,17 @@ const translationsUr = <String, String>{
   'enterPin': 'PIN درج کریں',
   'pinDoesNotMatch': 'PIN مماثل نہیں ہے۔ دوبارہ کوشش کریں۔',
   'incorrectPin': 'غلط PIN۔ دوبارہ کوشش کریں۔',
+
+  // Auto Drive backup
+  'autoBackup': 'ڈرائیو پر خودکار بیک اپ',
+  'autoBackupDesc': 'ایپ شروع ہونے پر خودکار بیک اپ (سائن ان ہونے پر)',
+
+  // Security section
+  'security': 'سیکیورٹی',
+  'securityFingerprint': 'فنگر پرنٹ',
+  'securityFingerprintDesc': 'حساس کاروائیوں کی منظوری کے لیے فنگر پرنٹ استعمال کریں',
+  'securityPin': 'PIN لاک',
+  'securityPinDesc': 'حساس کاروائیوں کے لیے 4 ہندسوں کا PIN درکار',
+  'biometricNotAvailable': 'اس ڈیوائس پر کوئی فنگر پرنٹ رجسٹرڈ نہیں',
+  'changeSecurity': 'سیکیورٹی ترتیبات بدلنے کے لیے تصدیق کریں',
 };

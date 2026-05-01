@@ -438,4 +438,17 @@ const translationsVi = <String, String>{
   'enterPin': 'Nhập mã PIN',
   'pinDoesNotMatch': 'Mã PIN không khớp. Thử lại.',
   'incorrectPin': 'Mã PIN không đúng. Thử lại.',
+
+  // Auto Drive backup
+  'autoBackup': 'Tự động sao lưu lên Drive',
+  'autoBackupDesc': 'Tự động sao lưu khi khởi động (nếu đã đăng nhập)',
+
+  // Security section
+  'security': 'Bảo mật',
+  'securityFingerprint': 'Vân tay',
+  'securityFingerprintDesc': 'Dùng vân tay để xác nhận các thao tác nhạy cảm',
+  'securityPin': 'Khóa PIN',
+  'securityPinDesc': 'Yêu cầu mã PIN 4 chữ số cho các thao tác nhạy cảm',
+  'biometricNotAvailable': 'Chưa có vân tay nào được đăng ký trên thiết bị này',
+  'changeSecurity': 'Xác minh để thay đổi cài đặt bảo mật',
 };

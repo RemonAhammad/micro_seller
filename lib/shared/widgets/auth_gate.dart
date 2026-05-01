@@ -1,34 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/services/auth_gate_service.dart';
 
-/// Single entry-point: returns `true` if the user passes the gate (biometric
-/// success OR PIN verified OR fresh PIN set up), `false` if they cancel.
+/// Reads a boolean env flag, defaulting to true if missing/blank/unparseable.
+/// Treats `'false'` / `'0'` / `'no'` / `'off'` (case-insensitive, trimmed)
+/// as false; everything else is true. Defaults to true so a missing `.env`
+/// doesn't silently hide security UI.
+bool _envFlag(String key, {bool defaultValue = true}) {
+  final raw = dotenv.env[key]?.trim().toLowerCase();
+  if (raw == null || raw.isEmpty) return defaultValue;
+  if (raw == 'false' || raw == '0' || raw == 'no' || raw == 'off') return false;
+  return true;
+}
+
+/// `.env` build-time visibility flags. When `false`, the matching toggle is
+/// hidden from Settings → Security entirely (and `runAuthGate` ignores that
+/// path even if the user setting says otherwise).
+bool get isFingerprintFeatureEnabled => _envFlag('ENABLE_FINGERPRINT_GATE');
+bool get isPinFeatureEnabled => _envFlag('ENABLE_PIN_GATE');
+
+/// Gate destructive actions. Returns `true` if the user passes (biometric
+/// OR PIN verified OR fresh PIN set up), `false` if they cancel.
 ///
-/// Strategy:
-///   1. If biometrics are available, prompt biometric. On success → pass.
-///   2. If biometric fails / cancels OR no biometrics enrolled, show the
-///      PIN sheet. If a PIN is configured we verify it; otherwise we run
-///      the setup flow (enter, confirm, store) and pass on completion.
-///
-/// [reason] is shown in the biometric system prompt and as the sheet title.
+/// [fingerprintEnabled] and [pinEnabled] are the *user's* preference from
+/// Settings. They're combined with the `.env` build-time flags here so the
+/// caller doesn't have to know about `.env`. Each path is considered
+/// independently — both must be off for the gate to passthrough.
 Future<bool> runAuthGate(
   BuildContext context, {
   required String reason,
+  required bool fingerprintEnabled,
+  required bool pinEnabled,
   AuthGateService? service,
 }) async {
   final svc = service ?? AuthGateService();
 
-  if (await svc.isBiometricAvailable()) {
+  // Combine user settings with .env feature flags.
+  final fp = fingerprintEnabled && isFingerprintFeatureEnabled;
+  final pin = pinEnabled && isPinFeatureEnabled;
+
+  // Both paths off — passthrough.
+  if (!fp && !pin) return true;
+
+  if (fp && await svc.isBiometricAvailable()) {
     final ok = await svc.authenticateBiometric(reason);
     if (ok) return true;
-    // Biometric prompt was cancelled or failed. We don't auto-fall to PIN
-    // here — the user explicitly cancelled, treat that as cancel. If the
-    // device has no biometrics at all, we don't even reach this branch.
+    // Biometric was cancelled / failed. Don't auto-fall-through to PIN —
+    // explicit cancel means cancel.
     return false;
   }
 
-  // No biometrics. Use the PIN sheet.
+  // Either biometrics aren't available or fingerprint gate is disabled.
+  // If PIN is also disabled, fail closed.
+  if (!pin) return false;
+
   if (!context.mounted) return false;
   final hasPin = await svc.hasPin();
   if (!context.mounted) return false;
@@ -43,6 +69,31 @@ Future<bool> runAuthGate(
       service: svc,
       title: reason,
       mode: hasPin ? _PinMode.verify : _PinMode.setup,
+    ),
+  );
+  return result == true;
+}
+
+/// Forces a fresh PIN setup flow (enter → confirm → store), regardless of
+/// whether a PIN already exists. Returns `true` if a PIN was set, `false`
+/// if the user cancelled.
+Future<bool> runPinSetup(
+  BuildContext context, {
+  required String reason,
+  AuthGateService? service,
+}) async {
+  final svc = service ?? AuthGateService();
+  if (!context.mounted) return false;
+  final result = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _PinSheet(
+      service: svc,
+      title: reason,
+      mode: _PinMode.setup,
     ),
   );
   return result == true;

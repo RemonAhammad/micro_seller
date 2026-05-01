@@ -438,4 +438,17 @@ const translationsMs = <String, String>{
   'enterPin': 'Masukkan PIN',
   'pinDoesNotMatch': 'PIN tidak sepadan. Cuba lagi.',
   'incorrectPin': 'PIN salah. Cuba lagi.',
+
+  // Auto Drive backup
+  'autoBackup': 'Sandaran automatik ke Drive',
+  'autoBackupDesc': 'Sandar secara automatik semasa aplikasi dibuka (jika log masuk)',
+
+  // Security section
+  'security': 'Keselamatan',
+  'securityFingerprint': 'Cap jari',
+  'securityFingerprintDesc': 'Guna cap jari untuk membenarkan tindakan sensitif',
+  'securityPin': 'Kunci PIN',
+  'securityPinDesc': 'Minta PIN 4 digit untuk tindakan sensitif',
+  'biometricNotAvailable': 'Tiada cap jari didaftarkan pada peranti ini',
+  'changeSecurity': 'Sahkan untuk menukar tetapan keselamatan',
 };

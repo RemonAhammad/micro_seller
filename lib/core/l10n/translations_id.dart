@@ -438,4 +438,17 @@ const translationsId = <String, String>{
   'enterPin': 'Masukkan PIN',
   'pinDoesNotMatch': 'PIN tidak cocok. Coba lagi.',
   'incorrectPin': 'PIN salah. Coba lagi.',
+
+  // Auto Drive backup
+  'autoBackup': 'Cadangan otomatis ke Drive',
+  'autoBackupDesc': 'Cadangkan otomatis saat aplikasi dibuka (jika sudah masuk)',
+
+  // Security section
+  'security': 'Keamanan',
+  'securityFingerprint': 'Sidik jari',
+  'securityFingerprintDesc': 'Gunakan sidik jari untuk mengizinkan tindakan sensitif',
+  'securityPin': 'Kunci PIN',
+  'securityPinDesc': 'Wajibkan PIN 4 digit untuk tindakan sensitif',
+  'biometricNotAvailable': 'Tidak ada sidik jari terdaftar di perangkat ini',
+  'changeSecurity': 'Verifikasi untuk mengubah pengaturan keamanan',
 };

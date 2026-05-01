@@ -24,6 +24,7 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/auth_gate.dart';
+import '../../../data/services/auth_gate_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -185,6 +186,71 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  /// Verifies fingerprint only. Used when the user toggles the fingerprint
+  /// switch — separate from PIN. Returns true if there's nothing to verify
+  /// against (fingerprint isn't currently active) or biometric succeeds.
+  Future<bool> _verifyFingerprint(String reason) async {
+    final settings = ref.read(settingsProvider.notifier);
+    if (!settings.securityFingerprintEnabled) return true;
+    final svc = AuthGateService();
+    if (!await svc.isBiometricAvailable()) return true;
+    if (!mounted) return false;
+    return runAuthGate(
+      context,
+      reason: reason,
+      fingerprintEnabled: true,
+      pinEnabled: false,
+      service: svc,
+    );
+  }
+
+  /// Verifies PIN only. Used when the user toggles the PIN switch — separate
+  /// from fingerprint. Returns true if there's no stored PIN to verify.
+  Future<bool> _verifyPin(String reason) async {
+    final settings = ref.read(settingsProvider.notifier);
+    if (!settings.securityPinEnabled) return true;
+    final svc = AuthGateService();
+    if (!await svc.hasPin()) return true;
+    if (!mounted) return false;
+    return runAuthGate(
+      context,
+      reason: reason,
+      fingerprintEnabled: false,
+      pinEnabled: true,
+      service: svc,
+    );
+  }
+
+  Future<void> _toggleFingerprint(bool target) async {
+    final s = AppStrings.of(context);
+    final passed = await _verifyFingerprint(s.tr('changeSecurity'));
+    if (!passed || !mounted) return;
+    await ref
+        .read(settingsProvider.notifier)
+        .updateSecurityFingerprintEnabled(target);
+  }
+
+  Future<void> _togglePin(bool target) async {
+    final s = AppStrings.of(context);
+    final passed = await _verifyPin(s.tr('changeSecurity'));
+    if (!passed || !mounted) return;
+    final svc = AuthGateService();
+    if (target) {
+      // Enable: force a fresh PIN setup so we know one exists going forward.
+      final ok = await runPinSetup(
+        context,
+        reason: s.tr('createPin'),
+        service: svc,
+      );
+      if (!ok || !mounted) return;
+      await ref.read(settingsProvider.notifier).updateSecurityPinEnabled(true);
+    } else {
+      // Disable: clear the stored PIN so re-enabling forces a fresh setup.
+      await svc.clearPin();
+      await ref.read(settingsProvider.notifier).updateSecurityPinEnabled(false);
+    }
+  }
+
   Future<void> _clearData() async {
     final ok = await ConfirmDialog.show(
       context,
@@ -198,9 +264,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     // Security gate: biometric prompt if available, otherwise a 4-digit PIN
     // (set up on first use). User must pass before any data is wiped.
+    final settings = ref.read(settingsProvider.notifier);
     final passed = await runAuthGate(
       context,
       reason: AppStrings.of(context).clearAllData,
+      fingerprintEnabled: settings.securityFingerprintEnabled,
+      pinEnabled: settings.securityPinEnabled,
     );
     if (!passed || !mounted) return;
 
@@ -627,6 +696,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: _isRestoring ? null : _restore,
               ),
+              const Divider(height: 1),
+              // Auto-backup switch — when enabled and the user is signed
+              // into Drive, AutoBackupRunner kicks off a backup on app
+              // startup (throttled to ≥12h between runs).
+              SwitchListTile(
+                secondary: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.autorenew_rounded,
+                      color: Colors.indigo),
+                ),
+                title: Text(s.tr('autoBackup')),
+                subtitle: Text(
+                  s.tr('autoBackupDesc'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                value: ref.watch(settingsProvider)['autoBackup'] as bool? ??
+                    false,
+                onChanged: (v) async {
+                  await ref
+                      .read(settingsProvider.notifier)
+                      .updateAutoBackup(v);
+                },
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -654,6 +754,88 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // Security — each row is visibility-gated by its `.env` flag.
+          // ENABLE_FINGERPRINT_GATE / ENABLE_PIN_GATE control whether the
+          // toggle is shown at all; user setting controls whether that path
+          // is active. Section is hidden entirely when both .env flags off.
+          if (isFingerprintFeatureEnabled || isPinFeatureEnabled) ...[
+            _SectionHeader(s.tr('security')),
+            _SettingsCard(
+              children: [
+                if (isFingerprintFeatureEnabled)
+                  FutureBuilder<bool>(
+                    future: AuthGateService().isBiometricAvailable(),
+                    builder: (context, snapshot) {
+                      final available = snapshot.data ?? false;
+                      return SwitchListTile(
+                        secondary: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.fingerprint_rounded,
+                            color: available
+                                ? AppColors.primary
+                                : theme.colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                        ),
+                        title: Text(s.tr('securityFingerprint')),
+                        subtitle: Text(
+                          available
+                              ? s.tr('securityFingerprintDesc')
+                              : s.tr('biometricNotAvailable'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface
+                                .withOpacity(0.6),
+                          ),
+                        ),
+                        value: available &&
+                            ref
+                                .watch(settingsProvider.notifier)
+                                .securityFingerprintEnabled,
+                        onChanged: available
+                            ? (v) => _toggleFingerprint(v)
+                            : null,
+                      );
+                    },
+                  ),
+                if (isFingerprintFeatureEnabled && isPinFeatureEnabled)
+                  const Divider(height: 1),
+                if (isPinFeatureEnabled)
+                  SwitchListTile(
+                    secondary: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.pin_rounded,
+                          color: AppColors.primary),
+                    ),
+                    title: Text(s.tr('securityPin')),
+                    subtitle: Text(
+                      s.tr('securityPinDesc'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                    value: ref
+                        .watch(settingsProvider.notifier)
+                        .securityPinEnabled,
+                    onChanged: (v) => _togglePin(v),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Danger zone
           _SectionHeader(s.dangerZone),

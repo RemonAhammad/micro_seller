@@ -446,4 +446,17 @@ const translationsEn = <String, String>{
   'enterPin': 'Enter your PIN',
   'pinDoesNotMatch': 'PINs do not match. Try again.',
   'incorrectPin': 'Incorrect PIN. Try again.',
+
+  // Auto Drive backup
+  'autoBackup': 'Auto Backup to Drive',
+  'autoBackupDesc': 'Back up automatically on app start (when signed in)',
+
+  // Security section
+  'security': 'Security',
+  'securityFingerprint': 'Fingerprint',
+  'securityFingerprintDesc': 'Use fingerprint to authorize sensitive actions',
+  'securityPin': 'PIN Lock',
+  'securityPinDesc': 'Require a 4-digit PIN for sensitive actions',
+  'biometricNotAvailable': 'No fingerprint enrolled on this device',
+  'changeSecurity': 'Verify to change security settings',
 };

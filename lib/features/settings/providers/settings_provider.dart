@@ -19,6 +19,9 @@ class Settings extends _$Settings {
   static const _keySidebarOrder = 'sidebarOrder';
   static const _keySidebarPosition = 'sidebarPosition';
   static const _keyHiddenSidebarItems = 'hiddenSidebarItems';
+  static const _keyAutoBackup = 'autoBackup';
+  static const _keySecurityFingerprint = 'securityFingerprintEnabled';
+  static const _keySecurityPin = 'securityPinEnabled';
 
   /// 'left' (default) or 'right'.
   static const sidebarPositionLeft = 'left';
@@ -39,6 +42,9 @@ class Settings extends _$Settings {
       'sidebarOrder': List<String>.from(defaultSidebarOrder),
       'sidebarPosition': sidebarPositionLeft,
       'hiddenSidebarItems': const <String>[],
+      'autoBackup': false,
+      'securityFingerprintEnabled': true,
+      'securityPinEnabled': true,
     };
   }
 
@@ -95,6 +101,10 @@ class Settings extends _$Settings {
           ? sidebarPositionRight
           : sidebarPositionLeft,
       'hiddenSidebarItems': hidden,
+      'autoBackup': prefs.getBool(_keyAutoBackup) ?? false,
+      'securityFingerprintEnabled':
+          prefs.getBool(_keySecurityFingerprint) ?? true,
+      'securityPinEnabled': prefs.getBool(_keySecurityPin) ?? true,
     };
   }
 
@@ -187,6 +197,29 @@ class Settings extends _$Settings {
       state['sidebarPosition'] as String? ?? sidebarPositionLeft;
   List<String> get hiddenSidebarItems =>
       List<String>.from(state['hiddenSidebarItems'] as List? ?? const []);
+  bool get autoBackup => state['autoBackup'] as bool? ?? false;
+  bool get securityFingerprintEnabled =>
+      state['securityFingerprintEnabled'] as bool? ?? true;
+  bool get securityPinEnabled =>
+      state['securityPinEnabled'] as bool? ?? true;
+
+  Future<void> updateAutoBackup(bool enabled) async {
+    state = {...state, 'autoBackup': enabled};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyAutoBackup, enabled);
+  }
+
+  Future<void> updateSecurityFingerprintEnabled(bool enabled) async {
+    state = {...state, 'securityFingerprintEnabled': enabled};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySecurityFingerprint, enabled);
+  }
+
+  Future<void> updateSecurityPinEnabled(bool enabled) async {
+    state = {...state, 'securityPinEnabled': enabled};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySecurityPin, enabled);
+  }
 
   Future<void> updateLanguage(String lang) async {
     state = {...state, 'language': lang};
@@ -218,6 +251,9 @@ class Settings extends _$Settings {
       'sidebarOrder': sidebarOrder,
       'sidebarPosition': sidebarPosition,
       'hiddenSidebarItems': hiddenSidebarItems,
+      'autoBackup': autoBackup,
+      'securityFingerprintEnabled': securityFingerprintEnabled,
+      'securityPinEnabled': securityPinEnabled,
     };
   }
 
@@ -261,6 +297,18 @@ class Settings extends _$Settings {
     if (position is String &&
         (position == sidebarPositionLeft || position == sidebarPositionRight)) {
       await updateSidebarPosition(position);
+    }
+    final autoBackup = data['autoBackup'];
+    if (autoBackup is bool) {
+      await updateAutoBackup(autoBackup);
+    }
+    final secFp = data['securityFingerprintEnabled'];
+    if (secFp is bool) {
+      await updateSecurityFingerprintEnabled(secFp);
+    }
+    final secPin = data['securityPinEnabled'];
+    if (secPin is bool) {
+      await updateSecurityPinEnabled(secPin);
     }
     final hidden = data['hiddenSidebarItems'];
     if (hidden is List) {

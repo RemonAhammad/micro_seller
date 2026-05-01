@@ -438,4 +438,17 @@ const translationsPt = <String, String>{
   'enterPin': 'Digite seu PIN',
   'pinDoesNotMatch': 'Os PINs não coincidem. Tente novamente.',
   'incorrectPin': 'PIN incorreto. Tente novamente.',
+
+  // Auto Drive backup
+  'autoBackup': 'Backup automático para o Drive',
+  'autoBackupDesc': 'Fazer backup automaticamente ao iniciar (se conectado)',
+
+  // Security section
+  'security': 'Segurança',
+  'securityFingerprint': 'Impressão digital',
+  'securityFingerprintDesc': 'Usar impressão digital para autorizar ações sensíveis',
+  'securityPin': 'Bloqueio com PIN',
+  'securityPinDesc': 'Exigir um PIN de 4 dígitos para ações sensíveis',
+  'biometricNotAvailable': 'Nenhuma impressão digital cadastrada neste dispositivo',
+  'changeSecurity': 'Verifique para alterar as configurações de segurança',
 };

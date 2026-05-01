@@ -438,4 +438,17 @@ const translationsBn = <String, String>{
   'enterPin': 'পিন লিখুন',
   'pinDoesNotMatch': 'পিন মিলছে না। আবার চেষ্টা করুন।',
   'incorrectPin': 'ভুল পিন। আবার চেষ্টা করুন।',
+
+  // Auto Drive backup
+  'autoBackup': 'ড্রাইভে স্বয়ংক্রিয় ব্যাকআপ',
+  'autoBackupDesc': 'অ্যাপ চালু হলে স্বয়ংক্রিয়ভাবে ব্যাকআপ নিন (সাইন-ইন থাকলে)',
+
+  // Security section
+  'security': 'নিরাপত্তা',
+  'securityFingerprint': 'ফিঙ্গারপ্রিন্ট',
+  'securityFingerprintDesc': 'সংবেদনশীল কাজের অনুমতির জন্য ফিঙ্গারপ্রিন্ট ব্যবহার করুন',
+  'securityPin': 'পিন লক',
+  'securityPinDesc': 'সংবেদনশীল কাজের জন্য ৪ অঙ্কের পিন প্রয়োজন',
+  'biometricNotAvailable': 'এই ডিভাইসে কোনো ফিঙ্গারপ্রিন্ট সেট করা নেই',
+  'changeSecurity': 'নিরাপত্তা সেটিংস বদলাতে যাচাই করুন',
 };

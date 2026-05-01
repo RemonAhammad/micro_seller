@@ -437,4 +437,17 @@ const translationsAr = <String, String>{
   'enterPin': 'أدخل رمز PIN',
   'pinDoesNotMatch': 'رموز PIN غير متطابقة. حاول مرة أخرى.',
   'incorrectPin': 'رمز PIN غير صحيح. حاول مرة أخرى.',
+
+  // Auto Drive backup
+  'autoBackup': 'نسخ احتياطي تلقائي إلى Drive',
+  'autoBackupDesc': 'نسخ احتياطي تلقائي عند بدء التطبيق (عند تسجيل الدخول)',
+
+  // Security section
+  'security': 'الأمان',
+  'securityFingerprint': 'بصمة الإصبع',
+  'securityFingerprintDesc': 'استخدم بصمة الإصبع للتحقق من الإجراءات الحساسة',
+  'securityPin': 'قفل برمز PIN',
+  'securityPinDesc': 'طلب رمز PIN مكوّن من 4 أرقام للإجراءات الحساسة',
+  'biometricNotAvailable': 'لا توجد بصمة مسجلة على هذا الجهاز',
+  'changeSecurity': 'تحقق لتغيير إعدادات الأمان',
 };

@@ -438,4 +438,17 @@ const translationsTr = <String, String>{
   'enterPin': 'PIN’i gir',
   'pinDoesNotMatch': 'PIN’ler eşleşmiyor. Tekrar deneyin.',
   'incorrectPin': 'Yanlış PIN. Tekrar deneyin.',
+
+  // Auto Drive backup
+  'autoBackup': 'Drive’a otomatik yedekle',
+  'autoBackupDesc': 'Uygulama açıldığında otomatik yedekle (oturum açıkken)',
+
+  // Security section
+  'security': 'Güvenlik',
+  'securityFingerprint': 'Parmak izi',
+  'securityFingerprintDesc': 'Hassas işlemleri onaylamak için parmak izi kullan',
+  'securityPin': 'PIN kilidi',
+  'securityPinDesc': 'Hassas işlemler için 4 haneli PIN iste',
+  'biometricNotAvailable': 'Bu cihazda kayıtlı parmak izi yok',
+  'changeSecurity': 'Güvenlik ayarlarını değiştirmek için doğrula',
 };

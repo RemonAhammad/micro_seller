@@ -438,4 +438,17 @@ const translationsTh = <String, String>{
   'enterPin': 'ใส่ PIN',
   'pinDoesNotMatch': 'PIN ไม่ตรงกัน ลองอีกครั้ง',
   'incorrectPin': 'PIN ไม่ถูกต้อง ลองอีกครั้ง',
+
+  // Auto Drive backup
+  'autoBackup': 'สำรองข้อมูลอัตโนมัติไปยัง Drive',
+  'autoBackupDesc': 'สำรองข้อมูลอัตโนมัติเมื่อเปิดแอป (เมื่อเข้าสู่ระบบแล้ว)',
+
+  // Security section
+  'security': 'ความปลอดภัย',
+  'securityFingerprint': 'ลายนิ้วมือ',
+  'securityFingerprintDesc': 'ใช้ลายนิ้วมือเพื่อยืนยันการดำเนินการที่สำคัญ',
+  'securityPin': 'ล็อกด้วย PIN',
+  'securityPinDesc': 'ต้องใช้ PIN 4 หลักสำหรับการดำเนินการที่สำคัญ',
+  'biometricNotAvailable': 'ยังไม่มีการลงทะเบียนลายนิ้วมือบนอุปกรณ์นี้',
+  'changeSecurity': 'ยืนยันตัวตนเพื่อเปลี่ยนการตั้งค่าความปลอดภัย',
 };

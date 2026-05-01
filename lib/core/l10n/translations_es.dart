@@ -437,4 +437,17 @@ const translationsEs = <String, String>{
   'enterPin': 'Ingresa tu PIN',
   'pinDoesNotMatch': 'Los PIN no coinciden. Inténtalo de nuevo.',
   'incorrectPin': 'PIN incorrecto. Inténtalo de nuevo.',
+
+  // Auto Drive backup
+  'autoBackup': 'Respaldo automático en Drive',
+  'autoBackupDesc': 'Respaldar automáticamente al iniciar la app (si has iniciado sesión)',
+
+  // Security section
+  'security': 'Seguridad',
+  'securityFingerprint': 'Huella digital',
+  'securityFingerprintDesc': 'Usar huella digital para autorizar acciones sensibles',
+  'securityPin': 'Bloqueo con PIN',
+  'securityPinDesc': 'Pedir un PIN de 4 dígitos para acciones sensibles',
+  'biometricNotAvailable': 'No hay huella registrada en este dispositivo',
+  'changeSecurity': 'Verifica para cambiar la configuración de seguridad',
 };

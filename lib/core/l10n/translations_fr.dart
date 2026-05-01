@@ -438,4 +438,17 @@ const translationsFr = <String, String>{
   'enterPin': 'Entrer le code PIN',
   'pinDoesNotMatch': 'Les codes PIN ne correspondent pas. Réessayez.',
   'incorrectPin': 'Code PIN incorrect. Réessayez.',
+
+  // Auto Drive backup
+  'autoBackup': 'Sauvegarde automatique sur Drive',
+  'autoBackupDesc': 'Sauvegarder automatiquement au démarrage (si connecté)',
+
+  // Security section
+  'security': 'Sécurité',
+  'securityFingerprint': 'Empreinte digitale',
+  'securityFingerprintDesc': 'Utiliser l’empreinte pour valider les actions sensibles',
+  'securityPin': 'Verrouillage par code',
+  'securityPinDesc': 'Exiger un code à 4 chiffres pour les actions sensibles',
+  'biometricNotAvailable': 'Aucune empreinte enregistrée sur cet appareil',
+  'changeSecurity': 'Vérifier pour modifier les paramètres de sécurité',
 };

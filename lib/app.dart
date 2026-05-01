@@ -5,14 +5,31 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
 import 'core/l10n/app_localizations.dart';
+import 'data/services/auto_backup_runner.dart';
 import 'data/services/isar_service.dart';
 import 'features/settings/providers/settings_provider.dart';
 
-class SellerBookApp extends ConsumerWidget {
+class SellerBookApp extends ConsumerStatefulWidget {
   const SellerBookApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SellerBookApp> createState() => _SellerBookAppState();
+}
+
+class _SellerBookAppState extends ConsumerState<SellerBookApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Fire-and-forget after first frame so it never blocks startup. The
+    // runner short-circuits if auto-backup is disabled, the Drive account
+    // isn't signed in, or the last backup was less than 12 hours ago.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(autoBackupRunnerProvider).runIfDue();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Pre-warm the Isar DB on app start
     ref.watch(isarProvider);
 
