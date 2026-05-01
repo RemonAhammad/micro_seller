@@ -427,6 +427,7 @@ const translationsFr = <String, String>{
   'sidebarOrder': 'Ordre de la barre latérale',
   'sidebarOrderDesc': 'Faites glisser pour réorganiser les onglets',
   'resetToDefault': 'Réinitialiser par défaut',
+  'sidebar': 'Barre latérale',
   'sidebarPosition': 'Position de la barre latérale',
   'left': 'Gauche',
   'right': 'Droite',

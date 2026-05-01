@@ -426,6 +426,7 @@ const translationsAr = <String, String>{
   'sidebarOrder': 'ترتيب الشريط الجانبي',
   'sidebarOrderDesc': 'اسحب لإعادة ترتيب علامات تبويب الشريط الجانبي',
   'resetToDefault': 'إعادة التعيين إلى الافتراضي',
+  'sidebar': 'الشريط الجانبي',
   'sidebarPosition': 'موضع الشريط الجانبي',
   'left': 'يسار',
   'right': 'يمين',

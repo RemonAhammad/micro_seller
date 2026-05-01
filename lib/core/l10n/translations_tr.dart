@@ -427,6 +427,7 @@ const translationsTr = <String, String>{
   'sidebarOrder': 'Kenar Çubuğu Sırası',
   'sidebarOrderDesc': 'Kenar çubuğu sekmelerini yeniden düzenlemek için sürükleyin',
   'resetToDefault': 'Varsayılana Sıfırla',
+  'sidebar': 'Kenar Çubuğu',
   'sidebarPosition': 'Kenar Çubuğu Konumu',
   'left': 'Sol',
   'right': 'Sağ',

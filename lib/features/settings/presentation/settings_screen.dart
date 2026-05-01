@@ -271,6 +271,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Sidebar customization
+          _SectionHeader(s.sidebar),
           _SettingsCard(
             children: [
               ListTile(

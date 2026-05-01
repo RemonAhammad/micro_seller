@@ -21,9 +21,7 @@ class ScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
-  final _controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-  );
+  final _controller = MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates);
 
   String? _scannedCode;
   Product? _matchedProduct;
@@ -55,12 +53,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     try {
       final isar = await ref.read(isarProvider.future);
       // Match against qrCode OR sku — sellers may print either as a label.
-      final product = await isar.products
-          .filter()
-          .qrCodeEqualTo(value)
-          .or()
-          .skuEqualTo(value)
-          .findFirst();
+      final product = await isar.products.filter().qrCodeEqualTo(value).or().skuEqualTo(value).findFirst();
       if (!mounted) return;
       setState(() {
         _matchedProduct = product;
@@ -111,17 +104,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           Expanded(
             child: Stack(
               children: [
-                MobileScanner(
-                  controller: _controller,
-                  onDetect: _onDetect,
-                ),
+                MobileScanner(controller: _controller, onDetect: _onDetect),
                 Center(
                   child: Container(
                     width: 240,
                     height: 240,
                     decoration: BoxDecoration(
-                      border: Border.all(
-                          color: theme.colorScheme.primary, width: 3),
+                      border: Border.all(color: theme.colorScheme.primary, width: 3),
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
@@ -132,17 +121,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                   right: 0,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        s.pointCameraAtCode,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 13),
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                      child: Text(s.pointCameraAtCode, style: const TextStyle(color: Colors.white70, fontSize: 13)),
                     ),
                   ),
                 ),
@@ -168,10 +149,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     },
                     onAdd: () {
                       // Push directly so we leave the scanner branch.
-                      context.push(
-                        '/products/add',
-                        extra: ScannerPrefill(qrCode: _scannedCode!),
-                      );
+                      context.push('/products/add', extra: ScannerPrefill(qrCode: _scannedCode!));
                     },
                   ),
           ),
@@ -207,8 +185,8 @@ class _ResultPanel extends StatelessWidget {
     final accent = searching
         ? cs.primary
         : found
-            ? Colors.green
-            : Colors.orange;
+        ? Colors.green
+        : Colors.orange;
 
     return Container(
       width: double.infinity,
@@ -216,9 +194,7 @@ class _ResultPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12)],
       ),
       child: SafeArea(
         top: false,
@@ -238,8 +214,8 @@ class _ResultPanel extends StatelessWidget {
                     searching
                         ? Icons.search_rounded
                         : found
-                            ? Icons.check_circle_rounded
-                            : Icons.help_outline_rounded,
+                        ? Icons.check_circle_rounded
+                        : Icons.help_outline_rounded,
                     color: accent,
                     size: 18,
                   ),
@@ -253,66 +229,59 @@ class _ResultPanel extends StatelessWidget {
                         searching
                             ? '...'
                             : found
-                                ? s.productMatched
-                                : s.noProductMatched,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: accent,
-                        ),
+                            ? s.productMatched
+                            : s.noProductMatched,
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: accent),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${s.scannedCode}: $code',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.6),
-                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            if (found) ...[
-              const SizedBox(height: 14),
-              _ProductPreview(product: product!),
-            ],
+            if (found) ...[const SizedBox(height: 14), _ProductPreview(product: product!)],
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onScanAgain,
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: Text(s.scanAgain),
+            // IntrinsicHeight + stretch keeps both buttons the same height
+            // even when one wraps to multiple lines (e.g. "Add as new
+            // product" wraps to 3 lines on narrow phones while "Scan again"
+            // fits in one). Without this they'd render at their own
+            // intrinsic heights and look mismatched.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onScanAgain,
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: Text(s.scanAgain, textAlign: TextAlign.center),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: searching
-                      ? const Center(
-                          child: SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.5),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: searching
+                        ? const Center(
+                            child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+                          )
+                        : found
+                        ? FilledButton.icon(
+                            onPressed: onView,
+                            icon: const Icon(Icons.visibility_rounded, size: 18),
+                            label: Text(s.viewProduct, textAlign: TextAlign.center),
+                          )
+                        : FilledButton.icon(
+                            onPressed: onAdd,
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: Text(s.addAsNewProduct, textAlign: TextAlign.center),
+                            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
                           ),
-                        )
-                      : found
-                          ? FilledButton.icon(
-                              onPressed: onView,
-                              icon: const Icon(Icons.visibility_rounded,
-                                  size: 18),
-                              label: Text(s.viewProduct),
-                            )
-                          : FilledButton.icon(
-                              onPressed: onAdd,
-                              icon: const Icon(Icons.add_rounded, size: 18),
-                              label: Text(s.addAsNewProduct),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                              ),
-                            ),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -354,18 +323,14 @@ class _ProductPreview extends StatelessWidget {
               children: [
                 Text(
                   product.name,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (product.sku.isNotEmpty)
                   Text(
                     'SKU: ${product.sku}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.6),
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
                   ),
               ],
             ),
@@ -377,8 +342,8 @@ class _ProductPreview extends StatelessWidget {
               color: product.isOutOfStock
                   ? Colors.red
                   : product.isLowStock
-                      ? Colors.orange
-                      : Colors.green,
+                  ? Colors.orange
+                  : Colors.green,
             ),
           ),
         ],
