@@ -450,4 +450,11 @@ const translationsAr = <String, String>{
   'securityPinDesc': 'طلب رمز PIN مكوّن من 4 أرقام للإجراءات الحساسة',
   'biometricNotAvailable': 'لا توجد بصمة مسجلة على هذا الجهاز',
   'changeSecurity': 'تحقق لتغيير إعدادات الأمان',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'تم إيقاف النسخ الاحتياطي التلقائي مؤقتًا',
+  'autoBackupResumed': 'تم استئناف النسخ الاحتياطي التلقائي',
+  'signInToFix': 'سجّل الدخول للإصلاح',
+  'signInFailed': 'فشل تسجيل الدخول',
+  'dismiss': 'تجاهل',
 };

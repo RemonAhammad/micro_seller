@@ -451,4 +451,11 @@ const translationsPt = <String, String>{
   'securityPinDesc': 'Exigir um PIN de 4 dígitos para ações sensíveis',
   'biometricNotAvailable': 'Nenhuma impressão digital cadastrada neste dispositivo',
   'changeSecurity': 'Verifique para alterar as configurações de segurança',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'Backup automático pausado',
+  'autoBackupResumed': 'Backup automático retomado',
+  'signInToFix': 'Entre para corrigir',
+  'signInFailed': 'Falha ao entrar',
+  'dismiss': 'Dispensar',
 };

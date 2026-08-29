@@ -451,4 +451,11 @@ const translationsFr = <String, String>{
   'securityPinDesc': 'Exiger un code à 4 chiffres pour les actions sensibles',
   'biometricNotAvailable': 'Aucune empreinte enregistrée sur cet appareil',
   'changeSecurity': 'Vérifier pour modifier les paramètres de sécurité',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'Sauvegarde automatique suspendue',
+  'autoBackupResumed': 'Sauvegarde automatique reprise',
+  'signInToFix': 'Se connecter pour corriger',
+  'signInFailed': 'Échec de la connexion',
+  'dismiss': 'Ignorer',
 };

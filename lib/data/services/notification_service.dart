@@ -73,6 +73,30 @@ class NotificationService {
     );
   }
 
+  /// Fired by the background WorkManager worker when Drive access is no
+  /// longer usable (silent sign-in returned null, account revoked the
+  /// scope, or Play Services raised DEVELOPER_ERROR). Tapping the
+  /// notification opens the app, where Settings → Drive shows a banner
+  /// with a "Sign in" button to restore the connection.
+  static Future<void> showAutoBackupPaused() async {
+    await _plugin.show(
+      3,
+      'Auto backup paused',
+      'Sign in to Google Drive again to resume backups.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'auto_backup',
+          'Auto Backup',
+          channelDescription:
+              'Alerts when scheduled Drive backups need your attention',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   /// Check and trigger notifications based on current data
   static Future<void> checkAndNotify(Isar isar) async {
     // Low stock check

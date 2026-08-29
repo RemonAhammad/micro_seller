@@ -451,4 +451,11 @@ const translationsId = <String, String>{
   'securityPinDesc': 'Wajibkan PIN 4 digit untuk tindakan sensitif',
   'biometricNotAvailable': 'Tidak ada sidik jari terdaftar di perangkat ini',
   'changeSecurity': 'Verifikasi untuk mengubah pengaturan keamanan',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'Cadangan otomatis dijeda',
+  'autoBackupResumed': 'Cadangan otomatis dilanjutkan',
+  'signInToFix': 'Masuk untuk memperbaiki',
+  'signInFailed': 'Masuk gagal',
+  'dismiss': 'Tutup',
 };

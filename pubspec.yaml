@@ -1,7 +1,7 @@
 name: micro_seller
 description: Inventory and order manager for micro sellers
 publish_to: 'none'
-version: 1.0.3+7
+version: 1.0.4+8
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -87,6 +87,12 @@ dependencies:
   # to a 4-digit PIN stored as a SHA-256 hash when biometrics aren't set up.
   local_auth: ^2.3.0
   crypto: ^3.0.3
+
+  # Background periodic Drive backup (Android WorkManager wrapper). Schedules
+  # a daily worker when "Auto Backup" is on; the worker survives app close
+  # and reboot. Failed silent sign-in (revoked access) raises a notification
+  # and a Settings banner — never silent.
+  workmanager: ^0.5.2
 
 dev_dependencies:
   flutter_test:

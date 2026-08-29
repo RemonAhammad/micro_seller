@@ -459,4 +459,11 @@ const translationsEn = <String, String>{
   'securityPinDesc': 'Require a 4-digit PIN for sensitive actions',
   'biometricNotAvailable': 'No fingerprint enrolled on this device',
   'changeSecurity': 'Verify to change security settings',
+
+  // Background auto-backup status (worker → UI handoff)
+  'autoBackupPaused': 'Auto backup paused',
+  'autoBackupResumed': 'Auto backup resumed',
+  'signInToFix': 'Sign in to fix',
+  'signInFailed': 'Sign-in failed',
+  'dismiss': 'Dismiss',
 };

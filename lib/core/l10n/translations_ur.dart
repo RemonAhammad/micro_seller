@@ -451,4 +451,11 @@ const translationsUr = <String, String>{
   'securityPinDesc': 'حساس کاروائیوں کے لیے 4 ہندسوں کا PIN درکار',
   'biometricNotAvailable': 'اس ڈیوائس پر کوئی فنگر پرنٹ رجسٹرڈ نہیں',
   'changeSecurity': 'سیکیورٹی ترتیبات بدلنے کے لیے تصدیق کریں',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'خودکار بیک اپ روک دیا گیا',
+  'autoBackupResumed': 'خودکار بیک اپ دوبارہ شروع',
+  'signInToFix': 'ٹھیک کرنے کے لیے سائن ان کریں',
+  'signInFailed': 'سائن ان ناکام',
+  'dismiss': 'برخاست کریں',
 };

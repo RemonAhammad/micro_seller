@@ -451,4 +451,11 @@ const translationsMs = <String, String>{
   'securityPinDesc': 'Minta PIN 4 digit untuk tindakan sensitif',
   'biometricNotAvailable': 'Tiada cap jari didaftarkan pada peranti ini',
   'changeSecurity': 'Sahkan untuk menukar tetapan keselamatan',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'Sandaran automatik dijeda',
+  'autoBackupResumed': 'Sandaran automatik disambung semula',
+  'signInToFix': 'Log masuk untuk membaiki',
+  'signInFailed': 'Log masuk gagal',
+  'dismiss': 'Tutup',
 };

@@ -1,11 +1,14 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 import 'app.dart';
 import 'core/utils/currency_formatter.dart';
+import 'data/services/auto_backup_runner.dart';
 import 'data/services/notification_service.dart';
 
 void main() async {
@@ -27,6 +30,24 @@ void main() async {
   }
 
   await NotificationService.init();
+
+  // Workmanager — Android only. Initialized once per process; the dispatcher
+  // is a top-level entry-point (see auto_backup_runner.dart) so AOT keeps
+  // it alive in release builds. Schedule the daily backup when the user
+  // has Auto Backup turned on; otherwise leave it idle.
+  if (Platform.isAndroid) {
+    try {
+      await Workmanager().initialize(
+        autoBackupCallbackDispatcher,
+        isInDebugMode: kDebugMode,
+      );
+      if (prefs.getBool('autoBackup') ?? false) {
+        await AutoBackupRunner.scheduleAutoBackup();
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[main] workmanager init failed: $e');
+    }
+  }
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

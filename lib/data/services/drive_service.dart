@@ -97,11 +97,17 @@ class DriveService {
     }
   }
 
-  Future<drive.DriveApi> _getDriveApi() async {
+  Future<drive.DriveApi> _getDriveApi({bool interactive = true}) async {
     GoogleSignInAccount? account;
     try {
-      account =
-          await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
+      account = _googleSignIn.currentUser ??
+          await _googleSignIn.signInSilently();
+      // Only fall back to the interactive prompt when called from a UI
+      // context. Background workers must never call signIn() — it would
+      // crash because there's no Activity to host the picker.
+      if (account == null && interactive) {
+        account = await _googleSignIn.signIn();
+      }
     } catch (e, st) {
       _logError('signIn', e, st);
       throw DriveBackupException(
@@ -191,11 +197,17 @@ class DriveService {
   /// [settings] — pass the user's exported preferences map (theme, currency,
   /// sidebar order, etc.) to include them in the backup. Pass null to back
   /// up data only.
+  ///
+  /// [interactive] — when false, the call will NOT show a sign-in picker if
+  /// silent sign-in fails (background workers must use `false`). It instead
+  /// throws `DriveBackupException(notSignedIn)` so the caller can mark the
+  /// auto-backup as paused and prompt the user from the UI.
   Future<void> backupToDrive(
     Isar isar, {
     Map<String, dynamic>? settings,
+    bool interactive = true,
   }) async {
-    final driveApi = await _getDriveApi();
+    final driveApi = await _getDriveApi(interactive: interactive);
 
     final String jsonStr;
     try {

@@ -451,4 +451,11 @@ const translationsVi = <String, String>{
   'securityPinDesc': 'Yêu cầu mã PIN 4 chữ số cho các thao tác nhạy cảm',
   'biometricNotAvailable': 'Chưa có vân tay nào được đăng ký trên thiết bị này',
   'changeSecurity': 'Xác minh để thay đổi cài đặt bảo mật',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'Tự động sao lưu đang tạm dừng',
+  'autoBackupResumed': 'Tự động sao lưu đã tiếp tục',
+  'signInToFix': 'Đăng nhập để khắc phục',
+  'signInFailed': 'Đăng nhập thất bại',
+  'dismiss': 'Bỏ qua',
 };

@@ -451,4 +451,11 @@ const translationsTr = <String, String>{
   'securityPinDesc': 'Hassas işlemler için 4 haneli PIN iste',
   'biometricNotAvailable': 'Bu cihazda kayıtlı parmak izi yok',
   'changeSecurity': 'Güvenlik ayarlarını değiştirmek için doğrula',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'Otomatik yedekleme duraklatıldı',
+  'autoBackupResumed': 'Otomatik yedekleme devam ediyor',
+  'signInToFix': 'Düzeltmek için oturum aç',
+  'signInFailed': 'Oturum açma başarısız',
+  'dismiss': 'Kapat',
 };

@@ -451,4 +451,11 @@ const translationsTh = <String, String>{
   'securityPinDesc': 'ต้องใช้ PIN 4 หลักสำหรับการดำเนินการที่สำคัญ',
   'biometricNotAvailable': 'ยังไม่มีการลงทะเบียนลายนิ้วมือบนอุปกรณ์นี้',
   'changeSecurity': 'ยืนยันตัวตนเพื่อเปลี่ยนการตั้งค่าความปลอดภัย',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'การสำรองข้อมูลอัตโนมัติถูกระงับ',
+  'autoBackupResumed': 'การสำรองข้อมูลอัตโนมัติทำงานต่อแล้ว',
+  'signInToFix': 'ลงชื่อเข้าใช้เพื่อแก้ไข',
+  'signInFailed': 'ลงชื่อเข้าใช้ไม่สำเร็จ',
+  'dismiss': 'ปิด',
 };

@@ -22,6 +22,11 @@ class Settings extends _$Settings {
   static const _keyAutoBackup = 'autoBackup';
   static const _keySecurityFingerprint = 'securityFingerprintEnabled';
   static const _keySecurityPin = 'securityPinEnabled';
+  // Set by the background worker (`auto_backup_runner.dart`) when Drive
+  // access is revoked / silent sign-in returns null. Read by the Settings
+  // UI to surface a "Sign in to resume" banner. Always cleared on a
+  // successful backup.
+  static const _keyAutoBackupError = 'autoBackupError';
 
   /// 'left' (default) or 'right'.
   static const sidebarPositionLeft = 'left';
@@ -45,6 +50,7 @@ class Settings extends _$Settings {
       'autoBackup': false,
       'securityFingerprintEnabled': true,
       'securityPinEnabled': true,
+      'autoBackupError': null,
     };
   }
 
@@ -105,6 +111,7 @@ class Settings extends _$Settings {
       'securityFingerprintEnabled':
           prefs.getBool(_keySecurityFingerprint) ?? true,
       'securityPinEnabled': prefs.getBool(_keySecurityPin) ?? true,
+      'autoBackupError': prefs.getString(_keyAutoBackupError),
     };
   }
 
@@ -202,6 +209,21 @@ class Settings extends _$Settings {
       state['securityFingerprintEnabled'] as bool? ?? true;
   bool get securityPinEnabled =>
       state['securityPinEnabled'] as bool? ?? true;
+  String? get autoBackupError => state['autoBackupError'] as String?;
+
+  /// Re-read [_keyAutoBackupError] from disk into state. The key is written
+  /// from the background isolate by `auto_backup_runner.dart`, so the
+  /// foreground provider's in-memory state can be stale until we sync.
+  Future<void> refreshAutoBackupError() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = {...state, 'autoBackupError': prefs.getString(_keyAutoBackupError)};
+  }
+
+  Future<void> clearAutoBackupError() async {
+    state = {...state, 'autoBackupError': null};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyAutoBackupError);
+  }
 
   Future<void> updateAutoBackup(bool enabled) async {
     state = {...state, 'autoBackup': enabled};

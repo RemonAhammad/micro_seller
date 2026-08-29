@@ -15,6 +15,7 @@ import '../../../data/models/stock_movement.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/purchase.dart';
 import '../../../data/models/cash_register.dart';
+import '../../../data/services/auto_backup_runner.dart';
 import '../../../data/services/drive_service.dart';
 import '../../../data/services/local_backup_service.dart';
 import '../../../data/services/isar_service.dart';
@@ -33,7 +34,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with WidgetsBindingObserver {
   final _driveService = DriveService();
   final _localBackupService = LocalBackupService();
   bool _isBackingUp = false;
@@ -45,7 +47,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadAccount();
+    // The auto-backup worker writes `autoBackupError` to SharedPreferences
+    // from a separate isolate, so the in-memory provider state can be stale
+    // when this screen builds. Pull it once on entry.
+    ref.read(settingsProvider.notifier).refreshAutoBackupError();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Returning to the app after the worker fired in the background should
+    // surface the banner without requiring a navigation away and back.
+    if (state == AppLifecycleState.resumed) {
+      ref.read(settingsProvider.notifier).refreshAutoBackupError();
+    }
   }
 
   Future<void> _loadAccount() async {
@@ -623,6 +645,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Google Drive
           _SectionHeader(s.googleDriveBackup),
+          if (ref.watch(settingsProvider)['autoBackupError'] != null)
+            _AutoBackupErrorBanner(
+              message: ref
+                      .watch(settingsProvider)['autoBackupError']
+                      as String? ??
+                  '',
+              onSignIn: () async {
+                try {
+                  // Interactive sign-in — re-issues the OAuth grant.
+                  final user = await _driveService.signIn();
+                  if (user == null) return; // user cancelled
+                  await ref
+                      .read(settingsProvider.notifier)
+                      .clearAutoBackupError();
+                  // Re-schedule so the next backup attempt runs soon.
+                  await AutoBackupRunner.scheduleAutoBackup();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(s.tr('autoBackupResumed')),
+                      backgroundColor: Colors.green,
+                    ));
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('${s.tr('signInFailed')}: $e'),
+                      backgroundColor: Colors.red,
+                    ));
+                  }
+                }
+              },
+              onDismiss: () => ref
+                  .read(settingsProvider.notifier)
+                  .clearAutoBackupError(),
+            ),
           _SettingsCard(
             children: [
               ListTile(
@@ -725,6 +782,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   await ref
                       .read(settingsProvider.notifier)
                       .updateAutoBackup(v);
+                  // Schedule / cancel the WorkManager periodic worker so
+                  // background backups follow the toggle. No-op on iOS /
+                  // desktop — the helpers already early-return there.
+                  if (v) {
+                    await AutoBackupRunner.scheduleAutoBackup();
+                  } else {
+                    await AutoBackupRunner.cancelAutoBackup();
+                    // Clearing the error too: with auto-backup off the
+                    // banner is meaningless.
+                    await ref
+                        .read(settingsProvider.notifier)
+                        .clearAutoBackupError();
+                  }
                 },
               ),
             ],
@@ -903,6 +973,82 @@ class _SidebarPositionToggle extends StatelessWidget {
           height: 30,
           child: Icon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
         ),
+      ),
+    );
+  }
+}
+
+/// Amber warning card surfaced under the "Google Drive" section header
+/// when the background worker has detected revoked / failed Drive access.
+/// Tapping the primary button re-runs interactive sign-in; tapping the X
+/// dismisses the banner without fixing it.
+class _AutoBackupErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onSignIn;
+  final VoidCallback onDismiss;
+
+  const _AutoBackupErrorBanner({
+    required this.message,
+    required this.onSignIn,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withOpacity(0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.warning_amber_rounded,
+              color: Colors.amber, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.tr('autoBackupPaused'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: cs.onSurface.withOpacity(0.75),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    FilledButton.tonal(
+                      onPressed: onSignIn,
+                      style: FilledButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: Text(s.tr('signInToFix')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: s.tr('dismiss'),
+            icon: const Icon(Icons.close_rounded, size: 20),
+            onPressed: onDismiss,
+          ),
+        ],
       ),
     );
   }

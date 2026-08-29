@@ -451,4 +451,11 @@ const translationsBn = <String, String>{
   'securityPinDesc': 'সংবেদনশীল কাজের জন্য ৪ অঙ্কের পিন প্রয়োজন',
   'biometricNotAvailable': 'এই ডিভাইসে কোনো ফিঙ্গারপ্রিন্ট সেট করা নেই',
   'changeSecurity': 'নিরাপত্তা সেটিংস বদলাতে যাচাই করুন',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'অটো ব্যাকআপ বিরতিতে আছে',
+  'autoBackupResumed': 'অটো ব্যাকআপ পুনরায় শুরু হয়েছে',
+  'signInToFix': 'সাইন ইন করে ঠিক করুন',
+  'signInFailed': 'সাইন-ইন ব্যর্থ',
+  'dismiss': 'বাতিল',
 };

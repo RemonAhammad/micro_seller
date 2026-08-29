@@ -450,4 +450,11 @@ const translationsEs = <String, String>{
   'securityPinDesc': 'Pedir un PIN de 4 dígitos para acciones sensibles',
   'biometricNotAvailable': 'No hay huella registrada en este dispositivo',
   'changeSecurity': 'Verifica para cambiar la configuración de seguridad',
+
+  // Background auto-backup status
+  'autoBackupPaused': 'Respaldo automático en pausa',
+  'autoBackupResumed': 'Respaldo automático reanudado',
+  'signInToFix': 'Inicia sesión para arreglarlo',
+  'signInFailed': 'Error al iniciar sesión',
+  'dismiss': 'Descartar',
 };
