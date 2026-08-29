@@ -10,6 +10,7 @@ import '../models/product.dart';
 import '../models/purchase.dart';
 import '../models/stock_movement.dart';
 import '../models/supplier.dart';
+import '../models/trash_entry.dart';
 import 'migration_service.dart';
 
 part 'isar_service.g.dart';
@@ -28,6 +29,7 @@ Future<Isar> isar(Ref ref) async {
       SupplierSchema,
       PurchaseSchema,
       CashRegisterSchema,
+      TrashEntrySchema,
     ],
     directory: dir.path,
     name: 'sellerbook_db',

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../providers/expense_provider.dart';
 import '../../../data/services/csv_export_service.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/extensions/context_extensions.dart';
+import '../../settings/providers/trash_provider.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -128,9 +130,17 @@ class ExpenseListScreen extends ConsumerWidget {
                           icon: Icons.delete_rounded,
                         );
                         if (ok == true) {
-                          await ref
+                          final trashId = await ref
                               .read(expenseProvider.notifier)
                               .deleteExpense(expense.id);
+                          if (trashId != null && context.mounted) {
+                            context.showUndoSnackBar(
+                              '${s.itemDeleted}: ${expense.title}',
+                              onUndo: () => ref
+                                  .read(trashProvider.notifier)
+                                  .restore(trashId),
+                            );
+                          }
                         }
                       },
                       ),

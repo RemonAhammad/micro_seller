@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/trash_entry.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/expense.dart';
 import '../../../data/models/order.dart';
@@ -306,6 +307,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       await isar.suppliers.clear();
       await isar.purchases.clear();
       await isar.cashRegisters.clear();
+      // "Clear all" has to mean all: leaving the recycle bin behind would
+      // both retain data the user asked to wipe and leave entries pointing
+      // at ids that no longer exist.
+      await isar.trashEntries.clear();
     });
 
     if (mounted) {
@@ -439,6 +444,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 onEdit: (val) => ref.read(settingsProvider.notifier).updateShopName(val),
               ),
               const Divider(height: 1),
+              // Printed on the shared product catalog so buyers know where to
+              // order from. Optional — blank simply omits the line.
+              _EditableTile(
+                icon: Icons.phone_rounded,
+                label: s.shopPhone,
+                value: ref.read(settingsProvider.notifier).shopPhone,
+                onEdit: (val) =>
+                    ref.read(settingsProvider.notifier).updateShopPhone(val),
+              ),
+              const Divider(height: 1),
               ListTile(
                 leading: Container(
                   width: 40,
@@ -537,6 +552,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     setState(() {});
                   }
                 },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Recycle Bin — deleted records, recoverable for 30 days.
+          _SectionHeader(s.recycleBin),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.delete_outline_rounded,
+                      color: Colors.blueGrey, size: 20),
+                ),
+                title: Text(s.recycleBin),
+                subtitle: Text(
+                  s.recycleBinRetentionNote,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                onTap: () => context.push('/settings/recycle-bin'),
               ),
             ],
           ),

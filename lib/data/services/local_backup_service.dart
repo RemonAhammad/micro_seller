@@ -12,6 +12,7 @@ import '../models/category.dart';
 import '../models/supplier.dart';
 import '../models/purchase.dart';
 import '../models/cash_register.dart';
+import '../models/trash_entry.dart';
 
 class LocalBackupService {
   /// Bumped to v3 when the `settings` payload was added. Older v2 backups
@@ -71,6 +72,11 @@ class LocalBackupService {
       await isar.suppliers.clear();
       await isar.purchases.clear();
       await isar.cashRegisters.clear();
+      // Trash is deliberately NOT part of the backup payload, but it must be
+      // cleared here anyway: its entries reference ids from the dataset being
+      // replaced, so restoring one afterwards would write stale rows over
+      // unrelated records.
+      await isar.trashEntries.clear();
 
       if (data['products'] != null) {
         await isar.products

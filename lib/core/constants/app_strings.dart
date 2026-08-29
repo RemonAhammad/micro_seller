@@ -498,4 +498,40 @@ class _L10nStrings {
   String get sidebarPosition => _l10n.tr('sidebarPosition');
   String get left => _l10n.tr('left');
   String get right => _l10n.tr('right');
+  String get expense => _l10n.tr('expense');
+  String get product => _l10n.tr('product');
+  String get order => _l10n.tr('order');
+  String get purchase => _l10n.tr('purchase');
+  String get supplier => _l10n.tr('supplier');
+  String get restore => _l10n.tr('restore');
+  String get recycleBin => _l10n.tr('recycleBin');
+  String get recycleBinEmpty => _l10n.tr('recycleBinEmpty');
+  String get recycleBinEmptyHint => _l10n.tr('recycleBinEmptyHint');
+  String get recycleBinRetentionNote => _l10n.tr('recycleBinRetentionNote');
+  String get emptyBin => _l10n.tr('emptyBin');
+  String get emptyBinConfirm => _l10n.tr('emptyBinConfirm');
+  String get binEmptied => _l10n.tr('binEmptied');
+  String get itemRestored => _l10n.tr('itemRestored');
+  String get restoreFailed => _l10n.tr('restoreFailed');
+  String get deleteForever => _l10n.tr('deleteForever');
+  String get deleteForeverConfirm => _l10n.tr('deleteForeverConfirm');
+  String get itemDeleted => _l10n.tr('itemDeleted');
+  String get shareCatalog => _l10n.tr('shareCatalog');
+  String get selectAll => _l10n.tr('selectAll');
+  String get clearSelection => _l10n.tr('clearSelection');
+  String get noProducts => _l10n.tr('noProducts');
+  String get includePhotos => _l10n.tr('includePhotos');
+  String get includeStock => _l10n.tr('includeStock');
+  String get includeSku => _l10n.tr('includeSku');
+  String get shareAsImage => _l10n.tr('shareAsImage');
+  String get shareAsPdf => _l10n.tr('shareAsPdf');
+  String get copyPriceList => _l10n.tr('copyPriceList');
+  String get priceListCopied => _l10n.tr('priceListCopied');
+  String get catalogGenerationFailed => _l10n.tr('catalogGenerationFailed');
+  String get shopPhone => _l10n.tr('shopPhone');
+  String get productCatalog => _l10n.tr('productCatalog');
+
+  /// Only the first N products fit into a single shared image.
+  String catalogImageTruncated(int count) =>
+      _l10n.tr('catalogImageTruncated').replaceAll('{count}', '\$count');
 }

@@ -41,7 +41,7 @@ final class SettingsProvider
   }
 }
 
-String _$settingsHash() => r'80826b6ee7b69ca0115334fa792619f9edc5bb7f';
+String _$settingsHash() => r'211de6859ac1a2ef603baee11b621c1c85452a1f';
 
 abstract class _$Settings extends $Notifier<Map<String, dynamic>> {
   Map<String, dynamic> build();

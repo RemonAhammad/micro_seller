@@ -10,6 +10,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/extensions/context_extensions.dart';
+import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import 'widgets/stock_badge.dart';
 
@@ -82,8 +84,21 @@ class _ProductDetailBody extends ConsumerWidget {
                         icon: Icons.delete_rounded,
                       );
                       if (ok == true && context.mounted) {
-                        await ref.read(productProvider.notifier).deleteProduct(product.id);
-                        if (context.mounted) context.pop();
+                        final trashId = await ref
+                            .read(productProvider.notifier)
+                            .deleteProduct(product.id);
+                        if (!context.mounted) return;
+                        context.pop();
+                        // After the pop, so the snackbar belongs to the list
+                        // screen rather than the detail screen unwinding.
+                        if (trashId != null) {
+                          context.showUndoSnackBar(
+                            '${s.itemDeleted}: ${product.name}',
+                            onUndo: () => ref
+                                .read(trashProvider.notifier)
+                                .restore(trashId),
+                          );
+                        }
                       }
                     },
                   ),

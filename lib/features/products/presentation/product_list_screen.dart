@@ -43,6 +43,11 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         title: Text(s.products),
         actions: [
           IconButton(
+            icon: const Icon(Icons.ios_share_rounded),
+            tooltip: s.shareCatalog,
+            onPressed: () => context.push('/products/catalog'),
+          ),
+          IconButton(
             icon: Icon(
                 _showGrid ? Icons.view_list_rounded : Icons.grid_view_rounded),
             onPressed: () => setState(() => _showGrid = !_showGrid),

@@ -1,7 +1,9 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/trash_entry.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/trash_service.dart';
 
 part 'category_provider.g.dart';
 
@@ -31,11 +33,28 @@ class CategoryNotifier extends _$CategoryNotifier {
     });
   }
 
-  Future<void> deleteCategory(int id) async {
+  /// Moves the category to the trash instead of destroying it. Recoverable
+  /// for [kTrashRetention] via the undo snackbar or Settings → Recycle Bin.
+  /// Returns the trash entry id, for wiring an UNDO action. Null if the
+  /// category was already gone.
+  Future<int?> deleteCategory(int id) async {
+    int? trashId;
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
-      await isar.writeTxn(() async => isar.categories.delete(id));
+      final trash = TrashService(isar);
+      await isar.writeTxn(() async {
+        final category = await isar.categories.get(id);
+        if (category == null) return;
+        trashId = await trash.capture(
+          kind: TrashKind.category,
+          originalId: id,
+          payload: category.toJson(),
+          label: category.name,
+        );
+        await isar.categories.delete(id);
+      });
     });
+    return trashId;
   }
 
   /// Ensures the named category exists; creates it if not.

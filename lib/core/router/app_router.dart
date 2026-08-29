@@ -5,10 +5,12 @@ import 'package:showcaseview/showcaseview.dart';
 import '../../data/services/tutorial_service.dart';
 import '../../features/settings/providers/settings_provider.dart';
 import '../../features/settings/presentation/sidebar_order_screen.dart';
+import '../../features/settings/presentation/recycle_bin_screen.dart';
 import '../constants/sidebar_items.dart';
 import '../../features/categories/presentation/category_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
+import '../../features/products/presentation/catalog_share_screen.dart';
 import '../../features/products/presentation/product_form_screen.dart';
 import '../../features/products/presentation/product_detail_screen.dart';
 import '../../features/orders/presentation/order_list_screen.dart';
@@ -77,6 +79,11 @@ final appRouter = GoRouter(
             path: '/products',
             builder: (_, __) => const ProductListScreen(),
             routes: [
+              GoRoute(
+                path: 'catalog',
+                pageBuilder: (_, s) =>
+                    _fadePage(const CatalogShareScreen(), s),
+              ),
               GoRoute(
                 path: 'add',
                 pageBuilder: (_, s) {
@@ -280,6 +287,11 @@ final appRouter = GoRouter(
                 path: 'sidebar-order',
                 pageBuilder: (_, s) =>
                     _fadePage(const SidebarOrderScreen(), s),
+              ),
+              GoRoute(
+                path: 'recycle-bin',
+                pageBuilder: (_, s) =>
+                    _fadePage(const RecycleBinScreen(), s),
               ),
             ],
           ),

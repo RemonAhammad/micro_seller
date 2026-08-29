@@ -158,7 +158,7 @@ final class ProductNotifierProvider
   ProductNotifier create() => ProductNotifier();
 }
 
-String _$productNotifierHash() => r'4776bc277b1ce3e3f519f09720dacf996d125061';
+String _$productNotifierHash() => r'3e16baf4af4ef742be8fd0fad7261b78a106b279';
 
 abstract class _$ProductNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

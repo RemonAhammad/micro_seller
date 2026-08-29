@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/category.dart';
 import '../providers/category_provider.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/extensions/context_extensions.dart';
+import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 
@@ -142,9 +144,17 @@ class _CategoryTile extends StatelessWidget {
           ),
         );
       },
-      onDismissed: (_) => ref
-          .read(categoryProvider.notifier)
-          .deleteCategory(category.id),
+      onDismissed: (_) async {
+        final s = AppStrings.of(context);
+        final trashId =
+            await ref.read(categoryProvider.notifier).deleteCategory(category.id);
+        if (trashId != null && context.mounted) {
+          context.showUndoSnackBar(
+            '${s.itemDeleted}: ${category.name}',
+            onUndo: () => ref.read(trashProvider.notifier).restore(trashId),
+          );
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(

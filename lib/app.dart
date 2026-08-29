@@ -8,6 +8,7 @@ import 'core/l10n/app_localizations.dart';
 import 'data/services/auto_backup_runner.dart';
 import 'data/services/isar_service.dart';
 import 'features/settings/providers/settings_provider.dart';
+import 'features/settings/providers/trash_provider.dart';
 
 class SellerBookApp extends ConsumerStatefulWidget {
   const SellerBookApp({super.key});
@@ -23,8 +24,18 @@ class _SellerBookAppState extends ConsumerState<SellerBookApp> {
     // Fire-and-forget after first frame so it never blocks startup. The
     // runner short-circuits if auto-backup is disabled, the Drive account
     // isn't signed in, or the last backup was less than 12 hours ago.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(autoBackupRunnerProvider).runIfDue();
+
+      // Drop recycle-bin entries past the retention window. Also
+      // fire-and-forget: a failure here must never keep the app from
+      // starting, and the next launch will retry.
+      try {
+        final service = await ref.read(trashServiceProvider.future);
+        await service.purgeExpired();
+      } catch (_) {
+        // Non-fatal — stale entries simply persist until the next launch.
+      }
     });
   }
 

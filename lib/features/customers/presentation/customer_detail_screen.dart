@@ -11,6 +11,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/extensions/context_extensions.dart';
+import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../orders/presentation/widgets/order_card.dart';
 
@@ -84,10 +86,20 @@ class _CustomerDetailBody extends ConsumerWidget {
                     icon: Icons.delete_rounded,
                   );
                   if (ok == true && context.mounted) {
-                    await ref
+                    final trashId = await ref
                         .read(customerProvider.notifier)
                         .deleteCustomer(customer.id);
+                    if (!context.mounted) return;
                     context.pop();
+                    // Shown after the pop so the snackbar lands on the list
+                    // screen rather than a detail screen that's unwinding.
+                    if (trashId != null) {
+                      context.showUndoSnackBar(
+                        '${s.itemDeleted}: ${customer.name}',
+                        onUndo: () =>
+                            ref.read(trashProvider.notifier).restore(trashId),
+                      );
+                    }
                   }
                 },
               ),

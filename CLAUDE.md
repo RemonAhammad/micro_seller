@@ -66,7 +66,8 @@ lib/
 │   │   ├── supplier.dart         # id, name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue
 │   │   ├── purchase.dart         # id, supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber
 │   │   ├── cash_register.dart    # id, openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt
-│   │   └── stock_movement.dart   # id, productId, type(sale/restock/adjustment/damage), qty, reason
+│   │   ├── stock_movement.dart   # id, productId, type(sale/restock/adjustment/damage), qty, reason
+│   │   └── trash_entry.dart      # kind(TrashKind), originalId, payload(JSON), sidecar(JSON), label, sublabel, deletedAt. `@Collection(accessor: 'trashEntries')` — the default pluralisation would be `trashEntrys`.
 │   ├── repositories/
 │   │   ├── customer_repository.dart   # CRUD, search, watchAll stream
 │   │   ├── expense_repository.dart    # CRUD, date range, monthly totals
@@ -78,7 +79,9 @@ lib/
 │       ├── csv_import_service.dart  # Import products from CSV via file_picker
 │       ├── migration_service.dart  # One-time migration: flat variants → hierarchical VariantAttribute + VariantCombination
 │       ├── drive_service.dart       # Google Drive backup/restore — delegates JSON to LocalBackupService (all 9 collections); typed DriveBackupException + DriveErrorCode; max 5 backups; safe restore with rollback; full error/stack logging via dart:developer
-│       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 9 collection schemas
+│       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 10 collection schemas
+│       ├── catalog_service.dart     # Shareable product catalog. Same widget→PNG→PDF pipeline as pdf_service (Skia/HarfBuzz for Unicode). `generateCatalogImage` (single-page PNG for chat), `generateCatalogPdf` (paginated, 6 tiles/page in a fixed 794×1123 A4 canvas), `generateCatalogText` (plain price list). Product images are pre-read to `Uint8List` and rendered via `Image.memory` — `Image.file` loads async and the off-screen capture races it, producing blank tiles.
+│       ├── trash_service.dart       # Soft-delete store behind the undo snackbar + Recycle Bin. Generic over all models (every one has toJson/fromJson). `capture()` is called inside the delete's own writeTxn; `restore()` dispatches on TrashKind and reverses side effects from the entry's `sidecar`; `purgeExpired()` drops entries older than `kTrashRetention` (30 days), called post-first-frame from app.dart.
 │       ├── local_backup_service.dart # Public encodeAll(Isar)/decodeAll(Isar,String) — single source of truth for backup JSON shape (v2). exportBackup/importBackup/exportToDirectory delegate to these. All 9 collections.
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
 │       ├── tutorial_service.dart    # SharedPreferences flags: splash_shown, tour_completed; resetAll()
@@ -157,8 +160,10 @@ lib/
 │   │   ├── presentation/cash_register_screen.dart  # Open/close register, cash in/out, expected vs actual closing, history
 │   │   └── providers/cash_register_provider.dart   # openRegister, closeRegister, addCashIn, addCashOut
 │   └── settings/
+│       ├── presentation/recycle_bin_screen.dart    # Deleted items grouped by kind; Restore / Delete forever / Empty bin (auth-gated)
+│       ├── providers/trash_provider.dart           # trashServiceProvider + trashEntriesProvider (stream) + TrashNotifier (keepAlive)
 │       ├── presentation/settings_screen.dart       # Theme toggle, language picker, currency picker (38+ currencies), shop config, tax rate, local backup export/import, Drive backup, clear data
-│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, currency(৳), threshold, themeMode, taxRate, language, downloadDirectory, sidebarOrder, sidebarPosition ('left' | 'right'), hiddenSidebarItems (list of keys the user toggled off). Exposes `exportSettings()`/`importSettings(map)` so backup/restore round-trips preferences alongside the 9 Isar collections. `toggleSidebarItemHidden('settings', _)` is a no-op — the Settings tab is force-visible to prevent soft-lockout.
+│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, shopPhone (optional, printed on the shared catalog), currency(৳), threshold, themeMode, taxRate, language, downloadDirectory, sidebarOrder, sidebarPosition ('left' | 'right'), hiddenSidebarItems (list of keys the user toggled off). Exposes `exportSettings()`/`importSettings(map)` so backup/restore round-trips preferences alongside the 9 Isar collections. `toggleSidebarItemHidden('settings', _)` is a no-op — the Settings tab is force-visible to prevent soft-lockout.
 └── shared/
     ├── screens/qr_scanner_screen.dart
     └── widgets/
@@ -189,6 +194,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 | **Supplier**           | name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue                                                                                                                                                                                                                                                                                 | hasOutstanding                                                                        |
 | **Purchase**           | supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber                                                                                                                                                                                                                                          | balanceDue, isFullyPaid, totalItems                                                   |
 | **PurchaseItem**       | @embedded: productId, productName, qty, unitCost, totalCost                                                                                                                                                                                                                                                                                                      | —                                                                                     |
+| **TrashEntry**         | kind, originalId, payload (JSON of the deleted record), sidecar (JSON of what its delete also changed), label, sublabel, deletedAt                                                                                                                                                                                                              | —                                                                                     |
 | **CashRegister**       | openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt                                                                                                                                                                                                                                                 | expectedClosing, difference                                                           |
 
 ## Order Form UX (order_form_screen.dart)
@@ -366,6 +372,41 @@ Products support **multi-attribute variant combinations**:
 - **OAuth scope:** `drive.appdata` — backups live in a hidden app-data folder; not visible at drive.google.com.
 - **OAuth client IDs** are stored in `.env` (gitignored) for documentation. Note: Android `google_sign_in` does NOT read these at runtime — it matches the running APK's package + signing-cert SHA-1 against the Cloud project automatically. The `.env` becomes functional once iOS/web client IDs are wired into `GoogleSignIn(clientId: ...)`.
 
+### Product Catalog Share
+
+Turns the app from a pure ledger into an outbound sales surface — the target sellers sell *through* WhatsApp and Facebook groups and previously retyped price lists by hand.
+
+1. Products list → share action in the appbar → `/products/catalog`
+2. Multi-select products (only `isActive` ones are offered — a soft-deleted item shouldn't be advertised), with select-all
+3. Filter chips toggle photos / stock / SKU per tile
+4. Three outputs, because chat apps treat them differently:
+   - **Share as Image** — one PNG, the most shareable form in a thread. Capped at one page (6 products); a snackbar says so rather than silently dropping the overflow.
+   - **Share as PDF** — paginated, carries everything
+   - **Copy price list** — plain text, includes per-variant prices (`sellingPrice + priceAdjustment`) which a flat list would misquote
+5. Header shows `Settings.shopName` + optional `Settings.shopPhone`; footer carries the same "Powered by ⬡ Micro Seller" watermark as the invoice
+
+**Two constraints inherited from `pdf_service`:** (a) `captureFromWidget` needs a *finite* `targetSize` — infinity × pixelRatio yields an undecodable PNG — so the page is a fixed 794×1123 and content is paginated rather than scrolled; (b) the capture environment provides only `Directionality`, so `MediaQuery` / `DefaultTextStyle` / `Material` are wired by hand (`MaterialApp` fails there). Unlike the receipt, the catalog is image-heavy, so images are pre-decoded to bytes and the capture `delay` is raised to 300 ms.
+
+### Undo & Recycle Bin
+
+Before this, `grep -r 'undo|trash|deletedAt' lib/` returned one string constant in a warning dialog — deletes were safe for data integrity but permanent for the user.
+
+- **One generic `TrashEntry` collection** rather than `deletedAt` flags on each model, viable because all 13 models implement `toJson`/`fromJson`. No query in the app needs to learn to filter deleted rows.
+- **Deletes are not pure**, so the payload alone is not enough to restore. Each entry carries a `sidecar` of what else the delete touched:
+
+  | Delete | Side effect | Sidecar |
+  | --- | --- | --- |
+  | Customer | Zeroes `customerId` on their orders | `unlinkedOrderIds` — re-linked on restore, skipping orders since deleted |
+  | Product (soft) | Sets `isActive = false` | `softDeleted: true` — restore flips the flag on the *current* row, preserving edits made since |
+  | Product (hard) | Also wipes the product's StockMovements | `softDeleted: false` + the movement JSONs |
+  | Expense, Category | None | `{}` |
+
+- `capture()` runs **inside the delete's own `writeTxn`**, so the trash entry and the delete can never diverge. `restore()` likewise runs the payload put + side-effect reversal in a single transaction.
+- **Two UX layers:** a 10-second `showUndoSnackBar` (in `context_extensions.dart`) on each delete, and Settings → Recycle Bin for the full 30-day window. The snackbar is only a convenience — MIUI's known SnackBar-timer stall (the quirk that made `pdf_saved_sheet.dart` own its `Timer`) is harmless here, since the record is recoverable from the bin either way.
+- **Phase A covers expense, category, customer, product.** Order, purchase and supplier still delete permanently — their reversal touches stock, variant stock, movements and party stats. `TrashService.restore` throws `UnsupportedError` for those kinds and the bin renders them with restore disabled, so no path offers an action that would fail.
+- **Both bulk-clear paths clear the trash too** — `LocalBackupService.decodeAll` and Settings → Clear All Data. `decodeAll` clears the nine collections *explicitly* (not `isar.clear()`), so without this a surviving `trashEntries` row would reference ids from the replaced dataset and restoring it would corrupt live data. Trash is deliberately **not** part of the backup payload.
+- `purgeExpired()` runs post-first-frame from `app.dart`, wrapped in a try/catch — a failure must never block startup.
+
 ### CSV Export
 
 - Export orders, products, or expenses as CSV files via share_plus
@@ -474,7 +515,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 | ------------- | ---------------- | ------------------------------------------------------------------------------------------- |
 | Splash        | `/splash`        | — (initial route, auto-navigates to `/`)                                                    |
 | Dashboard     | `/`              | —                                                                                           |
-| Products      | `/products`      | `add`, `:id`, `:id/edit`                                                                    |
+| Products      | `/products`      | `catalog`, `add`, `:id`, `:id/edit`                                                         |
 | Orders        | `/orders`        | `add`, `:id`, `:id/edit`                                                                    |
 | Returns       | `/returns`       | `:id`                                                                                       |
 | Customers     | `/customers`     | `add`, `:id`, `:id/edit`                                                                    |
@@ -484,7 +525,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 | Cash Register | `/cash-register` | —                                                                                           |
 | Categories    | `/categories`    | —                                                                                           |
 | Reports       | `/reports`       | —                                                                                           |
-| Settings      | `/settings`      | —                                                                                           |
+| Settings      | `/settings`      | `sidebar-order`, `recycle-bin`                                                              |
 
 ## State Management Pattern
 

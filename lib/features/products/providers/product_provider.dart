@@ -4,8 +4,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
+import '../../../data/models/trash_entry.dart';
 import '../../../data/repositories/product_repository.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/trash_service.dart';
 
 part 'product_provider.g.dart';
 
@@ -71,9 +73,17 @@ class ProductNotifier extends _$ProductNotifier {
     });
   }
 
-  Future<void> deleteProduct(int id) async {
+  /// Both delete branches are now recoverable. The sidecar records which
+  /// branch ran, because undoing a soft-delete means flipping `isActive` back
+  /// whereas undoing a hard-delete also has to restore the stock movements
+  /// that were wiped alongside the product.
+  /// Returns the trash entry id, for wiring an UNDO action. Null if the
+  /// product was already gone.
+  Future<int?> deleteProduct(int id) async {
+    int? trashId;
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
+      final trash = TrashService(isar);
 
       // Check if product is referenced in any orders
       final orders = await isar.orders.where().findAll();
@@ -83,22 +93,52 @@ class ProductNotifier extends _$ProductNotifier {
         // Soft-delete: mark inactive instead of removing
         final product = await isar.products.get(id);
         if (product != null) {
-          await isar.writeTxn(() async => isar.products.put(
-                product.copyWith(isActive: false, updatedAt: DateTime.now()),
-              ));
+          await isar.writeTxn(() async {
+            trashId = await trash.capture(
+              kind: TrashKind.product,
+              originalId: id,
+              payload: product.toJson(),
+              sidecar: const {'softDeleted': true},
+              label: product.name,
+              sublabel: product.sku,
+            );
+            await isar.products.put(
+              product.copyWith(isActive: false, updatedAt: DateTime.now()),
+            );
+          });
         }
         return;
       }
 
       await isar.writeTxn(() async {
-        // Also clean up stock movements
-        await isar.stockMovements
+        final product = await isar.products.get(id);
+        if (product == null) return;
+
+        // Also clean up stock movements — captured first so a restore can
+        // put them back.
+        final movements = await isar.stockMovements
             .filter()
             .productIdEqualTo(id)
-            .deleteAll();
+            .findAll();
+
+        trashId = await trash.capture(
+          kind: TrashKind.product,
+          originalId: id,
+          payload: product.toJson(),
+          sidecar: {
+            'softDeleted': false,
+            'stockMovements': movements.map((m) => m.toJson()).toList(),
+          },
+          label: product.name,
+          sublabel: product.sku,
+        );
+
+        await isar.stockMovements
+            .deleteAll(movements.map((m) => m.id).toList());
         await isar.products.delete(id);
       });
     });
+    return trashId;
   }
 
   Future<void> adjustStock(

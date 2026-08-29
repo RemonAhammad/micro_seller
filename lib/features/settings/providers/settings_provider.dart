@@ -9,6 +9,7 @@ part 'settings_provider.g.dart';
 @Riverpod(keepAlive: true)
 class Settings extends _$Settings {
   static const _keyShopName = 'shopName';
+  static const _keyShopPhone = 'shopPhone';
   static const _keyCurrency = 'currencySymbol';
   static const _keyThreshold = 'lowStockThreshold';
   static const _keyLastBackup = 'lastBackupTime';
@@ -37,6 +38,7 @@ class Settings extends _$Settings {
     _loadFromDisk();
     return {
       'shopName': 'My Shop',
+      'shopPhone': '',
       'currencySymbol': '\$',
       'lowStockThreshold': 10,
       'lastBackupTime': null,
@@ -94,6 +96,7 @@ class Settings extends _$Settings {
 
     state = {
       'shopName': prefs.getString(_keyShopName) ?? 'My Shop',
+      'shopPhone': prefs.getString(_keyShopPhone) ?? '',
       'currencySymbol': currency,
       'lowStockThreshold': prefs.getInt(_keyThreshold) ?? 10,
       'lastBackupTime':
@@ -119,6 +122,13 @@ class Settings extends _$Settings {
     state = {...state, 'shopName': name};
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyShopName, name);
+  }
+
+  /// Contact number printed on the shared product catalog. Optional.
+  Future<void> updateShopPhone(String phone) async {
+    state = {...state, 'shopPhone': phone};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyShopPhone, phone);
   }
 
   Future<void> updateCurrencySymbol(String symbol) async {
@@ -192,6 +202,7 @@ class Settings extends _$Settings {
   }
 
   String get shopName => state['shopName'] as String? ?? 'My Shop';
+  String get shopPhone => state['shopPhone'] as String? ?? '';
   String get currencySymbol => state['currencySymbol'] as String? ?? '\$';
   int get lowStockThreshold => state['lowStockThreshold'] as int? ?? 10;
   DateTime? get lastBackupTime => state['lastBackupTime'] as DateTime?;
@@ -264,6 +275,7 @@ class Settings extends _$Settings {
   Map<String, dynamic> exportSettings() {
     return {
       'shopName': shopName,
+      'shopPhone': shopPhone,
       'currencySymbol': currencySymbol,
       'lowStockThreshold': lowStockThreshold,
       'themeMode': themeMode,
@@ -286,6 +298,10 @@ class Settings extends _$Settings {
     final shopName = data['shopName'];
     if (shopName is String && shopName.isNotEmpty) {
       await updateShopName(shopName);
+    }
+    final shopPhone = data['shopPhone'];
+    if (shopPhone is String) {
+      await updateShopPhone(shopPhone);
     }
     final currency = data['currencySymbol'];
     if (currency is String && currency.isNotEmpty) {
