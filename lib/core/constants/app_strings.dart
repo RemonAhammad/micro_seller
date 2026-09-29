@@ -593,6 +593,26 @@ class _L10nStrings {
   String goesToDueBook(String amount) =>
       _l10n.tr('goesToDueBook').replaceAll('{amount}', amount);
   String get amountPaidExceedsTotal => _l10n.tr('amountPaidExceedsTotal');
+  String get clearFilters => _l10n.tr('clearFilters');
+  String get dueAge => _l10n.tr('dueAge');
+  String get ageUnder30 => _l10n.tr('ageUnder30');
+  String get age30to60 => _l10n.tr('age30to60');
+  String get age60plus => _l10n.tr('age60plus');
+  String get customerType => _l10n.tr('customerType');
+  String get regular => _l10n.tr('regular');
+  String get vip => _l10n.tr('vip');
+  String get paymentActivity => _l10n.tr('paymentActivity');
+  String get neverPaid => _l10n.tr('neverPaid');
+  String get noPaymentIn30Days => _l10n.tr('noPaymentIn30Days');
+  String get hasPhoneOnly => _l10n.tr('hasPhoneOnly');
+  String get minimumDue => _l10n.tr('minimumDue');
+  String get sortName => _l10n.tr('sortName');
+  String get noDuesMatchFilters => _l10n.tr('noDuesMatchFilters');
+  String get tagNew => _l10n.tr('new');
+  String showingOf(int count, int total) => _l10n
+      .tr('showingOf')
+      .replaceAll('{count}', '$count')
+      .replaceAll('{total}', '$total');
   String pageOf(int page, int total) => _l10n
       .tr('pageOf')
       .replaceAll('{page}', '$page')

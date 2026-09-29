@@ -181,9 +181,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               Row(
                 children: CustomerTag.values.map((tag) {
                   final label = switch (tag) {
-                    CustomerTag.newCustomer => s.tr('new'),
-                    CustomerTag.regular => s.tr('regular'),
-                    CustomerTag.vip => s.tr('vip'),
+                    CustomerTag.newCustomer => s.tagNew,
+                    CustomerTag.regular => s.regular,
+                    CustomerTag.vip => s.vip,
                   };
                   final isSelected = _tag == tag;
                   return Expanded(

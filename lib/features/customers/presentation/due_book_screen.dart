@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,14 +9,112 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/debouncer.dart';
+import '../../../data/models/customer.dart';
 import '../../../data/services/dues_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../providers/dues_provider.dart';
 import 'widgets/due_actions.dart';
 
-enum _DueSort { oldest, largest }
+enum _DueSort { oldest, largest, name }
+
+enum _AgeBucket { under30, from30to60, over60 }
+
+enum _Activity { any, neverPaid, noPaymentIn30Days }
+
+/// Due Book filters. All are AND-ed; an empty set means "don't filter".
+class _DueFilters {
+  const _DueFilters({
+    this.ages = const {},
+    this.tags = const {},
+    this.activity = _Activity.any,
+    this.phoneOnly = false,
+    this.minDue = 0,
+  });
+
+  final Set<_AgeBucket> ages;
+  final Set<CustomerTag> tags;
+  final _Activity activity;
+  final bool phoneOnly;
+  final double minDue;
+
+  int get activeCount =>
+      (ages.isNotEmpty ? 1 : 0) +
+      (tags.isNotEmpty ? 1 : 0) +
+      (activity != _Activity.any ? 1 : 0) +
+      (phoneOnly ? 1 : 0) +
+      (minDue > 0 ? 1 : 0);
+
+  _DueFilters copyWith({
+    Set<_AgeBucket>? ages,
+    Set<CustomerTag>? tags,
+    _Activity? activity,
+    bool? phoneOnly,
+    double? minDue,
+  }) =>
+      _DueFilters(
+        ages: ages ?? this.ages,
+        tags: tags ?? this.tags,
+        activity: activity ?? this.activity,
+        phoneOnly: phoneOnly ?? this.phoneOnly,
+        minDue: minDue ?? this.minDue,
+      );
+
+  static _AgeBucket bucketOf(CustomerDue d) {
+    final days = d.daysOutstanding;
+    if (days >= 60) return _AgeBucket.over60;
+    if (days >= 30) return _AgeBucket.from30to60;
+    return _AgeBucket.under30;
+  }
+
+  bool matches(CustomerDue d) {
+    if (ages.isNotEmpty && !ages.contains(bucketOf(d))) return false;
+    if (tags.isNotEmpty && !tags.contains(d.customer.tag)) return false;
+    if (phoneOnly && d.customer.phone.trim().isEmpty) return false;
+    if (minDue > 0 && d.totalDue < minDue) return false;
+    switch (activity) {
+      case _Activity.any:
+        break;
+      case _Activity.neverPaid:
+        if (d.lastPaymentAt != null) return false;
+      case _Activity.noPaymentIn30Days:
+        final last = d.lastPaymentAt;
+        if (last != null && DateTime.now().difference(last).inDays < 30) {
+          return false;
+        }
+    }
+    return true;
+  }
+}
+
+String _ageLabel(BuildContext context, _AgeBucket b) {
+  final s = AppStrings.of(context);
+  return switch (b) {
+    _AgeBucket.under30 => s.ageUnder30,
+    _AgeBucket.from30to60 => s.age30to60,
+    _AgeBucket.over60 => s.age60plus,
+  };
+}
+
+String _tagLabel(BuildContext context, CustomerTag t) {
+  final s = AppStrings.of(context);
+  return switch (t) {
+    CustomerTag.newCustomer => s.tagNew,
+    CustomerTag.regular => s.regular,
+    CustomerTag.vip => s.vip,
+  };
+}
+
+String _activityLabel(BuildContext context, _Activity a) {
+  final s = AppStrings.of(context);
+  return switch (a) {
+    _Activity.any => s.all,
+    _Activity.neverPaid => s.neverPaid,
+    _Activity.noPaymentIn30Days => s.noPaymentIn30Days,
+  };
+}
 
 /// Due Book ("baki khata"): every customer who owes money, with one-tap
 /// collect / WhatsApp reminder / call. Dues are computed from orders — see
@@ -32,6 +131,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
   final _debouncer = Debouncer();
   String _query = '';
   _DueSort _sort = _DueSort.oldest;
+  _DueFilters _filters = const _DueFilters();
 
   @override
   void dispose() {
@@ -48,15 +148,58 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
     if (mounted) context.showSuccessSnackBar(s.balancesRecalculated(changed));
   }
 
+  Future<void> _openFilters() async {
+    await AppBottomSheet.show(
+      context,
+      title: AppStrings.of(context).filter,
+      child: _FilterSheet(
+        initial: _filters,
+        // Live: the list behind the sheet updates as chips are toggled.
+        onChanged: (f) => setState(() => _filters = f),
+      ),
+    );
+  }
+
+  List<CustomerDue> _apply(List<CustomerDue> all) {
+    final visible = all
+        .where((d) =>
+            _query.isEmpty ||
+            d.customer.name.toLowerCase().contains(_query) ||
+            d.customer.phone.contains(_query))
+        .where(_filters.matches)
+        .toList();
+    switch (_sort) {
+      case _DueSort.oldest:
+        break; // provider already sorts oldest-first
+      case _DueSort.largest:
+        visible.sort((a, b) => b.totalDue.compareTo(a.totalDue));
+      case _DueSort.name:
+        visible.sort((a, b) => a.customer.name
+            .toLowerCase()
+            .compareTo(b.customer.name.toLowerCase()));
+    }
+    return visible;
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final duesAsync = ref.watch(duesProvider);
+    final active = _filters.activeCount;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(s.dueBook),
         actions: [
+          IconButton(
+            tooltip: s.filter,
+            onPressed: _openFilters,
+            icon: Badge(
+              isLabelVisible: active > 0,
+              label: Text('$active'),
+              child: const Icon(Icons.filter_list_rounded),
+            ),
+          ),
           PopupMenuButton<String>(
             onSelected: (_) => _recalculate(),
             itemBuilder: (_) => [
@@ -104,42 +247,68 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
             );
           }
 
-          final visible = all
-              .where((d) =>
-                  _query.isEmpty ||
-                  d.customer.name.toLowerCase().contains(_query) ||
-                  d.customer.phone.contains(_query))
-              .toList();
-          if (_sort == _DueSort.largest) {
-            visible.sort((a, b) => b.totalDue.compareTo(a.totalDue));
-          }
+          final visible = _apply(all);
+          final narrowed = active > 0 || _query.isNotEmpty;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              _SummaryCard(dues: all),
+              // Totals follow the filters — "how much do my VIPs owe?"
+              _SummaryCard(dues: visible),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: Text(s.sortOldest),
-                    selected: _sort == _DueSort.oldest,
-                    onSelected: (_) => setState(() => _sort = _DueSort.oldest),
-                  ),
-                  ChoiceChip(
-                    label: Text(s.sortLargest),
-                    selected: _sort == _DueSort.largest,
-                    onSelected: (_) =>
-                        setState(() => _sort = _DueSort.largest),
-                  ),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final (sort, label) in [
+                      (_DueSort.oldest, s.sortOldest),
+                      (_DueSort.largest, s.sortLargest),
+                      (_DueSort.name, s.sortName),
+                    ])
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(end: 8),
+                        child: ChoiceChip(
+                          label: Text(label),
+                          selected: _sort == sort,
+                          onSelected: (_) => setState(() => _sort = sort),
+                        ),
+                      ),
+                  ],
+                ),
               ),
+              if (active > 0) ...[
+                const SizedBox(height: 8),
+                _ActiveFilterChips(
+                  filters: _filters,
+                  onChanged: (f) => setState(() => _filters = f),
+                ),
+              ],
+              if (narrowed) ...[
+                const SizedBox(height: 8),
+                Text(
+                  s.showingOf(visible.length, all.length),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6)),
+                ),
+              ],
               const SizedBox(height: 12),
               if (visible.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 32),
-                  child: Center(child: Text(s.noCustomersFound)),
+                  child: Column(
+                    children: [
+                      Text(active > 0 ? s.noDuesMatchFilters : s.noCustomersFound),
+                      if (active > 0)
+                        TextButton(
+                          onPressed: () =>
+                              setState(() => _filters = const _DueFilters()),
+                          child: Text(s.clearFilters),
+                        ),
+                    ],
+                  ),
                 ),
               for (var i = 0; i < visible.length; i++)
                 Padding(
@@ -153,6 +322,180 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+/// Deletable chips for each active filter, plus "Clear filters".
+class _ActiveFilterChips extends StatelessWidget {
+  const _ActiveFilterChips({required this.filters, required this.onChanged});
+
+  final _DueFilters filters;
+  final ValueChanged<_DueFilters> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    Widget chip(String label, _DueFilters without) => InputChip(
+          label: Text(label),
+          onDeleted: () => onChanged(without),
+          visualDensity: VisualDensity.compact,
+        );
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (final a in filters.ages)
+          chip(_ageLabel(context, a),
+              filters.copyWith(ages: {...filters.ages}..remove(a))),
+        for (final t in filters.tags)
+          chip(_tagLabel(context, t),
+              filters.copyWith(tags: {...filters.tags}..remove(t))),
+        if (filters.activity != _Activity.any)
+          chip(_activityLabel(context, filters.activity),
+              filters.copyWith(activity: _Activity.any)),
+        if (filters.phoneOnly)
+          chip(s.hasPhoneOnly, filters.copyWith(phoneOnly: false)),
+        if (filters.minDue > 0)
+          chip('≥ ${CurrencyFormatter.format(filters.minDue)}',
+              filters.copyWith(minDue: 0)),
+        TextButton(
+          onPressed: () => onChanged(const _DueFilters()),
+          child: Text(s.clearFilters),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterSheet extends StatefulWidget {
+  const _FilterSheet({required this.initial, required this.onChanged});
+
+  final _DueFilters initial;
+  final ValueChanged<_DueFilters> onChanged;
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  late _DueFilters _f = widget.initial;
+  late final _minCtrl = TextEditingController(
+      text: widget.initial.minDue > 0
+          ? widget.initial.minDue.toStringAsFixed(0)
+          : '');
+
+  @override
+  void dispose() {
+    _minCtrl.dispose();
+    super.dispose();
+  }
+
+  void _set(_DueFilters f) {
+    setState(() => _f = f);
+    widget.onChanged(f);
+  }
+
+  Widget _section(String title) => Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 8),
+        child: Text(title,
+            style: Theme.of(context)
+                .textTheme
+                .labelLarge
+                ?.copyWith(fontWeight: FontWeight.w700)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _section(s.dueAge),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final b in _AgeBucket.values)
+              FilterChip(
+                label: Text(_ageLabel(context, b)),
+                selected: _f.ages.contains(b),
+                onSelected: (on) => _set(_f.copyWith(
+                    ages: on ? {..._f.ages, b} : ({..._f.ages}..remove(b)))),
+              ),
+          ],
+        ),
+        _section(s.customerType),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final t in CustomerTag.values)
+              FilterChip(
+                label: Text(_tagLabel(context, t)),
+                selected: _f.tags.contains(t),
+                onSelected: (on) => _set(_f.copyWith(
+                    tags: on ? {..._f.tags, t} : ({..._f.tags}..remove(t)))),
+              ),
+          ],
+        ),
+        _section(s.paymentActivity),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final a in _Activity.values)
+              ChoiceChip(
+                label: Text(_activityLabel(context, a)),
+                selected: _f.activity == a,
+                onSelected: (_) => _set(_f.copyWith(activity: a)),
+              ),
+          ],
+        ),
+        _section(s.minimumDue),
+        TextField(
+          controller: _minCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+          ],
+          decoration:
+              InputDecoration(prefixText: '${CurrencyFormatter.symbol} '),
+          onChanged: (v) =>
+              _set(_f.copyWith(minDue: double.tryParse(v) ?? 0)),
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(s.hasPhoneOnly),
+          value: _f.phoneOnly,
+          onChanged: (v) => _set(_f.copyWith(phoneOnly: v)),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  _minCtrl.clear();
+                  _set(const _DueFilters());
+                },
+                child: Text(s.clearFilters),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(s.done),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

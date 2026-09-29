@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../data/models/customer.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 
 class CustomerCard extends StatelessWidget {
   final Customer customer;
@@ -17,10 +18,11 @@ class CustomerCard extends StatelessWidget {
       CustomerTag.regular => AppColors.tagRegular,
       CustomerTag.vip => AppColors.tagVip,
     };
+    final s = AppStrings.of(context);
     final tagLabel = switch (customer.tag) {
-      CustomerTag.newCustomer => 'New',
-      CustomerTag.regular => 'Regular',
-      CustomerTag.vip => 'VIP ⭐',
+      CustomerTag.newCustomer => s.tagNew,
+      CustomerTag.regular => s.regular,
+      CustomerTag.vip => '${s.vip} ⭐',
     };
 
     return GestureDetector(
