@@ -539,4 +539,7 @@ const translationsEs = <String, String>{
   'generatedOn': 'Generado el {date}',
   'reference': 'Referencia',
   'pageOf': 'Página {page} de {total}',
+  'payLaterHint': 'Déjalo vacío si el cliente pagará después',
+  'goesToDueBook': '{amount} irá al libro de deudas',
+  'amountPaidExceedsTotal': 'El monto pagado no puede superar el total',
 };

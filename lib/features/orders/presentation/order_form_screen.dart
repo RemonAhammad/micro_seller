@@ -17,6 +17,7 @@ import '../../../data/services/isar_service.dart';
 import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -137,6 +138,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   double get _taxAmount => _taxRate > 0 ? (_subtotal - _discount).clamp(0, double.infinity) * _taxRate / 100 : 0;
 
   double get _total => (_subtotal - _discount + _taxAmount + _delivery).clamp(0, double.infinity);
+  double get _amountPaid => double.tryParse(_amountPaidCtrl.text) ?? 0;
+
+  /// What the customer still owes on this order — goes to the Due Book.
+  double get _dueAmount => (_total - _amountPaid).clamp(0, double.infinity);
+  bool get _overpaid => _amountPaid > _total + 0.005;
 
   // ─── Customer ────────────────────────────────────────────────────────
 
@@ -222,6 +228,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
+      return;
+    }
+
+    if (_overpaid) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).amountPaidExceedsTotal)));
       return;
     }
 
@@ -466,13 +477,14 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 _buildPricingSection(theme, cs),
                 const SizedBox(height: 16),
 
+                // ── Payment: amount paid → rest goes to the Due Book ──
+                _buildPaymentSection(theme, cs),
+                const SizedBox(height: 16),
+
                 // ── Order status ──
                 _buildStatusSection(theme, cs),
                 const SizedBox(height: 16),
 
-                // ── Payment method ──
-                _buildPaymentMethodSection(theme, cs),
-                const SizedBox(height: 16),
 
                 // ── Notes ──
                 AppTextField(
@@ -814,35 +826,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           prefixIcon: const Icon(Icons.percent, size: 18),
           helperText: _taxAmount > 0 ? 'Tax: ${CurrencyFormatter.format(_taxAmount)}' : null,
         ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: AppTextField(
-                label: s.amountPaid,
-                controller: _amountPaidCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: TextButton(
-                onPressed: _total > 0
-                    ? () => setState(
-                        () => _amountPaidCtrl.text = _total.toStringAsFixed(_total == _total.roundToDouble() ? 0 : 2),
-                      )
-                    : null,
-                child: Text(s.payFull),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
       ],
     );
   }
@@ -884,7 +867,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   // ─── Payment Method ──────────────────────────────────────────────────
 
-  Widget _buildPaymentMethodSection(ThemeData theme, ColorScheme cs) {
+  /// Amount paid (with Pay Full), a live paid / due readout, method, and
+  /// transaction id. Whatever isn't paid here goes to the Due Book.
+  Widget _buildPaymentSection(ThemeData theme, ColorScheme cs) {
     final s = AppStrings.of(context);
     const methods = PaymentMethod.values;
     final labels = {
@@ -895,11 +880,58 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       PaymentMethod.other: s.other,
     };
 
+    final Widget status;
+    if (_total <= 0) {
+      status = const SizedBox.shrink();
+    } else if (_overpaid) {
+      status = _paymentStatusLine(Icons.error_outline_rounded, s.amountPaidExceedsTotal, cs.error);
+    } else if (_dueAmount <= 0.005) {
+      status = _paymentStatusLine(Icons.check_circle_rounded, s.paidInFull, AppColors.paymentPaid);
+    } else {
+      status = _paymentStatusLine(
+        Icons.menu_book_rounded,
+        s.goesToDueBook(CurrencyFormatter.format(_dueAmount)),
+        AppColors.paymentPartial,
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(s.paymentMethod, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+        Text(s.payment, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: AppTextField(
+                label: s.amountPaid,
+                hint: s.payLaterHint,
+                controller: _amountPaidCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: TextButton(
+                onPressed: _total > 0
+                    ? () => setState(
+                        () => _amountPaidCtrl.text = _total.toStringAsFixed(_total == _total.roundToDouble() ? 0 : 2),
+                      )
+                    : null,
+                child: Text(s.payFull),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        status,
+        const SizedBox(height: 12),
+        Text(s.paymentMethod, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
         Wrap(
           spacing: 8,
           runSpacing: 4,
@@ -917,7 +949,29 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             );
           }).toList(),
         ),
+        const SizedBox(height: 12),
+        AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
       ],
+    );
+  }
+
+  Widget _paymentStatusLine(IconData icon, String text, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -956,6 +1010,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ),
             ],
           ),
+          if (_total > 0 && _amountPaid > 0)
+            _summaryRow(s.amountPaid, CurrencyFormatter.format(_amountPaid), theme,
+                valueColor: AppColors.paymentPaid),
+          if (_total > 0 && _dueAmount > 0.005)
+            _summaryRow(s.due, CurrencyFormatter.format(_dueAmount), theme,
+                valueColor: AppColors.paymentPartial),
           const SizedBox(height: 12),
           AppButton(
             label: _isEditing ? s.editOrder : s.addOrder,

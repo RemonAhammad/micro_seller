@@ -539,4 +539,7 @@ const translationsAr = <String, String>{
   'generatedOn': 'تاريخ الإنشاء {date}',
   'reference': 'المرجع',
   'pageOf': 'صفحة {page} من {total}',
+  'payLaterHint': 'اتركه فارغًا إذا كان العميل سيدفع لاحقًا',
+  'goesToDueBook': 'سيُضاف {amount} إلى دفتر الديون',
+  'amountPaidExceedsTotal': 'لا يمكن أن يتجاوز المبلغ المدفوع الإجمالي',
 };

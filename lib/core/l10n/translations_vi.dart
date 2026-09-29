@@ -540,4 +540,7 @@ const translationsVi = <String, String>{
   'generatedOn': 'Tạo ngày {date}',
   'reference': 'Tham chiếu',
   'pageOf': 'Trang {page}/{total}',
+  'payLaterHint': 'Để trống nếu khách sẽ trả sau',
+  'goesToDueBook': '{amount} sẽ được ghi vào sổ công nợ',
+  'amountPaidExceedsTotal': 'Số tiền đã trả không được lớn hơn tổng',
 };

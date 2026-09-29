@@ -540,4 +540,7 @@ const translationsMs = <String, String>{
   'generatedOn': 'Dijana pada {date}',
   'reference': 'Rujukan',
   'pageOf': 'Halaman {page} daripada {total}',
+  'payLaterHint': 'Biarkan kosong jika pelanggan akan bayar kemudian',
+  'goesToDueBook': '{amount} akan dimasukkan ke Buku Hutang',
+  'amountPaidExceedsTotal': 'Jumlah dibayar tidak boleh melebihi jumlah keseluruhan',
 };

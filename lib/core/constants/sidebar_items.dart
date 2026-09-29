@@ -33,6 +33,7 @@ class SidebarItem {
       'orders' => s.orders,
       'returns' => s.returns,
       'customers' => s.customers,
+      'dues' => s.dueBook,
       'inventory' => s.inventory,
       'suppliers' => s.suppliers,
       'expenses' => s.expenses,
@@ -82,6 +83,12 @@ const sidebarItems = <SidebarItem>[
     selectedIcon: Icons.people,
   ),
   SidebarItem(
+    key: 'dues',
+    branchIndex: 13,
+    icon: Icons.menu_book_outlined,
+    selectedIcon: Icons.menu_book,
+  ),
+  SidebarItem(
     key: 'inventory',
     branchIndex: 5,
     icon: Icons.warehouse_outlined,
@@ -116,7 +123,8 @@ const sidebarItems = <SidebarItem>[
     branchIndex: 10,
     icon: Icons.analytics_outlined,
     selectedIcon: Icons.analytics,
-  ),SidebarItem(
+  ),
+  SidebarItem(
     key: 'scanner',
     branchIndex: 12,
     icon: Icons.qr_code_scanner_outlined,
@@ -140,13 +148,19 @@ SidebarItem sidebarItemByKey(String key) =>
         orElse: () => sidebarItems.first);
 
 /// Reconcile a stored order against the current `sidebarItems`:
-/// drop unknown keys, append any missing keys at the end. Lets us evolve the
-/// app (add a new tab) without invalidating users' saved order.
+/// drop unknown keys, and slot each missing key in right after its
+/// predecessor in [defaultSidebarOrder] (so a new tab like "dues" lands next
+/// to "customers" for existing users, not below Settings). Lets us evolve
+/// the app without invalidating users' saved order.
 List<String> reconcileSidebarOrder(List<String> stored) {
   final knownKeys = sidebarItems.map((e) => e.key).toSet();
-  final result = stored.where(knownKeys.contains).toList();
-  for (final key in defaultSidebarOrder) {
-    if (!result.contains(key)) result.add(key);
+  final result = stored.where(knownKeys.contains).toSet().toList();
+  for (var i = 0; i < defaultSidebarOrder.length; i++) {
+    final key = defaultSidebarOrder[i];
+    if (result.contains(key)) continue;
+    final prev = i == 0 ? null : defaultSidebarOrder[i - 1];
+    final at = prev == null ? 0 : result.indexOf(prev) + 1;
+    result.insert(at.clamp(0, result.length), key);
   }
   return result;
 }

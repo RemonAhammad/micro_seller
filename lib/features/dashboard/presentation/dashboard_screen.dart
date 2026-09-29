@@ -165,7 +165,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         iconColor: AppColors.paymentUnpaid,
                                         action: TextButton(
                                           onPressed: () =>
-                                              context.push('/customers/dues'),
+                                              context.go('/dues'),
                                           child: Text(s.dueBook),
                                         ),
                                         child: UnpaidOrdersWidget(
@@ -206,7 +206,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     iconColor: AppColors.paymentUnpaid,
                                     action: TextButton(
                                       onPressed: () =>
-                                          context.push('/customers/dues'),
+                                          context.go('/dues'),
                                       child: Text(s.dueBook),
                                     ),
                                     child: UnpaidOrdersWidget(

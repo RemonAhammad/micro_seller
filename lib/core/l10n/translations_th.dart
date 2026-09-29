@@ -540,4 +540,7 @@ const translationsTh = <String, String>{
   'generatedOn': 'สร้างเมื่อ {date}',
   'reference': 'อ้างอิง',
   'pageOf': 'หน้า {page} จาก {total}',
+  'payLaterHint': 'เว้นว่างไว้หากลูกค้าจะจ่ายภายหลัง',
+  'goesToDueBook': '{amount} จะถูกบันทึกในสมุดลูกหนี้',
+  'amountPaidExceedsTotal': 'ยอดที่ชำระต้องไม่เกินยอดรวม',
 };

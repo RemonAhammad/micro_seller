@@ -540,4 +540,7 @@ const translationsBn = <String, String>{
   'generatedOn': 'তৈরির তারিখ {date}',
   'reference': 'রেফারেন্স',
   'pageOf': 'পৃষ্ঠা {page}/{total}',
+  'payLaterHint': 'গ্রাহক পরে টাকা দিলে খালি রাখুন',
+  'goesToDueBook': '{amount} বাকির খাতায় যাবে',
+  'amountPaidExceedsTotal': 'পরিশোধিত টাকা মোটের চেয়ে বেশি হতে পারে না',
 };

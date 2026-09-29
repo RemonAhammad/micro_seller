@@ -7,7 +7,7 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **Flutter** (SDK >=3.8.0 <4.0.0)
 - **State Management:** Riverpod 3 (`flutter_riverpod ^3.0` + `riverpod_annotation ^4.0` + `riverpod_generator ^4.0`). Notes: (1) Riverpod 3 uses plain `Ref` everywhere (no per-provider `XxxRef` typedefs), and `@riverpod class XxxNotifier` generates `xxxProvider` (no `Notifier` infix). `AsyncValue.value` is now nullable; `valueOrNull` is gone. (2) **All CRUD notifiers must be `@Riverpod(keepAlive: true)`** — Riverpod 3 auto-disposes by default, and a `ref.read(xxxProvider.notifier).method()` call from a screen disposes the provider during the await. Post-await `state = ...` then throws `UnmountedRefException`. This applies to product / order / customer / supplier / expense / category / cash_register notifiers.
 - **Database:** Isar 3.3 via the community fork — `isar_community` + `isar_community_flutter_libs` + `isar_community_generator` ^3.3.2. The original `isar` package was abandoned in 2023 and shipped 4 KB-aligned native binaries that Play Store rejects on Android 15+. The community fork is API-identical; storage format is byte-compatible (no on-device migration).
-- **Navigation:** GoRouter with `StatefulShellRoute` (13-branch sidebar navigation)
+- **Navigation:** GoRouter with `StatefulShellRoute` (14-branch sidebar navigation)
 - **Code Generation:** Freezed 3 (`freezed ^3.2.5` + `freezed_annotation ^3.1`). Note: freezed 3 requires `abstract class Foo with _$Foo` (the `abstract` keyword is mandatory). JSON serializable + isar_community schema generator.
 - **Security:** `local_auth` (biometric) + `crypto` (SHA-256 PIN hashing). `AuthGateService` + `runAuthGate(context, reason: ..., fingerprintEnabled: ..., pinEnabled: ...)` helper protect destructive actions. PIN is stored in SharedPreferences as `sha256(salt + pin)` with a per-install salt. Android: `MainActivity` extends `FlutterFragmentActivity` (required by local_auth's BiometricPrompt) and the manifest declares `USE_BIOMETRIC`. Two-layer gate: (1) **`.env` build-time visibility** — `ENABLE_FINGERPRINT_GATE` / `ENABLE_PIN_GATE` (default `true`) control whether each toggle is shown in Settings → Security at all, and `runAuthGate` ignores any path whose `.env` flag is false; (2) **user setting** — `securityFingerprintEnabled` / `securityPinEnabled` in SharedPreferences (default `true`) control whether the user has each path active. Each toggle in Settings is verified independently — flipping fingerprint requires verifying *current fingerprint only* (never PIN), flipping PIN requires verifying *current PIN only*. Enabling PIN runs `runPinSetup` (fresh setup); disabling clears the stored PIN. `runAuthGate` chooses biometric if (env+user+device-available), else PIN if (env+user+stored), else passthrough.
 - **PDF:** `pdf` + `printing` + `screenshot` (Flutter widget → PNG capture for guaranteed Unicode shaping, embedded into a single-page A4 `pw.Document`)
@@ -43,7 +43,7 @@ lib/
 │   │   ├── translations_en.dart     # English (~180 keys, source of truth) + parameterized helpers
 │   │   └── translations_<bn|ar|es|fr|pt|tr|id|th|vi|ur|ms>.dart  # Same keys, translated
 │   ├── router/
-│   │   └── app_router.dart       # GoRouter config, 13-branch sidebar navigation shell, SafeArea wrapper
+│   │   └── app_router.dart       # GoRouter config, 14-branch sidebar navigation shell, SafeArea wrapper
 │   ├── theme/
 │   │   └── app_theme.dart        # Material 3 light/dark themes, status bar matches appbar color
 │   └── utils/
@@ -101,7 +101,7 @@ lib/
 │   │   │   ├── customer_list_screen.dart           # Search by name/phone (debounced)
 │   │   │   ├── customer_form_screen.dart           # Add/edit with tag selector
 │   │   │   ├── customer_detail_screen.dart         # Live (watchObject) stats, Collect / Remind / Statement actions, payment history, order history, 6-month purchase chart
-│   │   │   ├── due_book_screen.dart                # /customers/dues — who owes what, oldest-first or largest-first, collect / WhatsApp remind / call, recalculate balances
+│   │   │   ├── due_book_screen.dart                # /dues (own sidebar tab, branch 13) — who owes what, oldest-first or largest-first, collect / WhatsApp remind / call, recalculate balances
 │   │   │   ├── widgets/due_actions.dart            # Collect sheet (allocation preview), `sendDueReminder` (wa.me), `shareCustomerStatement`, `PaymentHistoryTile`
 │   │   │   └── widgets/customer_card.dart
 │   │   ├── providers/customer_provider.dart        # Cascading delete (unlinks orders)
@@ -334,7 +334,7 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 ### Due Book (customer credit ledger)
 
-Sellers sell on credit ("baki"); the Due Book is where they get paid back. Route `/customers/dues`, reached from the Customers appbar and the Dashboard unpaid card.
+Sellers sell on credit ("baki"); the Due Book is where they get paid back. Own sidebar tab **Due Book** (`/dues`, branch 13, key `dues`), also reached from the Customers appbar and the Dashboard unpaid card.
 
 - **Dues are computed from orders, never from `Customer.outstandingBalance`.** That counter drifts (`updateOrder` doesn't adjust it; recurring copies didn't bill the customer until the Due Book fixed `processRecurringOrders`). The customer's total is `computeNetDue` — every order's effective due *including credits* (an exchange return worth more than an order's remaining due), floored at 0 — so it matches the counter and the statement; collections are capped at it. `computeOrderDues` takes all of a customer's orders *including returns*: excluded are cancelled orders and return orders; each order's effective due is `balanceDue − value of its refunded returns`, because `processRefund` lowers the original's `amountPaid` by the refund but not its `totalAmount`.
 - **Collect** (`OrderNotifier.collectFromCustomer`): one amount applied oldest-first across the customer's due orders, capped at the total due (no advance credit). One `Payment` per touched order sharing a `groupId`. Cash collections can add to the open cash register in the same transaction. The sheet's allocation preview mirrors the notifier's loop.
@@ -529,7 +529,7 @@ Before this, `grep -r 'undo|trash|deletedAt' lib/` returned one string constant 
 
 ## Navigation (GoRouter)
 
-Initial route is `/splash` (animated splash screen), then navigates to `/` (dashboard shell). 13 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
+Initial route is `/splash` (animated splash screen), then navigates to `/` (dashboard shell). 14 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
 
 | Route         | Path             | Sub-routes                                                                                  |
 | ------------- | ---------------- | ------------------------------------------------------------------------------------------- |
@@ -538,7 +538,8 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 | Products      | `/products`      | `catalog`, `add`, `:id`, `:id/edit`                                                         |
 | Orders        | `/orders`        | `add`, `:id`, `:id/edit`                                                                    |
 | Returns       | `/returns`       | `:id`                                                                                       |
-| Customers     | `/customers`     | `add`, `dues`, `:id`, `:id/edit`                                                            |
+| Customers     | `/customers`     | `add`, `:id`, `:id/edit`                                                                    |
+| Due Book      | `/dues`          | — (branch 13; customer detail via `/customers/:id`)                                         |
 | Scanner       | `/scanner`       | — (scan QR/barcode → view matching product, or add it as new)                               |
 | Inventory     | `/inventory`     | `adjust/:id`                                                                                |
 | Suppliers     | `/suppliers`     | `add`, `:id`, `:id/edit`, `:id/purchase/add`, `purchases`, `purchases/add`, `purchases/:id` |
@@ -567,7 +568,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 - **Shop name as primary brand:** `Settings.shopName` (default "My Shop") replaces `AppStrings.appName` in three live-rendering surfaces — `MaterialApp.title` (OS task switcher), Splash Screen hero text, Dashboard SliverAppBar title — each falls back to "Micro Seller" if the shop name is empty. The PDF invoice watermark intentionally stays as "Powered by Micro Seller" (brand attribution, not the user's shop).
 - **Language:** 12 languages with in-app language switcher (English, Bengali, Arabic, Spanish, French, Portuguese, Turkish, Indonesian, Thai, Vietnamese, Urdu, Malay)
 - **Responsive sidebar navigation**: icon-only rail (56px) on phones (<600px), expanded with labels (200px) on tablet/desktop (>=600px). Tooltips on collapsed icons. Wrapped in SafeArea.
-- **Sidebar customization** lives under its own **"Sidebar"** section header on the Settings screen (separate from Theme / Language / Shop): drag-reorder tabs (Settings → Sidebar Order screen), per-tab visibility toggle (`CupertinoSwitch`), and a **left/right position** picker on the main Settings screen. The position picker is a custom `_SidebarPositionToggle` widget (in [settings_screen.dart](lib/features/settings/presentation/settings_screen.dart)) — a compact pill-rounded two-icon segmented control that fits inside `ListTile.trailing` without forcing the title onto a second line. Active side fills with `cs.primary`; inactive ghosts to 55% `onSurface`. Material 3 `SegmentedButton` was tried first but its mandatory label+icon padding was too wide. The position swap itself is just a `Row.children` reorder in `_NavigationShell` — not two separate layouts. `Settings.toggleSidebarItemHidden('settings', _)` is a hard no-op and the Settings row's switch is rendered disabled, so the user can never lock themselves out. All three knobs (`sidebarOrder`, `hiddenSidebarItems`, `sidebarPosition`) are part of the backup payload via `exportSettings()` / `importSettings(map)`.
+- **Sidebar customization** lives under its own **"Sidebar"** section header on the Settings screen (separate from Theme / Language / Shop): drag-reorder tabs (Settings → Sidebar Order screen; `reconcileSidebarOrder` slots a newly added tab after its default predecessor so existing users see it in place, not below Settings), per-tab visibility toggle (`CupertinoSwitch`), and a **left/right position** picker on the main Settings screen. The position picker is a custom `_SidebarPositionToggle` widget (in [settings_screen.dart](lib/features/settings/presentation/settings_screen.dart)) — a compact pill-rounded two-icon segmented control that fits inside `ListTile.trailing` without forcing the title onto a second line. Active side fills with `cs.primary`; inactive ghosts to 55% `onSurface`. Material 3 `SegmentedButton` was tried first but its mandatory label+icon padding was too wide. The position swap itself is just a `Row.children` reorder in `_NavigationShell` — not two separate layouts. `Settings.toggleSidebarItemHidden('settings', _)` is a hard no-op and the Settings row's switch is rendered disabled, so the user can never lock themselves out. All three knobs (`sidebarOrder`, `hiddenSidebarItems`, `sidebarPosition`) are part of the backup payload via `exportSettings()` / `importSettings(map)`.
 - **Responsive layouts throughout**:
   - Dashboard: stat cards via `Wrap` + `LayoutBuilder` (2-6 cols based on `width/170`); charts side-by-side on wide screens; date-range filter bar
   - Product grid: responsive columns via `LayoutBuilder` (`width/180`, clamp 2-6)

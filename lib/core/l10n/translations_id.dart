@@ -540,4 +540,7 @@ const translationsId = <String, String>{
   'generatedOn': 'Dibuat pada {date}',
   'reference': 'Referensi',
   'pageOf': 'Halaman {page} dari {total}',
+  'payLaterHint': 'Kosongkan jika pelanggan akan membayar nanti',
+  'goesToDueBook': '{amount} akan masuk ke Buku Utang',
+  'amountPaidExceedsTotal': 'Jumlah dibayar tidak boleh melebihi total',
 };

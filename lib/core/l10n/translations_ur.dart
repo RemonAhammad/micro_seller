@@ -540,4 +540,7 @@ const translationsUr = <String, String>{
   'generatedOn': 'تاریخ اجرا {date}',
   'reference': 'حوالہ',
   'pageOf': 'صفحہ {page} از {total}',
+  'payLaterHint': 'اگر گاہک بعد میں ادائیگی کرے گا تو خالی چھوڑ دیں',
+  'goesToDueBook': '{amount} ادھار کھاتے میں جائیں گے',
+  'amountPaidExceedsTotal': 'ادا شدہ رقم کل سے زیادہ نہیں ہو سکتی',
 };

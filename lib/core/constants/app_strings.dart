@@ -589,6 +589,10 @@ class _L10nStrings {
   String generatedOn(String date) =>
       _l10n.tr('generatedOn').replaceAll('{date}', date);
   String get reference => _l10n.tr('reference');
+  String get payLaterHint => _l10n.tr('payLaterHint');
+  String goesToDueBook(String amount) =>
+      _l10n.tr('goesToDueBook').replaceAll('{amount}', amount);
+  String get amountPaidExceedsTotal => _l10n.tr('amountPaidExceedsTotal');
   String pageOf(int page, int total) => _l10n
       .tr('pageOf')
       .replaceAll('{page}', '$page')

@@ -40,7 +40,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           IconButton(
             tooltip: s.dueBook,
             icon: const Icon(Icons.menu_book_rounded),
-            onPressed: () => context.push('/customers/dues'),
+            onPressed: () => context.go('/dues'),
           ),
         ],
         bottom: PreferredSize(

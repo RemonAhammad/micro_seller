@@ -161,11 +161,6 @@ final appRouter = GoRouter(
                 pageBuilder: (_, s) =>
                     _fadePage(const CustomerFormScreen(customer: null), s),
               ),
-              // Before ':id' so "dues" isn't parsed as a customer id.
-              GoRoute(
-                path: 'dues',
-                pageBuilder: (_, s) => _fadePage(const DueBookScreen(), s),
-              ),
               GoRoute(
                 path: ':id',
                 pageBuilder: (_, s) => _fadePage(
@@ -304,6 +299,11 @@ final appRouter = GoRouter(
         ]),
         StatefulShellBranch(routes: [
           GoRoute(path: '/scanner', builder: (_, __) => const ScannerScreen()),
+        ]),
+        // Branch 13 — appended, never inserted: branch indices are persisted
+        // by `SidebarItem.branchIndex` and must stay stable.
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/dues', builder: (_, __) => const DueBookScreen()),
         ]),
       ],
     ),

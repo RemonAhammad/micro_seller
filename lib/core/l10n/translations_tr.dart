@@ -540,4 +540,7 @@ const translationsTr = <String, String>{
   'generatedOn': 'Oluşturulma {date}',
   'reference': 'Referans',
   'pageOf': 'Sayfa {page}/{total}',
+  'payLaterHint': 'Müşteri sonra ödeyecekse boş bırakın',
+  'goesToDueBook': '{amount} veresiye defterine eklenecek',
+  'amountPaidExceedsTotal': 'Ödenen tutar toplamdan fazla olamaz',
 };
