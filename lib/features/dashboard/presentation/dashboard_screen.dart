@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -228,7 +228,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final s = AppStrings.of(context);
     return _SectionCard(
       title: s.dueBook,
-      icon: LucideIcons.notebookPen,
+      icon: Icons.menu_book_rounded,
+      iconBuilder: AppIcons.dueBook,
       iconColor: AppColors.paymentPartial,
       action: TextButton(
         onPressed: () => context.go('/dues'),
@@ -496,53 +497,53 @@ class _DashboardBody extends StatelessWidget {
   Widget _buildStatCards(BuildContext context) {
     final s = AppStrings.of(context);
     // `route` makes a card tappable (null = not tappable).
-    final items = <({String label, String value, IconData icon, Color color, String? route})>[
+    final items = <({String label, String value, ThinIconBuilder icon, Color color, String? route})>[
       (
         label: s.monthRevenue,
         value: CurrencyFormatter.formatCompact(stats.thisMonthRevenue),
-        icon: LucideIcons.trendingUp,
+        icon: AppIcons.revenue,
         color: AppColors.primary,
         route: null,
       ),
       (
         label: s.monthProfit,
         value: CurrencyFormatter.formatCompact(stats.thisMonthProfit),
-        icon: LucideIcons.piggyBank,
+        icon: AppIcons.profit,
         color: const Color(0xFF42A5F5),
         route: null,
       ),
       (
         label: s.monthExpenses,
         value: CurrencyFormatter.formatCompact(monthExpenses),
-        icon: LucideIcons.wallet,
+        icon: AppIcons.expenses,
         color: AppColors.statusCancelled,
         route: '/expenses',
       ),
       (
         label: s.pendingOrders,
         value: '${stats.pendingOrders}',
-        icon: LucideIcons.hourglass,
+        icon: AppIcons.pending,
         color: AppColors.statusPending,
         route: '/orders',
       ),
       (
         label: s.totalReceivable,
         value: CurrencyFormatter.formatCompact(receivable),
-        icon: LucideIcons.notebookPen,
+        icon: AppIcons.dueBook,
         color: AppColors.paymentUnpaid,
         route: '/dues',
       ),
       (
         label: s.duesCollectedThisMonth,
         value: CurrencyFormatter.formatCompact(collectedThisMonth),
-        icon: LucideIcons.handCoins,
+        icon: AppIcons.collected,
         color: AppColors.paymentPaid,
         route: '/dues',
       ),
       (
         label: s.lowStockItems,
         value: '${stats.lowStockProducts.length}',
-        icon: LucideIcons.packageX,
+        icon: AppIcons.lowStock,
         color: AppColors.statusPending,
         route: '/inventory',
       ),
@@ -570,7 +571,7 @@ class _DashboardBody extends StatelessWidget {
                 child: StatCard(
                   label: item.label,
                   value: item.value,
-                  icon: item.icon,
+                  iconBuilder: item.icon,
                   color: item.color,
                   onTap: item.route == null
                       ? null
@@ -607,7 +608,7 @@ class _OverdueBanner extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
           child: Row(
             children: [
-              const Icon(LucideIcons.triangleAlert, color: color, size: 22),
+              const ThinIcon(AppIcons.alert, color: color, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -634,6 +635,9 @@ class _OverdueBanner extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
+
+  /// Thin Tabler icon; when set it's drawn instead of [icon].
+  final ThinIconBuilder? iconBuilder;
   final Color iconColor;
   final Widget? action;
   final Widget child;
@@ -641,6 +645,7 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
     required this.icon,
+    this.iconBuilder,
     required this.iconColor,
     this.action,
     required this.child,
@@ -676,7 +681,11 @@ class _SectionCard extends StatelessWidget {
                   color: iconColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Icon(icon, color: iconColor, size: 14),
+                child: Center(
+                  child: iconBuilder != null
+                      ? ThinIcon(iconBuilder!, color: iconColor, size: 16)
+                      : Icon(icon, color: iconColor, size: 14),
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(

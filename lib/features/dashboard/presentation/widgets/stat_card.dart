@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 
 class StatCard extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  /// Material icon — or pass [iconBuilder] for a thin Tabler icon instead.
+  final IconData? icon;
+  final ThinIconBuilder? iconBuilder;
   final Color color;
   final VoidCallback? onTap;
 
@@ -11,10 +14,11 @@ class StatCard extends StatelessWidget {
     super.key,
     required this.label,
     required this.value,
-    required this.icon,
+    this.icon,
+    this.iconBuilder,
     required this.color,
     this.onTap,
-  });
+  }) : assert(icon != null || iconBuilder != null);
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +52,11 @@ class StatCard extends StatelessWidget {
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(9),
               ),
-              child: Icon(icon, color: color, size: 17),
+              child: Center(
+                child: iconBuilder != null
+                    ? ThinIcon(iconBuilder!, color: color, size: 18)
+                    : Icon(icon, color: color, size: 17),
+              ),
             ),
             const Spacer(),
             Text(

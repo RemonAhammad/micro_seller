@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/sidebar_items.dart';
 import '../providers/settings_provider.dart';
 
@@ -107,8 +108,8 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
                           horizontal: 12, vertical: 6),
                       child: Row(
                         children: [
-                          Icon(
-                            isVisible ? item.selectedIcon : item.icon,
+                          ThinIcon(
+                            item.icon,
                             color: isVisible
                                 ? item.color
                                 : cs.onSurface.withValues(alpha: 0.35),

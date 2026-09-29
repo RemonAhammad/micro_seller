@@ -93,8 +93,7 @@ dependencies:
   # and reboot. Failed silent sign-in (revoked access) raises a notification
   # and a Settings banner — never silent.
   workmanager: ^0.10.10
-  lucide_icons_flutter: ^3.1.20
-
+  tabler_icons_next: ^3.48.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

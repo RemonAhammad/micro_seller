@@ -6,6 +6,7 @@ import '../../data/services/tutorial_service.dart';
 import '../../features/settings/providers/settings_provider.dart';
 import '../../features/settings/presentation/sidebar_order_screen.dart';
 import '../../features/settings/presentation/recycle_bin_screen.dart';
+import '../constants/app_icons.dart';
 import '../constants/sidebar_items.dart';
 import '../../features/categories/presentation/category_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
@@ -507,10 +508,11 @@ class _Sidebar extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tint =
         isDark ? Color.lerp(item.color, Colors.white, 0.25)! : item.color;
-    final icon = Icon(
-      selected ? item.selectedIcon : item.icon,
+    final icon = ThinIcon(
+      item.icon,
       size: 22,
       color: selected ? tint : tint.withValues(alpha: 0.75),
+      strokeWidth: selected ? kIconStrokeSelected : kIconStroke,
     );
     final bg = selected ? tint.withValues(alpha: 0.14) : Colors.transparent;
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));

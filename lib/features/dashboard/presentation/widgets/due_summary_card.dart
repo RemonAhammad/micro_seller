@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -155,16 +155,16 @@ class _ChaseRow extends ConsumerWidget {
               visualDensity: VisualDensity.compact,
               onPressed: () => sendDueReminder(
                   context, ref, due.customer, due.orderDues, due.totalDue),
-              icon: const Icon(LucideIcons.messageCircle,
-                  color: Color(0xFF25D366), size: 20),
+              icon: const ThinIcon(AppIcons.whatsapp,
+                  color: Color(0xFF25D366), size: 22),
             ),
             IconButton(
               tooltip: s.collect,
               visualDensity: VisualDensity.compact,
               onPressed: () => showCollectPaymentSheet(
                   context, due.customer, due.orderDues, due.totalDue),
-              icon: const Icon(LucideIcons.handCoins,
-                  color: AppColors.primary, size: 20),
+              icon: const ThinIcon(AppIcons.collected,
+                  color: AppColors.primary, size: 22),
             ),
           ],
         ),

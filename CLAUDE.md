@@ -21,7 +21,7 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **Env config:** `flutter_dotenv` loads `.env` at startup (OAuth client IDs, gitignored; `.env.example` is the tracked template)
 - **Onboarding:** showcaseview v5 for first-time guided tour
 - **In-App Update:** in_app_update for Play Store auto-update prompts
-- **Icons:** `lucide_icons_flutter` for the sidebar and dashboard. Each glyph has const weight variants (`LucideIcons.package` / `LucideIcons.package600`); the sidebar uses the default stroke unselected and `…600` selected. Keep every `IconData` `const` — release builds use `--tree-shake-icons`. (`phosphor_flutter` 2.1.0 was tried and **does not compile** on Flutter 3.44: it extends `IconData`, which is now a `final` class.)
+- **Icons:** thin line icons from `tabler_icons_next` (Tabler, SVG widgets via `flutter_svg`), all declared once in [app_icons.dart](lib/core/constants/app_icons.dart) as `AppIcons.<name>` static builders (`ThinIconBuilder`) and drawn with the `ThinIcon` widget. Stroke `kIconStroke = 1.25`, and `kIconStrokeSelected = 1.75` for the active sidebar tab (Tabler's default is 2.0). Static-method tear-offs are const, so `sidebarItems` stays `const`. `StatCard` and the dashboard `_SectionCard` take an optional `iconBuilder`; everything else still uses Material `Icons`. Always pass a color — Tabler's own fallback color is black. History: `phosphor_flutter` 2.1.0 **does not compile** on Flutter 3.44 (it extends `IconData`, now `final`); Lucide and Fluent both read as too bold.
 - **Other:** image_picker, mobile_scanner v6 (QR), share_plus, url_launcher, intl, package_info_plus
 
 ## Architecture
