@@ -86,6 +86,84 @@ Stream<List<CustomerDue>> dues(Ref ref) async* {
   }
 }
 
+/// Dashboard roll-up of [dues]. Aging is per customer by their oldest unpaid
+/// order — the same rule as the Due Book's "How long unpaid" filter — so the
+/// three buckets always sum to [total].
+class DueSummary {
+  const DueSummary({
+    this.total = 0,
+    this.customerCount = 0,
+    this.under30 = 0,
+    this.from30to60 = 0,
+    this.over60 = 0,
+    this.over60Count = 0,
+  });
+
+  final double total;
+  final int customerCount;
+  final double under30;
+  final double from30to60;
+  final double over60;
+  final int over60Count;
+}
+
+DueSummary summarizeDues(List<CustomerDue> dues) {
+  var total = 0.0, under30 = 0.0, from30to60 = 0.0, over60 = 0.0;
+  var over60Count = 0;
+  for (final d in dues) {
+    total += d.totalDue;
+    final days = d.daysOutstanding;
+    if (days >= 60) {
+      over60 += d.totalDue;
+      over60Count++;
+    } else if (days >= 30) {
+      from30to60 += d.totalDue;
+    } else {
+      under30 += d.totalDue;
+    }
+  }
+  return DueSummary(
+    total: total,
+    customerCount: dues.length,
+    under30: under30,
+    from30to60: from30to60,
+    over60: over60,
+    over60Count: over60Count,
+  );
+}
+
+@riverpod
+DueSummary? dueSummary(Ref ref) {
+  final dues = ref.watch(duesProvider).value;
+  return dues == null ? null : summarizeDues(dues);
+}
+
+/// Dues collected since the 1st of this month (see [duesCollectedBetween]).
+@riverpod
+Stream<double> duesCollectedThisMonth(Ref ref) async* {
+  final isar = await ref.watch(isarProvider.future);
+
+  Future<double> load() async {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month);
+    final end = DateTime(now.year, now.month + 1);
+    final payments =
+        await isar.payments.filter().paidAtBetween(start, end).findAll();
+    final orders = await isar.orders
+        .getAll(payments.map((p) => p.orderId).toSet().toList());
+    final byId = {
+      for (final o in orders)
+        if (o != null) o.id: o,
+    };
+    return duesCollectedBetween(payments, byId, start, end);
+  }
+
+  yield await load();
+  await for (final _ in isar.payments.watchLazy()) {
+    yield await load();
+  }
+}
+
 /// A customer's payment history, newest first.
 @riverpod
 Stream<List<Payment>> customerPayments(Ref ref, int customerId) async* {

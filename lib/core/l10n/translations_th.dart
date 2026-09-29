@@ -567,4 +567,6 @@ const translationsTh = <String, String>{
   'sortLongestSincePaid': 'นานที่สุดนับจากชำระล่าสุด',
   'sortRecentlyPaid': 'ชำระล่าสุด',
   'sortNameDesc': 'ชื่อ (ฮ–ก)',
+  'duesCollectedThisMonth': 'ยอดค้างชำระที่เก็บได้ (เดือนนี้)',
+  'overdue60Banner': 'ลูกค้า {count} ราย ค้างชำระ {amount} เกิน 60 วัน',
 };

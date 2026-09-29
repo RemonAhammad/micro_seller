@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'app_strings.dart';
 
 /// One sidebar tab. The `key` is a stable string used to persist the user's
@@ -13,14 +14,24 @@ class SidebarItem {
   /// Used by `_Sidebar` to translate visual position → branch index.
   final int branchIndex;
 
+  /// Lucide icon at the default stroke, shown when the tab isn't selected.
   final IconData icon;
+
+  /// The same Lucide glyph at the bold 600 stroke, shown when selected.
+  /// (Both are `const` so `--tree-shake-icons` keeps working.)
   final IconData selectedIcon;
+
+  /// The tab's own accent color — tints its icon, and its label and
+  /// background when selected. Each tab has a distinct hue so the rail is
+  /// scannable at a glance.
+  final Color color;
 
   const SidebarItem({
     required this.key,
     required this.branchIndex,
     required this.icon,
     required this.selectedIcon,
+    required this.color,
   });
 
   /// Localized label. Reads from [_L10nStrings] so the sidebar follows the
@@ -55,86 +66,100 @@ const sidebarItems = <SidebarItem>[
   SidebarItem(
     key: 'dashboard',
     branchIndex: 0,
-    icon: Icons.dashboard_outlined,
-    selectedIcon: Icons.dashboard,
+    icon: LucideIcons.layoutDashboard,
+    selectedIcon: LucideIcons.layoutDashboard600,
+    color: Color(0xFF00897B), // Brand teal
   ),
   SidebarItem(
     key: 'products',
     branchIndex: 1,
-    icon: Icons.inventory_2_outlined,
-    selectedIcon: Icons.inventory_2,
+    icon: LucideIcons.package,
+    selectedIcon: LucideIcons.package600,
+    color: Color(0xFF3F51B5), // Indigo
   ),
   SidebarItem(
     key: 'orders',
     branchIndex: 2,
-    icon: Icons.receipt_long_outlined,
-    selectedIcon: Icons.receipt_long,
+    icon: LucideIcons.receipt,
+    selectedIcon: LucideIcons.receipt600,
+    color: Color(0xFF1E88E5), // Blue
   ),
   SidebarItem(
     key: 'returns',
     branchIndex: 3,
-    icon: Icons.assignment_return_outlined,
-    selectedIcon: Icons.assignment_return,
+    icon: LucideIcons.undo2,
+    selectedIcon: LucideIcons.undo2600,
+    color: Color(0xFFF4511E), // Deep orange
   ),
   SidebarItem(
     key: 'customers',
     branchIndex: 4,
-    icon: Icons.people_outline,
-    selectedIcon: Icons.people,
+    icon: LucideIcons.usersRound,
+    selectedIcon: LucideIcons.usersRound600,
+    color: Color(0xFF8E24AA), // Purple
   ),
   SidebarItem(
     key: 'dues',
     branchIndex: 13,
-    icon: Icons.menu_book_outlined,
-    selectedIcon: Icons.menu_book,
+    icon: LucideIcons.notebookPen,
+    selectedIcon: LucideIcons.notebookPen600,
+    color: Color(0xFFFB8C00), // Amber-orange — money owed
   ),
   SidebarItem(
     key: 'inventory',
     branchIndex: 5,
-    icon: Icons.warehouse_outlined,
-    selectedIcon: Icons.warehouse,
+    icon: LucideIcons.warehouse,
+    selectedIcon: LucideIcons.warehouse600,
+    color: Color(0xFF6D4C41), // Brown
   ),
   SidebarItem(
     key: 'suppliers',
     branchIndex: 6,
-    icon: Icons.local_shipping_outlined,
-    selectedIcon: Icons.local_shipping,
+    icon: LucideIcons.truck,
+    selectedIcon: LucideIcons.truck600,
+    color: Color(0xFF00ACC1), // Cyan
   ),
   SidebarItem(
     key: 'expenses',
     branchIndex: 7,
-    icon: Icons.account_balance_wallet_outlined,
-    selectedIcon: Icons.account_balance_wallet,
+    icon: LucideIcons.wallet,
+    selectedIcon: LucideIcons.wallet600,
+    color: Color(0xFFE53935), // Red — money out
   ),
   SidebarItem(
     key: 'cash_register',
     branchIndex: 8,
-    icon: Icons.point_of_sale_outlined,
-    selectedIcon: Icons.point_of_sale,
+    icon: LucideIcons.banknote,
+    selectedIcon: LucideIcons.banknote600,
+    color: Color(0xFF43A047), // Green — money in
   ),
   SidebarItem(
     key: 'categories',
     branchIndex: 9,
-    icon: Icons.category_outlined,
-    selectedIcon: Icons.category,
+    icon: LucideIcons.tag,
+    selectedIcon: LucideIcons.tag600,
+    color: Color(0xFFD81B60), // Pink
   ),
   SidebarItem(
     key: 'reports',
     branchIndex: 10,
-    icon: Icons.analytics_outlined,
-    selectedIcon: Icons.analytics,
+    icon: LucideIcons.chartLine,
+    selectedIcon: LucideIcons.chartLine600,
+    color: Color(0xFF5E35B1), // Deep purple
   ),
   SidebarItem(
     key: 'scanner',
     branchIndex: 12,
-    icon: Icons.qr_code_scanner_outlined,
-    selectedIcon: Icons.qr_code_scanner,
+    icon: LucideIcons.scanBarcode,
+    selectedIcon: LucideIcons.scanBarcode600,
+    color: Color(0xFF546E7A), // Blue-grey
   ),
   SidebarItem(
     key: 'settings',
     branchIndex: 11,
-    icon: Icons.settings_outlined,
-    selectedIcon: Icons.settings,
+    icon: LucideIcons.settings,
+    selectedIcon: LucideIcons.settings600,
+    color: Color(0xFF757575), // Grey
   ),
 ];
 

@@ -32,17 +32,6 @@ Stream<List<Order>> pendingOrders(Ref ref) async* {
       .watch(fireImmediately: true);
 }
 
-@riverpod
-Stream<List<Order>> unpaidOrders(Ref ref) async* {
-  final isar = await ref.watch(isarProvider.future);
-  yield* isar.orders
-      .filter()
-      .paymentStatusEqualTo(PaymentStatus.unpaid)
-      .or()
-      .paymentStatusEqualTo(PaymentStatus.partial)
-      .watch(fireImmediately: true);
-}
-
 @Riverpod(keepAlive: true)
 class OrderNotifier extends _$OrderNotifier {
   @override

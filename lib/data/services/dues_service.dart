@@ -3,6 +3,7 @@ import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/customer.dart';
 import '../models/order.dart';
+import '../models/payment.dart';
 
 /// Amounts below this are treated as settled (floating-point dust).
 const kDueEpsilon = 0.005;
@@ -71,6 +72,32 @@ Future<int> recalculateOutstandingBalancesInTxn(Isar isar) async {
     }
   }
   return changed;
+}
+
+/// Money collected on dues in `[start, end)` — payments received on a later
+/// day than their order was created (so pay-at-sale isn't counted as "dues
+/// collected"). Refunds and cancel reversals (negative rows) are ignored: a
+/// refund of a pay-at-sale order was never counted here, so subtracting it
+/// would understate the figure or drive it negative.
+double duesCollectedBetween(
+  List<Payment> payments,
+  Map<int, Order> ordersById,
+  DateTime start,
+  DateTime end,
+) {
+  DateTime day(DateTime d) => DateTime(d.year, d.month, d.day);
+  var total = 0.0;
+  for (final p in payments) {
+    final paidAt = p.paidAt;
+    if (p.amount <= 0) continue;
+    if (paidAt == null || paidAt.isBefore(start) || !paidAt.isBefore(end)) {
+      continue;
+    }
+    final orderDate = ordersById[p.orderId]?.createdAt;
+    if (orderDate != null && !day(paidAt).isAfter(day(orderDate))) continue;
+    total += p.amount;
+  }
+  return total;
 }
 
 const _balancesMigrationKey = 'outstandingBalancesV1Migrated';

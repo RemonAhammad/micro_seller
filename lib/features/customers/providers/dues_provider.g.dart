@@ -55,7 +55,87 @@ final class DuesProvider
   }
 }
 
-String _$duesHash() => r'6f5e6be2dfbde91d85594ab728269995d8260371';
+String _$duesHash() => r'c1d48263c7879d059b9c4efa53d9e027e6c3b544';
+
+@ProviderFor(dueSummary)
+final dueSummaryProvider = DueSummaryProvider._();
+
+final class DueSummaryProvider
+    extends $FunctionalProvider<DueSummary?, DueSummary?, DueSummary?>
+    with $Provider<DueSummary?> {
+  DueSummaryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dueSummaryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dueSummaryHash();
+
+  @$internal
+  @override
+  $ProviderElement<DueSummary?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DueSummary? create(Ref ref) {
+    return dueSummary(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DueSummary? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DueSummary?>(value),
+    );
+  }
+}
+
+String _$dueSummaryHash() => r'3d3dbc1a7f64ef59251222437254b9f2dbd5c45c';
+
+/// Dues collected since the 1st of this month (see [duesCollectedBetween]).
+
+@ProviderFor(duesCollectedThisMonth)
+final duesCollectedThisMonthProvider = DuesCollectedThisMonthProvider._();
+
+/// Dues collected since the 1st of this month (see [duesCollectedBetween]).
+
+final class DuesCollectedThisMonthProvider
+    extends $FunctionalProvider<AsyncValue<double>, double, Stream<double>>
+    with $FutureModifier<double>, $StreamProvider<double> {
+  /// Dues collected since the 1st of this month (see [duesCollectedBetween]).
+  DuesCollectedThisMonthProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'duesCollectedThisMonthProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$duesCollectedThisMonthHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<double> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<double> create(Ref ref) {
+    return duesCollectedThisMonth(ref);
+  }
+}
+
+String _$duesCollectedThisMonthHash() =>
+    r'4ae7fe006b5e7b816f9b9304abdac33a6243511b';
 
 /// A customer's payment history, newest first.
 

@@ -567,4 +567,6 @@ const translationsId = <String, String>{
   'sortLongestSincePaid': 'Terlama sejak bayar terakhir',
   'sortRecentlyPaid': 'Baru saja bayar',
   'sortNameDesc': 'Nama (Z–A)',
+  'duesCollectedThisMonth': 'Piutang tertagih (bulan ini)',
+  'overdue60Banner': '{count} pelanggan berutang {amount} selama 60+ hari',
 };

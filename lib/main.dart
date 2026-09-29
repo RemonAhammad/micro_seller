@@ -37,10 +37,7 @@ void main() async {
   // has Auto Backup turned on; otherwise leave it idle.
   if (Platform.isAndroid) {
     try {
-      await Workmanager().initialize(
-        autoBackupCallbackDispatcher,
-        isInDebugMode: kDebugMode,
-      );
+      await Workmanager().initialize(autoBackupCallbackDispatcher);
       if (prefs.getBool('autoBackup') ?? false) {
         await AutoBackupRunner.scheduleAutoBackup();
       }

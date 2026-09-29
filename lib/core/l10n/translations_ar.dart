@@ -566,4 +566,6 @@ const translationsAr = <String, String>{
   'sortLongestSincePaid': 'الأطول منذ آخر دفعة',
   'sortRecentlyPaid': 'دفع مؤخرًا',
   'sortNameDesc': 'الاسم (ي–أ)',
+  'duesCollectedThisMonth': 'الديون المحصّلة (هذا الشهر)',
+  'overdue60Banner': '{count} عميل مدينون بمبلغ {amount} منذ أكثر من 60 يومًا',
 };

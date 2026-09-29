@@ -87,45 +87,6 @@ final class PendingOrdersProvider
 
 String _$pendingOrdersHash() => r'6e1c02fdda068ea21a49dcb33145c5a50e67dc70';
 
-@ProviderFor(unpaidOrders)
-final unpaidOrdersProvider = UnpaidOrdersProvider._();
-
-final class UnpaidOrdersProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Order>>,
-          List<Order>,
-          Stream<List<Order>>
-        >
-    with $FutureModifier<List<Order>>, $StreamProvider<List<Order>> {
-  UnpaidOrdersProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'unpaidOrdersProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$unpaidOrdersHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<List<Order>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<Order>> create(Ref ref) {
-    return unpaidOrders(ref);
-  }
-}
-
-String _$unpaidOrdersHash() => r'4735e84dba7ca4d954add30fdbe6f099262c259a';
-
 @ProviderFor(OrderNotifier)
 final orderProvider = OrderNotifierProvider._();
 
@@ -150,7 +111,7 @@ final class OrderNotifierProvider
   OrderNotifier create() => OrderNotifier();
 }
 
-String _$orderNotifierHash() => r'84b42ef3d5b1bdb00edcbbbf6d98fdc71efb547a';
+String _$orderNotifierHash() => r'd64a1cc8e4b3e3b5b1bafb29fee98663a2467281';
 
 abstract class _$OrderNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

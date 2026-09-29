@@ -567,4 +567,6 @@ const translationsBn = <String, String>{
   'sortLongestSincePaid': 'অনেকদিন পেমেন্ট নেই',
   'sortRecentlyPaid': 'সম্প্রতি পরিশোধ',
   'sortNameDesc': 'নাম (হ–ক)',
+  'duesCollectedThisMonth': 'বাকি আদায় (এই মাস)',
+  'overdue60Banner': '{count} জন গ্রাহকের কাছে ৬০+ দিন ধরে {amount} বাকি',
 };

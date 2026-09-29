@@ -108,9 +108,9 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
                       child: Row(
                         children: [
                           Icon(
-                            item.icon,
+                            isVisible ? item.selectedIcon : item.icon,
                             color: isVisible
-                                ? cs.primary
+                                ? item.color
                                 : cs.onSurface.withValues(alpha: 0.35),
                           ),
                           const SizedBox(width: 14),

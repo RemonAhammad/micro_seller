@@ -3,6 +3,8 @@ import 'package:micro_seller/data/models/order.dart';
 import 'package:micro_seller/data/models/payment.dart';
 import 'package:micro_seller/data/services/dues_service.dart';
 import 'package:micro_seller/data/services/statement_service.dart';
+import 'package:micro_seller/data/models/customer.dart';
+import 'package:micro_seller/features/customers/providers/dues_provider.dart';
 
 final _labels = StatementLabels(
   title: 'Statement',
@@ -213,6 +215,64 @@ void main() {
       // Due Book shows nothing owed (dues never go negative).
       expect(rows.last.balance, closeTo(-150, 0.001));
       expect(computeOrderDues(orders), isEmpty);
+    });
+  });
+
+  group('summarizeDues', () {
+    CustomerDue due(int id, double total, int oldestDaysAgo) {
+      final o = Order(
+        id: id,
+        customerId: id,
+        totalAmount: total,
+        createdAt: DateTime.now().subtract(Duration(days: oldestDaysAgo)),
+      );
+      return CustomerDue(
+        customer: Customer(id: id, name: 'C$id'),
+        orderDues: [OrderDue(o, total)],
+        totalDue: total,
+      );
+    }
+
+    test('buckets sum to the total and use the oldest order age', () {
+      final summary = summarizeDues([
+        due(1, 100, 5),
+        due(2, 200, 45),
+        due(3, 300, 70),
+        due(4, 50, 61),
+      ]);
+      expect(summary.total, 650);
+      expect(summary.customerCount, 4);
+      expect(summary.under30, 100);
+      expect(summary.from30to60, 200);
+      expect(summary.over60, 350);
+      expect(summary.over60Count, 2);
+      expect(summary.under30 + summary.from30to60 + summary.over60,
+          summary.total);
+    });
+  });
+
+  group('duesCollectedBetween', () {
+    final start = DateTime(2026, 3, 1);
+    final end = DateTime(2026, 4, 1);
+    final orders = {
+      1: _order(1, 1000).copyWith(createdAt: DateTime(2026, 2, 20)),
+      2: _order(2, 500).copyWith(createdAt: DateTime(2026, 3, 10, 9)),
+    };
+
+    test('counts later collections, skips pay-at-sale and refunds', () {
+      final total = duesCollectedBetween([
+        // Collected on a due from February → counts.
+        Payment(orderId: 1, amount: 300, paidAt: DateTime(2026, 3, 5)),
+        // Paid at the time of sale (same day) → not a due collection.
+        Payment(orderId: 2, amount: 200, paidAt: DateTime(2026, 3, 10, 18)),
+        // Collected later on order 2 → counts.
+        Payment(orderId: 2, amount: 100, paidAt: DateTime(2026, 3, 20)),
+        // Refund → not a collection, ignored.
+        Payment(orderId: 1, amount: -50, paidAt: DateTime(2026, 3, 25)),
+        // Outside the month → ignored.
+        Payment(orderId: 1, amount: 999, paidAt: DateTime(2026, 4, 2)),
+      ], orders, start, end);
+      expect(total, 400);
     });
   });
 }

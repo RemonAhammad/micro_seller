@@ -1,6 +1,6 @@
 {
-  "nodeCount": 3868,
-  "edgeCount": 448,
+  "nodeCount": 3913,
+  "edgeCount": 480,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 3868,
+  "totalCount": 3913,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-09-29T05:39:29.330Z",
-  "lastFile": "dues_test.dart"
+  "syncedAt": "2026-09-29T11:39:54.691Z",
+  "lastFile": "due_summary_card.dart"
 }

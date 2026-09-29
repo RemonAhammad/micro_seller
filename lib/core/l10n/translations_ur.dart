@@ -567,4 +567,6 @@ const translationsUr = <String, String>{
   'sortLongestSincePaid': 'آخری ادائیگی کو سب سے زیادہ وقت',
   'sortRecentlyPaid': 'حال ہی میں ادائیگی',
   'sortNameDesc': 'نام (ی–ا)',
+  'duesCollectedThisMonth': 'وصول شدہ بقایا (اس ماہ)',
+  'overdue60Banner': '{count} گاہک 60+ دنوں سے {amount} کے مقروض ہیں',
 };

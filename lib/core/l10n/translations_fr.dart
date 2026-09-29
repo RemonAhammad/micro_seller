@@ -567,4 +567,6 @@ const translationsFr = <String, String>{
   'sortLongestSincePaid': 'Plus longtemps sans paiement',
   'sortRecentlyPaid': 'Payé récemment',
   'sortNameDesc': 'Nom (Z–A)',
+  'duesCollectedThisMonth': 'Dettes encaissées (ce mois-ci)',
+  'overdue60Banner': '{count} client(s) doivent {amount} depuis plus de 60 jours',
 };

@@ -616,6 +616,11 @@ class _L10nStrings {
   String get sortLongestSincePaid => _l10n.tr('sortLongestSincePaid');
   String get sortRecentlyPaid => _l10n.tr('sortRecentlyPaid');
   String get sortNameDesc => _l10n.tr('sortNameDesc');
+  String get duesCollectedThisMonth => _l10n.tr('duesCollectedThisMonth');
+  String overdue60Banner(int count, String amount) => _l10n
+      .tr('overdue60Banner')
+      .replaceAll('{count}', '$count')
+      .replaceAll('{amount}', amount);
   String showingOf(int count, int total) => _l10n
       .tr('showingOf')
       .replaceAll('{count}', '$count')

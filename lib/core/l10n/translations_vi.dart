@@ -567,4 +567,6 @@ const translationsVi = <String, String>{
   'sortLongestSincePaid': 'Lâu nhất kể từ lần trả cuối',
   'sortRecentlyPaid': 'Vừa trả gần đây',
   'sortNameDesc': 'Tên (Z–A)',
+  'duesCollectedThisMonth': 'Công nợ đã thu (tháng này)',
+  'overdue60Banner': '{count} khách hàng nợ {amount} hơn 60 ngày',
 };

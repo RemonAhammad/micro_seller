@@ -567,4 +567,6 @@ const translationsTr = <String, String>{
   'sortLongestSincePaid': 'En uzun süredir ödeme yok',
   'sortRecentlyPaid': 'Yakın zamanda ödedi',
   'sortNameDesc': 'Ad (Z–A)',
+  'duesCollectedThisMonth': 'Tahsil edilen borçlar (bu ay)',
+  'overdue60Banner': '{count} müşteri 60+ gündür {amount} borçlu',
 };

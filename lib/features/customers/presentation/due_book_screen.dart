@@ -183,7 +183,10 @@ String _activityLabel(BuildContext context, _Activity a) {
 /// collect / WhatsApp reminder / call. Dues are computed from orders — see
 /// `computeOrderDues` — not from the stored outstandingBalance counter.
 class DueBookScreen extends ConsumerStatefulWidget {
-  const DueBookScreen({super.key});
+  const DueBookScreen({super.key, this.initialOver60 = false});
+
+  /// Start filtered to the 60+ days bucket (dashboard overdue banner).
+  final bool initialOver60;
 
   @override
   ConsumerState<DueBookScreen> createState() => _DueBookScreenState();
@@ -194,7 +197,9 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
   final _debouncer = Debouncer();
   String _query = '';
   _DueSort _sort = _DueSort.oldest;
-  _DueFilters _filters = const _DueFilters();
+  late _DueFilters _filters = widget.initialOver60
+      ? const _DueFilters(ages: {_AgeBucket.over60})
+      : const _DueFilters();
 
   @override
   void dispose() {

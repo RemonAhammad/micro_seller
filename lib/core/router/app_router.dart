@@ -303,7 +303,16 @@ final appRouter = GoRouter(
         // Branch 13 — appended, never inserted: branch indices are persisted
         // by `SidebarItem.branchIndex` and must stay stable.
         StatefulShellBranch(routes: [
-          GoRoute(path: '/dues', builder: (_, __) => const DueBookScreen()),
+          GoRoute(
+            path: '/dues',
+            // `?age=60` (from the dashboard's overdue banner) opens the list
+            // pre-filtered. Keyed on the URI so a later banner tap re-applies
+            // the filter even though the branch keeps its state.
+            builder: (_, state) => DueBookScreen(
+              key: ValueKey(state.uri.toString()),
+              initialOver60: state.uri.queryParameters['age'] == '60',
+            ),
+          ),
         ]),
       ],
     ),
@@ -493,12 +502,17 @@ class _Sidebar extends ConsumerWidget {
     Color unselectedColor,
   ) {
     final selected = currentIndex == item.branchIndex;
+    // Each tab keeps its own hue. In dark mode, lift it toward white so the
+    // darker ones (brown, blue-grey, grey, deep purple) stay readable.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tint =
+        isDark ? Color.lerp(item.color, Colors.white, 0.25)! : item.color;
     final icon = Icon(
       selected ? item.selectedIcon : item.icon,
       size: 22,
-      color: selected ? selectedColor : unselectedColor,
+      color: selected ? tint : tint.withValues(alpha: 0.75),
     );
-    final bg = selected ? selectedColor.withValues(alpha: 0.12) : Colors.transparent;
+    final bg = selected ? tint.withValues(alpha: 0.14) : Colors.transparent;
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
     final label = item.label(context);
 
@@ -527,7 +541,7 @@ class _Sidebar extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        color: selected ? selectedColor : unselectedColor,
+                        color: selected ? tint : unselectedColor,
                       ),
                     ),
                   ),

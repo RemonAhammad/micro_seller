@@ -26,7 +26,6 @@ abstract class DashboardStats with _$DashboardStats {
     @Default(0.0) double thisMonthProfit,
     @Default(0) int totalOrders,
     @Default(0) int pendingOrders,
-    @Default(0.0) double unpaidTotal,
     @Default([]) List<Product> lowStockProducts,
     @Default([]) List<DailySales> weeklySales,
   }) = _DashboardStats;
@@ -133,16 +132,6 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
       .orderStatusEqualTo(OrderStatus.confirmed)
       .count();
 
-  // Unpaid total
-  final unpaidOrders = await isar.orders
-      .filter()
-      .not()
-      .paymentStatusEqualTo(PaymentStatus.paid)
-      .not()
-      .orderStatusEqualTo(OrderStatus.cancelled)
-      .findAll();
-  final unpaidTotal = unpaidOrders.fold(0.0, (s, o) => s + o.balanceDue);
-
   // Low stock products
   final products = await isar.products
       .where()
@@ -187,7 +176,6 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
     thisMonthProfit: thisMonthProfit,
     totalOrders: totalOrders,
     pendingOrders: pendingOrders,
-    unpaidTotal: unpaidTotal,
     lowStockProducts: lowStockProducts,
     weeklySales: weeklySales,
   );

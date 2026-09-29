@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -18,7 +19,8 @@ import 'widgets/stat_card.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/sales_chart.dart';
 import 'widgets/low_stock_list.dart';
-import 'widgets/unpaid_orders_widget.dart';
+import 'widgets/due_summary_card.dart';
+import '../../customers/providers/dues_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -40,7 +42,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final statsAsync = ref.watch(dashboardStatsProvider);
-    final unpaidOrdersAsync = ref.watch(unpaidOrdersProvider);
+    // Due info comes from the Due Book's own providers, so the dashboard and
+    // the Due Book can never disagree.
+    final dues = ref.watch(duesProvider).value ?? const <CustomerDue>[];
+    final dueSummary = ref.watch(dueSummaryProvider) ?? const DueSummary();
+    final collectedThisMonth =
+        ref.watch(duesCollectedThisMonthProvider).value ?? 0;
     final ordersAsync = ref.watch(ordersProvider);
     final expensesAsync = ref.watch(expensesProvider);
     final theme = Theme.of(context);
@@ -65,6 +72,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: _DateRangeBar(),
                   ),
                 ),
+
+                // ── 60+ days overdue alert ──
+                if (dueSummary.over60Count > 0)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: _OverdueBanner(summary: dueSummary),
+                    ),
+                  ),
 
                 // ── Body ──
                 SliverToBoxAdapter(
@@ -111,6 +127,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         statusCounts: statusCounts,
                         dailyExpenses: dailyExpenses,
                         monthExpenses: totalExpensesThisMonth,
+                        receivable: dueSummary.total,
+                        collectedThisMonth: collectedThisMonth,
                         isWide: isWide,
                       );
                     },
@@ -124,10 +142,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 SliverToBoxAdapter(
                   child: statsAsync.whenOrNull(
                         data: (stats) {
-                          final unpaidOrders =
-                              unpaidOrdersAsync.value ?? [];
-                          if (stats.lowStockProducts.isEmpty &&
-                              unpaidOrders.isEmpty) {
+                          final hasDues = dues.isNotEmpty;
+                          if (stats.lowStockProducts.isEmpty && !hasDues) {
                             return const SizedBox(height: 24);
                           }
 
@@ -155,22 +171,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                       ),
                                     ),
                                   if (stats.lowStockProducts.isNotEmpty &&
-                                      unpaidOrders.isNotEmpty)
+                                      hasDues)
                                     const SizedBox(width: 12),
-                                  if (unpaidOrders.isNotEmpty)
+                                  if (hasDues)
                                     Expanded(
-                                      child: _SectionCard(
-                                        title: s.unpaidAmount,
-                                        icon: Icons.payment_rounded,
-                                        iconColor: AppColors.paymentUnpaid,
-                                        action: TextButton(
-                                          onPressed: () =>
-                                              context.go('/dues'),
-                                          child: Text(s.dueBook),
-                                        ),
-                                        child: UnpaidOrdersWidget(
-                                            orders: unpaidOrders),
-                                      ),
+                                      child: _dueSection(
+                                          context, dueSummary, dues),
                                     ),
                                 ],
                               ),
@@ -196,22 +202,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         products: stats.lowStockProducts),
                                   ),
                                 ),
-                              if (unpaidOrders.isNotEmpty)
+                              if (hasDues)
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
                                       16, 0, 16, 24),
-                                  child: _SectionCard(
-                                    title: s.unpaidAmount,
-                                    icon: Icons.payment_rounded,
-                                    iconColor: AppColors.paymentUnpaid,
-                                    action: TextButton(
-                                      onPressed: () =>
-                                          context.go('/dues'),
-                                      child: Text(s.dueBook),
-                                    ),
-                                    child: UnpaidOrdersWidget(
-                                        orders: unpaidOrders),
-                                  ),
+                                  child: _dueSection(
+                                      context, dueSummary, dues),
                                 ),
                             ],
                           );
@@ -224,6 +220,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _dueSection(
+      BuildContext context, DueSummary summary, List<CustomerDue> dues) {
+    final s = AppStrings.of(context);
+    return _SectionCard(
+      title: s.dueBook,
+      icon: LucideIcons.notebookPen,
+      iconColor: AppColors.paymentPartial,
+      action: TextButton(
+        onPressed: () => context.go('/dues'),
+        child: Text(s.viewAll),
+      ),
+      child: DueSummaryCard(summary: summary, dues: dues),
     );
   }
 
@@ -376,6 +387,8 @@ class _DashboardBody extends StatelessWidget {
   final Map<String, int> statusCounts;
   final Map<int, double> dailyExpenses;
   final double monthExpenses;
+  final double receivable;
+  final double collectedThisMonth;
   final bool isWide;
 
   const _DashboardBody({
@@ -383,6 +396,8 @@ class _DashboardBody extends StatelessWidget {
     required this.statusCounts,
     required this.dailyExpenses,
     required this.monthExpenses,
+    required this.receivable,
+    required this.collectedThisMonth,
     required this.isWide,
   });
 
@@ -480,42 +495,56 @@ class _DashboardBody extends StatelessWidget {
 
   Widget _buildStatCards(BuildContext context) {
     final s = AppStrings.of(context);
-    final items = [
+    // `route` makes a card tappable (null = not tappable).
+    final items = <({String label, String value, IconData icon, Color color, String? route})>[
       (
         label: s.monthRevenue,
         value: CurrencyFormatter.formatCompact(stats.thisMonthRevenue),
-        icon: Icons.trending_up_rounded,
+        icon: LucideIcons.trendingUp,
         color: AppColors.primary,
+        route: null,
       ),
       (
         label: s.monthProfit,
         value: CurrencyFormatter.formatCompact(stats.thisMonthProfit),
-        icon: Icons.account_balance_wallet_rounded,
+        icon: LucideIcons.piggyBank,
         color: const Color(0xFF42A5F5),
+        route: null,
       ),
       (
         label: s.monthExpenses,
         value: CurrencyFormatter.formatCompact(monthExpenses),
-        icon: Icons.receipt_long_rounded,
+        icon: LucideIcons.wallet,
         color: AppColors.statusCancelled,
+        route: '/expenses',
       ),
       (
         label: s.pendingOrders,
         value: '${stats.pendingOrders}',
-        icon: Icons.hourglass_top_rounded,
+        icon: LucideIcons.hourglass,
         color: AppColors.statusPending,
+        route: '/orders',
       ),
       (
-        label: s.unpaidAmount,
-        value: CurrencyFormatter.formatCompact(stats.unpaidTotal),
-        icon: Icons.money_off_rounded,
+        label: s.totalReceivable,
+        value: CurrencyFormatter.formatCompact(receivable),
+        icon: LucideIcons.notebookPen,
         color: AppColors.paymentUnpaid,
+        route: '/dues',
+      ),
+      (
+        label: s.duesCollectedThisMonth,
+        value: CurrencyFormatter.formatCompact(collectedThisMonth),
+        icon: LucideIcons.handCoins,
+        color: AppColors.paymentPaid,
+        route: '/dues',
       ),
       (
         label: s.lowStockItems,
         value: '${stats.lowStockProducts.length}',
-        icon: Icons.inventory_2_rounded,
+        icon: LucideIcons.packageX,
         color: AppColors.statusPending,
+        route: '/inventory',
       ),
     ];
 
@@ -543,12 +572,59 @@ class _DashboardBody extends StatelessWidget {
                   value: item.value,
                   icon: item.icon,
                   color: item.color,
+                  onTap: item.route == null
+                      ? null
+                      : () => context.go(item.route!),
                 ),
               ),
             );
           }),
         );
       },
+    );
+  }
+}
+
+// ─── 60+ days overdue banner ───────────────────────────────────────────────
+
+class _OverdueBanner extends StatelessWidget {
+  const _OverdueBanner({required this.summary});
+
+  final DueSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    const color = AppColors.paymentPartial;
+    return Material(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        // Opens the Due Book pre-filtered to the 60+ days bucket.
+        onTap: () => context.go('/dues?age=60'),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.triangleAlert, color: color, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  s.overdue60Banner(summary.over60Count,
+                      CurrencyFormatter.format(summary.over60)),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, color: Color(0xFFE65100)),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.go('/dues?age=60'),
+                child: Text(s.open),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
