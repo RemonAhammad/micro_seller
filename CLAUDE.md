@@ -101,7 +101,7 @@ lib/
 │   │   │   ├── customer_list_screen.dart           # Search by name/phone (debounced)
 │   │   │   ├── customer_form_screen.dart           # Add/edit with tag selector
 │   │   │   ├── customer_detail_screen.dart         # Live (watchObject) stats, Collect / Remind / Statement actions, payment history, order history, 6-month purchase chart
-│   │   │   ├── due_book_screen.dart                # /dues (own sidebar tab, branch 13) — who owes what; sort oldest / largest / name; filter sheet (age bucket <30/30–60/60+ days, customer tag, never paid / no payment in 30 days, minimum due, has phone) with live results, removable active-filter chips, badge count; summary card totals follow the filters; collect / WhatsApp remind / call, recalculate balances
+│   │   │   ├── due_book_screen.dart                # /dues (own sidebar tab, branch 13) — who owes what; sort menu (oldest / newest, largest / smallest, most unpaid orders, longest since last payment / recently paid, name A–Z / Z–A; ties → larger due first); filter sheet (age bucket <30/30–60/60+ days, customer tag, never paid / no payment in 30 days, minimum due, has phone) with live results, removable active-filter chips, badge count; summary card totals follow the filters; collect / WhatsApp remind / call, recalculate balances
 │   │   │   ├── widgets/due_actions.dart            # Collect sheet (allocation preview), `sendDueReminder` (wa.me), `shareCustomerStatement`, `PaymentHistoryTile`
 │   │   │   └── widgets/customer_card.dart
 │   │   ├── providers/customer_provider.dart        # Cascading delete (unlinks orders)

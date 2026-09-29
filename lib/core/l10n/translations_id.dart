@@ -560,4 +560,11 @@ const translationsId = <String, String>{
   'sortName': 'Nama (A–Z)',
   'showingOf': 'Menampilkan {count} dari {total}',
   'noDuesMatchFilters': 'Tidak ada pelanggan yang cocok',
+  'sortBy': 'Urutkan',
+  'sortNewest': 'Terbaru dulu',
+  'sortSmallest': 'Terkecil dulu',
+  'sortMostOrders': 'Pesanan belum lunas terbanyak',
+  'sortLongestSincePaid': 'Terlama sejak bayar terakhir',
+  'sortRecentlyPaid': 'Baru saja bayar',
+  'sortNameDesc': 'Nama (Z–A)',
 };

@@ -609,6 +609,13 @@ class _L10nStrings {
   String get sortName => _l10n.tr('sortName');
   String get noDuesMatchFilters => _l10n.tr('noDuesMatchFilters');
   String get tagNew => _l10n.tr('new');
+  String get sortBy => _l10n.tr('sortBy');
+  String get sortNewest => _l10n.tr('sortNewest');
+  String get sortSmallest => _l10n.tr('sortSmallest');
+  String get sortMostOrders => _l10n.tr('sortMostOrders');
+  String get sortLongestSincePaid => _l10n.tr('sortLongestSincePaid');
+  String get sortRecentlyPaid => _l10n.tr('sortRecentlyPaid');
+  String get sortNameDesc => _l10n.tr('sortNameDesc');
   String showingOf(int count, int total) => _l10n
       .tr('showingOf')
       .replaceAll('{count}', '$count')

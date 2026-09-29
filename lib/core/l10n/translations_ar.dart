@@ -559,4 +559,11 @@ const translationsAr = <String, String>{
   'sortName': 'الاسم (أ–ي)',
   'showingOf': 'عرض {count} من {total}',
   'noDuesMatchFilters': 'لا يوجد عملاء يطابقون هذه الفلاتر',
+  'sortBy': 'ترتيب حسب',
+  'sortNewest': 'الأحدث أولًا',
+  'sortSmallest': 'الأصغر أولًا',
+  'sortMostOrders': 'أكثر الطلبات غير المدفوعة',
+  'sortLongestSincePaid': 'الأطول منذ آخر دفعة',
+  'sortRecentlyPaid': 'دفع مؤخرًا',
+  'sortNameDesc': 'الاسم (ي–أ)',
 };

@@ -560,4 +560,11 @@ const translationsFr = <String, String>{
   'sortName': 'Nom (A–Z)',
   'showingOf': '{count} sur {total}',
   'noDuesMatchFilters': 'Aucun client ne correspond à ces filtres',
+  'sortBy': 'Trier par',
+  'sortNewest': 'Plus récents d\'abord',
+  'sortSmallest': 'Plus petits d\'abord',
+  'sortMostOrders': 'Plus de commandes impayées',
+  'sortLongestSincePaid': 'Plus longtemps sans paiement',
+  'sortRecentlyPaid': 'Payé récemment',
+  'sortNameDesc': 'Nom (Z–A)',
 };

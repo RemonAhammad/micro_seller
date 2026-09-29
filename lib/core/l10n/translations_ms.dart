@@ -560,4 +560,11 @@ const translationsMs = <String, String>{
   'sortName': 'Nama (A–Z)',
   'showingOf': 'Menunjukkan {count} daripada {total}',
   'noDuesMatchFilters': 'Tiada pelanggan sepadan dengan penapis',
+  'sortBy': 'Susun ikut',
+  'sortNewest': 'Terbaru dahulu',
+  'sortSmallest': 'Paling kecil dahulu',
+  'sortMostOrders': 'Paling banyak pesanan belum dibayar',
+  'sortLongestSincePaid': 'Paling lama sejak bayaran terakhir',
+  'sortRecentlyPaid': 'Baru membayar',
+  'sortNameDesc': 'Nama (Z–A)',
 };

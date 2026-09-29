@@ -560,4 +560,11 @@ const translationsUr = <String, String>{
   'sortName': 'نام (ا–ی)',
   'showingOf': '{total} میں سے {count}',
   'noDuesMatchFilters': 'ان فلٹرز سے کوئی گاہک نہیں ملا',
+  'sortBy': 'ترتیب',
+  'sortNewest': 'نئے پہلے',
+  'sortSmallest': 'چھوٹے پہلے',
+  'sortMostOrders': 'سب سے زیادہ غیر ادا شدہ آرڈر',
+  'sortLongestSincePaid': 'آخری ادائیگی کو سب سے زیادہ وقت',
+  'sortRecentlyPaid': 'حال ہی میں ادائیگی',
+  'sortNameDesc': 'نام (ی–ا)',
 };

@@ -560,4 +560,11 @@ const translationsTh = <String, String>{
   'sortName': 'ชื่อ (ก–ฮ)',
   'showingOf': 'แสดง {count} จาก {total}',
   'noDuesMatchFilters': 'ไม่มีลูกค้าที่ตรงกับตัวกรอง',
+  'sortBy': 'เรียงตาม',
+  'sortNewest': 'ใหม่สุดก่อน',
+  'sortSmallest': 'น้อยสุดก่อน',
+  'sortMostOrders': 'ค้างชำระหลายคำสั่งซื้อที่สุด',
+  'sortLongestSincePaid': 'นานที่สุดนับจากชำระล่าสุด',
+  'sortRecentlyPaid': 'ชำระล่าสุด',
+  'sortNameDesc': 'ชื่อ (ฮ–ก)',
 };

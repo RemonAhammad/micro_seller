@@ -560,4 +560,11 @@ const translationsTr = <String, String>{
   'sortName': 'Ad (A–Z)',
   'showingOf': '{total} içinden {count} gösteriliyor',
   'noDuesMatchFilters': 'Bu filtrelere uyan müşteri yok',
+  'sortBy': 'Sırala',
+  'sortNewest': 'Önce en yeni',
+  'sortSmallest': 'Önce en küçük',
+  'sortMostOrders': 'En çok ödenmemiş sipariş',
+  'sortLongestSincePaid': 'En uzun süredir ödeme yok',
+  'sortRecentlyPaid': 'Yakın zamanda ödedi',
+  'sortNameDesc': 'Ad (Z–A)',
 };

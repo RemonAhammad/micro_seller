@@ -18,7 +18,70 @@ import '../../../shared/widgets/empty_state.dart';
 import '../providers/dues_provider.dart';
 import 'widgets/due_actions.dart';
 
-enum _DueSort { oldest, largest, name }
+enum _DueSort {
+  oldest,
+  newest,
+  largest,
+  smallest,
+  mostOrders,
+  longestSincePaid,
+  recentlyPaid,
+  nameAsc,
+  nameDesc,
+}
+
+String _sortLabel(BuildContext context, _DueSort sort) {
+  final s = AppStrings.of(context);
+  return switch (sort) {
+    _DueSort.oldest => s.sortOldest,
+    _DueSort.newest => s.sortNewest,
+    _DueSort.largest => s.sortLargest,
+    _DueSort.smallest => s.sortSmallest,
+    _DueSort.mostOrders => s.sortMostOrders,
+    _DueSort.longestSincePaid => s.sortLongestSincePaid,
+    _DueSort.recentlyPaid => s.sortRecentlyPaid,
+    _DueSort.nameAsc => s.sortName,
+    _DueSort.nameDesc => s.sortNameDesc,
+  };
+}
+
+IconData _sortIcon(_DueSort sort) => switch (sort) {
+      _DueSort.oldest || _DueSort.newest => Icons.schedule_rounded,
+      _DueSort.largest || _DueSort.smallest => Icons.payments_rounded,
+      _DueSort.mostOrders => Icons.receipt_long_rounded,
+      _DueSort.longestSincePaid ||
+      _DueSort.recentlyPaid =>
+        Icons.history_rounded,
+      _DueSort.nameAsc || _DueSort.nameDesc => Icons.sort_by_alpha_rounded,
+    };
+
+/// Sorts in place. Ties fall back to the larger due, so the list is stable
+/// and the most money is always nearer the top.
+void _sortDues(List<CustomerDue> list, _DueSort sort) {
+  int byDue(CustomerDue a, CustomerDue b) => b.totalDue.compareTo(a.totalDue);
+  int byName(CustomerDue a, CustomerDue b) => a.customer.name
+      .toLowerCase()
+      .compareTo(b.customer.name.toLowerCase());
+  // Never-paid customers count as "paid at the dawn of time".
+  DateTime paidAt(CustomerDue d) => d.lastPaymentAt ?? DateTime(0);
+
+  int Function(CustomerDue, CustomerDue) cmp = switch (sort) {
+    _DueSort.oldest => (a, b) => b.daysOutstanding.compareTo(a.daysOutstanding),
+    _DueSort.newest => (a, b) => a.daysOutstanding.compareTo(b.daysOutstanding),
+    _DueSort.largest => byDue,
+    _DueSort.smallest => (a, b) => a.totalDue.compareTo(b.totalDue),
+    _DueSort.mostOrders => (a, b) =>
+        b.orderDues.length.compareTo(a.orderDues.length),
+    _DueSort.longestSincePaid => (a, b) => paidAt(a).compareTo(paidAt(b)),
+    _DueSort.recentlyPaid => (a, b) => paidAt(b).compareTo(paidAt(a)),
+    _DueSort.nameAsc => byName,
+    _DueSort.nameDesc => (a, b) => byName(b, a),
+  };
+  list.sort((a, b) {
+    final c = cmp(a, b);
+    return c != 0 ? c : byDue(a, b);
+  });
+}
 
 enum _AgeBucket { under30, from30to60, over60 }
 
@@ -168,16 +231,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
             d.customer.phone.contains(_query))
         .where(_filters.matches)
         .toList();
-    switch (_sort) {
-      case _DueSort.oldest:
-        break; // provider already sorts oldest-first
-      case _DueSort.largest:
-        visible.sort((a, b) => b.totalDue.compareTo(a.totalDue));
-      case _DueSort.name:
-        visible.sort((a, b) => a.customer.name
-            .toLowerCase()
-            .compareTo(b.customer.name.toLowerCase()));
-    }
+    _sortDues(visible, _sort);
     return visible;
   }
 
@@ -256,24 +310,11 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
               // Totals follow the filters — "how much do my VIPs owe?"
               _SummaryCard(dues: visible),
               const SizedBox(height: 12),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final (sort, label) in [
-                      (_DueSort.oldest, s.sortOldest),
-                      (_DueSort.largest, s.sortLargest),
-                      (_DueSort.name, s.sortName),
-                    ])
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 8),
-                        child: ChoiceChip(
-                          label: Text(label),
-                          selected: _sort == sort,
-                          onSelected: (_) => setState(() => _sort = sort),
-                        ),
-                      ),
-                  ],
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: _SortButton(
+                  value: _sort,
+                  onChanged: (v) => setState(() => _sort = v),
                 ),
               ),
               if (active > 0) ...[
@@ -321,6 +362,52 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// "Sort by: Oldest first ▾" — opens a menu of every sort option.
+class _SortButton extends StatelessWidget {
+  const _SortButton({required this.value, required this.onChanged});
+
+  final _DueSort value;
+  final ValueChanged<_DueSort> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    return PopupMenuButton<_DueSort>(
+      initialValue: value,
+      tooltip: s.sortBy,
+      onSelected: onChanged,
+      itemBuilder: (_) => [
+        for (final sort in _DueSort.values)
+          CheckedPopupMenuItem(
+            value: sort,
+            checked: sort == value,
+            child: Text(_sortLabel(context, sort)),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_sortIcon(value), size: 18, color: cs.primary),
+            const SizedBox(width: 6),
+            Text(
+              '${s.sortBy}: ${_sortLabel(context, value)}',
+              style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600),
+            ),
+            Icon(Icons.arrow_drop_down_rounded, color: cs.primary),
+          ],
+        ),
       ),
     );
   }

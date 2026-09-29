@@ -14,8 +14,8 @@
     "lib/features/inventory/presentation/inventory_screen.dart:L322-L330"
   ],
   "nudges": 2,
-  "inputCostMicros": 19294717,
-  "inputTokensBilled": 28983551,
-  "lastBillingUuid": "7bd49f1b-e1cc-4b65-9933-b5956c26d875",
+  "inputCostMicros": 19972534,
+  "inputTokensBilled": 30266925,
+  "lastBillingUuid": "eaeb509d-ed12-46f0-937e-7af3f6268512",
   "host": "claude-code"
 }

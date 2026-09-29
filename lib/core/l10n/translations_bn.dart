@@ -560,4 +560,11 @@ const translationsBn = <String, String>{
   'sortName': 'নাম (ক–হ)',
   'showingOf': '{total} জনের মধ্যে {count} জন',
   'noDuesMatchFilters': 'এই ফিল্টারে কোনো গ্রাহক নেই',
+  'sortBy': 'সাজান',
+  'sortNewest': 'নতুন আগে',
+  'sortSmallest': 'কম আগে',
+  'sortMostOrders': 'বেশি বাকি অর্ডার',
+  'sortLongestSincePaid': 'অনেকদিন পেমেন্ট নেই',
+  'sortRecentlyPaid': 'সম্প্রতি পরিশোধ',
+  'sortNameDesc': 'নাম (হ–ক)',
 };

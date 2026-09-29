@@ -560,4 +560,11 @@ const translationsVi = <String, String>{
   'sortName': 'Tên (A–Z)',
   'showingOf': 'Hiển thị {count}/{total}',
   'noDuesMatchFilters': 'Không có khách hàng phù hợp',
+  'sortBy': 'Sắp xếp',
+  'sortNewest': 'Mới nhất trước',
+  'sortSmallest': 'Nhỏ nhất trước',
+  'sortMostOrders': 'Nhiều đơn chưa trả nhất',
+  'sortLongestSincePaid': 'Lâu nhất kể từ lần trả cuối',
+  'sortRecentlyPaid': 'Vừa trả gần đây',
+  'sortNameDesc': 'Tên (Z–A)',
 };
