@@ -1,0 +1,17 @@
+{
+  "lastQuery": "how I will use this due?",
+  "perAgentQuery": {},
+  "graftReads": 0,
+  "sourceReads": 3,
+  "savedTokens": 0,
+  "injectedPointers": [
+    "lib/features/customers/presentation/widgets/due_actions.dart:L70-L95",
+    "lib/features/customers/presentation/due_book_screen.dart:L23-L28",
+    "lib/data/services/dues_service.dart:L34-L37"
+  ],
+  "nudges": 2,
+  "inputCostMicros": 11583918,
+  "inputTokensBilled": 19942568,
+  "lastBillingUuid": "edd9580e-99f0-4331-b2e0-31f9e989941d",
+  "host": "claude-code"
+}

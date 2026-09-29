@@ -204,7 +204,7 @@ class _ReceiptWidget extends StatelessWidget {
                 const Positioned(
                   right: 24,
                   bottom: 20,
-                  child: _Watermark(),
+                  child: PdfWatermark(),
                 ),
               ],
             ),
@@ -446,8 +446,8 @@ class _ReceiptWidget extends StatelessWidget {
 /// Bottom-right watermark: app icon + "Micro Seller" wordmark. Subtle
 /// (slightly faded) so it reads as branding rather than competing with the
 /// invoice content.
-class _Watermark extends StatelessWidget {
-  const _Watermark();
+class PdfWatermark extends StatelessWidget {
+  const PdfWatermark();
 
   @override
   Widget build(BuildContext context) {

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/payment.dart';
 import '../../../data/models/trash_entry.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/expense.dart';
@@ -307,6 +308,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       await isar.suppliers.clear();
       await isar.purchases.clear();
       await isar.cashRegisters.clear();
+      await isar.payments.clear();
       // "Clear all" has to mean all: leaving the recycle bin behind would
       // both retain data the user asked to wipe and leave entries pointing
       // at ids that no longer exist.

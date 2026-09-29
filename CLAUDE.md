@@ -7,7 +7,7 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 - **Flutter** (SDK >=3.8.0 <4.0.0)
 - **State Management:** Riverpod 3 (`flutter_riverpod ^3.0` + `riverpod_annotation ^4.0` + `riverpod_generator ^4.0`). Notes: (1) Riverpod 3 uses plain `Ref` everywhere (no per-provider `XxxRef` typedefs), and `@riverpod class XxxNotifier` generates `xxxProvider` (no `Notifier` infix). `AsyncValue.value` is now nullable; `valueOrNull` is gone. (2) **All CRUD notifiers must be `@Riverpod(keepAlive: true)`** — Riverpod 3 auto-disposes by default, and a `ref.read(xxxProvider.notifier).method()` call from a screen disposes the provider during the await. Post-await `state = ...` then throws `UnmountedRefException`. This applies to product / order / customer / supplier / expense / category / cash_register notifiers.
 - **Database:** Isar 3.3 via the community fork — `isar_community` + `isar_community_flutter_libs` + `isar_community_generator` ^3.3.2. The original `isar` package was abandoned in 2023 and shipped 4 KB-aligned native binaries that Play Store rejects on Android 15+. The community fork is API-identical; storage format is byte-compatible (no on-device migration).
-- **Navigation:** GoRouter with `StatefulShellRoute` (12-branch sidebar navigation)
+- **Navigation:** GoRouter with `StatefulShellRoute` (13-branch sidebar navigation)
 - **Code Generation:** Freezed 3 (`freezed ^3.2.5` + `freezed_annotation ^3.1`). Note: freezed 3 requires `abstract class Foo with _$Foo` (the `abstract` keyword is mandatory). JSON serializable + isar_community schema generator.
 - **Security:** `local_auth` (biometric) + `crypto` (SHA-256 PIN hashing). `AuthGateService` + `runAuthGate(context, reason: ..., fingerprintEnabled: ..., pinEnabled: ...)` helper protect destructive actions. PIN is stored in SharedPreferences as `sha256(salt + pin)` with a per-install salt. Android: `MainActivity` extends `FlutterFragmentActivity` (required by local_auth's BiometricPrompt) and the manifest declares `USE_BIOMETRIC`. Two-layer gate: (1) **`.env` build-time visibility** — `ENABLE_FINGERPRINT_GATE` / `ENABLE_PIN_GATE` (default `true`) control whether each toggle is shown in Settings → Security at all, and `runAuthGate` ignores any path whose `.env` flag is false; (2) **user setting** — `securityFingerprintEnabled` / `securityPinEnabled` in SharedPreferences (default `true`) control whether the user has each path active. Each toggle in Settings is verified independently — flipping fingerprint requires verifying *current fingerprint only* (never PIN), flipping PIN requires verifying *current PIN only*. Enabling PIN runs `runPinSetup` (fresh setup); disabling clears the stored PIN. `runAuthGate` chooses biometric if (env+user+device-available), else PIN if (env+user+stored), else passthrough.
 - **PDF:** `pdf` + `printing` + `screenshot` (Flutter widget → PNG capture for guaranteed Unicode shaping, embedded into a single-page A4 `pw.Document`)
@@ -43,7 +43,7 @@ lib/
 │   │   ├── translations_en.dart     # English (~180 keys, source of truth) + parameterized helpers
 │   │   └── translations_<bn|ar|es|fr|pt|tr|id|th|vi|ur|ms>.dart  # Same keys, translated
 │   ├── router/
-│   │   └── app_router.dart       # GoRouter config, 12-branch sidebar navigation shell, SafeArea wrapper
+│   │   └── app_router.dart       # GoRouter config, 13-branch sidebar navigation shell, SafeArea wrapper
 │   ├── theme/
 │   │   └── app_theme.dart        # Material 3 light/dark themes, status bar matches appbar color
 │   └── utils/
@@ -66,6 +66,7 @@ lib/
 │   │   ├── supplier.dart         # id, name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue
 │   │   ├── purchase.dart         # id, supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber
 │   │   ├── cash_register.dart    # id, openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt
+│   │   ├── payment.dart          # @Index customerId + orderId, amount (negative = refund), method, transactionId, note, groupId, paidAt — history log behind Order.amountPaid
 │   │   ├── stock_movement.dart   # id, productId, type(sale/restock/adjustment/damage), qty, reason
 │   │   └── trash_entry.dart      # kind(TrashKind), originalId, payload(JSON), sidecar(JSON), label, sublabel, deletedAt. `@Collection(accessor: 'trashEntries')` — the default pluralisation would be `trashEntrys`.
 │   ├── repositories/
@@ -78,11 +79,13 @@ lib/
 │       ├── csv_export_service.dart  # Export orders/products/expenses as CSV via share_plus
 │       ├── csv_import_service.dart  # Import products from CSV via file_picker
 │       ├── migration_service.dart  # One-time migration: flat variants → hierarchical VariantAttribute + VariantCombination
-│       ├── drive_service.dart       # Google Drive backup/restore — delegates JSON to LocalBackupService (all 9 collections); typed DriveBackupException + DriveErrorCode; max 5 backups; safe restore with rollback; full error/stack logging via dart:developer
-│       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with 10 collection schemas
+│       ├── drive_service.dart       # Google Drive backup/restore — delegates JSON to LocalBackupService (all 10 backed-up collections); typed DriveBackupException + DriveErrorCode; max 5 backups; safe restore with rollback; full error/stack logging via dart:developer
+│       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with `kIsarSchemas` (11 schemas). The auto-backup worker opens the same file from its own isolate with the **same constant** — a hand-kept copy there had silently fallen behind (missing TrashEntrySchema). Also runs one-time migrations (`migrateVariantsV2`, `migrateOutstandingBalancesV1`).
+│       ├── dues_service.dart        # `computeOrderDues` (effective due per order, oldest first — subtracts refunded returns), `recalculateOutstandingBalancesInTxn`, `migrateOutstandingBalancesV1`
+│       ├── statement_service.dart   # Customer statement: `buildRows` (running ledger: orders debit; payments + refunded returns credit; unlogged legacy payments inferred per order) + paginated widget→PNG→PDF (26 rows/page, 794×1123)
 │       ├── catalog_service.dart     # Shareable product catalog. Same widget→PNG→PDF pipeline as pdf_service (Skia/HarfBuzz for Unicode). `generateCatalogImage` (single-page PNG for chat), `generateCatalogPdf` (paginated, 6 tiles/page in a fixed 794×1123 A4 canvas), `generateCatalogText` (plain price list). Product images are pre-read to `Uint8List` and rendered via `Image.memory` — `Image.file` loads async and the off-screen capture races it, producing blank tiles.
 │       ├── trash_service.dart       # Soft-delete store behind the undo snackbar + Recycle Bin. Generic over all models (every one has toJson/fromJson). `capture()` is called inside the delete's own writeTxn; `restore()` dispatches on TrashKind and reverses side effects from the entry's `sidecar`; `purgeExpired()` drops entries older than `kTrashRetention` (30 days), called post-first-frame from app.dart.
-│       ├── local_backup_service.dart # Public encodeAll(Isar)/decodeAll(Isar,String) — single source of truth for backup JSON shape (v2). exportBackup/importBackup/exportToDirectory delegate to these. All 9 collections.
+│       ├── local_backup_service.dart # Public encodeAll(Isar)/decodeAll(Isar,String) — single source of truth for backup JSON shape (v4 — adds `payments`; older backups restore with empty payment history). exportBackup/importBackup/exportToDirectory delegate to these. All 10 backed-up collections (everything except `trashEntries`).
 │       ├── notification_service.dart # Low stock alerts + unpaid order reminders via flutter_local_notifications
 │       ├── tutorial_service.dart    # SharedPreferences flags: splash_shown, tour_completed; resetAll()
 │       ├── auth_gate_service.dart   # Biometric (local_auth) + 4-digit PIN (SHA-256 with per-install salt, stored in SharedPreferences). Used to gate destructive actions like Clear All Data. Two-layer control: `.env` (`ENABLE_FINGERPRINT_GATE` / `ENABLE_PIN_GATE`) gates each toggle's *visibility* in Settings → Security; user settings (`securityFingerprintEnabled` / `securityPinEnabled`) control whether each path is *active*. Each toggle is verified independently against its own auth method only.
@@ -97,9 +100,12 @@ lib/
 │   │   ├── presentation/
 │   │   │   ├── customer_list_screen.dart           # Search by name/phone (debounced)
 │   │   │   ├── customer_form_screen.dart           # Add/edit with tag selector
-│   │   │   ├── customer_detail_screen.dart         # Stats + order history + 6-month purchase history bar chart
+│   │   │   ├── customer_detail_screen.dart         # Live (watchObject) stats, Collect / Remind / Statement actions, payment history, order history, 6-month purchase chart
+│   │   │   ├── due_book_screen.dart                # /customers/dues — who owes what, oldest-first or largest-first, collect / WhatsApp remind / call, recalculate balances
+│   │   │   ├── widgets/due_actions.dart            # Collect sheet (allocation preview), `sendDueReminder` (wa.me), `shareCustomerStatement`, `PaymentHistoryTile`
 │   │   │   └── widgets/customer_card.dart
-│   │   └── providers/customer_provider.dart        # Cascading delete (unlinks orders)
+│   │   ├── providers/customer_provider.dart        # Cascading delete (unlinks orders)
+│   │   └── providers/dues_provider.dart            # `duesProvider` (live List<CustomerDue>), `customerPaymentsProvider(customerId)`
 │   ├── dashboard/
 │   │   ├── presentation/
 │   │   │   ├── dashboard_screen.dart               # Responsive dashboard with date-range filter bar, showcaseview tour (3 steps), in-app update check
@@ -163,14 +169,16 @@ lib/
 │       ├── presentation/recycle_bin_screen.dart    # Deleted items grouped by kind; Restore / Delete forever / Empty bin (auth-gated)
 │       ├── providers/trash_provider.dart           # trashServiceProvider + trashEntriesProvider (stream) + TrashNotifier (keepAlive)
 │       ├── presentation/settings_screen.dart       # Theme toggle, language picker, currency picker (38+ currencies), shop config, tax rate, local backup export/import, Drive backup, clear data
-│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, shopPhone (optional, printed on the shared catalog), currency(৳), threshold, themeMode, taxRate, language, downloadDirectory, sidebarOrder, sidebarPosition ('left' | 'right'), hiddenSidebarItems (list of keys the user toggled off). Exposes `exportSettings()`/`importSettings(map)` so backup/restore round-trips preferences alongside the 9 Isar collections. `toggleSidebarItemHidden('settings', _)` is a no-op — the Settings tab is force-visible to prevent soft-lockout.
+│       └── providers/settings_provider.dart        # keepAlive, SharedPreferences: shopName, shopPhone (optional, printed on the shared catalog), currency(৳), threshold, themeMode, taxRate, language, downloadDirectory, sidebarOrder, sidebarPosition ('left' | 'right'), hiddenSidebarItems (list of keys the user toggled off). Exposes `exportSettings()`/`importSettings(map)` so backup/restore round-trips preferences alongside the 10 backed-up Isar collections. `toggleSidebarItemHidden('settings', _)` is a no-op — the Settings tab is force-visible to prevent soft-lockout.
 └── shared/
     ├── screens/qr_scanner_screen.dart
+    │   (sidebar Scanner branch lives in features/scanner/presentation/scanner_screen.dart)
     └── widgets/
         ├── app_button.dart           # Variants: filled, outlined, text, destructive
         ├── app_text_field.dart        # With paste button
         ├── bottom_sheet_handle.dart   # AppBottomSheet.show()
         ├── confirm_dialog.dart        # ConfirmDialog.show()
+        ├── payment_method_chips.dart  # PaymentMethodChips + paymentMethodLabel()
         ├── drawer_menu_button.dart
         ├── empty_state.dart           # Icon + title + optional action
         └── loading_overlay.dart       # LoadingOverlay + LoadingShimmer
@@ -194,6 +202,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 | **Supplier**           | name, phone, email, address, company, notes, totalPurchases, totalPaid, totalDue                                                                                                                                                                                                                                                                                 | hasOutstanding                                                                        |
 | **Purchase**           | supplierId, supplierName, items (embedded PurchaseItem), totalAmount, amountPaid, paymentMethod, notes, referenceNumber                                                                                                                                                                                                                                          | balanceDue, isFullyPaid, totalItems                                                   |
 | **PurchaseItem**       | @embedded: productId, productName, qty, unitCost, totalCost                                                                                                                                                                                                                                                                                                      | —                                                                                     |
+| **Payment**            | customerId, orderId, amount (negative = refund), method, transactionId, note, groupId (shared by one multi-order collection), paidAt                                                                                                                                                              | isRefund                                                                              |
 | **TrashEntry**         | kind, originalId, payload (JSON of the deleted record), sidecar (JSON of what its delete also changed), label, sublabel, deletedAt                                                                                                                                                                                                              | —                                                                                     |
 | **CashRegister**       | openingAmount, closingAmount, totalSales, totalExpenses, totalCashIn, totalCashOut, isClosed, openedAt, closedAt                                                                                                                                                                                                                                                 | expectedClosing, difference                                                           |
 
@@ -251,7 +260,7 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 - **Post-creation invoice sheet:** After a *new* order is saved, an `AppBottomSheet` opens titled "Order created · {orderNumber}" with four tappable action tiles before the form pops:
   - **Share PDF** — generates the invoice and opens the system share sheet
-  - **Download PDF** — saves to the user's chosen download directory (asked once, persisted in settings); snackbar with "Share" action confirms the path
+  - **Download PDF** — saves to the user's chosen download directory (asked once, persisted in settings); `showPdfSavedSheet` (`pdf_saved_sheet.dart`) confirms the path with Open / Share and auto-dismisses after 5 s
   - **Print** — opens the system print dialog via `Printing.layoutPdf`
   - **Share via WhatsApp** — sends the formatted text version
   - **Done** dismisses; the form then pops back to the order list
@@ -263,7 +272,7 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 1. Customer is required (validated in form)
 2. Save order to DB — each OrderItem stores `costPrice` from the product at time of order (frozen for accurate profit)
-3. OrderItem stores `variantName`/`variantValue` if a variant was selected
+3. OrderItem stores `variantCombinationKey` + `variantDisplayLabel` if a variant was selected (legacy `variantName`/`variantValue` are only read as a fallback for pre-migration orders)
 4. Tax amount is calculated from the per-order tax rate field and stored on the order
 5. If status == confirmed: deduct stock per item (**both base `stockQty` and variant `stockQty`**) + create StockMovement records
 6. If customerId > 0: update customer totalOrders, totalSpent, outstandingBalance
@@ -321,6 +330,17 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 1. Update order.amountPaid, determine paymentStatus (paid/partial)
 2. Update customer.outstandingBalance -= payment
+3. Log a `Payment` row in the same `writeTxn`. Every `amountPaid` change logs one: `createOrder` (initial payment), `recordPayment`, `collectFromCustomer`, `processRefund` (negative, on the original order), cancel (negative — cancel is an auto-refund). `deleteOrder` deletes the order's rows.
+
+### Due Book (customer credit ledger)
+
+Sellers sell on credit ("baki"); the Due Book is where they get paid back. Route `/customers/dues`, reached from the Customers appbar and the Dashboard unpaid card.
+
+- **Dues are computed from orders, never from `Customer.outstandingBalance`.** That counter drifts (`updateOrder` doesn't adjust it; recurring copies didn't bill the customer until the Due Book fixed `processRecurringOrders`). The customer's total is `computeNetDue` — every order's effective due *including credits* (an exchange return worth more than an order's remaining due), floored at 0 — so it matches the counter and the statement; collections are capped at it. `computeOrderDues` takes all of a customer's orders *including returns*: excluded are cancelled orders and return orders; each order's effective due is `balanceDue − value of its refunded returns`, because `processRefund` lowers the original's `amountPaid` by the refund but not its `totalAmount`.
+- **Collect** (`OrderNotifier.collectFromCustomer`): one amount applied oldest-first across the customer's due orders, capped at the total due (no advance credit). One `Payment` per touched order sharing a `groupId`. Cash collections can add to the open cash register in the same transaction. The sheet's allocation preview mirrors the notifier's loop.
+- **Remind**: localized WhatsApp text via `https://wa.me/<digits>?text=`. A Bangladeshi local mobile (`01…`, 11 digits) with ৳ gets the `88` prefix; other numbers pass through as typed. No phone / launch failure → share sheet.
+- **Statement**: `StatementService` PDF (running balance). Orders before payment history existed have no `Payment` rows, so each order's unlogged `amountPaid` is shown as a payment on the order date — the closing balance always matches the orders.
+- **Recalculate balances** (Due Book overflow menu, and once automatically via `migrateOutstandingBalancesV1`) resets every counter to the computed dues.
 
 ### Stock Adjustment (transactional, combination-aware)
 
@@ -361,7 +381,7 @@ Products support **multi-attribute variant combinations**:
 
 ### Backup/Restore (Google Drive, safe)
 
-- Exports **all 9 collections** as timestamped JSON to Drive appDataFolder (uses `LocalBackupService.encodeAll`)
+- Exports **all 10 backed-up collections** as timestamped JSON to Drive appDataFolder (uses `LocalBackupService.encodeAll`)
 - Keeps max 5 backups, cleans up old ones (cleanup failure doesn't break upload)
 - **Safe restore:** creates local safety backup before clearing → if import fails, rolls back to safety backup
 - **Settings round-trip:** backup payload includes a `settings` field built from `Settings.exportSettings()` (theme, currency, sidebar order/position/hidden items, shop name, autoBackup, etc.). Restore re-applies via `Settings.importSettings(map)`. v2 backups (collections only) still restore correctly — `settings` is optional on decode.
@@ -404,7 +424,7 @@ Before this, `grep -r 'undo|trash|deletedAt' lib/` returned one string constant 
 - `capture()` runs **inside the delete's own `writeTxn`**, so the trash entry and the delete can never diverge. `restore()` likewise runs the payload put + side-effect reversal in a single transaction.
 - **Two UX layers:** a 10-second `showUndoSnackBar` (in `context_extensions.dart`) on each delete, and Settings → Recycle Bin for the full 30-day window. The snackbar is only a convenience — MIUI's known SnackBar-timer stall (the quirk that made `pdf_saved_sheet.dart` own its `Timer`) is harmless here, since the record is recoverable from the bin either way.
 - **Phase A covers expense, category, customer, product.** Order, purchase and supplier still delete permanently — their reversal touches stock, variant stock, movements and party stats. `TrashService.restore` throws `UnsupportedError` for those kinds and the bin renders them with restore disabled, so no path offers an action that would fail.
-- **Both bulk-clear paths clear the trash too** — `LocalBackupService.decodeAll` and Settings → Clear All Data. `decodeAll` clears the nine collections *explicitly* (not `isar.clear()`), so without this a surviving `trashEntries` row would reference ids from the replaced dataset and restoring it would corrupt live data. Trash is deliberately **not** part of the backup payload.
+- **Both bulk-clear paths clear the trash too** — `LocalBackupService.decodeAll` and Settings → Clear All Data. `decodeAll` clears the backed-up collections *explicitly* (not `isar.clear()`), so without this a surviving `trashEntries` row would reference ids from the replaced dataset and restoring it would corrupt live data. Trash is deliberately **not** part of the backup payload.
 - `purgeExpired()` runs post-first-frame from `app.dart`, wrapped in a try/catch — a failure must never block startup.
 
 ### CSV Export
@@ -493,7 +513,7 @@ Before this, `grep -r 'undo|trash|deletedAt' lib/` returned one string constant 
 
 ### Local Backup Export/Import
 
-- **Export:** Saves all 9 collections as a timestamped JSON file via share sheet
+- **Export:** Saves all 10 backed-up collections as a timestamped JSON file via share sheet
 - **Import:** Pick a `.json` file, confirm with destructive warning, replaces all data
 - Available in Settings → Local Backup section
 - Complements Google Drive backup (works offline, shareable via any app)
@@ -509,7 +529,7 @@ Before this, `grep -r 'undo|trash|deletedAt' lib/` returned one string constant 
 
 ## Navigation (GoRouter)
 
-Initial route is `/splash` (animated splash screen), then navigates to `/` (dashboard shell). 12 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
+Initial route is `/splash` (animated splash screen), then navigates to `/` (dashboard shell). 13 branches via `StatefulShellRoute` with a responsive sidebar (icon-only <600px, expanded with labels >=600px). Tooltips on icons when collapsed. Wrapped in `SafeArea`.
 
 | Route         | Path             | Sub-routes                                                                                  |
 | ------------- | ---------------- | ------------------------------------------------------------------------------------------- |
@@ -518,7 +538,8 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 | Products      | `/products`      | `catalog`, `add`, `:id`, `:id/edit`                                                         |
 | Orders        | `/orders`        | `add`, `:id`, `:id/edit`                                                                    |
 | Returns       | `/returns`       | `:id`                                                                                       |
-| Customers     | `/customers`     | `add`, `:id`, `:id/edit`                                                                    |
+| Customers     | `/customers`     | `add`, `dues`, `:id`, `:id/edit`                                                            |
+| Scanner       | `/scanner`       | — (scan QR/barcode → view matching product, or add it as new)                               |
 | Inventory     | `/inventory`     | `adjust/:id`                                                                                |
 | Suppliers     | `/suppliers`     | `add`, `:id`, `:id/edit`, `:id/purchase/add`, `purchases`, `purchases/add`, `purchases/:id` |
 | Expenses      | `/expenses`      | `add`, `:id/edit`                                                                           |
@@ -633,3 +654,18 @@ See [RELEASE.md](RELEASE.md) for the full Play Store publishing guide.
 ## Platform Support
 
 Android, iOS (min 16.0), Web, macOS, Linux, Windows.
+
+## Claude Code tooling (`.claude/`)
+
+| Kind | Name | Use it for |
+| --- | --- | --- |
+| Skill | `l10n` | Any visible string: en key → `_L10nStrings` getter → 11 locales → `scripts/l10n_parity.sh` (exit 0 required) |
+| Skill | `new-collection` | Adding an Isar model — `kIsarSchemas`, backup encode/decode + version bump, Clear All Data, trash decision |
+| Skill | `new-screen` | Screen / route / notifier conventions (keepAlive, writeTxn, sub-route before `:id`, shared widgets) |
+| Skill | `verify` | After any change: build_runner (if needed) → `flutter analyze` → l10n parity |
+| Skill | `release` | `/release` only — version bump, obfuscated AAB, 16 KB alignment check |
+| Skill | `sync-docs` | Keep this file matching the code after a feature |
+| Agent | `invariant-reviewer` | Read-only review of a diff against the money/stock/backup invariants above |
+| Agent | `translator` | Fill the 11 non-English locale files for new keys |
+
+`AppLocalizations.tr` falls back to English, then to the raw key — a missing key shows English, but parity is still required.

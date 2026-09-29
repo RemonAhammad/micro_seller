@@ -36,6 +36,13 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(s.customers),
+        actions: [
+          IconButton(
+            tooltip: s.dueBook,
+            icon: const Icon(Icons.menu_book_rounded),
+            onPressed: () => context.push('/customers/dues'),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),
           child: Padding(

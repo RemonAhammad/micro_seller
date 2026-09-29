@@ -17,6 +17,7 @@ import '../../features/orders/presentation/order_list_screen.dart';
 import '../../features/orders/presentation/order_form_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
 import '../../features/customers/presentation/customer_list_screen.dart';
+import '../../features/customers/presentation/due_book_screen.dart';
 import '../../features/customers/presentation/customer_form_screen.dart';
 import '../../features/customers/presentation/customer_detail_screen.dart';
 import '../../features/inventory/presentation/inventory_screen.dart';
@@ -159,6 +160,11 @@ final appRouter = GoRouter(
                 path: 'add',
                 pageBuilder: (_, s) =>
                     _fadePage(const CustomerFormScreen(customer: null), s),
+              ),
+              // Before ':id' so "dues" isn't parsed as a customer id.
+              GoRoute(
+                path: 'dues',
+                pageBuilder: (_, s) => _fadePage(const DueBookScreen(), s),
               ),
               GoRoute(
                 path: ':id',

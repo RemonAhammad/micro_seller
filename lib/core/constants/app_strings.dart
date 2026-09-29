@@ -533,5 +533,64 @@ class _L10nStrings {
 
   /// Only the first N products fit into a single shared image.
   String catalogImageTruncated(int count) =>
-      _l10n.tr('catalogImageTruncated').replaceAll('{count}', '\$count');
+      _l10n.tr('catalogImageTruncated').replaceAll('{count}', '$count');
+
+  String get refund => _l10n.tr('refund');
+
+  // Due Book
+  String get dueBook => _l10n.tr('dueBook');
+  String get totalReceivable => _l10n.tr('totalReceivable');
+  String customersOwing(int count) =>
+      _l10n.tr('customersOwing').replaceAll('{count}', '$count');
+  String get overdue30Days => _l10n.tr('overdue30Days');
+  String get collect => _l10n.tr('collect');
+  String get remind => _l10n.tr('remind');
+  String get callCustomer => _l10n.tr('callCustomer');
+  String get collectPayment => _l10n.tr('collectPayment');
+  String get fullDue => _l10n.tr('fullDue');
+  String get sortOldest => _l10n.tr('sortOldest');
+  String get sortLargest => _l10n.tr('sortLargest');
+  String daysOutstanding(int count) =>
+      _l10n.tr('daysOutstanding').replaceAll('{count}', '$count');
+  String get noDues => _l10n.tr('noDues');
+  String get noDuesSubtitle => _l10n.tr('noDuesSubtitle');
+  String get willSettle => _l10n.tr('willSettle');
+  String get paidInFull => _l10n.tr('paidInFull');
+  String amountLeft(String amount) =>
+      _l10n.tr('amountLeft').replaceAll('{amount}', amount);
+  String get addToCashRegister => _l10n.tr('addToCashRegister');
+  String paymentCollected(String amount) =>
+      _l10n.tr('paymentCollected').replaceAll('{amount}', amount);
+  String amountExceedsDue(String amount) =>
+      _l10n.tr('amountExceedsDue').replaceAll('{amount}', amount);
+  String get customerStatement => _l10n.tr('customerStatement');
+  String get statement => _l10n.tr('statement');
+  String get paymentHistory => _l10n.tr('paymentHistory');
+  String get noPayments => _l10n.tr('noPayments');
+  String get recalculateBalances => _l10n.tr('recalculateBalances');
+  String balancesRecalculated(int count) =>
+      _l10n.tr('balancesRecalculated').replaceAll('{count}', '$count');
+  String lastPaid(String date) =>
+      _l10n.tr('lastPaid').replaceAll('{date}', date);
+  String get noPhoneShareInstead => _l10n.tr('noPhoneShareInstead');
+  String reminderGreeting(String name) =>
+      _l10n.tr('reminderGreeting').replaceAll('{name}', name);
+  String reminderBody(String shop, String amount) => _l10n
+      .tr('reminderBody')
+      .replaceAll('{shop}', shop)
+      .replaceAll('{amount}', amount);
+  String get reminderClosing => _l10n.tr('reminderClosing');
+  String reminderContact(String phone) =>
+      _l10n.tr('reminderContact').replaceAll('{phone}', phone);
+  String get debit => _l10n.tr('debit');
+  String get credit => _l10n.tr('credit');
+  String get runningBalance => _l10n.tr('runningBalance');
+  String get closingBalance => _l10n.tr('closingBalance');
+  String generatedOn(String date) =>
+      _l10n.tr('generatedOn').replaceAll('{date}', date);
+  String get reference => _l10n.tr('reference');
+  String pageOf(int page, int total) => _l10n
+      .tr('pageOf')
+      .replaceAll('{page}', '$page')
+      .replaceAll('{total}', '$total');
 }

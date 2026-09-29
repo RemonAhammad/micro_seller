@@ -11,15 +11,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import '../../features/settings/providers/settings_provider.dart';
-import '../models/cash_register.dart';
-import '../models/category.dart';
-import '../models/customer.dart';
-import '../models/expense.dart';
-import '../models/order.dart';
-import '../models/product.dart';
-import '../models/purchase.dart';
-import '../models/stock_movement.dart';
-import '../models/supplier.dart';
 import 'drive_service.dart';
 import 'isar_service.dart';
 import 'notification_service.dart';
@@ -236,17 +227,9 @@ Future<bool> _runBackgroundBackup() async {
   try {
     final dir = await getApplicationDocumentsDirectory();
     isar = await Isar.open(
-      [
-        CategorySchema,
-        ProductSchema,
-        OrderSchema,
-        CustomerSchema,
-        ExpenseSchema,
-        StockMovementSchema,
-        SupplierSchema,
-        PurchaseSchema,
-        CashRegisterSchema,
-      ],
+      // Must be the app's full schema list — this list used to be a hand-kept
+      // copy that had fallen behind (missing TrashEntrySchema).
+      kIsarSchemas,
       directory: dir.path,
       name: 'sellerbook_db',
     );

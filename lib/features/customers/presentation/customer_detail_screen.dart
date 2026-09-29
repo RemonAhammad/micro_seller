@@ -6,6 +6,8 @@ import 'package:isar_community/isar.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/order.dart';
 import '../providers/customer_provider.dart';
+import '../providers/dues_provider.dart';
+import 'widgets/due_actions.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -45,8 +47,9 @@ class _CustomerDetailBody extends ConsumerWidget {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
 
-    return FutureBuilder<Customer?>(
-      future: isar.customers.get(customerId),
+    // Live, so collecting a payment from here refreshes the stats below.
+    return StreamBuilder<Customer?>(
+      stream: isar.customers.watchObject(customerId, fireImmediately: true),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -188,6 +191,8 @@ class _CustomerDetailBody extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
+                _DueActions(customer: customer),
+
                 if (customer.address.isNotEmpty ||
                     customer.notes.isNotEmpty) ...[
                   _InfoCard(children: [
@@ -238,6 +243,8 @@ class _CustomerDetailBody extends ConsumerWidget {
                   },
                 ),
 
+                _PaymentHistory(customerId: customerId),
+
                 // Customer orders
                 Text(s.purchaseHistory,
                     style: theme.textTheme.titleSmall
@@ -284,6 +291,88 @@ class _CustomerDetailBody extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Collect / Remind / Statement. Collect and Remind only when something is
+/// actually owed (computed from orders, not the stored counter).
+class _DueActions extends ConsumerWidget {
+  const _DueActions({required this.customer});
+
+  final Customer customer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
+    final due = ref
+        .watch(duesProvider)
+        .value
+        ?.where((d) => d.customer.id == customer.id)
+        .firstOrNull;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (due != null) ...[
+            FilledButton.icon(
+              onPressed: () =>
+                  showCollectPaymentSheet(
+                  context, customer, due.orderDues, due.totalDue),
+              icon: const Icon(Icons.payments_rounded, size: 18),
+              label: Text(s.collect),
+            ),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  sendDueReminder(
+                  context, ref, customer, due.orderDues, due.totalDue),
+              icon: const Icon(Icons.chat_rounded, size: 18),
+              label: Text(s.remind),
+            ),
+          ],
+          OutlinedButton.icon(
+            onPressed: () => shareCustomerStatement(context, ref, customer),
+            icon: const Icon(Icons.description_rounded, size: 18),
+            label: Text(s.statement),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentHistory extends ConsumerWidget {
+  const _PaymentHistory({required this.customerId});
+
+  final int customerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
+    final payments = ref.watch(customerPaymentsProvider(customerId)).value;
+    if (payments == null || payments.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(s.paymentHistory,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          for (final p in payments.take(10))
+            PaymentHistoryTile(
+              payment: p,
+              onTap: () => context.push('/orders/${p.orderId}'),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -5,6 +5,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/product.dart';
 import '../models/order.dart';
+import '../models/payment.dart';
+import 'dues_service.dart';
 import '../models/customer.dart';
 import '../models/expense.dart';
 import '../models/stock_movement.dart';
@@ -17,9 +19,9 @@ import '../models/trash_entry.dart';
 class LocalBackupService {
   /// Bumped to v3 when the `settings` payload was added. Older v2 backups
   /// (collections only) still restore cleanly — settings field is optional.
-  static const _backupVersion = 3;
+  static const _backupVersion = 4;
 
-  /// Serialize all 9 collections + (optionally) the user's settings to a
+  /// Serialize all 10 collections + (optionally) the user's settings to a
   /// JSON string. Pass `settings` from `Settings.exportSettings()` to include
   /// preferences (theme, currency, sidebar order, etc.) in the backup.
   Future<String> encodeAll(Isar isar, {Map<String, dynamic>? settings}) async {
@@ -32,6 +34,7 @@ class LocalBackupService {
     final suppliers = await isar.suppliers.where().findAll();
     final purchases = await isar.purchases.where().findAll();
     final cashRegisters = await isar.cashRegisters.where().findAll();
+    final payments = await isar.payments.where().findAll();
 
     return jsonEncode({
       'version': _backupVersion,
@@ -46,11 +49,12 @@ class LocalBackupService {
       'suppliers': suppliers.map((e) => e.toJson()).toList(),
       'purchases': purchases.map((e) => e.toJson()).toList(),
       'cashRegisters': cashRegisters.map((e) => e.toJson()).toList(),
+      'payments': payments.map((e) => e.toJson()).toList(),
       if (settings != null) 'settings': settings,
     });
   }
 
-  /// Validate + clear + import all 9 collections from a JSON string.
+  /// Validate + clear + import all 10 collections from a JSON string.
   /// Returns the embedded `settings` map if the backup contained one
   /// (caller is responsible for applying it via `Settings.importSettings`),
   /// otherwise null. Kept decoupled from the Riverpod settings provider so
@@ -72,6 +76,7 @@ class LocalBackupService {
       await isar.suppliers.clear();
       await isar.purchases.clear();
       await isar.cashRegisters.clear();
+      await isar.payments.clear();
       // Trash is deliberately NOT part of the backup payload, but it must be
       // cleared here anyway: its entries reference ids from the dataset being
       // replaced, so restoring one afterwards would write stale rows over
@@ -114,6 +119,15 @@ class LocalBackupService {
         await isar.cashRegisters.putAll(
             (data['cashRegisters'] as List).map((e) => CashRegister.fromJson(e as Map<String, dynamic>)).toList());
       }
+      // Absent in v2/v3 backups (before payment history existed) — those
+      // restore with an empty history; order.amountPaid still carries totals.
+      if (data['payments'] != null) {
+        await isar.payments.putAll(
+            (data['payments'] as List).map((e) => Payment.fromJson(e as Map<String, dynamic>)).toList());
+      }
+      // Older backups carry counters that drifted before dues were computed
+      // from orders; the one-time migration flag won't re-run for them.
+      await recalculateOutstandingBalancesInTxn(isar);
     });
 
     final settings = data['settings'];

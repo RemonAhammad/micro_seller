@@ -21,6 +21,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/payment_method_chips.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../returns/presentation/create_return_screen.dart';
 import 'widgets/order_status_badge.dart';
@@ -533,15 +534,9 @@ class _OrderDetailBody extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  children: PaymentMethod.values
-                      .map((m) => ChoiceChip(
-                            label: Text(_paymentMethodLabel(context, m)),
-                            selected: method == m,
-                            onSelected: (_) => setLocal(() => method = m),
-                          ))
-                      .toList(),
+                PaymentMethodChips(
+                  selected: method,
+                  onChanged: (m) => setLocal(() => method = m),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -1066,17 +1061,6 @@ class _ReturnFlowCard extends StatelessWidget {
     };
   }
 
-  String _paymentMethodLabel(BuildContext context, PaymentMethod method) {
-    final s = AppStrings.of(context);
-    return switch (method) {
-      PaymentMethod.cash => s.cash,
-      PaymentMethod.card => s.card,
-      PaymentMethod.mfs => s.mfs,
-      PaymentMethod.bank => s.bank,
-      PaymentMethod.other => s.other,
-    };
-  }
-
   Future<_RefundDialogResult?> _showRefundDialog(
       BuildContext context, Order returnOrder) {
     final s = AppStrings.of(context);
@@ -1103,15 +1087,9 @@ class _ReturnFlowCard extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  children: PaymentMethod.values
-                      .map((m) => ChoiceChip(
-                            label: Text(_paymentMethodLabel(context, m)),
-                            selected: method == m,
-                            onSelected: (_) => setLocal(() => method = m),
-                          ))
-                      .toList(),
+                PaymentMethodChips(
+                  selected: method,
+                  onChanged: (m) => setLocal(() => method = m),
                 ),
                 const SizedBox(height: 12),
                 TextField(

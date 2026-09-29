@@ -2,9 +2,12 @@ import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/order.dart';
+import '../../../data/models/cash_register.dart';
 import '../../../data/models/order_item.dart';
+import '../../../data/models/payment.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
+import '../../../data/services/dues_service.dart';
 import '../../../data/services/isar_service.dart';
 
 part 'order_provider.g.dart';
@@ -64,6 +67,31 @@ class OrderNotifier extends _$OrderNotifier {
     return product.copyWith(variantCombinations: updatedCombinations);
   }
 
+  /// Appends one row to the payment history. Call inside the caller's
+  /// writeTxn so the log and the `amountPaid` change can't diverge.
+  Future<void> _logPayment(
+    Isar isar, {
+    required Order order,
+    required double amount,
+    PaymentMethod? method,
+    String transactionId = '',
+    String note = '',
+    String groupId = '',
+  }) async {
+    final now = DateTime.now();
+    await isar.payments.put(Payment(
+      customerId: order.customerId,
+      orderId: order.id,
+      amount: amount,
+      method: method ?? order.paymentMethod,
+      transactionId: transactionId,
+      note: note,
+      groupId: groupId,
+      paidAt: now,
+      createdAt: now,
+    ));
+  }
+
   Future<String> generateOrderNumber() async {
     final isar = await ref.read(isarProvider.future);
     final count = await isar.orders.count();
@@ -77,6 +105,12 @@ class OrderNotifier extends _$OrderNotifier {
     try {
       await isar.writeTxn(() async {
         newId = await isar.orders.put(order);
+        if (order.amountPaid > 0) {
+          await _logPayment(isar,
+              order: order.copyWith(id: newId),
+              amount: order.amountPaid,
+              transactionId: order.transactionId);
+        }
 
         // Deduct stock and create movements for confirmed orders
         if (order.orderStatus == OrderStatus.confirmed) {
@@ -214,6 +248,10 @@ class OrderNotifier extends _$OrderNotifier {
               ));
             }
           }
+          if (order.amountPaid > 0) {
+            await _logPayment(isar,
+                order: order, amount: -order.amountPaid, note: 'cancelled');
+          }
           cancelledOrder = order.copyWith(
             amountPaid: 0,
             paymentStatus: PaymentStatus.unpaid,
@@ -250,13 +288,17 @@ class OrderNotifier extends _$OrderNotifier {
           paymentStatus: paymentStatus,
           paymentMethod: method ?? order.paymentMethod,
           // Only overwrite transactionId if a new one was supplied — empty
-          // string preserves the previous value (audit trail across multiple
-          // partial payments still loses earlier IDs; consider a Payment
-          // entity if that becomes a real requirement).
+          // string preserves the previous value. Every payment's own id is
+          // kept in the Payment history row logged below.
           transactionId:
               transactionId.isNotEmpty ? transactionId : order.transactionId,
           updatedAt: DateTime.now(),
         ));
+        await _logPayment(isar,
+            order: order,
+            amount: paymentAmount,
+            method: method,
+            transactionId: transactionId);
 
         // Update customer balance
         if (order.customerId > 0) {
@@ -270,6 +312,85 @@ class OrderNotifier extends _$OrderNotifier {
         }
       });
     });
+  }
+
+  /// Due Book collection: one payment from a customer, applied to their
+  /// unpaid orders oldest-first. Capped at what they owe (no advance credit).
+  ///
+  /// If [registerId] is given (an open cash register), the applied amount is
+  /// also added to that register's cash-in, in the same transaction.
+  /// Returns the amount actually applied (may be less than [amount] if the
+  /// dues changed since the caller read them).
+  Future<double> collectFromCustomer(
+    int customerId,
+    double amount, {
+    PaymentMethod method = PaymentMethod.cash,
+    String transactionId = '',
+    String note = '',
+    int? registerId,
+  }) async {
+    var applied = 0.0;
+    state = await AsyncValue.guard(() async {
+      final isar = await ref.read(isarProvider.future);
+      await isar.writeTxn(() async {
+        final orders =
+            await isar.orders.filter().customerIdEqualTo(customerId).findAll();
+        final groupId = 'col-${DateTime.now().microsecondsSinceEpoch}';
+        // Never collect more than the net due — credits on other orders
+        // (over-valued exchange returns) reduce what's actually owed.
+        var remaining = amount.clamp(0.0, computeNetDue(orders));
+
+        for (final d in computeOrderDues(orders)) {
+          if (remaining <= kDueEpsilon) break;
+          final part = remaining < d.due ? remaining : d.due;
+          final newPaid = d.order.amountPaid + part;
+          await isar.orders.put(d.order.copyWith(
+            amountPaid: newPaid,
+            // Same rule as recordPayment/processRefund, so status and the
+            // order's displayed balanceDue never disagree.
+            paymentStatus: newPaid >= d.order.totalAmount - kDueEpsilon
+                ? PaymentStatus.paid
+                : PaymentStatus.partial,
+            paymentMethod: method,
+            transactionId: transactionId.isNotEmpty
+                ? transactionId
+                : d.order.transactionId,
+            updatedAt: DateTime.now(),
+          ));
+          await _logPayment(isar,
+              order: d.order,
+              amount: part,
+              method: method,
+              transactionId: transactionId,
+              note: note,
+              groupId: groupId);
+          remaining -= part;
+          applied += part;
+        }
+        if (applied <= 0) return;
+
+        final customer = await isar.customers.get(customerId);
+        if (customer != null) {
+          await isar.customers.put(customer.copyWith(
+            outstandingBalance: (customer.outstandingBalance - applied)
+                .clamp(0, double.infinity),
+          ));
+        }
+
+        if (registerId != null) {
+          final register = await isar.cashRegisters.get(registerId);
+          if (register != null && !register.isClosed) {
+            await isar.cashRegisters.put(register.copyWith(
+              totalCashIn: register.totalCashIn + applied,
+            ));
+          }
+        }
+      });
+    });
+    if (state.hasError) {
+      throw state.error!;
+    }
+    return applied;
   }
 
   // ─── Return Flow (3-step: Request → Approve/Receive → Refund) ─────────
@@ -464,6 +585,14 @@ class OrderNotifier extends _$OrderNotifier {
             returnStatus: ReturnStatus.refunded,
             updatedAt: DateTime.now(),
           ));
+          if (actualRefund > 0) {
+            await _logPayment(isar,
+                order: original,
+                amount: -actualRefund,
+                method: refundMethod,
+                transactionId: refundTransactionId,
+                note: 'refund ${returnOrder.orderNumber}');
+          }
         }
 
         // Update customer stats.
@@ -530,6 +659,20 @@ class OrderNotifier extends _$OrderNotifier {
           );
           await isar.orders.put(newOrder);
 
+          // Bill the customer exactly as createOrder would — this path used
+          // to skip it, so the outstandingBalance counter drifted.
+          if (newOrder.customerId > 0) {
+            final customer = await isar.customers.get(newOrder.customerId);
+            if (customer != null) {
+              await isar.customers.put(customer.copyWith(
+                totalOrders: customer.totalOrders + 1,
+                totalSpent: customer.totalSpent + newOrder.totalAmount,
+                outstandingBalance:
+                    customer.outstandingBalance + newOrder.totalAmount,
+              ));
+            }
+          }
+
           // Update the original order's next date
           await isar.orders.put(order.copyWith(
             nextRecurringDate:
@@ -589,6 +732,7 @@ class OrderNotifier extends _$OrderNotifier {
           }
         }
 
+        await isar.payments.filter().orderIdEqualTo(id).deleteAll();
         await isar.orders.delete(id);
       });
     });

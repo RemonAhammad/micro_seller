@@ -87,7 +87,9 @@ class AppLocalizations {
     }
   }
 
-  String tr(String key) => _translations[key] ?? key;
+  // English fallback so a key missing from one locale shows readable text
+  // instead of the raw key name.
+  String tr(String key) => _translations[key] ?? translationsEn[key] ?? key;
 }
 
 class _AppLocalizationsDelegate

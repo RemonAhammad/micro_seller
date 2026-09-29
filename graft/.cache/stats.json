@@ -1,0 +1,18 @@
+{
+  "nodeCount": 3868,
+  "edgeCount": 448,
+  "languages": [
+    "c",
+    "cpp",
+    "dart",
+    "kotlin",
+    "swift"
+  ],
+  "totalCount": 3868,
+  "readyCount": 0,
+  "staleCount": 0,
+  "dirty": false,
+  "syncing": false,
+  "syncedAt": "2026-09-29T05:39:29.330Z",
+  "lastFile": "dues_test.dart"
+}
