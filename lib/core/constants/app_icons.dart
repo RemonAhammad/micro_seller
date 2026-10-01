@@ -40,7 +40,7 @@ abstract final class AppIcons {
 
   // ── Dashboard ──
   static const ThinIconBuilder revenue = tabler.TrendingUp.new;
-  static const ThinIconBuilder profit = tabler.PigMoney.new;
+  static const ThinIconBuilder profit = tabler.ReportMoney.new;
   static const ThinIconBuilder pending = tabler.HourglassHigh.new;
   static const ThinIconBuilder collected = tabler.Coins.new;
   static const ThinIconBuilder lowStock = tabler.BoxOff.new;

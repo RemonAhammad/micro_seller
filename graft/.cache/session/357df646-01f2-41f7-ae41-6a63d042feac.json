@@ -32,8 +32,8 @@
     "lib/features/orders/presentation/order_form_screen.dart:L221-L221"
   ],
   "nudges": 2,
-  "inputCostMicros": 69048464,
-  "inputTokensBilled": 113796507,
-  "lastBillingUuid": "7d760aa5-07a7-4e78-9ecb-355e0582f8e2",
+  "inputCostMicros": 70010073,
+  "inputTokensBilled": 115695841,
+  "lastBillingUuid": "cb194c5b-dfc8-4b19-98dd-8a371ffcd0c9",
   "host": "claude-code"
 }
