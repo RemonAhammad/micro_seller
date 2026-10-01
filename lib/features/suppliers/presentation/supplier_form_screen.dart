@@ -10,6 +10,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
 class SupplierFormScreen extends ConsumerStatefulWidget {
   final Supplier? supplier;
@@ -179,7 +180,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                 isLoading: _isLoading,
                 isFullWidth: true,
                 height: 52,
-                icon: isEdit ? Icons.save_rounded : Icons.add_rounded,
+                icon: isEdit ? tabler.DeviceFloppy.new : tabler.Plus.new,
               ),
             ],
           ),

@@ -11,6 +11,8 @@ import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class StockAdjustmentScreen extends ConsumerStatefulWidget {
   final int productId;
@@ -174,7 +176,7 @@ class _StockAdjustmentScreenState
                               color: cs.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(Icons.inventory_2_rounded,
+                            child: ThinIcon(tabler.Package.new,
                                 color: cs.primary),
                           ),
                           const SizedBox(width: 12),
@@ -279,22 +281,22 @@ class _StockAdjustmentScreenState
                     children: StockMovementType.values.map((type) {
                       final (icon, label, color) = switch (type) {
                         StockMovementType.restock => (
-                            Icons.add_shopping_cart_rounded,
+                            tabler.ShoppingCartPlus.new,
                             s.restock,
                             Colors.green
                           ),
                         StockMovementType.adjustment => (
-                            Icons.tune_rounded,
+                            tabler.AdjustmentsHorizontal.new,
                             s.adjust,
                             Colors.blue
                           ),
                         StockMovementType.sale => (
-                            Icons.sell_rounded,
+                            tabler.Tag.new,
                             s.sale,
                             Colors.orange
                           ),
                         StockMovementType.damage => (
-                            Icons.broken_image_rounded,
+                            tabler.PhotoOff.new,
                             s.damage,
                             Colors.red
                           ),
@@ -322,7 +324,7 @@ class _StockAdjustmentScreenState
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(icon,
+                              ThinIcon(icon,
                                   color: isSelected
                                       ? color
                                       : cs.onSurface.withValues(alpha: 0.5),
@@ -362,7 +364,7 @@ class _StockAdjustmentScreenState
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.local_shipping_outlined,
+                            ThinIcon(tabler.TruckDelivery.new,
                                 color: cs.onSurface.withValues(alpha: 0.5),
                                 size: 20),
                             const SizedBox(width: 12),
@@ -393,13 +395,13 @@ class _StockAdjustmentScreenState
                               GestureDetector(
                                 onTap: () => setState(
                                     () => _selectedSupplier = null),
-                                child: Icon(Icons.close,
+                                child: ThinIcon(tabler.X.new,
                                     size: 18,
                                     color: cs.onSurface
                                         .withValues(alpha: 0.5)),
                               )
                             else
-                              Icon(Icons.arrow_forward_ios,
+                              ThinIcon(tabler.ChevronRight.new,
                                   size: 14,
                                   color:
                                       cs.onSurface.withValues(alpha: 0.4)),
@@ -415,7 +417,7 @@ class _StockAdjustmentScreenState
                     controller: _qtyCtrl,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    prefixIcon: const Icon(Icons.numbers_rounded),
+                    prefixIcon: const ThinIcon(tabler.Number.new),
                     helperText: _type == StockMovementType.sale ||
                             _type == StockMovementType.damage
                         ? s.willDeductFromStock
@@ -436,7 +438,7 @@ class _StockAdjustmentScreenState
                     isLoading: _isLoading,
                     isFullWidth: true,
                     height: 52,
-                    icon: Icons.check_rounded,
+                    icon: tabler.Check.new,
                   ),
                 ],
               ),
@@ -516,7 +518,7 @@ class _StockSupplierPickerSheetState extends State<_StockSupplierPickerSheet> {
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: '${AppStrings.of(context).search}...',
-                prefixIcon: const Icon(Icons.search, size: 20),
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 isDense: true,
               ),
             ),

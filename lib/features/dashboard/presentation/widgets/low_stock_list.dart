@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../data/models/product.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../../core/constants/app_icons.dart';
 
 class LowStockList extends StatelessWidget {
   final List<Product> products;
@@ -49,10 +51,10 @@ class _LowStockItem extends StatelessWidget {
                 color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
+              child: ThinIcon(
                 isOut
-                    ? Icons.remove_shopping_cart_rounded
-                    : Icons.warning_amber_rounded,
+                    ? tabler.ShoppingCartOff.new
+                    : tabler.AlertTriangle.new,
                 color: color,
                 size: 20,
               ),

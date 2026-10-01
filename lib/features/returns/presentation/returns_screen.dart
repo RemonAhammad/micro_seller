@@ -8,6 +8,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class ReturnsScreen extends ConsumerStatefulWidget {
   const ReturnsScreen({super.key});
@@ -180,7 +182,7 @@ class _ReturnList extends StatelessWidget {
     if (orders.isEmpty) {
       final s = AppStrings.of(context);
       return EmptyState(
-        icon: Icons.assignment_return_rounded,
+        icon: tabler.ArrowBackUp.new,
         title: s.noReturns,
         subtitle: s.returnOrdersAppearHere,
       );
@@ -241,7 +243,7 @@ class _ReturnCard extends StatelessWidget {
                 ),
                 if (order.originalOrderId > 0) ...[
                   const SizedBox(width: 8),
-                  Icon(Icons.link_rounded, size: 13, color: muted),
+                  ThinIcon(tabler.Link.new, size: 13, color: muted),
                   const SizedBox(width: 3),
                   Text(
                     'ORD-${order.originalOrderId.toString().padLeft(3, '0')}',
@@ -263,7 +265,7 @@ class _ReturnCard extends StatelessWidget {
             Row(
               children: [
                 if (order.customerName.isNotEmpty) ...[
-                  Icon(Icons.person_outline_rounded, size: 13, color: muted),
+                  ThinIcon(tabler.User.new, size: 13, color: muted),
                   const SizedBox(width: 3),
                   Flexible(
                     child: Text(

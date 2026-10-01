@@ -5,7 +5,7 @@ class StatCard extends StatelessWidget {
   final String label;
   final String value;
   /// Material icon — or pass [iconBuilder] for a thin Tabler icon instead.
-  final IconData? icon;
+  final ThinIconBuilder? icon;
   final ThinIconBuilder? iconBuilder;
   final Color color;
   final VoidCallback? onTap;
@@ -53,9 +53,7 @@ class StatCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(9),
               ),
               child: Center(
-                child: iconBuilder != null
-                    ? ThinIcon(iconBuilder!, color: color, size: 18)
-                    : Icon(icon, color: color, size: 17),
+                child: ThinIcon(iconBuilder ?? icon!, color: color, size: 18),
               ),
             ),
             const Spacer(),

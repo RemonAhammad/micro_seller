@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../data/models/expense.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../../core/constants/app_icons.dart';
 
 class ExpenseCard extends StatelessWidget {
   final Expense expense;
@@ -19,11 +21,11 @@ class ExpenseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final (color, icon) = switch (expense.category) {
-      ExpenseCategory.logistics => (const Color(0xFF42A5F5), Icons.local_shipping_rounded),
-      ExpenseCategory.packaging => (const Color(0xFF66BB6A), Icons.inventory_rounded),
-      ExpenseCategory.marketing => (const Color(0xFFAB47BC), Icons.campaign_rounded),
-      ExpenseCategory.supplies => (const Color(0xFFFF7043), Icons.shopping_cart_rounded),
-      ExpenseCategory.other => (const Color(0xFF78909C), Icons.receipt_rounded),
+      ExpenseCategory.logistics => (const Color(0xFF42A5F5), tabler.TruckDelivery.new),
+      ExpenseCategory.packaging => (const Color(0xFF66BB6A), tabler.Packages.new),
+      ExpenseCategory.marketing => (const Color(0xFFAB47BC), tabler.Speakerphone.new),
+      ExpenseCategory.supplies => (const Color(0xFFFF7043), tabler.ShoppingCart.new),
+      ExpenseCategory.other => (const Color(0xFF78909C), tabler.Receipt.new),
     };
 
     final categoryLabel = switch (expense.category) {
@@ -55,7 +57,7 @@ class ExpenseCard extends StatelessWidget {
                 color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 22),
+              child: ThinIcon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -117,7 +119,7 @@ class ExpenseCard extends StatelessWidget {
                 if (onDelete != null)
                   GestureDetector(
                     onTap: onDelete,
-                    child: Icon(Icons.delete_outline_rounded,
+                    child: ThinIcon(tabler.Trash.new,
                         size: 18,
                         color: theme.colorScheme.onSurface.withOpacity(0.3)),
                   ),

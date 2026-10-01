@@ -4,6 +4,8 @@ import '../../../../data/models/customer.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../../core/constants/app_icons.dart';
 
 class CustomerCard extends StatelessWidget {
   final Customer customer;
@@ -109,17 +111,17 @@ class CustomerCard extends StatelessWidget {
                     children: [
                       _Stat(
                           label: '${customer.totalOrders} orders',
-                          icon: Icons.receipt_long_rounded),
+                          icon: tabler.Receipt.new),
                       const SizedBox(width: 12),
                       _Stat(
                           label: CurrencyFormatter.format(customer.totalSpent),
-                          icon: Icons.payments_rounded),
+                          icon: tabler.Cash.new),
                       if (customer.outstandingBalance > 0) ...[
                         const SizedBox(width: 12),
                         _Stat(
                           label: CurrencyFormatter.format(
                               customer.outstandingBalance),
-                          icon: Icons.money_off_rounded,
+                          icon: tabler.CashOff.new,
                           color: AppColors.paymentUnpaid,
                         ),
                       ],
@@ -128,7 +130,7 @@ class CustomerCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, size: 20),
+            const ThinIcon(tabler.ChevronRight.new, size: 20),
           ],
         ),
       ),
@@ -138,7 +140,7 @@ class CustomerCard extends StatelessWidget {
 
 class _Stat extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final ThinIconBuilder icon;
   final Color? color;
 
   const _Stat({required this.label, required this.icon, this.color});
@@ -149,7 +151,7 @@ class _Stat extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon,
+        ThinIcon(icon,
             size: 12,
             color: color ?? theme.colorScheme.onSurface.withOpacity(0.4)),
         const SizedBox(width: 3),

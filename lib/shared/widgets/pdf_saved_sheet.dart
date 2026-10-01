@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import '../../core/constants/app_strings.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../core/constants/app_icons.dart';
 
 /// Shows a modal bottom sheet confirming a PDF was saved, with an "Open"
 /// action and an automatic 5-second dismiss.
@@ -91,7 +93,7 @@ class _PdfSavedSheetState extends State<_PdfSavedSheet> {
                     color: Colors.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 26),
+                  child: const ThinIcon(tabler.CircleCheck.new, color: Colors.green, size: 26),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -124,7 +126,7 @@ class _PdfSavedSheetState extends State<_PdfSavedSheet> {
                       Navigator.of(context).maybePop();
                       await OpenFile.open(widget.filePath);
                     },
-                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                    icon: const ThinIcon(tabler.ExternalLink.new, size: 18),
                     label: Text(s.tr('open')),
                   ),
                 ),

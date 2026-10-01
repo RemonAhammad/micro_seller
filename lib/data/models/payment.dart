@@ -4,6 +4,10 @@ import 'order.dart';
 
 part 'payment.g.dart';
 
+/// [Payment.note] of the negative row logged when a paid order is cancelled
+/// (cancel = automatic refund). Reports net these out of money received.
+const kCancelledPaymentNote = 'cancelled';
+
 /// One money movement against one order — the history behind
 /// `Order.amountPaid`. The order's `amountPaid` stays the source of truth;
 /// these rows are the audit trail (who paid what, when, how).

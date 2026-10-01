@@ -7,6 +7,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class PurchaseListScreen extends ConsumerWidget {
   const PurchaseListScreen({super.key});
@@ -24,13 +26,13 @@ class PurchaseListScreen extends ConsumerWidget {
         onPressed: () => context.push('/suppliers/purchases/add'),
         tooltip: s.newPurchase,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add),
+        child: const ThinIcon(tabler.Plus.new),
       ),
       body: purchasesAsync.when(
         data: (purchases) {
           if (purchases.isEmpty) {
             return EmptyState(
-              icon: Icons.shopping_bag_outlined,
+              icon: tabler.ShoppingBag.new,
               title: s.noPurchasesYet,
               subtitle: s.tr('recordFirstPurchase'),
             );

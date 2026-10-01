@@ -5,6 +5,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import 'order_status_badge.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../../core/constants/app_icons.dart';
 
 class OrderCard extends StatelessWidget {
   final Order order;
@@ -30,27 +32,27 @@ class OrderCard extends StatelessWidget {
           OrderStatus.pending => (
               AppColors.statusPending,
               'Pending',
-              Icons.hourglass_top_rounded
+              tabler.HourglassHigh.new
             ),
           OrderStatus.confirmed => (
               AppColors.statusConfirmed,
               'Confirmed',
-              Icons.check_circle_outline_rounded
+              tabler.CircleCheck.new
             ),
           OrderStatus.shipped => (
               AppColors.statusShipped,
               'Shipped',
-              Icons.local_shipping_rounded
+              tabler.TruckDelivery.new
             ),
           OrderStatus.completed => (
               AppColors.statusCompleted,
               'Completed',
-              Icons.task_alt_rounded
+              tabler.CircleCheck.new
             ),
           OrderStatus.cancelled => (
               AppColors.statusCancelled,
               'Cancelled',
-              Icons.cancel_rounded
+              tabler.CircleX.new
             ),
         };
 
@@ -59,7 +61,7 @@ class OrderCard extends StatelessWidget {
           enabled: !selected,
           child: Row(
             children: [
-              Icon(icon, size: 18, color: selected ? color.withValues(alpha: 0.4) : color),
+              ThinIcon(icon, size: 18, color: selected ? color.withValues(alpha: 0.4) : color),
               const SizedBox(width: 10),
               Text(
                 label,
@@ -73,7 +75,7 @@ class OrderCard extends StatelessWidget {
               ),
               if (selected) ...[
                 const Spacer(),
-                Icon(Icons.check, size: 16, color: color),
+                ThinIcon(tabler.Check.new, size: 16, color: color),
               ],
             ],
           ),
@@ -214,7 +216,7 @@ class OrderCard extends StatelessWidget {
             ),
             if (order.customerName.isNotEmpty) ...[
               const SizedBox(width: 8),
-              Icon(Icons.person_outline_rounded, size: 13, color: muted),
+              ThinIcon(tabler.User.new, size: 13, color: muted),
               const SizedBox(width: 3),
               Flexible(
                 child: Text(

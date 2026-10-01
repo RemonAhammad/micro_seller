@@ -96,8 +96,8 @@ class AutoBackupRunner {
       // Only run if a Drive account is already signed in. Triggering the
       // sign-in flow on cold start would be a hostile UX.
       final drive = DriveService();
-      final user = await drive.getCurrentUser();
-      if (user == null) {
+      // No-UI check: a lightweight sign-in could flash a sheet at startup.
+      if (!await drive.hasDriveAccess()) {
         developer.log('skipped — not signed in to Drive', name: 'AutoBackup');
         return;
       }

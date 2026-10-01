@@ -26,6 +26,8 @@ import '../../settings/providers/settings_provider.dart';
 import '../../returns/presentation/create_return_screen.dart';
 import 'widgets/order_status_badge.dart';
 import 'widgets/order_item_row.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   final int orderId;
@@ -71,7 +73,7 @@ class _OrderDetailBody extends ConsumerWidget {
             title: Text(order.orderNumber),
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit_rounded),
+                icon: const ThinIcon(tabler.Pencil.new),
                 onPressed: () => context.push('/orders/${order.id}/edit'),
               ),
               PopupMenuButton<String>(
@@ -81,28 +83,28 @@ class _OrderDetailBody extends ConsumerWidget {
                   PopupMenuItem(
                       value: 'share_text',
                       child: ListTile(
-                        leading: const Icon(Icons.message_rounded),
+                        leading: const ThinIcon(tabler.Message.new),
                         title: Text(s.shareViaWhatsApp),
                         contentPadding: EdgeInsets.zero,
                       )),
                   PopupMenuItem(
                       value: 'share_pdf',
                       child: ListTile(
-                        leading: const Icon(Icons.picture_as_pdf_rounded),
+                        leading: const ThinIcon(tabler.FileTypePdf.new),
                         title: Text(s.sharePdf),
                         contentPadding: EdgeInsets.zero,
                       )),
                   PopupMenuItem(
                       value: 'download_pdf',
                       child: ListTile(
-                        leading: const Icon(Icons.download_rounded),
+                        leading: const ThinIcon(tabler.Download.new),
                         title: Text(s.downloadPdf),
                         contentPadding: EdgeInsets.zero,
                       )),
                   PopupMenuItem(
                       value: 'print',
                       child: ListTile(
-                        leading: const Icon(Icons.print_rounded),
+                        leading: const ThinIcon(tabler.Printer.new),
                         title: Text(s.print),
                         contentPadding: EdgeInsets.zero,
                       )),
@@ -110,7 +112,7 @@ class _OrderDetailBody extends ConsumerWidget {
                     PopupMenuItem(
                         value: 'return',
                         child: ListTile(
-                          leading: const Icon(Icons.assignment_return_rounded),
+                          leading: const ThinIcon(tabler.ArrowBackUp.new),
                           title: Text(s.createReturn),
                           contentPadding: EdgeInsets.zero,
                         )),
@@ -119,7 +121,7 @@ class _OrderDetailBody extends ConsumerWidget {
                     PopupMenuItem(
                         value: 'cancel',
                         child: ListTile(
-                          leading: const Icon(Icons.cancel_rounded, color: Colors.orange),
+                          leading: const ThinIcon(tabler.CircleX.new, color: Colors.orange),
                           title: Text(s.cancelOrder,
                               style: const TextStyle(color: Colors.orange)),
                           contentPadding: EdgeInsets.zero,
@@ -129,7 +131,7 @@ class _OrderDetailBody extends ConsumerWidget {
                   PopupMenuItem(
                       value: 'delete',
                       child: ListTile(
-                        leading: const Icon(Icons.delete_rounded, color: Colors.red),
+                        leading: const ThinIcon(tabler.Trash.new, color: Colors.red),
                         title: Text(s.delete, style: const TextStyle(color: Colors.red)),
                         contentPadding: EdgeInsets.zero,
                       )),
@@ -160,7 +162,7 @@ class _OrderDetailBody extends ConsumerWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.assignment_return_rounded,
+                            const ThinIcon(tabler.ArrowBackUp.new,
                                 size: 14, color: Colors.orange),
                             const SizedBox(width: 4),
                             Text(
@@ -223,8 +225,8 @@ class _OrderDetailBody extends ConsumerWidget {
                                 const SizedBox(width: 8),
                                 GestureDetector(
                                   onTap: () => launchUrl(Uri.parse('tel:${order.customerPhone}')),
-                                  child: Icon(
-                                    Icons.call_rounded,
+                                  child: ThinIcon(
+                                    tabler.Phone.new,
                                     size: 18,
                                     color: theme.colorScheme.primary,
                                   ),
@@ -329,7 +331,7 @@ class _OrderDetailBody extends ConsumerWidget {
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: () => _showPaymentDialog(context, ref, order),
-                      icon: const Icon(Icons.payment_rounded),
+                      icon: const ThinIcon(tabler.CreditCard.new),
                       label: Text(s.recordPayment),
                     ),
                   ),
@@ -368,7 +370,7 @@ class _OrderDetailBody extends ConsumerWidget {
       case 'share_text':
         final text = pdfService.generateWhatsAppText(order,
             currencySymbol: currencySymbol);
-        await Share.share(text);
+        await SharePlus.instance.share(ShareParams(text: text));
         break;
 
       case 'share_pdf':
@@ -379,7 +381,7 @@ class _OrderDetailBody extends ConsumerWidget {
         final dir = await getTemporaryDirectory();
         final file = File('${dir.path}/${order.orderNumber}.pdf');
         await file.writeAsBytes(bytes);
-        await Share.shareXFiles([XFile(file.path)]);
+        await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
         break;
 
       case 'download_pdf':
@@ -392,7 +394,7 @@ class _OrderDetailBody extends ConsumerWidget {
         var downloadDir = settings.downloadDirectory;
         if (downloadDir.isEmpty) {
           if (!context.mounted) break;
-          final picked = await FilePicker.platform.getDirectoryPath(
+          final picked = await FilePicker.getDirectoryPath(
             dialogTitle: 'Choose download folder',
           );
           if (picked == null || !context.mounted) break;
@@ -442,7 +444,7 @@ class _OrderDetailBody extends ConsumerWidget {
               '${s.cancelOrder} ${order.orderNumber}? ${s.cancelOrderConfirm}',
           confirmText: s.cancelOrder,
           isDestructive: true,
-          icon: Icons.cancel_rounded,
+          icon: tabler.CircleX.new,
         );
         if (ok == true && context.mounted) {
           await ref
@@ -460,7 +462,7 @@ class _OrderDetailBody extends ConsumerWidget {
           message: '${sd.deleteOrder} ${order.orderNumber}? ${sd.deleteOrderConfirm}',
           confirmText: sd.delete,
           isDestructive: true,
-          icon: Icons.delete_rounded,
+          icon: tabler.Trash.new,
         );
         if (ok == true && context.mounted) {
           await ref
@@ -606,7 +608,7 @@ class _StatusActions extends ConsumerWidget {
               .read(orderProvider.notifier)
               .updateStatus(order.id, nextStatus);
         },
-        icon: const Icon(Icons.arrow_forward_rounded),
+        icon: const ThinIcon(tabler.ArrowRight.new),
         label: Text(nextLabel),
       ),
     );
@@ -719,7 +721,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.local_shipping_rounded, size: 18, color: cs.primary),
+              ThinIcon(tabler.TruckDelivery.new, size: 18, color: cs.primary),
               const SizedBox(width: 8),
               Text(
                 s.delivery,
@@ -741,7 +743,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.location_on_outlined, size: 16, color: cs.onSurface.withOpacity(0.5)),
+                  ThinIcon(tabler.MapPin.new, size: 16, color: cs.onSurface.withOpacity(0.5)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -760,7 +762,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  Icon(Icons.schedule_rounded, size: 16, color: cs.onSurface.withOpacity(0.5)),
+                  ThinIcon(tabler.Clock.new, size: 16, color: cs.onSurface.withOpacity(0.5)),
                   const SizedBox(width: 8),
                   Text(
                     '${s.estimatedDelivery}: ${DateFormatter.format(order.estimatedDeliveryDate)}',
@@ -777,7 +779,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded, size: 16, color: AppColors.statusCompleted),
+                  const ThinIcon(tabler.CircleCheck.new, size: 16, color: AppColors.statusCompleted),
                   const SizedBox(width: 8),
                   Text(
                     '${s.delivered}: ${DateFormatter.format(order.actualDeliveryDate)}',
@@ -803,7 +805,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
                         ),
                       );
                 },
-                icon: const Icon(Icons.check_rounded, size: 18),
+                icon: const ThinIcon(tabler.Check.new, size: 18),
                 label: Text(s.markAsDelivered),
               ),
             ),
@@ -852,7 +854,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
                 border: isCurrent ? Border.all(color: cs.primary, width: 2) : null,
               ),
               child: isCompleted
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  ? const ThinIcon(tabler.Check.new, size: 14, color: Colors.white)
                   : Center(
                       child: Text(
                         '${stepIdx + 1}',
@@ -960,8 +962,8 @@ class _StatusStepperBar extends StatelessWidget {
                       ),
                       child: Center(
                         child: isActive
-                            ? Icon(
-                                i < _currentIndex ? Icons.check : Icons.circle,
+                            ? ThinIcon(
+                                i < _currentIndex ? tabler.Check.new : tabler.Circle.new,
                                 size: isCurrent ? 12 : 10,
                                 color: Colors.white,
                               )
@@ -1008,7 +1010,7 @@ class _StatusStepperBar extends StatelessWidget {
                   onPressed: _canGoBack
                       ? () => _changeStatus(context, _flow[_currentIndex - 1])
                       : null,
-                  icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                  icon: const ThinIcon(tabler.ArrowLeft.new, size: 16),
                   label: Text(
                     _canGoBack ? labels[_flow[_currentIndex - 1]]! : s.tr('back'),
                     style: const TextStyle(fontSize: 12),
@@ -1025,7 +1027,7 @@ class _StatusStepperBar extends StatelessWidget {
                     _canGoForward ? labels[_flow[_currentIndex + 1]]! : s.done,
                     style: const TextStyle(fontSize: 12),
                   ),
-                  label: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: const ThinIcon(tabler.ArrowRight.new, size: 16),
                 ),
               ),
             ],
@@ -1110,7 +1112,7 @@ class _ReturnFlowCard extends StatelessWidget {
                   ctx,
                   _RefundDialogResult(
                       method: method, transactionId: txnCtrl.text.trim())),
-              icon: const Icon(Icons.currency_exchange_rounded, size: 16),
+              icon: const ThinIcon(tabler.Exchange.new, size: 16),
               label: Text(s.tr('refund')),
             ),
           ],
@@ -1162,7 +1164,7 @@ class _ReturnFlowCard extends StatelessWidget {
           // Header: Return info + status
           Row(
             children: [
-              Icon(Icons.assignment_return_rounded, size: 18, color: color),
+              ThinIcon(tabler.ArrowBackUp.new, size: 18, color: color),
               const SizedBox(width: 8),
               Text(
                 '${s.returns} #${order.originalOrderId}',
@@ -1242,7 +1244,7 @@ class _ReturnFlowCard extends StatelessWidget {
                         message: s.tr('rejectReturnConfirm'),
                         confirmText: s.tr('reject'),
                         isDestructive: true,
-                        icon: Icons.close_rounded,
+                        icon: tabler.X.new,
                       );
                       if (ok == true) {
                         await ref
@@ -1250,7 +1252,7 @@ class _ReturnFlowCard extends StatelessWidget {
                             .rejectReturn(order.id);
                       }
                     },
-                    icon: const Icon(Icons.close_rounded, size: 16),
+                    icon: const ThinIcon(tabler.X.new, size: 16),
                     label: Text(s.tr('reject'), style: const TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                   ),
@@ -1264,7 +1266,7 @@ class _ReturnFlowCard extends StatelessWidget {
                         title: s.tr('approveAndReceiveItems'),
                         message: s.tr('approveReturnConfirm'),
                         confirmText: s.tr('approve'),
-                        icon: Icons.check_rounded,
+                        icon: tabler.Check.new,
                       );
                       if (ok == true) {
                         await ref
@@ -1272,7 +1274,7 @@ class _ReturnFlowCard extends StatelessWidget {
                             .approveReturn(order.id);
                       }
                     },
-                    icon: const Icon(Icons.check_rounded, size: 16),
+                    icon: const ThinIcon(tabler.Check.new, size: 16),
                     label: Text(s.approveAndReceive,
                         style: const TextStyle(fontSize: 12)),
                     style: FilledButton.styleFrom(
@@ -1305,7 +1307,7 @@ class _ReturnFlowCard extends StatelessWidget {
                     );
                   }
                 },
-                icon: const Icon(Icons.currency_exchange_rounded, size: 16),
+                icon: const ThinIcon(tabler.Exchange.new, size: 16),
                 label: Text(
                     '${s.processRefund} (${CurrencyFormatter.format(order.refundAmount)})',
                     style: const TextStyle(fontSize: 12)),
@@ -1330,7 +1332,7 @@ class _ReturnFlowCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.check_circle_rounded,
+                  const ThinIcon(tabler.CircleCheck.new,
                       color: Colors.green, size: 16),
                   const SizedBox(width: 6),
                   Text(
@@ -1359,7 +1361,7 @@ class _ReturnFlowCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.cancel_rounded, color: Colors.red, size: 16),
+                  const ThinIcon(tabler.CircleX.new, color: Colors.red, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     s.tr('returnRejected'),
@@ -1428,7 +1430,7 @@ class _ReturnStepIndicator extends StatelessWidget {
                     ),
                     child: Center(
                       child: isActive
-                          ? const Icon(Icons.check, size: 12, color: Colors.white)
+                          ? const ThinIcon(tabler.Check.new, size: 12, color: Colors.white)
                           : Text('${i + 1}',
                               style: TextStyle(
                                   fontSize: 10,

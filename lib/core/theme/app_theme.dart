@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../constants/app_colors.dart';
+import '../constants/app_icons.dart';
+
+/// Flutter's own app-bar buttons (back arrow, drawer, close) drawn with the
+/// same thin Tabler icons as the rest of the app. The back arrow points
+/// right in RTL layouts (Arabic, Urdu), as Material's own does.
+final _thinActionIcons = ActionIconThemeData(
+  backButtonIconBuilder: (context) => Directionality.of(context) == TextDirection.rtl
+      ? const ThinIcon(tabler.ArrowRight.new)
+      : const ThinIcon(tabler.ArrowLeft.new),
+  drawerButtonIconBuilder: (_) => const ThinIcon(tabler.Menu2.new),
+  endDrawerButtonIconBuilder: (_) => const ThinIcon(tabler.Menu2.new),
+  closeButtonIconBuilder: (_) => const ThinIcon(tabler.X.new),
+);
 
 class AppTheme {
   AppTheme._();
@@ -16,6 +30,7 @@ class AppTheme {
       tertiary: const Color(0xFF00BFA5),
     ),
     fontFamily: 'Roboto',
+    actionIconTheme: _thinActionIcons,
     appBarTheme: const AppBarTheme(
       centerTitle: false,
       elevation: 0,
@@ -149,6 +164,7 @@ class AppTheme {
       secondary: AppColors.accent,
     ),
     fontFamily: 'Roboto',
+    actionIconTheme: _thinActionIcons,
     appBarTheme: const AppBarTheme(
       centerTitle: false,
       elevation: 0,

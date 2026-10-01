@@ -9,6 +9,8 @@ import 'package:screenshot/screenshot.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../models/product.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../core/constants/app_icons.dart';
 
 /// What to include on each catalog tile. Sellers share these into chat
 /// threads, so the defaults lean toward "customer-facing": photo and price
@@ -466,7 +468,7 @@ class _CatalogPageWidget extends StatelessWidget {
           color: _grey100,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Icon(Icons.inventory_2_outlined,
+        child: const ThinIcon(tabler.Package.new,
             color: _grey600, size: 30),
       );
     }

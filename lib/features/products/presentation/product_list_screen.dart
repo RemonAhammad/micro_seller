@@ -9,6 +9,8 @@ import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/product_card.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class ProductListScreen extends ConsumerStatefulWidget {
   const ProductListScreen({super.key});
@@ -43,13 +45,13 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         title: Text(s.products),
         actions: [
           IconButton(
-            icon: const Icon(Icons.ios_share_rounded),
+            icon: const ThinIcon(tabler.Share.new),
             tooltip: s.shareCatalog,
             onPressed: () => context.push('/products/catalog'),
           ),
           IconButton(
-            icon: Icon(
-                _showGrid ? Icons.view_list_rounded : Icons.grid_view_rounded),
+            icon: ThinIcon(
+                _showGrid ? tabler.List.new : tabler.LayoutGrid.new),
             onPressed: () => setState(() => _showGrid = !_showGrid),
           ),
         ],
@@ -65,10 +67,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                       () => setState(() => _query = v.toLowerCase())),
                   decoration: InputDecoration(
                     hintText: s.searchProducts,
-                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                    prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                     suffixIcon: _query.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear),
+                            icon: const ThinIcon(tabler.X.new),
                             onPressed: () {
                               _searchCtrl.clear();
                               setState(() => _query = '');
@@ -142,7 +144,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           if (products.isEmpty) {
             final isFiltered = _query.isNotEmpty || _selectedCategory != null;
             return EmptyState(
-              icon: Icons.inventory_2_rounded,
+              icon: tabler.Package.new,
               title: isFiltered ? s.noProductsFound : s.noDataFound,
               subtitle: isFiltered ? null : s.addFirstProduct,
               actionLabel: isFiltered ? null : s.addProduct,
@@ -192,7 +194,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/products/add'),
         tooltip: s.addProduct,
-        child: const Icon(Icons.add),
+        child: const ThinIcon(tabler.Plus.new),
       ),
     );
   }
@@ -230,8 +232,8 @@ class _ProductListTile extends ConsumerWidget {
                 color: theme.colorScheme.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                Icons.inventory_2_rounded,
+              child: ThinIcon(
+                tabler.Package.new,
                 color: theme.colorScheme.primary.withOpacity(0.5),
                 size: 24,
               ),

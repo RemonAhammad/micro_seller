@@ -8,6 +8,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class CashRegisterScreen extends ConsumerWidget {
   const CashRegisterScreen({super.key});
@@ -183,7 +185,7 @@ class _OpenRegisterCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.point_of_sale_rounded, color: cs.primary, size: 24),
+              ThinIcon(tabler.CashRegister.new, color: cs.primary, size: 24),
               const SizedBox(width: 10),
               Text(s.registerOpen,
                   style: theme.textTheme.titleSmall?.copyWith(
@@ -211,7 +213,7 @@ class _OpenRegisterCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _showCashInOutDialog(context, true),
-                  icon: const Icon(Icons.add, size: 16),
+                  icon: const ThinIcon(tabler.Plus.new, size: 16),
                   label: Text(s.cashIn, style: const TextStyle(fontSize: 12)),
                 ),
               ),
@@ -219,7 +221,7 @@ class _OpenRegisterCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _showCashInOutDialog(context, false),
-                  icon: const Icon(Icons.remove, size: 16),
+                  icon: const ThinIcon(tabler.Minus.new, size: 16),
                   label:
                       Text(s.cashOut, style: const TextStyle(fontSize: 12)),
                 ),
@@ -231,7 +233,7 @@ class _OpenRegisterCard extends StatelessWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: () => _showCloseDialog(context),
-              icon: const Icon(Icons.lock_rounded, size: 16),
+              icon: const ThinIcon(tabler.Lock.new, size: 16),
               label: Text(s.closeRegister),
             ),
           ),
@@ -382,7 +384,7 @@ class _ClosedStateCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.point_of_sale_rounded,
+          ThinIcon(tabler.CashRegister.new,
               size: 48, color: cs.onSurface.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
           Text(s.noRegisterOpen,
@@ -395,7 +397,7 @@ class _ClosedStateCard extends StatelessWidget {
           const SizedBox(height: 20),
           AppButton(
             label: s.openRegister,
-            icon: Icons.lock_open_rounded,
+            icon: tabler.LockOpen.new,
             isFullWidth: true,
             height: 48,
             onPressed: () => _showOpenDialog(context),

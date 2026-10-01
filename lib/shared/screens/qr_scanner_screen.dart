@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/constants/app_strings.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../core/constants/app_icons.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -34,8 +36,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         title: Text(AppStrings.of(context).scanQrBarcode),
         actions: [
           IconButton(
-            icon: Icon(
-              _torchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+            icon: ThinIcon(
+              _torchOn ? tabler.Bolt.new : tabler.BoltOff.new,
               color: _torchOn ? Colors.yellow : Colors.white,
             ),
             onPressed: () {

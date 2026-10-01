@@ -1,8 +1,8 @@
 {
-  "lastQuery": "use more thin/slim/narrow icon package",
+  "lastQuery": "remove the pig icons from the app",
   "perAgentQuery": {},
   "graftReads": 0,
-  "sourceReads": 4,
+  "sourceReads": 19,
   "savedTokens": 0,
   "injectedPointers": [
     "lib/features/customers/presentation/widgets/due_actions.dart:L70-L95",
@@ -16,11 +16,24 @@
     "lib/features/dashboard/providers/dashboard_provider.g.dart:L121-L121",
     "lib/features/customers/providers/dues_provider.g.dart:L132-L134",
     "lib/features/customers/presentation/due_book_screen.dart:L48-L56",
-    "lib/features/settings/presentation/recycle_bin_screen.dart:L218-L226"
+    "lib/features/settings/presentation/recycle_bin_screen.dart:L218-L226",
+    "lib/features/reports/providers/reports_provider.dart:L11-L79",
+    "lib/features/reports/providers/reports_provider.g.dart:L66-L66",
+    "lib/features/reports/presentation/reports_screen.dart:L19-L134",
+    "lib/features/settings/presentation/settings_screen.dart:L67-L73",
+    "lib/features/orders/presentation/order_detail_screen.dart:L912-L914",
+    "lib/core/constants/app_icons.dart:L18-L64",
+    "lib/features/settings/providers/settings_provider.dart:L239-L243",
+    "lib/data/services/update_service.dart:L9-L36",
+    "lib/data/services/auto_backup_runner.dart:L66-L174",
+    "XCTestCase",
+    "lib/core/constants/app_icons.dart:L24-L49",
+    "lib/features/products/presentation/product_form_screen.dart:L190-L196",
+    "lib/features/orders/presentation/order_form_screen.dart:L221-L221"
   ],
   "nudges": 2,
-  "inputCostMicros": 44387589,
-  "inputTokensBilled": 72609081,
-  "lastBillingUuid": "f8d46a24-adad-4be7-be6c-e33bdf403ee7",
+  "inputCostMicros": 69048464,
+  "inputTokensBilled": 113796507,
+  "lastBillingUuid": "7d760aa5-07a7-4e78-9ecb-355e0582f8e2",
   "host": "claude-code"
 }

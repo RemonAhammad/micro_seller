@@ -7,6 +7,8 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class CategoryScreen extends ConsumerWidget {
   const CategoryScreen({super.key});
@@ -24,7 +26,7 @@ class CategoryScreen extends ConsumerWidget {
         data: (cats) {
           if (cats.isEmpty) {
             return EmptyState(
-              icon: Icons.category_rounded,
+              icon: tabler.Category.new,
               title: s.noCategoriesYet,
               subtitle: s.addCategoriesToOrganise,
               actionLabel: s.addCategory,
@@ -47,7 +49,7 @@ class CategoryScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showDialog(context, ref),
         tooltip: s.addCategory,
-        child: const Icon(Icons.add),
+        child: const ThinIcon(tabler.Plus.new),
       ),
     );
   }
@@ -120,7 +122,7 @@ class _CategoryTile extends StatelessWidget {
           color: Colors.red,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete_outline_rounded,
+        child: const ThinIcon(tabler.Trash.new,
             color: Colors.white, size: 26),
       ),
       confirmDismiss: (_) async {
@@ -174,7 +176,7 @@ class _CategoryTile extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.label_rounded,
+              child: ThinIcon(tabler.Tag.new,
                   color: theme.colorScheme.primary, size: 20),
             ),
             const SizedBox(width: 14),
@@ -186,7 +188,7 @@ class _CategoryTile extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.edit_outlined, size: 20),
+              icon: const ThinIcon(tabler.Pencil.new, size: 20),
               onPressed: () => _showEditDialog(context),
             ),
           ],

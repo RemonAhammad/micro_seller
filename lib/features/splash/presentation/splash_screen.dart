@@ -7,6 +7,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/services/tutorial_service.dart';
 import '../../settings/providers/settings_provider.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -431,12 +433,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   // ═══════════════════════════════════════════════════════════════════════════
 
   static const _featureData = [
-    (icon: Icons.category_rounded, label: 'Categories'),
-    (icon: Icons.inventory_2_rounded, label: 'Products'),
-    (icon: Icons.receipt_long_rounded, label: 'Orders'),
-    (icon: Icons.people_rounded, label: 'Customers'),
-    (icon: Icons.local_shipping_rounded, label: 'Suppliers'),
-    (icon: Icons.analytics_rounded, label: 'Reports'),
+    (icon: tabler.Category.new, label: 'Categories'),
+    (icon: tabler.Package.new, label: 'Products'),
+    (icon: tabler.Receipt.new, label: 'Orders'),
+    (icon: tabler.Users.new, label: 'Customers'),
+    (icon: tabler.TruckDelivery.new, label: 'Suppliers'),
+    (icon: tabler.ChartLine.new, label: 'Reports'),
   ];
 
   Widget _ring(double scale, double size, double op, double bw) {
@@ -458,14 +460,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   List<Widget> _buildOrbit(double fade, double center, double r1, double r2, double dotSize, double iconSize) {
     const icons = [
-      Icons.shopping_bag_rounded,
-      Icons.payments_rounded,
-      Icons.local_shipping_rounded,
-      Icons.qr_code_scanner_rounded,
-      Icons.warehouse_rounded,
-      Icons.point_of_sale_rounded,
-      Icons.sell_rounded,
-      Icons.bar_chart_rounded,
+      tabler.ShoppingBag.new,
+      tabler.Cash.new,
+      tabler.TruckDelivery.new,
+      tabler.Scan.new,
+      tabler.BuildingWarehouse.new,
+      tabler.CashRegister.new,
+      tabler.Tag.new,
+      tabler.ChartBar.new,
     ];
     return List.generate(icons.length, (i) {
       final a = (2 * pi * i) / icons.length + _orbit.value * 2 * pi;
@@ -494,7 +496,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   BoxShadow(color: Colors.white.withValues(alpha: 0.06), blurRadius: 12),
                 ],
               ),
-              child: Icon(icons[i], size: is2, color: Colors.white.withValues(alpha: 0.85)),
+              child: ThinIcon(icons[i], size: is2, color: Colors.white.withValues(alpha: 0.85)),
             ),
           ),
         ),
@@ -533,7 +535,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     });
   }
 
-  Widget _pill(int i, ({IconData icon, String label}) f, double h, double iconSz, double textSz) {
+  Widget _pill(int i, ({ThinIconBuilder icon, String label}) f, double h, double iconSz, double textSz) {
     final d = i * 0.018;
     final p = _t(0.4 + d, 0.58 + d, Curves.easeOutBack).clamp(0.0, 1.0);
     return Opacity(
@@ -556,7 +558,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(f.icon, size: iconSz, color: Colors.white60),
+                ThinIcon(f.icon, size: iconSz, color: Colors.white60),
                 SizedBox(width: iconSz * 0.3),
                 Text(f.label, style: TextStyle(fontSize: textSz, color: Colors.white60, fontWeight: FontWeight.w500)),
               ],

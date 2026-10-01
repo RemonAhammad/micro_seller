@@ -145,7 +145,7 @@ class LocalBackupService {
     final file = File('${dir.path}/microseller_backup_$timestamp.json');
     await file.writeAsString(json);
 
-    await Share.shareXFiles([XFile(file.path)], subject: 'Micro Seller Backup');
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: 'Micro Seller Backup'));
 
     return file.path;
   }
@@ -165,17 +165,14 @@ class LocalBackupService {
   /// apply preferences via `Settings.importSettings`. Returns null when the
   /// user cancels the file picker.
   Future<Map<String, dynamic>?> importBackup(Isar isar) async {
-    final result = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
-    if (result == null || result.files.isEmpty) return null;
+    if (picked == null) return null;
 
-    final filePath = result.files.single.path;
-    if (filePath == null) return null;
-
-    final file = File(filePath);
-    final jsonStr = await file.readAsString();
+    // Content URIs (Android SAF) have no local path — read bytes instead.
+    final jsonStr = utf8.decode(await picked.readAsBytes());
     return await decodeAll(isar, jsonStr);
   }
 }

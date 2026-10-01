@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/services/auth_gate_service.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../core/constants/app_icons.dart';
 
 /// Reads a boolean env flag, defaulting to true if missing/blank/unparseable.
 /// Treats `'false'` / `'0'` / `'no'` / `'off'` (case-insensitive, trimmed)
@@ -221,7 +223,7 @@ class _PinSheetState extends State<_PinSheet> {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.close_rounded),
+                  icon: const ThinIcon(tabler.X.new),
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
                 Expanded(
@@ -357,7 +359,7 @@ class _Numpad extends StatelessWidget {
             key(
               '⌫',
               onTap: onBackspace,
-              child: Icon(Icons.backspace_outlined, color: cs.onSurfaceVariant),
+              child: ThinIcon(tabler.Backspace.new, color: cs.onSurfaceVariant),
             ),
           ],
         ),

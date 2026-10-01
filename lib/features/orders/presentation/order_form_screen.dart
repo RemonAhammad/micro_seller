@@ -24,6 +24,8 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class OrderFormScreen extends ConsumerStatefulWidget {
   final Order? order;
@@ -366,7 +368,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _InvoiceActionTile(
-            icon: Icons.picture_as_pdf_rounded,
+            icon: tabler.FileTypePdf.new,
             label: s.sharePdf,
             color: Colors.teal,
             onTap: () async {
@@ -380,13 +382,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 final dir = await getTemporaryDirectory();
                 final file = File('${dir.path}/${order.orderNumber}.pdf');
                 await file.writeAsBytes(bytes);
-                await Share.shareXFiles([XFile(file.path)]);
+                await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
               });
             },
           ),
           const SizedBox(height: 8),
           _InvoiceActionTile(
-            icon: Icons.download_rounded,
+            icon: tabler.Download.new,
             label: s.downloadPdf,
             color: Colors.blue,
             onTap: () async {
@@ -400,7 +402,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               var downloadDir = settings.downloadDirectory;
               if (downloadDir.isEmpty) {
                 if (!mounted) return;
-                final picked = await FilePicker.platform.getDirectoryPath(dialogTitle: 'Choose download folder');
+                final picked = await FilePicker.getDirectoryPath(dialogTitle: 'Choose download folder');
                 if (picked == null) return;
                 downloadDir = picked;
                 await ref.read(settingsProvider.notifier).updateDownloadDirectory(downloadDir);
@@ -419,7 +421,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           ),
           const SizedBox(height: 8),
           _InvoiceActionTile(
-            icon: Icons.print_rounded,
+            icon: tabler.Printer.new,
             label: s.print,
             color: Colors.indigo,
             onTap: () async {
@@ -434,12 +436,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           ),
           const SizedBox(height: 8),
           _InvoiceActionTile(
-            icon: Icons.message_rounded,
+            icon: tabler.Message.new,
             label: s.shareViaWhatsApp,
             color: Colors.green,
             onTap: () async {
               final text = pdfService.generateWhatsAppText(order, currencySymbol: currencySymbol);
-              await Share.share(text);
+              await SharePlus.instance.share(ShareParams(text: text));
             },
           ),
           const SizedBox(height: 16),
@@ -507,7 +509,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   controller: _deliveryAddressCtrl,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
-                  prefixIcon: const Icon(Icons.local_shipping_outlined),
+                  prefixIcon: const ThinIcon(tabler.TruckDelivery.new),
                 ),
                 const SizedBox(height: 8),
                 GestureDetector(
@@ -528,7 +530,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.calendar_today_rounded, size: 18, color: cs.primary),
+                        ThinIcon(tabler.Calendar.new, size: 18, color: cs.primary),
                         const SizedBox(width: 8),
                         Text(
                           _estimatedDeliveryDate != null
@@ -542,7 +544,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                           const Spacer(),
                           GestureDetector(
                             onTap: () => setState(() => _estimatedDeliveryDate = null),
-                            child: const Icon(Icons.clear, size: 18),
+                            child: const ThinIcon(tabler.X.new, size: 18),
                           ),
                         ],
                       ],
@@ -607,7 +609,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.person_outline, color: cs.primary, size: 22),
+            ThinIcon(tabler.User.new, color: cs.primary, size: 22),
             const SizedBox(width: 12),
             Expanded(
               child: _selectedCustomer != null
@@ -630,10 +632,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             if (_selectedCustomer != null)
               GestureDetector(
                 onTap: () => setState(() => _selectedCustomer = null),
-                child: Icon(Icons.close, size: 18, color: cs.outline),
+                child: ThinIcon(tabler.X.new, size: 18, color: cs.outline),
               )
             else
-              Icon(Icons.chevron_right, size: 20, color: cs.outline),
+              ThinIcon(tabler.ChevronRight.new, size: 20, color: cs.outline),
           ],
         ),
       ),
@@ -669,7 +671,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             const Spacer(),
             TextButton.icon(
               onPressed: _pickProducts,
-              icon: const Icon(Icons.add, size: 16),
+              icon: const ThinIcon(tabler.Plus.new, size: 16),
               label: Text(AppStrings.of(context).add),
             ),
           ],
@@ -686,7 +688,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.add_shopping_cart, size: 28, color: cs.onSurface.withValues(alpha: 0.3)),
+                  ThinIcon(tabler.ShoppingCartPlus.new, size: 28, color: cs.onSurface.withValues(alpha: 0.3)),
                   const SizedBox(height: 6),
                   Text(
                     AppStrings.of(context).tapToAddProducts,
@@ -744,12 +746,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _qtyButton(Icons.remove, () => _updateQty(index, -1), cs),
+                _qtyButton(tabler.Minus.new, () => _updateQty(index, -1), cs),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text('${item.qty}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 ),
-                _qtyButton(Icons.add, () => _updateQty(index, 1), cs),
+                _qtyButton(tabler.Plus.new, () => _updateQty(index, 1), cs),
               ],
             ),
           ),
@@ -769,20 +771,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           const SizedBox(width: 4),
           GestureDetector(
             onTap: () => _removeItem(index),
-            child: Icon(Icons.close, size: 16, color: cs.error.withValues(alpha: 0.6)),
+            child: ThinIcon(tabler.X.new, size: 16, color: cs.error.withValues(alpha: 0.6)),
           ),
         ],
       ),
     );
   }
 
-  Widget _qtyButton(IconData icon, VoidCallback onTap, ColorScheme cs) {
+  Widget _qtyButton(ThinIconBuilder icon, VoidCallback onTap, ColorScheme cs) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 16, color: cs.primary),
+        child: ThinIcon(icon, size: 16, color: cs.primary),
       ),
     );
   }
@@ -823,7 +825,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
           onChanged: (_) => setState(() {}),
-          prefixIcon: const Icon(Icons.percent, size: 18),
+          prefixIcon: const ThinIcon(tabler.Percentage.new, size: 18),
           helperText: _taxAmount > 0 ? 'Tax: ${CurrencyFormatter.format(_taxAmount)}' : null,
         ),
       ],
@@ -884,12 +886,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     if (_total <= 0) {
       status = const SizedBox.shrink();
     } else if (_overpaid) {
-      status = _paymentStatusLine(Icons.error_outline_rounded, s.amountPaidExceedsTotal, cs.error);
+      status = _paymentStatusLine(tabler.AlertCircle.new, s.amountPaidExceedsTotal, cs.error);
     } else if (_dueAmount <= 0.005) {
-      status = _paymentStatusLine(Icons.check_circle_rounded, s.paidInFull, AppColors.paymentPaid);
+      status = _paymentStatusLine(tabler.CircleCheck.new, s.paidInFull, AppColors.paymentPaid);
     } else {
       status = _paymentStatusLine(
-        Icons.menu_book_rounded,
+        tabler.Notebook.new,
         s.goesToDueBook(CurrencyFormatter.format(_dueAmount)),
         AppColors.paymentPartial,
       );
@@ -955,7 +957,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  Widget _paymentStatusLine(IconData icon, String text, Color color) {
+  Widget _paymentStatusLine(ThinIconBuilder icon, String text, Color color) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -965,7 +967,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color),
+          ThinIcon(icon, size: 18, color: color),
           const SizedBox(width: 8),
           Expanded(
             child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
@@ -1023,7 +1025,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             isLoading: _isLoading,
             isFullWidth: true,
             height: 50,
-            icon: Icons.check_rounded,
+            icon: tabler.Check.new,
           ),
         ],
       ),
@@ -1198,10 +1200,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: AppStrings.of(context).searchByNameOrSku,
-                prefixIcon: const Icon(Icons.search, size: 20),
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close, size: 18),
+                        icon: const ThinIcon(tabler.X.new, size: 18),
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _query = '');
@@ -1272,8 +1274,8 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                         ],
                                       ),
                                     ),
-                                    Icon(
-                                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                                    ThinIcon(
+                                      isExpanded ? tabler.ChevronUp.new : tabler.ChevronDown.new,
                                       size: 20,
                                       color: cs.onSurface.withValues(alpha: 0.5),
                                     ),
@@ -1341,7 +1343,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 _sheetQtyBtn(
-                                                  Icons.remove,
+                                                  tabler.Minus.new,
                                                   () => _setQty(
                                                     p,
                                                     qty - 1,
@@ -1361,7 +1363,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                   ),
                                                 ),
                                                 _sheetQtyBtn(
-                                                  Icons.add,
+                                                  tabler.Plus.new,
                                                   qty >= c.stockQty
                                                       ? null
                                                       : () => _setQty(
@@ -1456,7 +1458,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _sheetQtyBtn(
-                                      Icons.remove,
+                                      tabler.Minus.new,
                                       () => _setQty(p, qty - 1, availableStock: p.stockQty),
                                       cs,
                                     ),
@@ -1468,7 +1470,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                       ),
                                     ),
                                     _sheetQtyBtn(
-                                      Icons.add,
+                                      tabler.Plus.new,
                                       qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty),
                                       cs,
                                     ),
@@ -1495,13 +1497,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     );
   }
 
-  Widget _sheetQtyBtn(IconData icon, VoidCallback? onTap, ColorScheme cs) {
+  Widget _sheetQtyBtn(ThinIconBuilder icon, VoidCallback? onTap, ColorScheme cs) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 16, color: onTap != null ? cs.primary : cs.onSurface.withValues(alpha: 0.25)),
+        child: ThinIcon(icon, size: 16, color: onTap != null ? cs.primary : cs.onSurface.withValues(alpha: 0.25)),
       ),
     );
   }
@@ -1622,7 +1624,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     onTap: () => setState(() => _showForm = false),
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Icon(Icons.arrow_back, size: 20, color: cs.onSurface),
+                      child: ThinIcon(tabler.ArrowLeft.new, size: 20, color: cs.onSurface),
                     ),
                   ),
                 Text(
@@ -1649,7 +1651,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
                       labelText: s.customerName,
-                      prefixIcon: const Icon(Icons.person_outline, size: 20),
+                      prefixIcon: const ThinIcon(tabler.User.new, size: 20),
                       isDense: true,
                     ),
                   ),
@@ -1660,7 +1662,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]'))],
                     decoration: InputDecoration(
                       labelText: s.phone,
-                      prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                      prefixIcon: const ThinIcon(tabler.Phone.new, size: 20),
                       isDense: true,
                     ),
                   ),
@@ -1670,7 +1672,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     textCapitalization: TextCapitalization.sentences,
                     decoration: InputDecoration(
                       labelText: s.address,
-                      prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                      prefixIcon: const ThinIcon(tabler.MapPin.new, size: 20),
                       isDense: true,
                     ),
                   ),
@@ -1683,7 +1685,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                        : const Icon(Icons.check, size: 18),
+                        : const ThinIcon(tabler.Check.new, size: 18),
                     label: Text(_saving ? s.tr('loading') : s.addAndSelect),
                     style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
                   ),
@@ -1700,10 +1702,10 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                 onChanged: (v) => setState(() => _query = v.toLowerCase()),
                 decoration: InputDecoration(
                   hintText: s.searchByNameOrPhone,
-                  prefixIcon: const Icon(Icons.search, size: 20),
+                  prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                   suffixIcon: _query.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.close, size: 18),
+                          icon: const ThinIcon(tabler.X.new, size: 18),
                           onPressed: () {
                             _searchCtrl.clear();
                             setState(() => _query = '');
@@ -1732,14 +1734,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.person_add_outlined, size: 20, color: cs.primary),
+                      ThinIcon(tabler.UserPlus.new, size: 20, color: cs.primary),
                       const SizedBox(width: 10),
                       Text(
                         s.createNewCustomer,
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: cs.primary),
                       ),
                       const Spacer(),
-                      Icon(Icons.arrow_forward_ios, size: 14, color: cs.primary.withValues(alpha: 0.6)),
+                      ThinIcon(tabler.ChevronRight.new, size: 14, color: cs.primary.withValues(alpha: 0.6)),
                     ],
                   ),
                 ),
@@ -1792,7 +1794,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
 }
 
 class _InvoiceActionTile extends StatelessWidget {
-  final IconData icon;
+  final ThinIconBuilder icon;
   final String label;
   final Color color;
   final Future<void> Function() onTap;
@@ -1821,13 +1823,13 @@ class _InvoiceActionTile extends StatelessWidget {
                   color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: ThinIcon(icon, color: color, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(label, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
               ),
-              Icon(Icons.chevron_right_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+              ThinIcon(tabler.ChevronRight.new, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
             ],
           ),
         ),

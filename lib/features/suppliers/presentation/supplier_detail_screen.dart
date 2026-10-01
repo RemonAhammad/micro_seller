@@ -10,6 +10,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class SupplierDetailScreen extends ConsumerWidget {
   final int supplierId;
@@ -55,11 +57,11 @@ class _Body extends ConsumerWidget {
             title: Text(supplier.name),
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit_rounded),
+                icon: const ThinIcon(tabler.Pencil.new),
                 onPressed: () => context.push('/suppliers/${supplier.id}/edit'),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_rounded),
+                icon: const ThinIcon(tabler.Trash.new),
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
                     context,
@@ -67,7 +69,7 @@ class _Body extends ConsumerWidget {
                     message: '${s.delete} "${supplier.name}"? ${s.tr("deleteSupplierConfirm")}',
                     confirmText: s.delete,
                     isDestructive: true,
-                    icon: Icons.delete_rounded,
+                    icon: tabler.Trash.new,
                   );
                   if (ok == true && context.mounted) {
                     await ref.read(supplierProvider.notifier).deleteSupplier(supplier.id);
@@ -112,7 +114,7 @@ class _Body extends ConsumerWidget {
                                   const SizedBox(width: 8),
                                   GestureDetector(
                                     onTap: () => launchUrl(Uri.parse('tel:${supplier.phone}')),
-                                    child: Icon(Icons.call_rounded, size: 18, color: cs.primary),
+                                    child: ThinIcon(tabler.Phone.new, size: 18, color: cs.primary),
                                   ),
                                 ],
                               ),
@@ -156,7 +158,7 @@ class _Body extends ConsumerWidget {
                       child: FilledButton.icon(
                         onPressed: () =>
                             context.push('/suppliers/${supplier.id}/purchase/add'),
-                        icon: const Icon(Icons.add_shopping_cart, size: 18),
+                        icon: const ThinIcon(tabler.ShoppingCartPlus.new, size: 18),
                         label: Text(s.newPurchase),
                       ),
                     ),
@@ -165,7 +167,7 @@ class _Body extends ConsumerWidget {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => _showPayDialog(context, ref, supplier),
-                          icon: const Icon(Icons.payments_outlined, size: 18),
+                          icon: const ThinIcon(tabler.Cash.new, size: 18),
                           label: Text(s.payDue),
                         ),
                       ),
@@ -326,7 +328,7 @@ class _SupplierProductsSection extends ConsumerWidget {
                               color: cs.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.inventory_2_outlined,
+                            child: ThinIcon(tabler.Package.new,
                                 size: 18, color: cs.primary),
                           ),
                           const SizedBox(width: 10),

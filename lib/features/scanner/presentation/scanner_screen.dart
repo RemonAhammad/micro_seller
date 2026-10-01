@@ -8,6 +8,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/isar_service.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 /// Scanner screen lives as a sidebar branch. The user scans a QR/barcode and
 /// the screen looks up the matching product (by qrCode or sku). If found the
@@ -87,8 +89,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         title: Text(s.scanQrBarcode),
         actions: [
           IconButton(
-            icon: Icon(
-              _torchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+            icon: ThinIcon(
+              _torchOn ? tabler.Bolt.new : tabler.BoltOff.new,
               color: _torchOn ? Colors.yellow : Colors.white,
             ),
             onPressed: () {
@@ -210,12 +212,12 @@ class _ResultPanel extends StatelessWidget {
                     color: accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
+                  child: ThinIcon(
                     searching
-                        ? Icons.search_rounded
+                        ? tabler.Search.new
                         : found
-                        ? Icons.check_circle_rounded
-                        : Icons.help_outline_rounded,
+                        ? tabler.CircleCheck.new
+                        : tabler.HelpCircle.new,
                     color: accent,
                     size: 18,
                   ),
@@ -257,7 +259,7 @@ class _ResultPanel extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: onScanAgain,
-                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      icon: const ThinIcon(tabler.Refresh.new, size: 18),
                       label: Text(s.scanAgain, textAlign: TextAlign.center),
                     ),
                   ),
@@ -270,12 +272,12 @@ class _ResultPanel extends StatelessWidget {
                         : found
                         ? FilledButton.icon(
                             onPressed: onView,
-                            icon: const Icon(Icons.visibility_rounded, size: 18),
+                            icon: const ThinIcon(tabler.Eye.new, size: 18),
                             label: Text(s.viewProduct, textAlign: TextAlign.center),
                           )
                         : FilledButton.icon(
                             onPressed: onAdd,
-                            icon: const Icon(Icons.add_rounded, size: 18),
+                            icon: const ThinIcon(tabler.Plus.new, size: 18),
                             label: Text(s.addAsNewProduct, textAlign: TextAlign.center),
                             style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
                           ),
@@ -314,7 +316,7 @@ class _ProductPreview extends StatelessWidget {
               color: cs.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.inventory_2_rounded, color: cs.primary),
+            child: ThinIcon(tabler.Package.new, color: cs.primary),
           ),
           const SizedBox(width: 12),
           Expanded(

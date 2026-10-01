@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../core/constants/app_icons.dart';
 
 class EmptyState extends StatelessWidget {
-  final IconData icon;
+  final ThinIconBuilder icon;
   final String title;
   final String? subtitle;
   final String? actionLabel;
@@ -32,7 +34,7 @@ class EmptyState extends StatelessWidget {
                 color: theme.colorScheme.primary.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: ThinIcon(
                 icon,
                 size: 48,
                 color: theme.colorScheme.primary.withOpacity(0.5),
@@ -61,7 +63,7 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.add),
+                icon: const ThinIcon(tabler.Plus.new),
                 label: Text(actionLabel!),
               ),
             ],

@@ -12,6 +12,8 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/expense_card.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class ExpenseListScreen extends ConsumerWidget {
   const ExpenseListScreen({super.key});
@@ -26,7 +28,7 @@ class ExpenseListScreen extends ConsumerWidget {
         title: Text(s.expenses),
         actions: [
           IconButton(
-            icon: const Icon(Icons.file_download_outlined),
+            icon: const ThinIcon(tabler.FileDownload.new),
             tooltip: s.exportCsv,
             onPressed: () async {
               final expenses = ref.read(expensesProvider).value ?? [];
@@ -40,7 +42,7 @@ class ExpenseListScreen extends ConsumerWidget {
         data: (expenses) {
           if (expenses.isEmpty) {
             return EmptyState(
-              icon: Icons.account_balance_wallet_rounded,
+              icon: tabler.Wallet.new,
               title: s.noExpenses,
               subtitle: s.trackExpenses,
               actionLabel: s.addExpense,
@@ -127,7 +129,7 @@ class ExpenseListScreen extends ConsumerWidget {
                           message: '${s.delete} "${expense.title}"?',
                           confirmText: s.delete,
                           isDestructive: true,
-                          icon: Icons.delete_rounded,
+                          icon: tabler.Trash.new,
                         );
                         if (ok == true) {
                           final trashId = await ref
@@ -158,7 +160,7 @@ class ExpenseListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/expenses/add'),
         tooltip: s.addExpense,
-        child: const Icon(Icons.add),
+        child: const ThinIcon(tabler.Plus.new),
       ),
     );
   }

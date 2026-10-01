@@ -1,14 +1,27 @@
-import 'package:fl_chart/fl_chart.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/utils/currency_formatter.dart';
+import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../shared/widgets/loading_overlay.dart';
-import '../../dashboard/presentation/widgets/stat_card.dart';
+import '../../../data/services/csv_export_service.dart';
+import '../../../data/services/report_pdf_service.dart';
+import '../../../data/services/report_service.dart';
+import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../settings/providers/settings_provider.dart';
 import '../providers/reports_provider.dart';
+import 'widgets/report_tabs.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
+enum _Range { today, thisWeek, thisMonth, lastMonth, thisYear, custom }
+
+/// Business reports: one date range, four tabs (Profit & Sales, Dues &
+/// Payments, Stock & Returns, Purchases & Expenses), each exportable as PDF
+/// or CSV. All numbers come from `report_service.dart`.
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
 
@@ -16,52 +29,176 @@ class ReportsScreen extends ConsumerStatefulWidget {
   ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends ConsumerState<ReportsScreen> {
-  late DateTime _startDate;
-  late DateTime _endDate;
+class _ReportsScreenState extends ConsumerState<ReportsScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 4, vsync: this);
+  _Range _range = _Range.thisMonth;
+  late DateTime _from;
+  late DateTime _to;
+  bool _exporting = false;
+
+  static const _tabKeys = [
+    'tabProfitSales',
+    'tabDuesPayments',
+    'tabInventoryReturns',
+    'tabPurchasesExpenses',
+  ];
 
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _startDate = DateTime(now.year, now.month, 1);
-    _endDate = now;
+    _applyRange(_Range.thisMonth);
   }
 
-  Future<void> _pickDate({required bool isStart}) async {
-    final picked = await showDatePicker(
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  void _applyRange(_Range r) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final (from, to) = switch (r) {
+      _Range.today => (today, today),
+      _Range.thisWeek => (today.subtract(Duration(days: today.weekday - 1)), today),
+      _Range.thisMonth => (DateTime(now.year, now.month), today),
+      _Range.lastMonth => (
+          DateTime(now.year, now.month - 1),
+          DateTime(now.year, now.month, 0), // last day of previous month
+        ),
+      _Range.thisYear => (DateTime(now.year), today),
+      _Range.custom => (_from, _to),
+    };
+    _range = r;
+    _from = from;
+    _to = to;
+  }
+
+  Future<void> _pickCustom() async {
+    final picked = await showDateRangePicker(
       context: context,
-      initialDate: isStart ? _startDate : _endDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(start: _from, end: _to),
     );
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = picked;
-          if (_startDate.isAfter(_endDate)) _endDate = _startDate;
-        } else {
-          _endDate = picked;
-          if (_endDate.isBefore(_startDate)) _startDate = _endDate;
-        }
-      });
+    if (picked == null) return;
+    setState(() {
+      _range = _Range.custom;
+      _from = picked.start;
+      _to = picked.end;
+    });
+  }
+
+  String _rangeLabel(BuildContext context, _Range r) {
+    final s = AppStrings.of(context);
+    return switch (r) {
+        _Range.today => s.tr('today'),
+        _Range.thisWeek => s.tr('thisWeek'),
+        _Range.thisMonth => s.tr('thisMonth'),
+        _Range.lastMonth => s.tr('lastMonth'),
+        _Range.thisYear => s.tr('thisYear'),
+        _Range.custom => s.tr('custom'),
+      };
+  }
+
+  // ─── Export ──
+
+  Future<List<ReportTable>> _currentTables(ReportTr tr) async {
+    return switch (_tabs.index) {
+      0 => (await ref.read(salesReportProvider(_from, _to).future)).toTables(tr),
+      1 => (await ref.read(duesReportProvider(_from, _to).future)).toTables(tr),
+      2 => (await ref.read(inventoryReportProvider(_from, _to).future)).toTables(tr),
+      _ => (await ref.read(purchasesReportProvider(_from, _to).future)).toTables(tr),
+    };
+  }
+
+  Future<void> _export({required bool pdf}) async {
+    final s = AppStrings.of(context);
+    final settings = ref.read(settingsProvider.notifier);
+    final title = s.tr(_tabKeys[_tabs.index]);
+    final period =
+        '${DateFormatter.format(_from)} ${s.tr('dateRangeTo')} ${DateFormatter.format(_to)}';
+    String d(DateTime x) =>
+        '${x.year}-${x.month.toString().padLeft(2, '0')}-${x.day.toString().padLeft(2, '0')}';
+    final fileName = 'report_${_tabKeys[_tabs.index]}_${d(_from)}_${d(_to)}';
+    final direction = Directionality.of(context);
+
+    setState(() => _exporting = true);
+    try {
+      final tables = await _currentTables(s.tr);
+      if (pdf) {
+        final bytes = await ReportPdfService().generate(
+          shopName: settings.shopName,
+          reportTitle: title,
+          periodLabel: period,
+          tables: tables,
+          pageOf: s.pageOf,
+          textDirection: direction,
+        );
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/$fileName.pdf');
+        await file.writeAsBytes(bytes);
+        await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: title));
+      } else {
+        await CsvExportService().exportReport(
+          shopName: settings.shopName,
+          reportTitle: title,
+          periodLabel: period,
+          tables: tables,
+          fileName: fileName,
+        );
+      }
+    } catch (_) {
+      if (mounted) context.showErrorSnackBar(s.errorOccurred);
+    } finally {
+      if (mounted) setState(() => _exporting = false);
     }
   }
+
+  void _openExportSheet() {
+    final s = AppStrings.of(context);
+    AppBottomSheet.show(
+      context,
+      title: '${s.tr('export')} · ${s.tr(_tabKeys[_tabs.index])}',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const ThinIcon(tabler.FileTypePdf.new, color: Color(0xFFE53935)),
+            title: Text(s.shareAsPdf),
+            onTap: () {
+              Navigator.pop(context);
+              _export(pdf: true);
+            },
+          ),
+          ListTile(
+            leading: const ThinIcon(tabler.Table.new, color: AppColors.paymentPaid),
+            title: Text(s.tr('shareAsCsv')),
+            onTap: () {
+              Navigator.pop(context);
+              _export(pdf: false);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── UI ──
 
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final reportAsync = ref.watch(reportDataProvider(_startDate, _endDate));
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: CustomScrollView(
-        slivers: [
+      body: NestedScrollView(
+        headerSliverBuilder: (context, _) => [
           SliverAppBar(
-            expandedHeight: 120,
             pinned: true,
+            expandedHeight: 150,
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             centerTitle: false,
@@ -74,26 +211,57 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 letterSpacing: -0.5,
               ),
             ),
+            actions: [
+              _exporting
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    )
+                  : IconButton(
+                      tooltip: s.tr('export'),
+                      icon: const ThinIcon(tabler.Share.new),
+                      onPressed: _openExportSheet,
+                    ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(gradient: AppColors.dashboardGradient),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 8, 20, 0),
-                    child: Row(
+                    padding: const EdgeInsets.only(top: kToolbarHeight + 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _DateChip(
-                          label: DateFormatter.formatShort(_startDate),
-                          onTap: () => _pickDate(isStart: true),
+                        SizedBox(
+                          height: 36,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            children: [
+                              for (final r in _Range.values)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 6),
+                                  child: _RangeChip(
+                                    label: _rangeLabel(context, r),
+                                    selected: _range == r,
+                                    onTap: () => r == _Range.custom
+                                        ? _pickCustom()
+                                        : setState(() => _applyRange(r)),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text('to',
-                              style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        ),
-                        _DateChip(
-                          label: DateFormatter.formatShort(_endDate),
-                          onTap: () => _pickDate(isStart: false),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                          child: Text(
+                            '${DateFormatter.format(_from)}  ${s.tr('dateRangeTo')}  ${DateFormatter.format(_to)}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
                         ),
                       ],
                     ),
@@ -101,63 +269,24 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: reportAsync.when(
-              data: (data) => _ReportBody(data: data),
-              loading: () => const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: LoadingShimmer(height: 400, borderRadius: 14)),
-              ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(Icons.error_outline, size: 40, color: cs.error),
-                      const SizedBox(height: 12),
-                      Text(s.errorOccurred,
-                          style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 6),
-                      Text(e.toString(),
-                          style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-              ),
+            bottom: TabBar(
+              controller: _tabs,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              indicatorColor: Colors.white,
+              tabs: [for (final k in _tabKeys) Tab(text: s.tr(k))],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Date Chip ──────────────────────────────────────────────────────────────
-
-class _DateChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _DateChip({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        body: TabBarView(
+          controller: _tabs,
           children: [
-            const Icon(Icons.calendar_today, size: 12, color: Colors.white70),
-            const SizedBox(width: 5),
-            Text(label,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
+            SalesReportTab(from: _from, to: _to),
+            DuesReportTab(from: _from, to: _to),
+            InventoryReportTab(from: _from, to: _to),
+            PurchasesReportTab(from: _from, to: _to),
           ],
         ),
       ),
@@ -165,365 +294,32 @@ class _DateChip extends StatelessWidget {
   }
 }
 
-// ─── Report Body ────────────────────────────────────────────────────────────
+class _RangeChip extends StatelessWidget {
+  const _RangeChip({required this.label, required this.selected, required this.onTap});
 
-class _ReportBody extends StatelessWidget {
-  final ReportData data;
-  const _ReportBody({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppStrings.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: Column(
-        children: [
-          _buildStatCards(context),
-          const SizedBox(height: 14),
-          if (data.topProducts.isNotEmpty) ...[
-            _SectionCard(
-              title: s.topProducts,
-              icon: Icons.bar_chart_rounded,
-              iconColor: AppColors.primary,
-              child: _TopProductsChart(products: data.topProducts),
-            ),
-            const SizedBox(height: 14),
-          ],
-          if (data.salesByCategory.isNotEmpty) ...[
-            _SectionCard(
-              title: s.salesByCategory,
-              icon: Icons.pie_chart_rounded,
-              iconColor: AppColors.statusConfirmed,
-              child: _RankedList(
-                entries: data.salesByCategory,
-                formatValue: CurrencyFormatter.formatCompact,
-              ),
-            ),
-            const SizedBox(height: 14),
-          ],
-          if (data.topCustomers.isNotEmpty) ...[
-            _SectionCard(
-              title: s.topCustomers,
-              icon: Icons.people_rounded,
-              iconColor: AppColors.statusShipped,
-              child: _RankedList(
-                entries: data.topCustomers,
-                formatValue: CurrencyFormatter.formatCompact,
-              ),
-            ),
-            const SizedBox(height: 14),
-          ],
-          if (data.topProductsByQty.isNotEmpty)
-            _SectionCard(
-              title: s.topProductsByQty,
-              icon: Icons.inventory_2_rounded,
-              iconColor: AppColors.statusPending,
-              child: _RankedList(
-                entries: data.topProductsByQty,
-                formatValue: (v) => '${v.toInt()} ${s.tr("sold")}',
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCards(BuildContext context) {
-    final s = AppStrings.of(context);
-    final items = [
-      (
-        label: s.totalRevenue,
-        value: CurrencyFormatter.formatCompact(data.totalRevenue),
-        icon: Icons.trending_up_rounded,
-        color: AppColors.primary,
-      ),
-      (
-        label: s.totalProfit,
-        value: CurrencyFormatter.formatCompact(data.totalProfit),
-        icon: Icons.account_balance_wallet_rounded,
-        color: const Color(0xFF42A5F5),
-      ),
-      (
-        label: s.totalExpenses,
-        value: CurrencyFormatter.formatCompact(data.totalExpenses),
-        icon: Icons.receipt_long_rounded,
-        color: AppColors.statusCancelled,
-      ),
-      (
-        label: s.avgOrderValue,
-        value: CurrencyFormatter.formatCompact(data.avgOrderValue),
-        icon: Icons.shopping_cart_rounded,
-        color: AppColors.statusShipped,
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cols = (constraints.maxWidth / 170).floor().clamp(2, 4);
-        const spacing = 10.0;
-        final cardWidth = (constraints.maxWidth - spacing * (cols - 1)) / cols;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: items
-              .map((item) => SizedBox(
-                    width: cardWidth,
-                    height: 110,
-                    child: StatCard(
-                      label: item.label,
-                      value: item.value,
-                      icon: item.icon,
-                      color: item.color,
-                    ),
-                  ))
-              .toList(),
-        );
-      },
-    );
-  }
-}
-
-// ─── Top Products Bar Chart ─────────────────────────────────────────────────
-
-class _TopProductsChart extends StatelessWidget {
-  final Map<String, double> products;
-  const _TopProductsChart({required this.products});
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final entries = products.entries.toList();
-    final maxRevenue = entries.first.value;
-    final maxY = maxRevenue * 1.2;
-
-    return SizedBox(
-      height: 180,
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: maxY == 0 ? 100 : maxY,
-          barTouchData: BarTouchData(
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                final name = entries[group.x].key;
-                return BarTooltipItem(
-                  '$name\n${CurrencyFormatter.format(rod.toY)}',
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
-                );
-              },
+    return Material(
+      color: selected ? Colors.white : Colors.white.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? AppColors.primary : Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
             ),
           ),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 32,
-                getTitlesWidget: (value, meta) {
-                  final i = value.toInt();
-                  if (i < 0 || i >= entries.length) return const SizedBox.shrink();
-                  final name = entries[i].key;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      name.length > 8 ? '${name.substring(0, 8)}..' : name,
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: cs.onSurface.withValues(alpha: 0.55),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                },
-              ),
-            ),
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY == 0 ? 25 : maxY / 4,
-            getDrawingHorizontalLine: (value) => FlLine(
-              color: cs.onSurface.withValues(alpha: 0.05),
-              strokeWidth: 1,
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          barGroups: entries.asMap().entries.map((e) {
-            return BarChartGroupData(
-              x: e.key,
-              barRods: [
-                BarChartRodData(
-                  toY: e.value.value,
-                  color: AppColors.primary.withValues(alpha: 0.8),
-                  width: 16,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
-                  backDrawRodData: BackgroundBarChartRodData(
-                    show: true,
-                    toY: maxY == 0 ? 100 : maxY,
-                    color: cs.onSurface.withValues(alpha: 0.03),
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
         ),
-      ),
-    );
-  }
-}
-
-// ─── Ranked List ────────────────────────────────────────────────────────────
-
-class _RankedList extends StatelessWidget {
-  final Map<String, double> entries;
-  final String Function(double) formatValue;
-  const _RankedList({required this.entries, required this.formatValue});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final items = entries.entries.toList();
-    final maxValue = items.isNotEmpty ? items.first.value : 1.0;
-
-    return Column(
-      children: items.asMap().entries.map((e) {
-        final rank = e.key + 1;
-        final item = e.value;
-        final fraction = maxValue > 0 ? item.value / maxValue : 0.0;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 22,
-                child: Text(
-                  '$rank',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: rank <= 3
-                        ? AppColors.primary
-                        : cs.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.key,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: cs.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: fraction,
-                        minHeight: 4,
-                        backgroundColor: cs.onSurface.withValues(alpha: 0.06),
-                        valueColor:
-                            AlwaysStoppedAnimation(AppColors.primary.withValues(alpha: 0.6)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                formatValue(item.value),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-// ─── Section Card (same pattern as dashboard) ───────────────────────────────
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color iconColor;
-  final Widget child;
-
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Icon(icon, color: iconColor, size: 14),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
       ),
     );
   }

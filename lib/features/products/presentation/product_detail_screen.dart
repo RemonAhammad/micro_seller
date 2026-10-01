@@ -14,6 +14,8 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import 'widgets/stock_badge.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
   final int productId;
@@ -69,11 +71,11 @@ class _ProductDetailBody extends ConsumerWidget {
                 pinned: true,
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.edit_rounded),
+                    icon: const ThinIcon(tabler.Pencil.new),
                     onPressed: () => context.push('/products/$productId/edit'),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_rounded),
+                    icon: const ThinIcon(tabler.Trash.new),
                     onPressed: () async {
                       final ok = await ConfirmDialog.show(
                         context,
@@ -81,7 +83,7 @@ class _ProductDetailBody extends ConsumerWidget {
                         message: s.deleteProductConfirm,
                         confirmText: s.delete,
                         isDestructive: true,
-                        icon: Icons.delete_rounded,
+                        icon: tabler.Trash.new,
                       );
                       if (ok == true && context.mounted) {
                         final trashId = await ref
@@ -117,7 +119,7 @@ class _ProductDetailBody extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          child: const Icon(Icons.inventory_2_rounded, size: 80, color: Colors.white30),
+                          child: const ThinIcon(tabler.Package.new, size: 80, color: Colors.white30),
                         ),
                 ),
               ),
@@ -318,7 +320,7 @@ class _ProductDetailBody extends ConsumerWidget {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () => context.push('/inventory/adjust/$productId'),
-                          icon: const Icon(Icons.tune_rounded),
+                          icon: const ThinIcon(tabler.AdjustmentsHorizontal.new),
                           label: Text(s.adjustStock),
                         ),
                       ),

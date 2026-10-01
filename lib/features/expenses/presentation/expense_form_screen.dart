@@ -10,6 +10,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class ExpenseFormScreen extends ConsumerStatefulWidget {
   final Expense? expense;
@@ -159,7 +161,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
                 ],
                 validator: (v) => Validators.positiveNumber(v, 'Amount'),
-                prefixIcon: const Icon(Icons.monetization_on_outlined, size: 18),
+                prefixIcon: const ThinIcon(tabler.Coin.new, size: 18),
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
@@ -177,7 +179,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded,
+                      ThinIcon(tabler.Calendar.new,
                           size: 18,
                           color: theme.colorScheme.onSurface.withOpacity(0.6)),
                       const SizedBox(width: 12),
@@ -198,7 +200,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right_rounded,
+                      ThinIcon(tabler.ChevronRight.new,
                           color: theme.colorScheme.outline),
                     ],
                   ),
@@ -273,7 +275,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 isLoading: _isLoading,
                 isFullWidth: true,
                 height: 52,
-                icon: isEdit ? Icons.save_rounded : Icons.add_rounded,
+                icon: isEdit ? tabler.DeviceFloppy.new : tabler.Plus.new,
               ),
             ],
           ),

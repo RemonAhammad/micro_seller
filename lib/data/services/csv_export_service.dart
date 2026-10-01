@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/order.dart';
 import '../models/product.dart';
 import '../models/expense.dart';
+import 'report_service.dart';
 
 class CsvExportService {
   /// Export orders to CSV and share via system share sheet.
@@ -92,13 +93,48 @@ class CsvExportService {
     await _shareAsCsv(rows, 'expenses_export');
   }
 
-  Future<void> _shareAsCsv(List<List<dynamic>> rows, String fileName) async {
-    final csv = const ListToCsvConverter().convert(rows);
+  /// Export one Reports tab: a header (shop, report, period), then each
+  /// [ReportTable] as its own block separated by a blank row.
+  Future<void> exportReport({
+    required String shopName,
+    required String reportTitle,
+    required String periodLabel,
+    required List<ReportTable> tables,
+    required String fileName,
+  }) async {
+    final rows = <List<dynamic>>[
+      [shopName],
+      [reportTitle],
+      [periodLabel],
+      [],
+      for (final t in tables) ...[
+        [t.title],
+        t.headers,
+        for (final r in t.rows) [for (final c in r) _safeCell(c)],
+        [],
+      ],
+    ];
+    // BOM so Excel opens Bengali / Arabic text as UTF-8.
+    await _shareAsCsv(rows, fileName, bom: true);
+  }
+
+  /// Numbers stay numbers (summable in Excel). Text that a spreadsheet would
+  /// run as a formula (=, +, -, @ — e.g. a product named "=SUM(...)") gets a
+  /// leading apostrophe.
+  static Object _safeCell(Object c) {
+    if (c is num) return c;
+    final s = c.toString();
+    return s.isNotEmpty && '=+-@'.contains(s[0]) ? "'$s" : s;
+  }
+
+  Future<void> _shareAsCsv(List<List<dynamic>> rows, String fileName,
+      {bool bom = false}) async {
+    final text = csv.encode(rows);
     final dir = await getTemporaryDirectory();
     final file = File(
       '${dir.path}/${fileName}_${DateTime.now().millisecondsSinceEpoch}.csv',
     );
-    await file.writeAsString(csv);
-    await Share.shareXFiles([XFile(file.path)], subject: fileName);
+    await file.writeAsString(bom ? '\uFEFF$text' : text);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: fileName));
   }
 }

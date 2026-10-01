@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
@@ -81,8 +81,72 @@ class DriveService {
   static const _maxBackups = 5;
   static const _backupPrefix = 'sellerbook_backup';
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: _scopes);
   final LocalBackupService _localBackup = LocalBackupService();
+
+  // ── Google Sign-In (google_sign_in 7) ──
+  //
+  // v7 splits *authentication* (who the user is — `authenticate()`, needs UI)
+  // from *authorization* (Drive access token — `authorizationClient`). Drive
+  // only needs authorization, which can be checked without any UI, so the
+  // background worker never risks showing a picker.
+  //
+  // On Android without google-services.json, v7 requires the **web** OAuth
+  // client id as `serverClientId` (GOOGLE_OAUTH_WEB_CLIENT_ID in .env).
+
+  static bool _initialized = false;
+  static GoogleSignInAccount? _account;
+
+  static Future<void> _ensureInitialized() async {
+    if (_initialized) return;
+    final webClientId = dotenv.isInitialized
+        ? dotenv.maybeGet('GOOGLE_OAUTH_WEB_CLIENT_ID')?.trim()
+        : null;
+    await GoogleSignIn.instance.initialize(
+      serverClientId:
+          (webClientId?.isNotEmpty ?? false) ? webClientId : null,
+    );
+    GoogleSignIn.instance.authenticationEvents.listen(
+      (e) => _account = switch (e) {
+        GoogleSignInAuthenticationEventSignIn() => e.user,
+        GoogleSignInAuthenticationEventSignOut() => null,
+      },
+      onError: (_) {},
+    );
+    _initialized = true;
+  }
+
+  /// Maps a v7 sign-in failure onto the app's stable [DriveErrorCode]s.
+  DriveBackupException _mapSignInError(Object e, StackTrace st) {
+    if (e is GoogleSignInException) {
+      switch (e.code) {
+        case GoogleSignInExceptionCode.canceled:
+          return DriveBackupException(
+            DriveErrorCode.signInCancelled,
+            'Sign-in was cancelled.',
+            cause: e,
+            stackTrace: st,
+          );
+        case GoogleSignInExceptionCode.clientConfigurationError:
+        case GoogleSignInExceptionCode.providerConfigurationError:
+          return DriveBackupException(
+            DriveErrorCode.developerError,
+            'Sign-in is not configured correctly. Verify the SHA-1, package '
+                'name, the web client id (serverClientId) and that the Google '
+                'Drive API is enabled in the Cloud project.',
+            cause: e,
+            stackTrace: st,
+          );
+        default:
+          break;
+      }
+    }
+    return DriveBackupException(
+      DriveErrorCode.signInFailed,
+      'Sign-in failed. Please try again.',
+      cause: e,
+      stackTrace: st,
+    );
+  }
 
   void _logError(String tag, Object error, StackTrace stack) {
     developer.log(
@@ -97,100 +161,92 @@ class DriveService {
     }
   }
 
+  /// Drive API client. With [interactive] false (background worker, app
+  /// start) this never shows UI: it only uses an already-granted token and
+  /// throws [DriveErrorCode.notSignedIn] otherwise.
   Future<drive.DriveApi> _getDriveApi({bool interactive = true}) async {
-    GoogleSignInAccount? account;
+    GoogleSignInClientAuthorization? authz;
     try {
-      account = _googleSignIn.currentUser ??
-          await _googleSignIn.signInSilently();
-      // Only fall back to the interactive prompt when called from a UI
-      // context. Background workers must never call signIn() — it would
-      // crash because there's no Activity to host the picker.
-      if (account == null && interactive) {
-        account = await _googleSignIn.signIn();
+      await _ensureInitialized();
+      final client = GoogleSignIn.instance.authorizationClient;
+      authz = await client.authorizationForScopes(_scopes);
+      if (authz == null && interactive) {
+        authz = await client.authorizeScopes(_scopes);
       }
     } catch (e, st) {
-      _logError('signIn', e, st);
-      throw DriveBackupException(
-        DriveErrorCode.signInFailed,
-        'Could not sign in to Google. Please try again.',
-        cause: e,
-        stackTrace: st,
-      );
+      _logError('authorize', e, st);
+      throw _mapSignInError(e, st);
     }
 
-    if (account == null) {
+    if (authz == null) {
       throw DriveBackupException(
         DriveErrorCode.notSignedIn,
         'You need to sign in to Google before backing up.',
       );
     }
 
-    try {
-      final auth = await account.authentication;
-      final client = _AuthClient(
-        {'Authorization': 'Bearer ${auth.accessToken}'},
-        http.Client(),
-      );
-      return drive.DriveApi(client);
-    } catch (e, st) {
-      _logError('getAuthHeaders', e, st);
-      throw DriveBackupException(
-        DriveErrorCode.signInFailed,
-        'Could not authorize Google Drive access.',
-        cause: e,
-        stackTrace: st,
-      );
-    }
+    final client = _AuthClient(
+      {'Authorization': 'Bearer ${authz.accessToken}'},
+      http.Client(),
+    );
+    return drive.DriveApi(client);
   }
 
+  /// Interactive sign-in + Drive consent. Returns null if the user cancels.
   Future<GoogleSignInAccount?> signIn() async {
     try {
-      return await _googleSignIn.signIn();
-    } on PlatformException catch (e, st) {
-      _logError('signIn', e, st);
-      // ApiException: 10 == DEVELOPER_ERROR — SHA-1 / package / API enablement
-      // mismatch in Cloud Console.
-      if (e.code == 'sign_in_failed' &&
-          (e.message?.contains('ApiException: 10') ?? false)) {
-        throw DriveBackupException(
-          DriveErrorCode.developerError,
-          'Sign-in is not configured correctly. Verify the SHA-1, package name, '
-              'and that the Google Drive API is enabled in the Cloud project.',
-          cause: e,
-          stackTrace: st,
-        );
-      }
-      throw DriveBackupException(
-        DriveErrorCode.signInFailed,
-        'Sign-in failed. Please try again.',
-        cause: e,
-        stackTrace: st,
-      );
+      await _ensureInitialized();
+      final account =
+          await GoogleSignIn.instance.authenticate(scopeHint: _scopes);
+      // Grant Drive access now so later (and background) backups don't need UI.
+      await account.authorizationClient.authorizeScopes(_scopes);
+      _account = account;
+      return account;
     } catch (e, st) {
       _logError('signIn', e, st);
-      throw DriveBackupException(
-        DriveErrorCode.signInFailed,
-        'Sign-in failed. Please try again.',
-        cause: e,
-        stackTrace: st,
-      );
+      final mapped = _mapSignInError(e, st);
+      if (mapped.code == DriveErrorCode.signInCancelled) return null;
+      throw mapped;
     }
   }
 
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
+      await _ensureInitialized();
+      await GoogleSignIn.instance.signOut();
+      _account = null;
     } catch (e, st) {
       _logError('signOut', e, st);
     }
   }
 
+  /// The signed-in account, restored without a picker when possible (used to
+  /// show the email in Settings). May be null even when [hasDriveAccess] is
+  /// true — Drive backups only need the latter.
   Future<GoogleSignInAccount?> getCurrentUser() async {
     try {
-      return _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
+      await _ensureInitialized();
+      if (_account != null) return _account;
+      final restored =
+          await GoogleSignIn.instance.attemptLightweightAuthentication();
+      return _account ?? restored;
     } catch (e, st) {
       _logError('getCurrentUser', e, st);
       return null;
+    }
+  }
+
+  /// True if a Drive token is available without any UI — the check the
+  /// auto-backup paths use before running.
+  Future<bool> hasDriveAccess() async {
+    try {
+      await _ensureInitialized();
+      return await GoogleSignIn.instance.authorizationClient
+              .authorizationForScopes(_scopes) !=
+          null;
+    } catch (e, st) {
+      _logError('hasDriveAccess', e, st);
+      return false;
     }
   }
 

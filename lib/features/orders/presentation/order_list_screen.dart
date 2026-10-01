@@ -8,6 +8,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/order_card.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class OrderListScreen extends ConsumerStatefulWidget {
   const OrderListScreen({super.key});
@@ -67,7 +69,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
         title: Text(s.orders),
         actions: [
           IconButton(
-            icon: const Icon(Icons.file_download_outlined),
+            icon: const ThinIcon(tabler.FileDownload.new),
             tooltip: s.exportCsv,
             onPressed: () async {
               final orders = ref.read(ordersProvider).value ?? [];
@@ -140,7 +142,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/orders/add'),
         tooltip: s.addOrder,
-        child: const Icon(Icons.add),
+        child: const ThinIcon(tabler.Plus.new),
       ),
     );
   }
@@ -194,7 +196,7 @@ class _OrderList extends ConsumerWidget {
     final s = AppStrings.of(context);
     if (orders.isEmpty) {
       return EmptyState(
-        icon: Icons.receipt_long_rounded,
+        icon: tabler.Receipt.new,
         title: s.noDataFound,
         subtitle: s.addFirstOrder,
       );

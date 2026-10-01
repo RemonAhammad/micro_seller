@@ -21,6 +21,7 @@ import 'widgets/sales_chart.dart';
 import 'widgets/low_stock_list.dart';
 import 'widgets/due_summary_card.dart';
 import '../../customers/providers/dues_provider.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -158,7 +159,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     Expanded(
                                       child: _SectionCard(
                                         title: s.lowStockItems,
-                                        icon: Icons.inventory_2_rounded,
+                                        icon: tabler.Package.new,
                                         iconColor: AppColors.statusPending,
                                         action: TextButton(
                                           onPressed: () =>
@@ -191,7 +192,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                       16, 0, 16, 12),
                                   child: _SectionCard(
                                     title: s.lowStockItems,
-                                    icon: Icons.inventory_2_rounded,
+                                    icon: tabler.Package.new,
                                     iconColor: AppColors.statusPending,
                                     action: TextButton(
                                       onPressed: () =>
@@ -228,7 +229,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final s = AppStrings.of(context);
     return _SectionCard(
       title: s.dueBook,
-      icon: Icons.menu_book_rounded,
+      icon: tabler.Notebook.new,
       iconBuilder: AppIcons.dueBook,
       iconColor: AppColors.paymentPartial,
       action: TextButton(
@@ -423,7 +424,7 @@ class _DashboardBody extends StatelessWidget {
                     flex: 3,
                     child: _SectionCard(
                       title: s.weeklySales,
-                      icon: Icons.bar_chart_rounded,
+                      icon: tabler.ChartBar.new,
                       iconColor: AppColors.primary,
                       child: SalesChart(weeklySales: stats.weeklySales),
                     ),
@@ -436,7 +437,7 @@ class _DashboardBody extends StatelessWidget {
                     flex: 2,
                     child: _SectionCard(
                       title: s.orderStatus,
-                      icon: Icons.donut_small_rounded,
+                      icon: tabler.ChartDonut.new,
                       iconColor: AppColors.statusConfirmed,
                       child:
                           OrderStatusChart(statusCounts: statusCounts),
@@ -448,7 +449,7 @@ class _DashboardBody extends StatelessWidget {
             if (stats.weeklySales.isNotEmpty)
               _SectionCard(
                 title: s.weeklySales,
-                icon: Icons.bar_chart_rounded,
+                icon: tabler.ChartBar.new,
                 iconColor: AppColors.primary,
                 child: SalesChart(weeklySales: stats.weeklySales),
               ),
@@ -456,7 +457,7 @@ class _DashboardBody extends StatelessWidget {
             if (statusCounts.isNotEmpty)
               _SectionCard(
                 title: s.orderStatus,
-                icon: Icons.donut_small_rounded,
+                icon: tabler.ChartDonut.new,
                 iconColor: AppColors.statusConfirmed,
                 child: OrderStatusChart(statusCounts: statusCounts),
               ),
@@ -468,7 +469,7 @@ class _DashboardBody extends StatelessWidget {
             if (!isWide) ...[
               _SectionCard(
                 title: s.revenueVsExpenses,
-                icon: Icons.compare_arrows_rounded,
+                icon: tabler.ArrowsLeftRight.new,
                 iconColor: AppColors.chartProfit,
                 child: RevenueExpenseChart(
                   weeklySales: stats.weeklySales,
@@ -479,7 +480,7 @@ class _DashboardBody extends StatelessWidget {
             ] else ...[
               _SectionCard(
                 title: s.revenueVsExpenses7d,
-                icon: Icons.compare_arrows_rounded,
+                icon: tabler.ArrowsLeftRight.new,
                 iconColor: AppColors.chartProfit,
                 child: RevenueExpenseChart(
                   weeklySales: stats.weeklySales,
@@ -634,7 +635,7 @@ class _OverdueBanner extends StatelessWidget {
 
 class _SectionCard extends StatelessWidget {
   final String title;
-  final IconData icon;
+  final ThinIconBuilder icon;
 
   /// Thin Tabler icon; when set it's drawn instead of [icon].
   final ThinIconBuilder? iconBuilder;
@@ -684,7 +685,7 @@ class _SectionCard extends StatelessWidget {
                 child: Center(
                   child: iconBuilder != null
                       ? ThinIcon(iconBuilder!, color: iconColor, size: 16)
-                      : Icon(icon, color: iconColor, size: 14),
+                      : ThinIcon(icon, color: iconColor, size: 14),
                 ),
               ),
               const SizedBox(width: 8),
@@ -749,8 +750,8 @@ class _DateRangeBar extends ConsumerWidget {
             ),
             const Spacer(),
             IconButton(
-              icon: Icon(
-                Icons.date_range_rounded,
+              icon: ThinIcon(
+                tabler.CalendarEvent.new,
                 size: 20,
                 color: activePreset == DateRangePreset.custom
                     ? AppColors.primary
@@ -889,7 +890,7 @@ class _ErrorBody extends StatelessWidget {
         padding: const EdgeInsets.all(32),
         child: Column(
           children: [
-            const Icon(Icons.error_outline, size: 40, color: Colors.red),
+            const ThinIcon(tabler.AlertCircle.new, size: 40, color: Colors.red),
             const SizedBox(height: 12),
             Text(AppStrings.of(context).errorOccurred,
                 style: Theme.of(context).textTheme.titleSmall),

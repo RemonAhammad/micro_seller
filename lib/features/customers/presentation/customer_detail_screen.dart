@@ -17,6 +17,8 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../orders/presentation/widgets/order_card.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class CustomerDetailScreen extends ConsumerWidget {
   final int customerId;
@@ -73,12 +75,12 @@ class _CustomerDetailBody extends ConsumerWidget {
             title: Text(customer.name),
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit_rounded),
+                icon: const ThinIcon(tabler.Pencil.new),
                 onPressed: () =>
                     context.push('/customers/$customerId/edit'),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_rounded),
+                icon: const ThinIcon(tabler.Trash.new),
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
                     context,
@@ -86,7 +88,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                     message: '${s.delete} ${customer.name}?',
                     confirmText: s.delete,
                     isDestructive: true,
-                    icon: Icons.delete_rounded,
+                    icon: tabler.Trash.new,
                   );
                   if (ok == true && context.mounted) {
                     final trashId = await ref
@@ -161,7 +163,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                       child: _StatChip(
                         label: s.orders,
                         value: '${customer.totalOrders}',
-                        icon: Icons.receipt_long_rounded,
+                        icon: tabler.Receipt.new,
                         color: theme.colorScheme.primary,
                       ),
                     ),
@@ -171,7 +173,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                         label: s.totalSpent,
                         value:
                             CurrencyFormatter.formatCompact(customer.totalSpent),
-                        icon: Icons.payments_rounded,
+                        icon: tabler.Cash.new,
                         color: AppColors.statusCompleted,
                       ),
                     ),
@@ -182,7 +184,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                           label: s.outstanding,
                           value: CurrencyFormatter.formatCompact(
                               customer.outstandingBalance),
-                          icon: Icons.money_off_rounded,
+                          icon: tabler.CashOff.new,
                           color: AppColors.paymentUnpaid,
                         ),
                       ),
@@ -322,20 +324,20 @@ class _DueActions extends ConsumerWidget {
               onPressed: () =>
                   showCollectPaymentSheet(
                   context, customer, due.orderDues, due.totalDue),
-              icon: const Icon(Icons.payments_rounded, size: 18),
+              icon: const ThinIcon(tabler.Cash.new, size: 18),
               label: Text(s.collect),
             ),
             OutlinedButton.icon(
               onPressed: () =>
                   sendDueReminder(
                   context, ref, customer, due.orderDues, due.totalDue),
-              icon: const Icon(Icons.chat_rounded, size: 18),
+              icon: const ThinIcon(tabler.MessageCircle.new, size: 18),
               label: Text(s.remind),
             ),
           ],
           OutlinedButton.icon(
             onPressed: () => shareCustomerStatement(context, ref, customer),
-            icon: const Icon(Icons.description_rounded, size: 18),
+            icon: const ThinIcon(tabler.FileDescription.new, size: 18),
             label: Text(s.statement),
           ),
         ],
@@ -380,7 +382,7 @@ class _PaymentHistory extends ConsumerWidget {
 class _StatChip extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final ThinIconBuilder icon;
   final Color color;
 
   const _StatChip(
@@ -400,7 +402,7 @@ class _StatChip extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 20),
+          ThinIcon(icon, color: color, size: 20),
           const SizedBox(height: 6),
           Text(
             value,
@@ -510,7 +512,7 @@ class _PurchaseHistoryChart extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.bar_chart_rounded,
+              const ThinIcon(tabler.ChartBar.new,
                   size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
               Text(
@@ -529,7 +531,7 @@ class _PurchaseHistoryChart extends StatelessWidget {
                 maxY: effectiveMaxY,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
-                    tooltipRoundedRadius: 8,
+                    tooltipBorderRadius: BorderRadius.circular(8),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final month = entries[group.x.toInt()].key;
                       return BarTooltipItem(

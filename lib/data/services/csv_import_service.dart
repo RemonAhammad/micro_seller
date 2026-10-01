@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/product.dart';
@@ -13,16 +13,15 @@ class CsvImportService {
   /// Pick a CSV file and parse products from it.
   /// Expected CSV columns: Name, SKU, Category, Selling Price, Cost Price, Stock, Low Stock Threshold
   Future<CsvImportResult?> importProducts() async {
-    final result = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['csv'],
     );
+    if (picked == null) return null;
 
-    if (result == null || result.files.isEmpty) return null;
-
-    final file = File(result.files.single.path!);
-    final csvString = await file.readAsString();
-    final rows = const CsvToListConverter().convert(csvString, eol: '\n');
+    // Content URIs (Android SAF) have no local path — read bytes instead.
+    final csvString = utf8.decode(await picked.readAsBytes());
+    final rows = csv.decode(csvString);
 
     if (rows.isEmpty) {
       return CsvImportResult(products: [], errors: ['CSV file is empty']);

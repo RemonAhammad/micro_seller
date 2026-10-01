@@ -19,7 +19,7 @@ class NotificationService {
     );
 
     await _plugin.initialize(
-      const InitializationSettings(
+      settings: const InitializationSettings(
         android: androidSettings,
         iOS: darwinSettings,
         macOS: darwinSettings,
@@ -36,10 +36,10 @@ class NotificationService {
         products.length > 3 ? ' and ${products.length - 3} more' : '';
 
     await _plugin.show(
-      1,
-      'Low Stock Alert',
-      '$names$extra ${products.length == 1 ? "is" : "are"} running low',
-      const NotificationDetails(
+      id: 1,
+      title: 'Low Stock Alert',
+      body: '$names$extra ${products.length == 1 ? "is" : "are"} running low',
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'low_stock',
           'Low Stock Alerts',
@@ -57,10 +57,10 @@ class NotificationService {
     if (unpaidCount == 0) return;
 
     await _plugin.show(
-      2,
-      'Payment Reminder',
-      '$unpaidCount unpaid order${unpaidCount == 1 ? "" : "s"} with outstanding balance',
-      const NotificationDetails(
+      id: 2,
+      title: 'Payment Reminder',
+      body: '$unpaidCount unpaid order${unpaidCount == 1 ? "" : "s"} with outstanding balance',
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'payment_reminder',
           'Payment Reminders',
@@ -80,10 +80,10 @@ class NotificationService {
   /// with a "Sign in" button to restore the connection.
   static Future<void> showAutoBackupPaused() async {
     await _plugin.show(
-      3,
-      'Auto backup paused',
-      'Sign in to Google Drive again to resume backups.',
-      const NotificationDetails(
+      id: 3,
+      title: 'Auto backup paused',
+      body: 'Sign in to Google Drive again to resume backups.',
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'auto_backup',
           'Auto Backup',

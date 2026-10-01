@@ -25,6 +25,7 @@ Read the surrounding code, not just the changed lines: an invariant usually brea
 10. **Rendering to PDF or image:** `captureFromWidget` gets a finite `targetSize` and a hand-wired `MediaQuery`/`Directionality`/`DefaultTextStyle`/`Material`, never a `MaterialApp`. Images are pre-read to bytes (`Image.memory`), not `Image.file`.
 11. **Currency:** `CurrencyFormatter.format`, never a literal symbol.
 12. **Auth:** destructive bulk actions go through `runAuthGate`.
+13. **Icons:** no Material `Icons.*` / `Icon(`; thin Tabler via `ThinIcon(tabler.X.new)`, icon params typed `ThinIconBuilder`.
 
 Also report ordinary correctness bugs you find along the way: null handling, off-by-one errors, async gaps that use `context` without a `mounted` check.
 

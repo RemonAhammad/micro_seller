@@ -48,11 +48,10 @@ class AuthGateService {
     try {
       return await _auth.authenticate(
         localizedReason: reason,
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-          useErrorDialogs: true,
-        ),
+        biometricOnly: true,
+        // Was `stickyAuth` in local_auth 2: keep the prompt alive if the app
+        // is backgrounded mid-auth.
+        persistAcrossBackgrounding: true,
       );
     } on PlatformException {
       return false;

@@ -6,6 +6,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class SupplierListScreen extends ConsumerWidget {
   const SupplierListScreen({super.key});
@@ -22,7 +24,7 @@ class SupplierListScreen extends ConsumerWidget {
         title: Text(s.suppliers),
         actions: [
           IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined),
+            icon: const ThinIcon(tabler.ShoppingBag.new),
             tooltip: s.allPurchases,
             onPressed: () => context.push('/suppliers/purchases'),
           ),
@@ -35,7 +37,7 @@ class SupplierListScreen extends ConsumerWidget {
           FloatingActionButton.extended(
             heroTag: 'newPurchase',
             onPressed: () => context.push('/suppliers/purchases/add'),
-            icon: const Icon(Icons.shopping_bag),
+            icon: const ThinIcon(tabler.ShoppingBag.new),
             label: Text(s.newPurchase),
           ),
           const SizedBox(height: 12),
@@ -44,7 +46,7 @@ class SupplierListScreen extends ConsumerWidget {
             onPressed: () => context.push('/suppliers/add'),
             tooltip: s.addSupplier,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.add),
+            child: const ThinIcon(tabler.Plus.new),
           ),
         ],
       ),
@@ -52,7 +54,7 @@ class SupplierListScreen extends ConsumerWidget {
         data: (suppliers) {
           if (suppliers.isEmpty) {
             return EmptyState(
-              icon: Icons.local_shipping_outlined,
+              icon: tabler.TruckDelivery.new,
               title: s.noSuppliersYet,
               subtitle: s.tr('addSuppliersFromMenu'),
             );

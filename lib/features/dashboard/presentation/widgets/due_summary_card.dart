@@ -5,6 +5,7 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/aging_bar.dart';
 import '../../../customers/presentation/widgets/due_actions.dart';
 import '../../../customers/providers/dues_provider.dart';
 
@@ -33,11 +34,6 @@ class DueSummaryCard extends ConsumerWidget {
         return byAge != 0 ? byAge : b.totalDue.compareTo(a.totalDue);
       });
 
-    final buckets = [
-      (s.ageUnder30, summary.under30, AppColors.paymentPaid),
-      (s.age30to60, summary.from30to60, AppColors.paymentPartial),
-      (s.age60plus, summary.over60, AppColors.paymentUnpaid),
-    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,47 +49,10 @@ class DueSummaryCard extends ConsumerWidget {
             style: theme.textTheme.bodySmall?.copyWith(color: muted)),
         const SizedBox(height: 12),
 
-        // Aging bar — segment widths proportional to each bucket's amount.
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: SizedBox(
-            height: 10,
-            child: Row(
-              children: [
-                for (final (_, amount, color) in buckets)
-                  if (amount > 0)
-                    Expanded(
-                      // Flex needs ints; scale so small buckets stay visible.
-                      flex: (amount / summary.total * 1000).round().clamp(1, 1000),
-                      child: Container(color: color),
-                    ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 14,
-          runSpacing: 4,
-          children: [
-            for (final (label, amount, color) in buckets)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration:
-                        BoxDecoration(color: color, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    '$label  ${CurrencyFormatter.formatCompact(amount)}',
-                    style: theme.textTheme.labelSmall?.copyWith(color: muted),
-                  ),
-                ],
-              ),
-          ],
+        AgingBar(
+          under30: summary.under30,
+          from30to60: summary.from30to60,
+          over60: summary.over60,
         ),
         const SizedBox(height: 8),
         const Divider(height: 16),

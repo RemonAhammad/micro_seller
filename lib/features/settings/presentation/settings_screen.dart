@@ -28,6 +28,8 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/auth_gate.dart';
 import '../../../data/services/auth_gate_service.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -173,7 +175,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         message: AppStrings.of(context).tr('restoreDataConfirm'),
         confirmText: AppStrings.of(context).restoreFromDrive,
         isDestructive: true,
-        icon: Icons.restore_rounded,
+        icon: tabler.Restore.new,
       );
 
       if (confirmed != true || !mounted) return;
@@ -282,7 +284,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       message: AppStrings.of(context).clearDataConfirmation,
       confirmText: AppStrings.of(context).clearAllData,
       isDestructive: true,
-      icon: Icons.warning_rounded,
+      icon: tabler.AlertTriangle.new,
     );
     if (ok != true || !mounted) return;
 
@@ -351,14 +353,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.language_rounded, color: AppColors.primary, size: 20),
+                  child: const ThinIcon(tabler.Language.new, color: AppColors.primary, size: 20),
                 ),
                 title: Text(s.language),
                 subtitle: Text(
                   AppLocalizations.languageNames[ref.read(settingsProvider.notifier).language] ?? 'English',
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: () async {
                   final currentLang = ref.read(settingsProvider.notifier).language;
                   final selected = await showModalBottomSheet<String>(
@@ -389,14 +391,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.view_sidebar_rounded, color: AppColors.primary, size: 20),
+                  child: const ThinIcon(tabler.LayoutSidebar.new, color: AppColors.primary, size: 20),
                 ),
                 title: Text(s.sidebarOrder),
                 subtitle: Text(
                   s.sidebarOrderDesc,
                   style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.6)),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: () => context.push('/settings/sidebar-order'),
               ),
               const Divider(height: 1, indent: 56),
@@ -412,7 +414,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary, size: 20),
+                      child: const ThinIcon(tabler.ArrowsExchange.new, color: AppColors.primary, size: 20),
                     ),
                     title: Text(s.sidebarPosition),
                     trailing: _SidebarPositionToggle(
@@ -440,7 +442,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           _SettingsCard(
             children: [
               _EditableTile(
-                icon: Icons.store_rounded,
+                icon: tabler.BuildingStore.new,
                 label: s.shopName,
                 value: ref.read(settingsProvider.notifier).shopName,
                 onEdit: (val) => ref.read(settingsProvider.notifier).updateShopName(val),
@@ -449,7 +451,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               // Printed on the shared product catalog so buyers know where to
               // order from. Optional — blank simply omits the line.
               _EditableTile(
-                icon: Icons.phone_rounded,
+                icon: tabler.Phone.new,
                 label: s.shopPhone,
                 value: ref.read(settingsProvider.notifier).shopPhone,
                 onEdit: (val) =>
@@ -464,14 +466,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.attach_money_rounded, color: AppColors.primary, size: 20),
+                  child: const ThinIcon(tabler.CurrencyDollar.new, color: AppColors.primary, size: 20),
                 ),
                 title: Text(s.currencySymbol),
                 subtitle: Text(
                   ref.read(settingsProvider.notifier).currencySymbol,
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: () async {
                   final selected = await showModalBottomSheet<String>(
                     context: context,
@@ -488,7 +490,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ),
               const Divider(height: 1),
               _EditableTile(
-                icon: Icons.inventory_2_rounded,
+                icon: tabler.Package.new,
                 label: s.defaultLowStockThreshold,
                 value: ref.read(settingsProvider.notifier).lowStockThreshold.toString(),
                 onEdit: (val) {
@@ -502,7 +504,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ),
               const Divider(height: 1),
               _EditableTile(
-                icon: Icons.percent_rounded,
+                icon: tabler.Percentage.new,
                 label: s.taxRate,
                 value: ref.read(settingsProvider.notifier).taxRate.toString(),
                 onEdit: (val) {
@@ -530,7 +532,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.folder_rounded, color: AppColors.primary, size: 20),
+                  child: const ThinIcon(tabler.Folder.new, color: AppColors.primary, size: 20),
                 ),
                 title: Text(s.pdfDownloadFolder),
                 subtitle: Text(
@@ -546,9 +548,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                trailing: const Icon(Icons.edit_rounded, size: 18),
+                trailing: const ThinIcon(tabler.Pencil.new, size: 18),
                 onTap: () async {
-                  final dir = await FilePicker.platform.getDirectoryPath();
+                  final dir = await FilePicker.getDirectoryPath();
                   if (dir != null) {
                     ref.read(settingsProvider.notifier).updateDownloadDirectory(dir);
                     setState(() {});
@@ -571,7 +573,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: Colors.blueGrey.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.delete_outline_rounded,
+                  child: const ThinIcon(tabler.Trash.new,
                       color: Colors.blueGrey, size: 20),
                 ),
                 title: Text(s.recycleBin),
@@ -582,7 +584,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: () => context.push('/settings/recycle-bin'),
               ),
             ],
@@ -603,7 +605,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                   child: _isLocalExporting
                       ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.upload_file_rounded, color: Colors.blue, size: 20),
+                      : const ThinIcon(tabler.FileUpload.new, color: Colors.blue, size: 20),
                 ),
                 title: Text(s.exportBackup),
                 subtitle: Text(s.exportBackupDesc, style: TextStyle(fontSize: 12)),
@@ -639,7 +641,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                   child: _isLocalImporting
                       ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.download_rounded, color: Colors.orange, size: 20),
+                      : const ThinIcon(tabler.Download.new, color: Colors.orange, size: 20),
                 ),
                 title: Text(s.importBackup),
                 subtitle: Text(s.importBackupDesc, style: const TextStyle(fontSize: 12)),
@@ -652,7 +654,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                           message: s.importBackupConfirm,
                           confirmText: s.importBackup,
                           isDestructive: true,
-                          icon: Icons.warning_rounded,
+                          icon: tabler.AlertTriangle.new,
                         );
                         if (ok != true) return;
                         setState(() => _isLocalImporting = true);
@@ -737,7 +739,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.account_circle_rounded, color: AppColors.primary),
+                  child: const ThinIcon(tabler.UserCircle.new, color: AppColors.primary),
                 ),
                 title: Text(s.googleAccount),
                 subtitle: Text(
@@ -772,7 +774,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                   child: _isBackingUp
                       ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.cloud_upload_rounded, color: Colors.blue),
+                      : const ThinIcon(tabler.CloudUpload.new, color: Colors.blue),
                 ),
                 title: Text(s.backupToDrive),
                 subtitle: ref.read(settingsProvider.notifier).lastBackupTime != null
@@ -780,7 +782,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         '${s.lastBackup}: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}',
                       )
                     : null,
-                trailing: const Icon(Icons.chevron_right_rounded),
+                trailing: const ThinIcon(tabler.ChevronRight.new),
                 onTap: _isBackingUp ? null : _backup,
               ),
               const Divider(height: 1),
@@ -794,10 +796,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                   child: _isRestoring
                       ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.cloud_download_rounded, color: Colors.green),
+                      : const ThinIcon(tabler.CloudDownload.new, color: Colors.green),
                 ),
                 title: Text(s.restoreFromDrive),
-                trailing: const Icon(Icons.chevron_right_rounded),
+                trailing: const ThinIcon(tabler.ChevronRight.new),
                 onTap: _isRestoring ? null : _restore,
               ),
               const Divider(height: 1),
@@ -812,7 +814,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: Colors.indigo.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.autorenew_rounded,
+                  child: const ThinIcon(tabler.Refresh.new,
                       color: Colors.indigo),
                 ),
                 title: Text(s.tr('autoBackup')),
@@ -860,7 +862,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
+                  child: const ThinIcon(tabler.InfoCircle.new, color: AppColors.primary),
                 ),
                 title: Text(s.appVersion),
                 trailing: Text(
@@ -893,8 +895,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(
-                            Icons.fingerprint_rounded,
+                          child: ThinIcon(
+                            tabler.Fingerprint.new,
                             color: available
                                 ? AppColors.primary
                                 : theme.colorScheme.onSurface.withOpacity(0.4),
@@ -932,7 +934,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.pin_rounded,
+                      child: const ThinIcon(tabler.Password.new,
                           color: AppColors.primary),
                     ),
                     title: Text(s.tr('securityPin')),
@@ -966,11 +968,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+                  child: const ThinIcon(tabler.TrashX.new, color: Colors.red),
                 ),
                 title: Text(s.clearAllData, style: const TextStyle(color: Colors.red)),
                 onTap: _clearData,
-                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.red),
+                trailing: const ThinIcon(tabler.ChevronRight.new, color: Colors.red),
               ),
             ],
           ),
@@ -1001,14 +1003,14 @@ class _SidebarPositionToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _segment(cs, icon: Icons.align_horizontal_left_rounded, active: isLeft, onTap: () => onChanged(true)),
-          _segment(cs, icon: Icons.align_horizontal_right_rounded, active: !isLeft, onTap: () => onChanged(false)),
+          _segment(cs, icon: tabler.LayoutSidebar.new, active: isLeft, onTap: () => onChanged(true)),
+          _segment(cs, icon: tabler.LayoutSidebarRight.new, active: !isLeft, onTap: () => onChanged(false)),
         ],
       ),
     );
   }
 
-  Widget _segment(ColorScheme cs, {required IconData icon, required bool active, required VoidCallback onTap}) {
+  Widget _segment(ColorScheme cs, {required ThinIconBuilder icon, required bool active, required VoidCallback onTap}) {
     return Material(
       color: active ? cs.primary : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
@@ -1018,7 +1020,7 @@ class _SidebarPositionToggle extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 30,
-          child: Icon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
+          child: ThinIcon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
         ),
       ),
     );
@@ -1055,7 +1057,7 @@ class _AutoBackupErrorBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded,
+          const ThinIcon(tabler.AlertTriangle.new,
               color: Colors.amber, size: 22),
           const SizedBox(width: 10),
           Expanded(
@@ -1092,7 +1094,7 @@ class _AutoBackupErrorBanner extends StatelessWidget {
           ),
           IconButton(
             tooltip: s.tr('dismiss'),
-            icon: const Icon(Icons.close_rounded, size: 20),
+            icon: const ThinIcon(tabler.X.new, size: 20),
             onPressed: onDismiss,
           ),
         ],
@@ -1142,7 +1144,7 @@ class _SettingsCard extends StatelessWidget {
 }
 
 class _EditableTile extends StatelessWidget {
-  final IconData icon;
+  final ThinIconBuilder icon;
   final String label;
   final String value;
   final void Function(String) onEdit;
@@ -1167,11 +1169,11 @@ class _EditableTile extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, color: AppColors.primary, size: 20),
+        child: ThinIcon(icon, color: AppColors.primary, size: 20),
       ),
       title: Text(label),
       subtitle: Text(value),
-      trailing: const Icon(Icons.edit_rounded, size: 18),
+      trailing: const ThinIcon(tabler.Pencil.new, size: 18),
       onTap: () {
         final ctrl = TextEditingController(text: value);
         showDialog(
@@ -1215,9 +1217,9 @@ class _ThemeModeSelector extends StatelessWidget {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final modes = [
-      ('light', Icons.light_mode_rounded, s.light),
-      ('dark', Icons.dark_mode_rounded, s.dark),
-      ('system', Icons.brightness_auto_rounded, s.system),
+      ('light', tabler.Sun.new, s.light),
+      ('dark', tabler.Moon.new, s.dark),
+      ('system', tabler.SunMoon.new, s.system),
     ];
 
     return _SettingsCard(
@@ -1248,7 +1250,7 @@ class _ThemeModeSelector extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            Icon(
+                            ThinIcon(
                               icon,
                               color: isSelected ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.5),
                               size: 24,
@@ -1306,7 +1308,7 @@ class _BackupPickerSheet extends StatelessWidget {
           itemBuilder: (ctx, i) {
             final backup = backups[i];
             return ListTile(
-              leading: const Icon(Icons.cloud_download_rounded, color: Colors.green),
+              leading: const ThinIcon(tabler.CloudDownload.new, color: Colors.green),
               title: Text(backup.name),
               subtitle: Text(DateFormatter.formatWithTime(backup.createdTime)),
               onTap: () => Navigator.pop(ctx, backup),
@@ -1426,10 +1428,10 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: AppStrings.of(context).searchCurrency,
-                prefixIcon: const Icon(Icons.search, size: 20),
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close, size: 18),
+                        icon: const ThinIcon(tabler.X.new, size: 18),
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _query = '');
@@ -1480,7 +1482,7 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                     ),
                   ),
                   subtitle: Text(c.code, style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5))),
-                  trailing: isSelected ? Icon(Icons.check_circle, color: cs.primary, size: 20) : null,
+                  trailing: isSelected ? ThinIcon(tabler.CircleCheck.new, color: cs.primary, size: 20) : null,
                   dense: true,
                 );
               },
@@ -1564,7 +1566,7 @@ class _LanguagePickerSheet extends StatelessWidget {
                       color: isSelected ? cs.primary : null,
                     ),
                   ),
-                  trailing: isSelected ? Icon(Icons.check_circle, color: cs.primary, size: 20) : null,
+                  trailing: isSelected ? ThinIcon(tabler.CircleCheck.new, color: cs.primary, size: 20) : null,
                   dense: true,
                 );
               },

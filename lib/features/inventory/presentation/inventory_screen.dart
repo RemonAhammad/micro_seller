@@ -9,6 +9,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/stock_movement_tile.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 enum _StockSort { lowStock, name, stockAsc, stockDesc }
 
@@ -86,7 +88,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             data: (products) {
               if (products.isEmpty) {
                 return EmptyState(
-                  icon: Icons.inventory_2_rounded,
+                  icon: tabler.Package.new,
                   title: s.noDataFound,
                   subtitle: s.addFirstProduct,
                 );
@@ -135,7 +137,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.filter_list,
+                                ThinIcon(tabler.Filter.new,
                                     size: 15,
                                     color: _categoryFilter != null
                                         ? cs.primary
@@ -153,7 +155,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                             .withValues(alpha: 0.6),
                                   ),
                                 ),
-                                Icon(Icons.arrow_drop_down,
+                                ThinIcon(tabler.CaretDown.new,
                                     size: 16,
                                     color: _categoryFilter != null
                                         ? cs.primary
@@ -167,7 +169,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                               value: null,
                               child: Row(
                                 children: [
-                                  Icon(Icons.clear_all,
+                                  ThinIcon(tabler.ClearAll.new,
                                       size: 18,
                                       color: _categoryFilter == null
                                           ? cs.primary
@@ -186,7 +188,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                       )),
                                   if (_categoryFilter == null) ...[
                                     const Spacer(),
-                                    Icon(Icons.check,
+                                    ThinIcon(tabler.Check.new,
                                         size: 16, color: cs.primary),
                                   ],
                                 ],
@@ -196,7 +198,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                   value: name,
                                   child: Row(
                                     children: [
-                                      Icon(Icons.label_outline,
+                                      ThinIcon(tabler.Tag.new,
                                           size: 18,
                                           color: _categoryFilter == name
                                               ? cs.primary
@@ -216,7 +218,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                           )),
                                       if (_categoryFilter == name) ...[
                                         const Spacer(),
-                                        Icon(Icons.check,
+                                        ThinIcon(tabler.Check.new,
                                             size: 16, color: cs.primary),
                                       ],
                                     ],
@@ -244,7 +246,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.sort, size: 16, color: cs.primary),
+                              ThinIcon(tabler.ArrowsSort.new, size: 16, color: cs.primary),
                               const SizedBox(width: 4),
                               Text(
                                 _sortLabel(_sort),
@@ -254,19 +256,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                                   color: cs.primary,
                                 ),
                               ),
-                              Icon(Icons.arrow_drop_down,
+                              ThinIcon(tabler.CaretDown.new,
                                   size: 18, color: cs.primary),
                             ],
                           ),
                           itemBuilder: (_) => [
                             _sortItem(_StockSort.lowStock, 'Low Stock First',
-                                Icons.warning_amber_rounded),
+                                tabler.AlertTriangle.new),
                             _sortItem(_StockSort.name, 'Name',
-                                Icons.sort_by_alpha),
+                                tabler.SortAscendingLetters.new),
                             _sortItem(_StockSort.stockAsc,
-                                'Stock: Low → High', Icons.arrow_upward),
+                                'Stock: Low → High', tabler.ArrowUp.new),
                             _sortItem(_StockSort.stockDesc,
-                                'Stock: High → Low', Icons.arrow_downward),
+                                'Stock: High → Low', tabler.ArrowDown.new),
                           ],
                         ),
                       ],
@@ -298,7 +300,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             data: (movements) {
               if (movements.isEmpty) {
                 return EmptyState(
-                  icon: Icons.swap_vert_rounded,
+                  icon: tabler.ArrowsSort.new,
                   title: s.noStockMovements,
                 );
               }
@@ -330,13 +332,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   }
 
   PopupMenuItem<_StockSort> _sortItem(
-      _StockSort value, String label, IconData icon) {
+      _StockSort value, String label, ThinIconBuilder icon) {
     final selected = _sort == value;
     return PopupMenuItem(
       value: value,
       child: Row(
         children: [
-          Icon(icon, size: 18,
+          ThinIcon(icon, size: 18,
               color: selected
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
@@ -349,7 +351,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               )),
           if (selected) ...[
             const Spacer(),
-            Icon(Icons.check, size: 16, color: Theme.of(context).colorScheme.primary),
+            ThinIcon(tabler.Check.new, size: 16, color: Theme.of(context).colorScheme.primary),
           ],
         ],
       ),
@@ -427,7 +429,7 @@ class _StockTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.tune_rounded),
+                icon: const ThinIcon(tabler.AdjustmentsHorizontal.new),
                 onPressed: () =>
                     context.push('/inventory/adjust/${product.id}'),
                 style: IconButton.styleFrom(
@@ -449,7 +451,7 @@ class _StockTile extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 12, top: 4),
                 child: Row(
                   children: [
-                    Icon(Icons.subdirectory_arrow_right,
+                    ThinIcon(tabler.CornerDownRight.new,
                         size: 14, color: cs.onSurface.withValues(alpha: 0.3)),
                     const SizedBox(width: 6),
                     Expanded(

@@ -17,6 +17,8 @@ import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../providers/dues_provider.dart';
 import 'widgets/due_actions.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 enum _DueSort {
   oldest,
@@ -45,14 +47,14 @@ String _sortLabel(BuildContext context, _DueSort sort) {
   };
 }
 
-IconData _sortIcon(_DueSort sort) => switch (sort) {
-      _DueSort.oldest || _DueSort.newest => Icons.schedule_rounded,
-      _DueSort.largest || _DueSort.smallest => Icons.payments_rounded,
-      _DueSort.mostOrders => Icons.receipt_long_rounded,
+ThinIconBuilder _sortIcon(_DueSort sort) => switch (sort) {
+      _DueSort.oldest || _DueSort.newest => tabler.Clock.new,
+      _DueSort.largest || _DueSort.smallest => tabler.Cash.new,
+      _DueSort.mostOrders => tabler.Receipt.new,
       _DueSort.longestSincePaid ||
       _DueSort.recentlyPaid =>
-        Icons.history_rounded,
-      _DueSort.nameAsc || _DueSort.nameDesc => Icons.sort_by_alpha_rounded,
+        tabler.History.new,
+      _DueSort.nameAsc || _DueSort.nameDesc => tabler.SortAscendingLetters.new,
     };
 
 /// Sorts in place. Ties fall back to the larger due, so the list is stable
@@ -256,7 +258,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
             icon: Badge(
               isLabelVisible: active > 0,
               label: Text('$active'),
-              child: const Icon(Icons.filter_list_rounded),
+              child: const ThinIcon(tabler.Filter.new),
             ),
           ),
           PopupMenuButton<String>(
@@ -279,10 +281,10 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
                   () => setState(() => _query = v.toLowerCase())),
               decoration: InputDecoration(
                 hintText: s.searchCustomers,
-                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear),
+                        icon: const ThinIcon(tabler.X.new),
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _query = '');
@@ -300,7 +302,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
         data: (all) {
           if (all.isEmpty) {
             return EmptyState(
-              icon: Icons.volunteer_activism_rounded,
+              icon: tabler.HeartHandshake.new,
               title: s.noDues,
               subtitle: s.noDuesSubtitle,
             );
@@ -404,13 +406,13 @@ class _SortButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(_sortIcon(value), size: 18, color: cs.primary),
+            ThinIcon(_sortIcon(value), size: 18, color: cs.primary),
             const SizedBox(width: 6),
             Text(
               '${s.sortBy}: ${_sortLabel(context, value)}',
               style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600),
             ),
-            Icon(Icons.arrow_drop_down_rounded, color: cs.primary),
+            ThinIcon(tabler.CaretDown.new, color: cs.primary),
           ],
         ),
       ),
@@ -765,14 +767,14 @@ class _DueCard extends ConsumerWidget {
                     onPressed: () =>
                         showCollectPaymentSheet(
                   context, customer, due.orderDues, due.totalDue),
-                    icon: const Icon(Icons.payments_rounded, size: 18),
+                    icon: const ThinIcon(tabler.Cash.new, size: 18),
                     label: Text(s.collect),
                   ),
                   TextButton.icon(
                     onPressed: () =>
                         sendDueReminder(
                   context, ref, customer, due.orderDues, due.totalDue),
-                    icon: const Icon(Icons.chat_rounded, size: 18),
+                    icon: const ThinIcon(tabler.MessageCircle.new, size: 18),
                     label: Text(s.remind),
                   ),
                   const Spacer(),
@@ -781,7 +783,7 @@ class _DueCard extends ConsumerWidget {
                       tooltip: s.callCustomer,
                       onPressed: () =>
                           launchUrl(Uri.parse('tel:${customer.phone}')),
-                      icon: const Icon(Icons.call_rounded, size: 20),
+                      icon: const ThinIcon(tabler.Phone.new, size: 20),
                     ),
                 ],
               ),

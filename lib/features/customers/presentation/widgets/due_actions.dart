@@ -22,6 +22,8 @@ import '../../../../shared/widgets/payment_method_chips.dart';
 import '../../../cash_register/providers/cash_register_provider.dart';
 import '../../../orders/providers/order_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../../core/constants/app_icons.dart';
 
 // ─── Reminder ────────────────────────────────────────────────────────────
 
@@ -91,7 +93,7 @@ Future<void> sendDueReminder(
   } else if (context.mounted) {
     context.showSnackBar(s.noPhoneShareInstead);
   }
-  await Share.share(text);
+  await SharePlus.instance.share(ShareParams(text: text));
 }
 
 // ─── Statement ───────────────────────────────────────────────────────────
@@ -140,7 +142,7 @@ Future<void> shareCustomerStatement(
     final safeName = customer.name.replaceAll(RegExp(r'[^\w]+'), '_');
     final file = File('${dir.path}/statement_$safeName.pdf');
     await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)]);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   } catch (e) {
     if (context.mounted) context.showErrorSnackBar(s.error);
   }
@@ -321,8 +323,8 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
         padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(
           children: [
-            Icon(
-              settled ? Icons.check_circle_rounded : Icons.timelapse_rounded,
+            ThinIcon(
+              settled ? tabler.CircleCheck.new : tabler.Progress.new,
               size: 18,
               color: settled ? AppColors.paymentPaid : AppColors.paymentPartial,
             ),
@@ -372,8 +374,8 @@ class PaymentHistoryTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.12),
-        child: Icon(
-          payment.isRefund ? Icons.undo_rounded : Icons.payments_rounded,
+        child: ThinIcon(
+          payment.isRefund ? tabler.ArrowBackUp.new : tabler.Cash.new,
           color: color,
           size: 20,
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../core/constants/app_icons.dart';
 
 class AppTextField extends StatelessWidget {
   final String label;
@@ -101,7 +103,7 @@ class _PasteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.content_paste_rounded, size: 18),
+      icon: const ThinIcon(tabler.Clipboard.new, size: 18),
       tooltip: 'Paste',
       onPressed: () async {
         final data = await Clipboard.getData(Clipboard.kTextPlain);

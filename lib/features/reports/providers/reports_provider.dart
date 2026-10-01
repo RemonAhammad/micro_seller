@@ -1,109 +1,156 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../data/models/order.dart';
-import '../../../data/models/product.dart';
+import '../../../data/models/cash_register.dart';
 import '../../../data/models/expense.dart';
+import '../../../data/models/order.dart';
+import '../../../data/models/payment.dart';
+import '../../../data/models/product.dart';
+import '../../../data/models/purchase.dart';
+import '../../../data/models/stock_movement.dart';
+import '../../../data/models/supplier.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/report_service.dart';
+import '../../customers/providers/dues_provider.dart';
 
 part 'reports_provider.g.dart';
 
-@riverpod
-Future<ReportData> reportData(
-  Ref ref,
-  DateTime startDate,
-  DateTime endDate,
-) async {
-  final isar = await ref.watch(isarProvider.future);
+/// The reporting window for a picked date range: `[start of first day,
+/// start of the day after the last)`.
+({DateTime start, DateTime end}) reportWindow(DateTime from, DateTime to) => (
+      start: DateTime(from.year, from.month, from.day),
+      end: DateTime(to.year, to.month, to.day + 1),
+    );
 
-  final orders = await isar.orders
+// Returns are dated by when their goods came back (`updatedAt`), which can
+// fall in the period even if the return order was created earlier — so the
+// sales/inventory reports load returns separately rather than by createdAt.
+Future<List<Order>> _ordersAndReturns(
+    Isar isar, DateTime start, DateTime end) async {
+  final sales = await isar.orders
       .filter()
-      .not()
-      .orderStatusEqualTo(OrderStatus.cancelled)
-      .createdAtGreaterThan(startDate.subtract(const Duration(seconds: 1)))
-      .createdAtLessThan(endDate.add(const Duration(days: 1)))
+      .isReturnEqualTo(false)
+      .createdAtBetween(start, end, includeUpper: false)
       .findAll();
+  final returns = await isar.orders.filter().isReturnEqualTo(true).findAll();
+  return [...sales, ...returns];
+}
 
+/// Ids of cancelled orders — returns against them are ignored (the cancel
+/// already removed the sale).
+Future<Set<int>> _cancelledIds(Isar isar) async => (await isar.orders
+        .filter()
+        .orderStatusEqualTo(OrderStatus.cancelled)
+        .idProperty()
+        .findAll())
+    .toSet();
+
+@riverpod
+Future<SalesReport> salesReport(Ref ref, DateTime from, DateTime to) async {
+  final isar = await ref.watch(isarProvider.future);
+  final w = reportWindow(from, to);
+  final orders = await _ordersAndReturns(isar, w.start, w.end);
+  final products = await isar.products.where().findAll();
   final expenses = await isar.expenses
       .filter()
-      .dateGreaterThan(startDate.subtract(const Duration(seconds: 1)))
-      .dateLessThan(endDate.add(const Duration(days: 1)))
+      .dateBetween(w.start, w.end, includeUpper: false)
       .findAll();
-
-  // Build a productId -> category lookup from the products table
-  final products = await isar.products.where().findAll();
-  final categoryByProductId = <int, String>{};
-  for (final p in products) {
-    categoryByProductId[p.id] = p.category.isNotEmpty ? p.category : 'Uncategorized';
-  }
-
-  final salesByCategory = <String, double>{};
-  final qtyByProduct = <String, double>{};
-  final revenueByProduct = <String, double>{};
-  final revenueByCustomer = <String, double>{};
-
-  double totalRevenue = 0;
-  double totalProfit = 0;
-  final double totalExpenses = expenses.fold(0.0, (s, e) => s + e.amount);
-
-  for (final order in orders) {
-    totalRevenue += order.totalAmount;
-
-    final customerKey =
-        order.customerName.isNotEmpty ? order.customerName : 'Walk-in';
-    revenueByCustomer[customerKey] =
-        (revenueByCustomer[customerKey] ?? 0) + order.totalAmount;
-
-    for (final item in order.items) {
-      final cat = categoryByProductId[item.productId] ?? 'Uncategorized';
-      salesByCategory[cat] = (salesByCategory[cat] ?? 0) + item.totalPrice;
-
-      qtyByProduct[item.productName] =
-          (qtyByProduct[item.productName] ?? 0) + item.qty.toDouble();
-      revenueByProduct[item.productName] =
-          (revenueByProduct[item.productName] ?? 0) + item.totalPrice;
-      totalProfit += (item.unitPrice - item.costPrice) * item.qty;
-    }
-  }
-
-  return ReportData(
-    totalRevenue: totalRevenue,
-    totalProfit: totalProfit,
-    totalExpenses: totalExpenses,
-    totalOrders: orders.length,
-    avgOrderValue: orders.isEmpty ? 0 : totalRevenue / orders.length,
-    salesByCategory: _sortedTop(salesByCategory, 10),
-    topProducts: _sortedTop(revenueByProduct, 10),
-    topProductsByQty: _sortedTop(qtyByProduct, 10),
-    topCustomers: _sortedTop(revenueByCustomer, 10),
+  return buildSalesReport(
+    orders: orders,
+    cancelledOrderIds: await _cancelledIds(isar),
+    productsById: {for (final p in products) p.id: p},
+    expenses: expenses,
+    start: w.start,
+    end: w.end,
   );
 }
 
-Map<String, double> _sortedTop(Map<String, double> map, int limit) {
-  final sorted = map.entries.toList()
-    ..sort((a, b) => b.value.compareTo(a.value));
-  return Map.fromEntries(sorted.take(limit));
+@riverpod
+Future<DuesReport> duesReport(Ref ref, DateTime from, DateTime to) async {
+  final isar = await ref.watch(isarProvider.future);
+  final w = reportWindow(from, to);
+  final dues = await ref.watch(duesProvider.future);
+  final payments = await isar.payments
+      .filter()
+      .paidAtBetween(w.start, w.end, includeUpper: false)
+      .findAll();
+  final ordersInPeriod = await isar.orders
+      .filter()
+      .isReturnEqualTo(false)
+      .createdAtBetween(w.start, w.end, includeUpper: false)
+      .findAll();
+  // Orders the period's payments belong to (often older than the period) —
+  // needed to tell a later "dues collection" from a pay-at-sale.
+  final ids = {...payments.map((p) => p.orderId)};
+  final extra = await isar.orders.getAll(ids.toList());
+  final ordersById = {
+    for (final o in ordersInPeriod) o.id: o,
+    for (final o in extra)
+      if (o != null) o.id: o,
+  };
+  // Same-day payments of period orders (for "credit given").
+  final periodIds = ordersInPeriod.map((o) => o.id).toList();
+  final periodPayments = periodIds.isEmpty
+      ? const <Payment>[]
+      : await isar.payments
+          .filter()
+          .anyOf(periodIds, (q, int id) => q.orderIdEqualTo(id))
+          .findAll();
+  final allPayments = {
+    for (final p in [...payments, ...periodPayments]) p.id: p,
+  }.values.toList();
+
+  return buildDuesReport(
+    payments: allPayments,
+    ordersById: ordersById,
+    ordersInPeriod: ordersInPeriod,
+    dues: dues,
+    start: w.start,
+    end: w.end,
+  );
 }
 
-class ReportData {
-  final double totalRevenue;
-  final double totalProfit;
-  final double totalExpenses;
-  final int totalOrders;
-  final double avgOrderValue;
-  final Map<String, double> salesByCategory;
-  final Map<String, double> topProducts;
-  final Map<String, double> topProductsByQty;
-  final Map<String, double> topCustomers;
+@riverpod
+Future<InventoryReport> inventoryReport(
+    Ref ref, DateTime from, DateTime to) async {
+  final isar = await ref.watch(isarProvider.future);
+  final w = reportWindow(from, to);
+  final products = await isar.products.where().findAll();
+  final movements = await isar.stockMovements
+      .filter()
+      .createdAtBetween(w.start, w.end, includeUpper: false)
+      .findAll();
+  final orders = await _ordersAndReturns(isar, w.start, w.end);
+  return buildInventoryReport(
+    products: products,
+    movements: movements,
+    orders: orders,
+    cancelledOrderIds: await _cancelledIds(isar),
+    start: w.start,
+    end: w.end,
+  );
+}
 
-  const ReportData({
-    required this.totalRevenue,
-    required this.totalProfit,
-    required this.totalExpenses,
-    required this.totalOrders,
-    required this.avgOrderValue,
-    required this.salesByCategory,
-    required this.topProducts,
-    required this.topProductsByQty,
-    required this.topCustomers,
-  });
+@riverpod
+Future<PurchasesReport> purchasesReport(
+    Ref ref, DateTime from, DateTime to) async {
+  final isar = await ref.watch(isarProvider.future);
+  final w = reportWindow(from, to);
+  // All purchases: "owed to suppliers today" spans every purchase.
+  final purchases = await isar.purchases.where().findAll();
+  final expenses = await isar.expenses
+      .filter()
+      .dateBetween(w.start, w.end, includeUpper: false)
+      .findAll();
+  final registers = await isar.cashRegisters
+      .filter()
+      .closedAtBetween(w.start, w.end, includeUpper: false)
+      .findAll();
+  return buildPurchasesReport(
+    purchases: purchases,
+    suppliers: await isar.suppliers.where().findAll(),
+    expenses: expenses,
+    registers: registers,
+    start: w.start,
+    end: w.end,
+  );
 }

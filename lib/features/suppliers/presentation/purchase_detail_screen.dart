@@ -9,6 +9,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class PurchaseDetailScreen extends ConsumerWidget {
   final int purchaseId;
@@ -66,7 +68,7 @@ class _Body extends ConsumerWidget {
             title: Text('${s.purchases} #${p.id}'),
             actions: [
               IconButton(
-                icon: const Icon(Icons.delete_rounded),
+                icon: const ThinIcon(tabler.Trash.new),
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
                     context,
@@ -74,7 +76,7 @@ class _Body extends ConsumerWidget {
                     message: s.tr('deletePurchaseConfirm'),
                     confirmText: s.delete,
                     isDestructive: true,
-                    icon: Icons.delete_rounded,
+                    icon: tabler.Trash.new,
                   );
                   if (ok == true && context.mounted) {
                     await ref
@@ -219,7 +221,7 @@ class _Body extends ConsumerWidget {
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: () => _showPayDialog(context, ref, p),
-                      icon: const Icon(Icons.payments_outlined),
+                      icon: const ThinIcon(tabler.Cash.new),
                       label: Text(s.recordPayment),
                     ),
                   ),

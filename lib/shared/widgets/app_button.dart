@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_icons.dart';
 
 enum AppButtonVariant { filled, outlined, text, destructive }
 
@@ -6,7 +7,7 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final AppButtonVariant variant;
-  final IconData? icon;
+  final ThinIconBuilder? icon;
   final bool isLoading;
   final bool isFullWidth;
   final double? height;
@@ -37,7 +38,7 @@ class AppButton extends StatelessWidget {
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 18),
+                  ThinIcon(icon!, size: 18),
                   const SizedBox(width: 8),
                   Text(label),
                 ],

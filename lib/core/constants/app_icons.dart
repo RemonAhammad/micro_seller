@@ -7,83 +7,73 @@ import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 const double kIconStroke = 1.25;
 const double kIconStrokeSelected = 1.75;
 
-/// Draws one thin icon. Tabler icons are SVG widgets (not font `IconData`),
-/// so each is a builder taking color, size and stroke width.
-typedef ThinIconBuilder = Widget Function(
-    Color color, double size, double strokeWidth);
+/// One thin icon: a Tabler widget constructor tear-off such as
+/// `tabler.Box.new`. Tabler icons are SVG widgets (not font `IconData`);
+/// constructor tear-offs are compile-time constants, so they work in `const`
+/// lists and `const ThinIcon(...)`. Any Tabler class fits this type.
+typedef ThinIconBuilder = Widget Function({
+  Key? key,
+  double? strokeWidth,
+  double? width,
+  double? height,
+  Color? color,
+});
 
-/// The app's thin line icons (Tabler, via `tabler_icons_next`). Static
-/// methods, so their tear-offs are constants — `SidebarItem` lists can stay
-/// `const`.
+/// Named icons shared across screens (sidebar, dashboard, reports). One-off
+/// icons elsewhere use a Tabler class directly: `ThinIcon(tabler.Plus.new)`.
 abstract final class AppIcons {
   // ── Sidebar ──
-  static Widget dashboard(Color c, double s, double w) =>
-      tabler.LayoutDashboard(color: c, width: s, height: s, strokeWidth: w);
-  static Widget products(Color c, double s, double w) =>
-      tabler.Box(color: c, width: s, height: s, strokeWidth: w);
-  static Widget orders(Color c, double s, double w) =>
-      tabler.Receipt(color: c, width: s, height: s, strokeWidth: w);
-  static Widget returns(Color c, double s, double w) =>
-      tabler.ArrowBackUp(color: c, width: s, height: s, strokeWidth: w);
-  static Widget customers(Color c, double s, double w) =>
-      tabler.Users(color: c, width: s, height: s, strokeWidth: w);
-  static Widget dueBook(Color c, double s, double w) =>
-      tabler.Notebook(color: c, width: s, height: s, strokeWidth: w);
-  static Widget inventory(Color c, double s, double w) =>
-      tabler.BuildingWarehouse(color: c, width: s, height: s, strokeWidth: w);
-  static Widget suppliers(Color c, double s, double w) =>
-      tabler.Truck(color: c, width: s, height: s, strokeWidth: w);
-  static Widget expenses(Color c, double s, double w) =>
-      tabler.Wallet(color: c, width: s, height: s, strokeWidth: w);
-  static Widget cashRegister(Color c, double s, double w) =>
-      tabler.CashRegister(color: c, width: s, height: s, strokeWidth: w);
-  static Widget categories(Color c, double s, double w) =>
-      tabler.Tag(color: c, width: s, height: s, strokeWidth: w);
-  static Widget reports(Color c, double s, double w) =>
-      tabler.ChartLine(color: c, width: s, height: s, strokeWidth: w);
-  static Widget scanner(Color c, double s, double w) =>
-      tabler.Barcode(color: c, width: s, height: s, strokeWidth: w);
-  static Widget settings(Color c, double s, double w) =>
-      tabler.Settings(color: c, width: s, height: s, strokeWidth: w);
+  static const ThinIconBuilder dashboard = tabler.LayoutDashboard.new;
+  static const ThinIconBuilder products = tabler.Box.new;
+  static const ThinIconBuilder orders = tabler.Receipt.new;
+  static const ThinIconBuilder returns = tabler.ArrowBackUp.new;
+  static const ThinIconBuilder customers = tabler.Users.new;
+  static const ThinIconBuilder dueBook = tabler.Notebook.new;
+  static const ThinIconBuilder inventory = tabler.BuildingWarehouse.new;
+  static const ThinIconBuilder suppliers = tabler.Truck.new;
+  static const ThinIconBuilder expenses = tabler.Wallet.new;
+  static const ThinIconBuilder cashRegister = tabler.CashRegister.new;
+  static const ThinIconBuilder categories = tabler.Tag.new;
+  static const ThinIconBuilder reports = tabler.ChartLine.new;
+  static const ThinIconBuilder scanner = tabler.Barcode.new;
+  static const ThinIconBuilder settings = tabler.Settings.new;
 
   // ── Dashboard ──
-  static Widget revenue(Color c, double s, double w) =>
-      tabler.TrendingUp(color: c, width: s, height: s, strokeWidth: w);
-  static Widget profit(Color c, double s, double w) =>
-      tabler.PigMoney(color: c, width: s, height: s, strokeWidth: w);
-  static Widget pending(Color c, double s, double w) =>
-      tabler.HourglassHigh(color: c, width: s, height: s, strokeWidth: w);
-  static Widget collected(Color c, double s, double w) =>
-      tabler.Coins(color: c, width: s, height: s, strokeWidth: w);
-  static Widget lowStock(Color c, double s, double w) =>
-      tabler.BoxOff(color: c, width: s, height: s, strokeWidth: w);
-  static Widget alert(Color c, double s, double w) =>
-      tabler.AlertTriangle(color: c, width: s, height: s, strokeWidth: w);
-  static Widget whatsapp(Color c, double s, double w) =>
-      tabler.BrandWhatsapp(color: c, width: s, height: s, strokeWidth: w);
+  static const ThinIconBuilder revenue = tabler.TrendingUp.new;
+  static const ThinIconBuilder profit = tabler.PigMoney.new;
+  static const ThinIconBuilder pending = tabler.HourglassHigh.new;
+  static const ThinIconBuilder collected = tabler.Coins.new;
+  static const ThinIconBuilder lowStock = tabler.BoxOff.new;
+  static const ThinIconBuilder alert = tabler.AlertTriangle.new;
+  static const ThinIconBuilder whatsapp = tabler.BrandWhatsapp.new;
 }
 
-/// Renders a [ThinIconBuilder] like Material's `Icon`: [color] defaults to the
-/// ambient `IconTheme` (Tabler's own fallback is black, so always resolve it).
+/// Drop-in for Material's `Icon`, drawing a thin Tabler icon. [color] and
+/// [size] default to the ambient `IconTheme`, exactly like `Icon` (so icons
+/// inside `IconButton`, `AppBar`, `ListTile`… inherit correctly). Tabler's own
+/// fallback color is black, which is why the color is always resolved here.
 class ThinIcon extends StatelessWidget {
   const ThinIcon(
     this.builder, {
     super.key,
     this.color,
-    this.size = 24,
+    this.size,
     this.strokeWidth = kIconStroke,
   });
 
   final ThinIconBuilder builder;
   final Color? color;
-  final double size;
+  final double? size;
   final double strokeWidth;
 
   @override
   Widget build(BuildContext context) {
-    final c = color ??
-        IconTheme.of(context).color ??
-        Theme.of(context).colorScheme.onSurface;
-    return SizedBox.square(dimension: size, child: builder(c, size, strokeWidth));
+    final theme = IconTheme.of(context);
+    final s = size ?? theme.size ?? 24;
+    final c = color ?? theme.color ?? Theme.of(context).colorScheme.onSurface;
+    return SizedBox.square(
+      dimension: s,
+      child: builder(color: c, width: s, height: s, strokeWidth: strokeWidth),
+    );
   }
 }

@@ -12,6 +12,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../providers/supplier_provider.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class PurchaseFormScreen extends ConsumerStatefulWidget {
   final int? supplierId;
@@ -214,7 +216,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.local_shipping_outlined,
+                    ThinIcon(tabler.TruckDelivery.new,
                         color: cs.onSurface.withValues(alpha: 0.5), size: 22),
                     const SizedBox(width: 12),
                     Expanded(
@@ -242,12 +244,12 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                     if (_selectedSupplier != null)
                       GestureDetector(
                         onTap: () => setState(() => _selectedSupplier = null),
-                        child: Icon(Icons.close,
+                        child: ThinIcon(tabler.X.new,
                             size: 18,
                             color: cs.onSurface.withValues(alpha: 0.5)),
                       )
                     else
-                      Icon(Icons.arrow_forward_ios,
+                      ThinIcon(tabler.ChevronRight.new,
                           size: 14,
                           color: cs.onSurface.withValues(alpha: 0.4)),
                   ],
@@ -283,7 +285,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 const Spacer(),
                 TextButton.icon(
                   onPressed: _pickProducts,
-                  icon: const Icon(Icons.add, size: 16),
+                  icon: const ThinIcon(tabler.Plus.new, size: 16),
                   label: Text(s.add, style: const TextStyle(fontSize: 12)),
                 ),
               ],
@@ -301,7 +303,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                     onTap: _pickProducts,
                     child: Column(
                       children: [
-                        Icon(Icons.add_shopping_cart_rounded,
+                        ThinIcon(tabler.ShoppingCartPlus.new,
                             size: 32, color: cs.onSurface.withValues(alpha: 0.3)),
                         const SizedBox(height: 8),
                         Text(s.tr('tapToAddProducts'),
@@ -442,7 +444,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
 
             AppButton(
               label: s.savePurchase,
-              icon: Icons.check_rounded,
+              icon: tabler.Check.new,
               onPressed: _submit,
               isLoading: _isLoading,
               isFullWidth: true,
@@ -471,7 +473,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
               ),
               GestureDetector(
                 onTap: () => setState(() => _items.removeAt(index)),
-                child: Icon(Icons.close,
+                child: ThinIcon(tabler.X.new,
                     size: 16, color: cs.error.withValues(alpha: 0.6)),
               ),
             ],
@@ -493,7 +495,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                       onTap: () => _updateItemQty(index, -1),
                       child: Padding(
                         padding: const EdgeInsets.all(6),
-                        child: Icon(Icons.remove, size: 14, color: cs.primary),
+                        child: ThinIcon(tabler.Minus.new, size: 14, color: cs.primary),
                       ),
                     ),
                     Padding(
@@ -506,7 +508,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                       onTap: () => _updateItemQty(index, 1),
                       child: Padding(
                         padding: const EdgeInsets.all(6),
-                        child: Icon(Icons.add, size: 14, color: cs.primary),
+                        child: ThinIcon(tabler.Plus.new, size: 14, color: cs.primary),
                       ),
                     ),
                   ],
@@ -661,7 +663,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: '${AppStrings.of(context).search}...',
-                prefixIcon: const Icon(Icons.search, size: 20),
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 isDense: true,
               ),
             ),
@@ -871,10 +873,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                   onChanged: (v) => setState(() => _query = v.toLowerCase()),
                   decoration: InputDecoration(
                     hintText: '${AppStrings.of(context).search}...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
+                    prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                     suffixIcon: _query.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.close, size: 18),
+                            icon: const ThinIcon(tabler.X.new, size: 18),
                             onPressed: () {
                               _searchCtrl.clear();
                               setState(() => _query = '');
@@ -963,7 +965,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                           onTap: () => _setQty(p, qty - 1),
                                           child: Padding(
                                             padding: const EdgeInsets.all(6),
-                                            child: Icon(Icons.remove,
+                                            child: ThinIcon(tabler.Minus.new,
                                                 size: 16,
                                                 color: cs.primary),
                                           ),
@@ -980,7 +982,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                           onTap: () => _setQty(p, qty + 1),
                                           child: Padding(
                                             padding: const EdgeInsets.all(6),
-                                            child: Icon(Icons.add,
+                                            child: ThinIcon(tabler.Plus.new,
                                                 size: 16,
                                                 color: cs.primary),
                                           ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../core/constants/app_icons.dart';
 
 extension ContextExtensions on BuildContext {
   ThemeData get theme => Theme.of(this);
@@ -28,7 +30,7 @@ extension ContextExtensions on BuildContext {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            const ThinIcon(tabler.CircleCheck.new, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
@@ -46,7 +48,7 @@ extension ContextExtensions on BuildContext {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white, size: 18),
+            const ThinIcon(tabler.AlertCircle.new, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],

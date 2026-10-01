@@ -15,6 +15,8 @@ import '../../../data/services/catalog_service.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../providers/product_provider.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 /// Builds a shareable product catalog: pick products, choose what each tile
 /// shows, then push it into a chat as an image, a PDF, or plain text.
@@ -80,7 +82,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
           final visible = _visible(all);
           if (visible.isEmpty) {
             return EmptyState(
-              icon: Icons.inventory_2_outlined,
+              icon: tabler.Package.new,
               title: s.noProducts,
             );
           }
@@ -132,7 +134,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
 
   Widget _thumb(Product p) {
     if (p.imagePath.isEmpty) {
-      return const CircleAvatar(child: Icon(Icons.inventory_2_outlined, size: 18));
+      return const CircleAvatar(child: ThinIcon(tabler.Package.new, size: 18));
     }
     return CircleAvatar(backgroundImage: FileImage(File(p.imagePath)));
   }
@@ -185,7 +187,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
                     onPressed: _busy || count == 0
                         ? null
                         : () => _shareImage(all),
-                    icon: const Icon(Icons.image_rounded, size: 18),
+                    icon: const ThinIcon(tabler.Photo.new, size: 18),
                     label: Text(s.shareAsImage),
                   ),
                 ),
@@ -194,7 +196,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
                   child: OutlinedButton.icon(
                     onPressed:
                         _busy || count == 0 ? null : () => _sharePdf(all),
-                    icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                    icon: const ThinIcon(tabler.FileTypePdf.new, size: 18),
                     label: Text(s.shareAsPdf),
                   ),
                 ),
@@ -203,7 +205,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
             const SizedBox(height: 6),
             TextButton.icon(
               onPressed: _busy || count == 0 ? null : () => _copyText(all),
-              icon: const Icon(Icons.content_copy_rounded, size: 16),
+              icon: const ThinIcon(tabler.Copy.new, size: 16),
               label: Text(s.copyPriceList),
             ),
           ],
@@ -269,7 +271,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)], subject: fileName);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: fileName));
   }
 
   /// Runs a generation task with the progress bar up, surfacing failures as a

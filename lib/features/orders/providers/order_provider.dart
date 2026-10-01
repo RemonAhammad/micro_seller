@@ -239,7 +239,7 @@ class OrderNotifier extends _$OrderNotifier {
           }
           if (order.amountPaid > 0) {
             await _logPayment(isar,
-                order: order, amount: -order.amountPaid, note: 'cancelled');
+                order: order, amount: -order.amountPaid, note: kCancelledPaymentNote);
           }
           cancelledOrder = order.copyWith(
             amountPaid: 0,

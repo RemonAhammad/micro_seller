@@ -9,6 +9,8 @@ import '../../orders/providers/order_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class CreateReturnScreen extends ConsumerStatefulWidget {
   final Order originalOrder;
@@ -136,7 +138,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
               border: Border.all(color: cs.outlineVariant),
             ),
             child: Row(children: [
-              Icon(Icons.receipt_long, color: cs.primary, size: 28),
+              ThinIcon(tabler.Receipt.new, color: cs.primary, size: 28),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -230,7 +232,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
             ],
-            prefixIcon: const Icon(Icons.payments_outlined),
+            prefixIcon: const ThinIcon(tabler.Cash.new),
           ),
           const SizedBox(height: 4),
           Text(
@@ -252,7 +254,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
 
           AppButton(
             label: s.submitReturnRequest,
-            icon: Icons.assignment_return,
+            icon: tabler.ArrowBackUp.new,
             isLoading: _isLoading,
             isFullWidth: true,
             height: 48,
@@ -265,7 +267,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
   }
 
   Widget _buildQtyControl(int idx, int value, int max, ColorScheme cs) {
-    Widget btn(IconData icon, bool enabled, VoidCallback onTap) => InkWell(
+    Widget btn(ThinIconBuilder icon, bool enabled, VoidCallback onTap) => InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: enabled ? onTap : null,
           child: Container(
@@ -276,12 +278,12 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
               border:
                   Border.all(color: enabled ? cs.outline : cs.outlineVariant),
             ),
-            child: Icon(icon,
+            child: ThinIcon(icon,
                 size: 16, color: enabled ? cs.primary : cs.outlineVariant),
           ),
         );
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      btn(Icons.remove, value > 0, () {
+      btn(tabler.Minus.new, value > 0, () {
         setState(() => _returnQtys[idx] = value - 1);
         _updateRefundAmount();
       }),
@@ -294,7 +296,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
               color: value > 0 ? cs.onSurface : cs.onSurfaceVariant,
             )),
       ),
-      btn(Icons.add, value < max, () {
+      btn(tabler.Plus.new, value < max, () {
         setState(() => _returnQtys[idx] = value + 1);
         _updateRefundAmount();
       }),

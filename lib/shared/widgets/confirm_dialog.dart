@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_icons.dart';
 
 class ConfirmDialog extends StatelessWidget {
   final String title;
@@ -6,7 +7,7 @@ class ConfirmDialog extends StatelessWidget {
   final String confirmText;
   final String cancelText;
   final bool isDestructive;
-  final IconData? icon;
+  final ThinIconBuilder? icon;
 
   const ConfirmDialog({
     super.key,
@@ -25,7 +26,7 @@ class ConfirmDialog extends StatelessWidget {
     String confirmText = 'Confirm',
     String cancelText = 'Cancel',
     bool isDestructive = false,
-    IconData? icon,
+    ThinIconBuilder? icon,
   }) {
     return showDialog<bool>(
       context: context,
@@ -49,8 +50,8 @@ class ConfirmDialog extends StatelessWidget {
       contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       icon: icon != null
-          ? Icon(
-              icon,
+          ? ThinIcon(
+              icon!,
               size: 40,
               color: isDestructive ? Colors.red : theme.colorScheme.primary,
             )

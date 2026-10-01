@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../data/models/stock_movement.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../../core/constants/app_icons.dart';
 
 class StockMovementTile extends StatelessWidget {
   final StockMovement movement;
@@ -14,10 +16,10 @@ class StockMovementTile extends StatelessWidget {
     final isIn = movement.qty > 0;
 
     final (color, icon, typeLabel) = switch (movement.type) {
-      StockMovementType.sale => (AppColors.statusCancelled, Icons.sell_rounded, 'Sale'),
-      StockMovementType.restock => (AppColors.statusCompleted, Icons.add_shopping_cart_rounded, 'Restock'),
-      StockMovementType.adjustment => (AppColors.statusConfirmed, Icons.tune_rounded, 'Adjustment'),
-      StockMovementType.damage => (AppColors.statusPending, Icons.broken_image_rounded, 'Damage'),
+      StockMovementType.sale => (AppColors.statusCancelled, tabler.Tag.new, 'Sale'),
+      StockMovementType.restock => (AppColors.statusCompleted, tabler.ShoppingCartPlus.new, 'Restock'),
+      StockMovementType.adjustment => (AppColors.statusConfirmed, tabler.AdjustmentsHorizontal.new, 'Adjustment'),
+      StockMovementType.damage => (AppColors.statusPending, tabler.PhotoOff.new, 'Damage'),
     };
 
     return Container(
@@ -36,7 +38,7 @@ class StockMovementTile extends StatelessWidget {
               color: color.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: ThinIcon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(

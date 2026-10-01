@@ -7,6 +7,8 @@ import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/customer_card.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class CustomerListScreen extends ConsumerStatefulWidget {
   const CustomerListScreen({super.key});
@@ -39,7 +41,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
         actions: [
           IconButton(
             tooltip: s.dueBook,
-            icon: const Icon(Icons.menu_book_rounded),
+            icon: const ThinIcon(tabler.Notebook.new),
             onPressed: () => context.go('/dues'),
           ),
         ],
@@ -53,10 +55,10 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                   () => setState(() => _query = v.toLowerCase())),
               decoration: InputDecoration(
                 hintText: s.searchCustomers,
-                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear),
+                        icon: const ThinIcon(tabler.X.new),
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _query = '');
@@ -80,7 +82,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
 
           if (customers.isEmpty) {
             return EmptyState(
-              icon: Icons.people_rounded,
+              icon: tabler.Users.new,
               title: _query.isNotEmpty ? s.noCustomersFound : s.noDataFound,
               subtitle: _query.isEmpty ? s.addFirstCustomer : null,
               actionLabel: _query.isEmpty ? s.addCustomer : null,
@@ -105,7 +107,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/customers/add'),
         tooltip: s.addCustomer,
-        child: const Icon(Icons.add),
+        child: const ThinIcon(tabler.Plus.new),
       ),
     );
   }

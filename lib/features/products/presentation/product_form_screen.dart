@@ -23,6 +23,8 @@ import '../../../core/utils/variant_utils.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/screens/qr_scanner_screen.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? product;
@@ -311,7 +313,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
             const SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.camera_alt_rounded),
+              leading: const ThinIcon(tabler.Camera.new),
               title: Text(s.takePhoto),
               onTap: () {
                 Navigator.pop(ctx);
@@ -319,7 +321,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
+              leading: const ThinIcon(tabler.Photo.new),
               title: Text(s.chooseFromGallery),
               onTap: () {
                 Navigator.pop(ctx);
@@ -328,7 +330,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
             if (_imagePath != null)
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded,
+                leading: const ThinIcon(tabler.Trash.new,
                     color: Colors.red),
                 title: Text(s.removePhoto,
                     style: const TextStyle(color: Colors.red)),
@@ -531,8 +533,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.add_photo_alternate_rounded,
+                              ThinIcon(
+                                tabler.PhotoPlus.new,
                                 size: 36,
                                 color: cs.primary.withValues(alpha: 0.5),
                               ),
@@ -617,7 +619,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.local_shipping_outlined,
+                      ThinIcon(tabler.TruckDelivery.new,
                           color: cs.onSurface.withValues(alpha: 0.5),
                           size: 20),
                       const SizedBox(width: 12),
@@ -646,12 +648,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         GestureDetector(
                           onTap: () =>
                               setState(() => _selectedSupplier = null),
-                          child: Icon(Icons.close,
+                          child: ThinIcon(tabler.X.new,
                               size: 18,
                               color: cs.onSurface.withValues(alpha: 0.5)),
                         )
                       else
-                        Icon(Icons.arrow_forward_ios,
+                        ThinIcon(tabler.ChevronRight.new,
                             size: 14,
                             color: cs.onSurface.withValues(alpha: 0.4)),
                     ],
@@ -675,7 +677,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 controller: _qrCtrl,
                 textInputAction: TextInputAction.next,
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.qr_code_scanner_rounded),
+                  icon: const ThinIcon(tabler.Scan.new),
                   tooltip: s.scan,
                   onPressed: _scanQr,
                 ),
@@ -770,7 +772,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   if (_attributes.length < 3)
                     TextButton.icon(
                       onPressed: _addAttribute,
-                      icon: const Icon(Icons.add, size: 16),
+                      icon: const ThinIcon(tabler.Plus.new, size: 16),
                       label: Text(s.add, style: const TextStyle(fontSize: 12)),
                     ),
                 ],
@@ -820,7 +822,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               ),
                             ),
                             IconButton(
-                              icon: Icon(Icons.close,
+                              icon: ThinIcon(tabler.X.new,
                                   size: 18, color: cs.error),
                               onPressed: () => _removeAttribute(i),
                               visualDensity: VisualDensity.compact,
@@ -851,7 +853,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                         horizontal: 8, vertical: 8),
                                     suffixIcon: GestureDetector(
                                       onTap: () => _removeOption(i, oi),
-                                      child: Icon(Icons.close,
+                                      child: ThinIcon(tabler.X.new,
                                           size: 14,
                                           color: cs.onSurface
                                               .withValues(alpha: 0.4)),
@@ -872,7 +874,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               height: 36,
                               child: TextButton.icon(
                                 onPressed: () => _addOption(i),
-                                icon: const Icon(Icons.add, size: 14),
+                                icon: const ThinIcon(tabler.Plus.new, size: 14),
                                 label: Text(s.add,
                                     style: const TextStyle(fontSize: 11)),
                                 style: TextButton.styleFrom(
@@ -1051,7 +1053,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 isLoading: _isLoading,
                 isFullWidth: true,
                 height: 52,
-                icon: isEdit ? Icons.save_rounded : Icons.add_rounded,
+                icon: isEdit ? tabler.DeviceFloppy.new : tabler.Plus.new,
               ),
               const SizedBox(height: 16),
             ],
@@ -1114,7 +1116,7 @@ class _BulkSetField extends StatelessWidget {
             onApply(ctrl.text);
             ctrl.clear();
           },
-          child: Icon(Icons.check_circle_outline,
+          child: ThinIcon(tabler.CircleCheck.new,
               size: 20, color: Theme.of(context).colorScheme.primary),
         ),
       ],
@@ -1233,7 +1235,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: '${AppStrings.of(context).search}...',
-                prefixIcon: const Icon(Icons.search, size: 20),
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 isDense: true,
               ),
             ),
@@ -1245,7 +1247,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.local_shipping_outlined,
+                        ThinIcon(tabler.TruckDelivery.new,
                             size: 48,
                             color: cs.onSurface.withValues(alpha: 0.3)),
                         const SizedBox(height: 8),

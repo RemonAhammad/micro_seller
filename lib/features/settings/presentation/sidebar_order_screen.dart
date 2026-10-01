@@ -5,6 +5,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/sidebar_items.dart';
 import '../providers/settings_provider.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
 /// Lets the user (a) drag-reorder the sidebar tabs and (b) toggle each tab's
 /// visibility with a Cupertino switch. Both persist immediately; the sidebar
@@ -71,7 +72,7 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
         actions: [
           IconButton(
             tooltip: s.resetToDefault,
-            icon: const Icon(Icons.restart_alt_rounded),
+            icon: const ThinIcon(tabler.Refresh.new),
             onPressed: _resetToDefault,
           ),
         ],
@@ -144,8 +145,8 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
                           const SizedBox(width: 8),
                           ReorderableDragStartListener(
                             index: i,
-                            child: Icon(
-                              Icons.drag_handle_rounded,
+                            child: ThinIcon(
+                              tabler.GripHorizontal.new,
                               color: cs.onSurfaceVariant,
                             ),
                           ),

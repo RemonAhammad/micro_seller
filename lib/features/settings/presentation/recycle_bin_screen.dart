@@ -11,6 +11,8 @@ import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../providers/settings_provider.dart';
 import '../providers/trash_provider.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 /// Deleted records, recoverable for [kTrashRetention].
 ///
@@ -58,7 +60,7 @@ class RecycleBinScreen extends ConsumerWidget {
         data: (entries) {
           if (entries.isEmpty) {
             return EmptyState(
-              icon: Icons.delete_outline_rounded,
+              icon: tabler.Trash.new,
               title: s.recycleBinEmpty,
               subtitle: s.recycleBinEmptyHint,
             );
@@ -88,7 +90,7 @@ class RecycleBinScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline_rounded, size: 18, color: cs.primary),
+          ThinIcon(tabler.InfoCircle.new, size: 18, color: cs.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -113,7 +115,7 @@ class RecycleBinScreen extends ConsumerWidget {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: _kindColor(entry.kind).withValues(alpha: 0.15),
-        child: Icon(_kindIcon(entry.kind),
+        child: ThinIcon(_kindIcon(entry.kind),
             size: 20, color: _kindColor(entry.kind)),
       ),
       title: Text(
@@ -137,14 +139,14 @@ class RecycleBinScreen extends ConsumerWidget {
         children: [
           IconButton(
             tooltip: s.restore,
-            icon: const Icon(Icons.restore_rounded),
+            icon: const ThinIcon(tabler.Restore.new),
             color: canRestore ? cs.primary : cs.onSurface.withValues(alpha: 0.3),
             onPressed:
                 canRestore ? () => _restore(context, ref, s, entry) : null,
           ),
           IconButton(
             tooltip: s.deleteForever,
-            icon: const Icon(Icons.delete_forever_rounded),
+            icon: const ThinIcon(tabler.TrashX.new),
             color: Colors.red.shade400,
             onPressed: () => _deleteForever(context, ref, s, entry),
           ),
@@ -180,7 +182,7 @@ class RecycleBinScreen extends ConsumerWidget {
       message: s.deleteForeverConfirm,
       confirmText: s.delete,
       isDestructive: true,
-      icon: Icons.delete_forever_rounded,
+      icon: tabler.TrashX.new,
     );
     if (ok != true || !context.mounted) return;
     await ref.read(trashProvider.notifier).deleteForever(entry.id);
@@ -196,7 +198,7 @@ class RecycleBinScreen extends ConsumerWidget {
       message: s.emptyBinConfirm,
       confirmText: s.delete,
       isDestructive: true,
-      icon: Icons.delete_forever_rounded,
+      icon: tabler.TrashX.new,
     );
     if (ok != true || !context.mounted) return;
 
@@ -215,14 +217,14 @@ class RecycleBinScreen extends ConsumerWidget {
 
   // ── presentation helpers ───────────────────────────────────────────────
 
-  IconData _kindIcon(TrashKind kind) => switch (kind) {
-        TrashKind.expense => Icons.receipt_long_rounded,
-        TrashKind.category => Icons.category_rounded,
-        TrashKind.customer => Icons.person_rounded,
-        TrashKind.product => Icons.inventory_2_rounded,
-        TrashKind.order => Icons.shopping_bag_rounded,
-        TrashKind.purchase => Icons.local_shipping_rounded,
-        TrashKind.supplier => Icons.store_rounded,
+  ThinIconBuilder _kindIcon(TrashKind kind) => switch (kind) {
+        TrashKind.expense => tabler.Receipt.new,
+        TrashKind.category => tabler.Category.new,
+        TrashKind.customer => tabler.User.new,
+        TrashKind.product => tabler.Package.new,
+        TrashKind.order => tabler.ShoppingBag.new,
+        TrashKind.purchase => tabler.TruckDelivery.new,
+        TrashKind.supplier => tabler.BuildingStore.new,
       };
 
   Color _kindColor(TrashKind kind) => switch (kind) {

@@ -19,6 +19,7 @@ description: Conventions for adding a screen, route, or Riverpod provider/notifi
 
 ## Widgets
 - Strings: `final s = AppStrings.of(context);`. Nothing hardcoded (see the `l10n` skill).
+- Icons: thin Tabler only — `ThinIcon(tabler.Plus.new)` with `import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;`. Never `Icon(Icons.…)`. Icon parameters are typed `ThinIconBuilder`, not `IconData`. Shared icons go in `AppIcons`.
 - Responsive: use `LayoutBuilder`, with 600px as the phone/tablet breakpoint and grids sized by `width / 170–180` clamped to 2–6 columns.
 - Reuse shared widgets: `EmptyState`, `AppBottomSheet.show`, `ConfirmDialog.show`, `AppButton`, `AppTextField`, `LoadingShimmer`, `Debouncer` (400ms search).
 - Number fields always get `inputFormatters` (`FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))` for money).

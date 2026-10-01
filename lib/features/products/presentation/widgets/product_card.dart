@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../data/models/product.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import 'stock_badge.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../../core/constants/app_icons.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -106,8 +108,8 @@ class _ProductImagePlaceholder extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.inventory_2_rounded,
+            ThinIcon(
+              tabler.Package.new,
               size: 36,
               color: theme.colorScheme.primary.withOpacity(0.3),
             ),

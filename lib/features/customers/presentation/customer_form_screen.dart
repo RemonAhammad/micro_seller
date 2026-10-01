@@ -10,6 +10,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../core/constants/app_icons.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
   final Customer? customer;
@@ -139,7 +141,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 textCapitalization: TextCapitalization.words,
                 validator: (v) => Validators.required(v, 'Name'),
                 textInputAction: TextInputAction.next,
-                prefixIcon: const Icon(Icons.person_outline_rounded),
+                prefixIcon: const ThinIcon(tabler.User.new),
               ),
               const SizedBox(height: 12),
               AppTextField(
@@ -151,7 +153,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 ],
                 validator: Validators.phone,
                 textInputAction: TextInputAction.next,
-                prefixIcon: const Icon(Icons.phone_outlined),
+                prefixIcon: const ThinIcon(tabler.Phone.new),
               ),
               const SizedBox(height: 12),
               AppTextField(
@@ -160,7 +162,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,
                 textInputAction: TextInputAction.next,
-                prefixIcon: const Icon(Icons.location_on_outlined),
+                prefixIcon: const ThinIcon(tabler.MapPin.new),
               ),
               const SizedBox(height: 12),
               AppTextField(
@@ -231,7 +233,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 isLoading: _isLoading,
                 isFullWidth: true,
                 height: 52,
-                icon: isEdit ? Icons.save_rounded : Icons.person_add_rounded,
+                icon: isEdit ? tabler.DeviceFloppy.new : tabler.UserPlus.new,
               ),
             ],
           ),
