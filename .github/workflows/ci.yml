@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # release.yml runs these same checks before building a release.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  # In a call from release.yml, github.workflow is the caller's name, so a
+  # release run never shares (or cancels) a group with push/PR CI.
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash # -eo pipefail
+
+jobs:
+  checks:
+    name: Analyze & test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Generated code is committed and current
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          stale=$(git status --porcelain -- '*.g.dart' '*.freezed.dart' pubspec.lock)
+          if [ -n "$stale" ]; then
+            echo "$stale"
+            git diff --stat -- '*.g.dart' '*.freezed.dart' pubspec.lock
+            echo "::error::Generated files are out of date. Run 'dart run build_runner build --delete-conflicting-outputs' and commit the result."
+            exit 1
+          fi
+
+      - name: Translations parity
+        run: bash .claude/skills/l10n/scripts/l10n_parity.sh
+
+      - name: Analyze
+        # Errors and warnings fail; infos (style hints) don't.
+        run: flutter analyze --no-pub --no-fatal-infos
+
+      - name: Test
+        run: flutter test --no-pub --file-reporter "json:$RUNNER_TEMP/tests.jsonl"
+
+      - name: No test was skipped
+        # The real-Isar tests skip themselves when the Isar core library isn't
+        # found; that must fail here rather than pass silently.
+        run: |
+          skipped=$(jq -rs '
+            (map(select(.type == "testStart") | {key: (.test.id | tostring), value: .test.name}) | from_entries) as $names
+            | map(select(.type == "testDone" and .skipped == true and .hidden != true) | $names[.testID | tostring])
+            | .[]' "$RUNNER_TEMP/tests.jsonl")
+          if [ -n "$skipped" ]; then
+            echo "$skipped"
+            echo "::error::$(printf '%s\n' "$skipped" | wc -l | tr -d ' ') test(s) skipped (Isar core library not loaded?)"
+            exit 1
+          fi
+          echo "No skipped tests."

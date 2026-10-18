@@ -1,0 +1,6 @@
+# LF everywhere: riverpod_generator hashes each provider's source into its
+# .g.dart, so a CRLF checkout would regenerate different files and fail CI's
+# "generated code is up to date" check.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf

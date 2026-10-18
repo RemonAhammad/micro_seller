@@ -1,0 +1,35 @@
+name: Set up Flutter
+description: >-
+  The pinned Flutter SDK, dependencies from the committed pubspec.lock, and a
+  placeholder .env (a declared asset). Never sees secrets — the release job
+  writes the real .env itself.
+
+inputs:
+  java:
+    description: Also install JDK 17 (needed for Android builds only).
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - if: inputs.java == 'true'
+      uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    # The one place the Flutter version is pinned (CLAUDE.md → Toolchain).
+    - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+      with:
+        channel: stable
+        flutter-version: 3.44.9
+        cache: true
+
+    - shell: bash
+      run: |
+        flutter --version
+        # Fails if pubspec.lock is missing or out of date with pubspec.yaml:
+        # a fresh resolve can pick an Isar version the generated code
+        # doesn't match.
+        flutter pub get --enforce-lockfile
+        cp .env.example .env

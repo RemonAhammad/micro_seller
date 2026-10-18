@@ -1,5 +1,4 @@
 import java.util.Properties
-import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
@@ -12,7 +11,14 @@ plugins {
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+} else if (System.getenv("REQUIRE_RELEASE_SIGNING") == "true") {
+    // CI's release job sets this: without key.properties the release build
+    // below would silently be signed with the debug key.
+    throw GradleException(
+        "REQUIRE_RELEASE_SIGNING=true but android/key.properties is missing; " +
+            "refusing to sign the release with the debug key"
+    )
 }
 
 android {

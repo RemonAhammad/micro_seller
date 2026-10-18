@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 *.lock
+# …except the app's dependency lock: CI and every machine must resolve the
+# same versions (Isar's generated code only works with the exact version
+# that generated it).
+!pubspec.lock
 
 # Android signing — NEVER commit these
 android/key.properties

@@ -17,7 +17,7 @@ typedef PagePixels = ({int width, int height});
 /// that froze the progress spinner for the whole export.
 ///
 /// [jpegPages]: pages whose PNG is exactly this many pixels are re-encoded as
-/// JPEG (quality 90, same size) first. The `pdf` package embeds JPEG bytes
+/// JPEG (quality [_jpegQuality], same size) first. The `pdf` package embeds JPEG bytes
 /// as-is (`/DCTDecode`: no Dart decode, no re-compression). Pass the full
 /// page size of a layout whose root paints opaque white edge to edge — JPEG
 /// has no alpha, and a capture of any other size (sized to its content) can
@@ -71,12 +71,16 @@ PagePixels? _pngPixels(Uint8List bytes) {
 /// Native JPEG encode (off the UI thread). `minWidth` / `minHeight` are the
 /// real size, so the plugin never scales the page (its defaults would let it
 /// shrink tall pages). Falls back to the PNG on any failure.
+// 75 keeps text sharp at the 2x capture while keeping mostly-white pages
+// small enough to share over chat apps (q90 was ~3x a PNG's size).
+const _jpegQuality = 75;
+
 Future<Uint8List> _pngToJpeg(Uint8List png, PagePixels size) async {
   try {
     final jpeg = await FlutterImageCompress.compressWithList(
       png,
       format: CompressFormat.jpeg,
-      quality: 90,
+      quality: _jpegQuality,
       minWidth: size.width,
       minHeight: size.height,
       autoCorrectionAngle: false,
