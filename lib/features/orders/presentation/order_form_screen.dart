@@ -1073,14 +1073,28 @@ class _ProductPickerSheet extends StatefulWidget {
 
 class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   late final List<OrderItem> _items;
+  // Created once: a new watch() per build restarts the watcher and re-reads every product.
+  late final Stream<List<Product>> _productsStream;
   final _searchCtrl = TextEditingController();
   String _query = '';
   final Set<int> _expandedProducts = {};
+
+  // Search memo, rebuilt only when the stream emits a new list or the query changes.
+  List<Product>? _source;
+  List<(String, String)>? _searchKeys;
+  String? _filteredQuery;
+  List<Product> _filtered = const [];
 
   @override
   void initState() {
     super.initState();
     _items = List.of(widget.currentItems);
+    _productsStream = widget.isar.products
+        .where()
+        .filter()
+        .isActiveEqualTo(true)
+        .sortByName()
+        .watch(fireImmediately: true);
   }
 
   @override
@@ -1130,26 +1144,44 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     widget.onChanged(_items);
   }
 
+  List<Product> _filterProducts(List<Product> all) {
+    if (!identical(all, _source)) {
+      _source = all;
+      _searchKeys = null;
+      _filteredQuery = null;
+    }
+    if (_query != _filteredQuery) {
+      _filteredQuery = _query;
+      if (_query.isEmpty) {
+        _filtered = all;
+      } else {
+        final keys = _searchKeys ??= [for (final p in all) (p.name.toLowerCase(), p.sku.toLowerCase())];
+        _filtered = [
+          for (var i = 0; i < all.length; i++)
+            if (keys[i].$1.contains(_query) || keys[i].$2.contains(_query)) all[i],
+        ];
+      }
+    }
+    return _filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return StreamBuilder<List<Product>>(
-      stream: widget.isar.products.where().filter().isActiveEqualTo(true).sortByName().watch(fireImmediately: true),
+      stream: _productsStream,
       builder: (context, snapshot) {
-        final allProducts = snapshot.data ?? [];
-        return _buildSheet(context, theme, cs, allProducts);
+        // null until the first emission (spinner); an error still falls back to the empty state.
+        final loading = !snapshot.hasData && !snapshot.hasError;
+        return _buildSheet(context, theme, cs, loading ? null : snapshot.data ?? const []);
       },
     );
   }
 
-  Widget _buildSheet(BuildContext context, ThemeData theme, ColorScheme cs, List<Product> allProducts) {
-    final filtered = _query.isEmpty
-        ? allProducts
-        : allProducts
-              .where((p) => p.name.toLowerCase().contains(_query) || p.sku.toLowerCase().contains(_query))
-              .toList();
+  Widget _buildSheet(BuildContext context, ThemeData theme, ColorScheme cs, List<Product>? allProducts) {
+    final filtered = allProducts == null ? const <Product>[] : _filterProducts(allProducts);
 
     final totalItems = _items.fold<int>(0, (s, i) => s + i.qty);
 
@@ -1224,7 +1256,9 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 
           // Product list
           Expanded(
-            child: filtered.isEmpty
+            child: allProducts == null
+                ? const Center(child: CircularProgressIndicator())
+                : filtered.isEmpty
                 ? Center(
                     child: Text(
                       AppStrings.of(context).noProductsFound,
@@ -1548,9 +1582,22 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
     super.dispose();
   }
 
-  List<Customer> get _filtered => _query.isEmpty
-      ? widget.customers
-      : widget.customers.where((c) => c.name.toLowerCase().contains(_query) || c.phone.contains(_query)).toList();
+  // Rebuilt only when the query changes, not on every read in build.
+  late List<Customer> _filtered = widget.customers;
+  late final List<String> _lowerNames = [for (final c in widget.customers) c.name.toLowerCase()];
+
+  void _setQuery(String query) {
+    setState(() {
+      _query = query;
+      final customers = widget.customers;
+      _filtered = query.isEmpty
+          ? customers
+          : [
+              for (var i = 0; i < customers.length; i++)
+                if (_lowerNames[i].contains(query) || customers[i].phone.contains(query)) customers[i],
+            ];
+    });
+  }
 
   void _openForm() {
     // Pre-fill from search query
@@ -1704,7 +1751,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
               child: TextField(
                 controller: _searchCtrl,
                 autofocus: true,
-                onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                onChanged: (v) => _setQuery(v.toLowerCase()),
                 decoration: InputDecoration(
                   hintText: s.searchByNameOrPhone,
                   prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
@@ -1713,7 +1760,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                           icon: const ThinIcon(tabler.X.new, size: 18),
                           onPressed: () {
                             _searchCtrl.clear();
-                            setState(() => _query = '');
+                            _setQuery('');
                           },
                         )
                       : null,

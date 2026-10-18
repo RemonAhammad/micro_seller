@@ -63,6 +63,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _qrCtrl = TextEditingController();
 
   String? _imagePath;
+  bool _isCompressing = false;
   bool _isLoading = false;
   Product? _existingProduct;
   Supplier? _selectedSupplier;
@@ -269,25 +270,43 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source, imageQuality: 90);
+    // No imageQuality: it made the picker decode the photo at full size. The
+    // 1600 cap lets it subsample that decode; the compress pass sets quality.
+    final picked = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
     if (picked == null) return;
 
-    final dir = await getApplicationDocumentsDirectory();
-    final fileName = '${const Uuid().v4()}.jpg';
-    final targetPath = '${dir.path}/product_images/$fileName';
+    if (mounted) setState(() => _isCompressing = true);
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = '${const Uuid().v4()}.jpg';
+      final targetPath = '${dir.path}/product_images/$fileName';
 
-    await Directory('${dir.path}/product_images').create(recursive: true);
+      await Directory('${dir.path}/product_images').create(recursive: true);
 
-    final compressed = await FlutterImageCompress.compressAndGetFile(
-      picked.path,
-      targetPath,
-      quality: 80,
-      minWidth: 600,
-      minHeight: 600,
-    );
+      final compressed = await FlutterImageCompress.compressAndGetFile(
+        picked.path,
+        targetPath,
+        quality: 80,
+        minWidth: 600,
+        minHeight: 600,
+      );
 
-    if (compressed != null && mounted) {
-      setState(() => _imagePath = compressed.path);
+      if (compressed != null && mounted) {
+        setState(() => _imagePath = compressed.path);
+      }
+    } finally {
+      if (mounted) setState(() => _isCompressing = false);
+      // Only mobile pickers hand back a temp copy; desktop returns the
+      // user's own file.
+      if (Platform.isAndroid || Platform.isIOS) {
+        try {
+          await File(picked.path).delete();
+        } catch (_) {}
+      }
     }
   }
 
@@ -509,7 +528,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               // ── Image picker ───────────────────────────────────────────────
               Center(
                 child: GestureDetector(
-                  onTap: _showImageSourceSheet,
+                  onTap: _isCompressing ? null : _showImageSourceSheet,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 120,
@@ -522,7 +541,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         width: 2,
                       ),
                     ),
-                    child: _imagePath != null
+                    child: _isCompressing
+                        ? const Center(child: CircularProgressIndicator())
+                        : _imagePath != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(14),
                             child: Image.file(

@@ -132,11 +132,23 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
     );
   }
 
+  static const _thumbRadius = 20.0;
+
   Widget _thumb(Product p) {
     if (p.imagePath.isEmpty) {
-      return const CircleAvatar(child: ThinIcon(tabler.Package.new, size: 18));
+      return const CircleAvatar(
+        radius: _thumbRadius,
+        child: ThinIcon(tabler.Package.new, size: 18),
+      );
     }
-    return CircleAvatar(backgroundImage: FileImage(File(p.imagePath)));
+    // Decode at the avatar's pixel size, not the stored photo's.
+    final width =
+        (_thumbRadius * 2 * MediaQuery.devicePixelRatioOf(context) * 1.4)
+            .ceil();
+    return CircleAvatar(
+      radius: _thumbRadius,
+      backgroundImage: ResizeImage(FileImage(File(p.imagePath)), width: width),
+    );
   }
 
   Widget _optionsBar(dynamic s) {

@@ -15,43 +15,26 @@ import '../models/supplier.dart';
 import '../models/purchase.dart';
 import '../models/cash_register.dart';
 import '../models/trash_entry.dart';
+import 'backup_format.dart';
 
 class LocalBackupService {
-  /// Bumped to v3 when the `settings` payload was added. Older v2 backups
-  /// (collections only) still restore cleanly — settings field is optional.
-  static const _backupVersion = 4;
-
   /// Serialize all 10 collections + (optionally) the user's settings to a
   /// JSON string. Pass `settings` from `Settings.exportSettings()` to include
   /// preferences (theme, currency, sidebar order, etc.) in the backup.
   Future<String> encodeAll(Isar isar, {Map<String, dynamic>? settings}) async {
-    final products = await isar.products.where().findAll();
-    final orders = await isar.orders.where().findAll();
-    final customers = await isar.customers.where().findAll();
-    final expenses = await isar.expenses.where().findAll();
-    final movements = await isar.stockMovements.where().findAll();
-    final categories = await isar.categories.where().findAll();
-    final suppliers = await isar.suppliers.where().findAll();
-    final purchases = await isar.purchases.where().findAll();
-    final cashRegisters = await isar.cashRegisters.where().findAll();
-    final payments = await isar.payments.where().findAll();
-
-    return jsonEncode({
-      'version': _backupVersion,
-      'appName': 'Micro Seller',
-      'timestamp': DateTime.now().toIso8601String(),
-      'products': products.map((e) => e.toJson()).toList(),
-      'orders': orders.map((e) => e.toJson()).toList(),
-      'customers': customers.map((e) => e.toJson()).toList(),
-      'expenses': expenses.map((e) => e.toJson()).toList(),
-      'stockMovements': movements.map((e) => e.toJson()).toList(),
-      'categories': categories.map((e) => e.toJson()).toList(),
-      'suppliers': suppliers.map((e) => e.toJson()).toList(),
-      'purchases': purchases.map((e) => e.toJson()).toList(),
-      'cashRegisters': cashRegisters.map((e) => e.toJson()).toList(),
-      'payments': payments.map((e) => e.toJson()).toList(),
-      if (settings != null) 'settings': settings,
-    });
+    return jsonEncode(buildBackupMap(
+      products: await isar.products.where().findAll(),
+      orders: await isar.orders.where().findAll(),
+      customers: await isar.customers.where().findAll(),
+      expenses: await isar.expenses.where().findAll(),
+      stockMovements: await isar.stockMovements.where().findAll(),
+      categories: await isar.categories.where().findAll(),
+      suppliers: await isar.suppliers.where().findAll(),
+      purchases: await isar.purchases.where().findAll(),
+      cashRegisters: await isar.cashRegisters.where().findAll(),
+      payments: await isar.payments.where().findAll(),
+      settings: settings,
+    ));
   }
 
   /// Validate + clear + import all 10 collections from a JSON string.

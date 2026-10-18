@@ -21,6 +21,15 @@ Stream<List<Order>> orders(Ref ref) async* {
       .watch(fireImmediately: true);
 }
 
+/// One order, live — without reloading every order on each write.
+@riverpod
+Stream<Order?> orderById(Ref ref, int id) async* {
+  final isar = await ref.watch(isarProvider.future);
+  yield isar.orders.getSync(id);
+  // No fireImmediately: the current value was just yielded above.
+  yield* isar.orders.watchObject(id);
+}
+
 @riverpod
 Stream<List<Order>> pendingOrders(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);

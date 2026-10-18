@@ -22,8 +22,9 @@ class ScannerScreen extends ConsumerStatefulWidget {
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends ConsumerState<ScannerScreen> {
-  final _controller = MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates);
+class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindingObserver {
+  // Started/stopped by hand: the branch stays mounted offstage after a visit.
+  final _controller = MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates, autoStart: false);
 
   String? _scannedCode;
   Product? _matchedProduct;
@@ -31,8 +32,58 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   bool _torchOn = false;
   bool _paused = false;
 
+  bool _tabActive = false;
+  bool _appResumed = true;
+  bool _cameraDenied = false;
+  Future<void> _cameraOp = Future.value();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // False while another branch is shown or a route covers this one.
+    final active = TickerMode.valuesOf(context).enabled;
+    if (active == _tabActive) return;
+    _tabActive = active;
+    // Opening the tab is the only time a refused camera is asked for again.
+    _syncCamera(retryDenied: active);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appResumed = state == AppLifecycleState.resumed;
+    _syncCamera();
+  }
+
+  /// Serialized because start() throws while a start is in flight; each op applies the latest wanted state.
+  void _syncCamera({bool retryDenied = false}) {
+    _cameraOp = _cameraOp.then((_) async {
+      if (!mounted) return;
+      final want = _tabActive && _appResumed;
+      // Android re-prompts on every start() and the prompt pauses/resumes the app — a resume loop.
+      if (want && _cameraDenied && !retryDenied) return;
+      try {
+        if (want) {
+          await _controller.start();
+          _cameraDenied = _controller.value.error?.errorCode == MobileScannerErrorCode.permissionDenied;
+        } else {
+          await _controller.stop();
+        }
+      } catch (_) {
+        // A failed start shows in the preview.
+      }
+      if (!want && _torchOn && mounted) setState(() => _torchOn = false);
+    });
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
   }

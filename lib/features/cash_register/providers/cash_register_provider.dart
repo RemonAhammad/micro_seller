@@ -1,6 +1,7 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/cash_register.dart';
+import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
 
 part 'cash_register_provider.g.dart';
@@ -8,10 +9,8 @@ part 'cash_register_provider.g.dart';
 @riverpod
 Stream<List<CashRegister>> cashRegisters(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.cashRegisters
-      .where()
-      .sortByOpenedAtDesc()
-      .watch(fireImmediately: true);
+  final query = isar.cashRegisters.where().sortByOpenedAtDesc();
+  yield* reloadOn(isar.cashRegisters.watchLazy(), query.findAll);
 }
 
 /// Returns the currently open register (if any)

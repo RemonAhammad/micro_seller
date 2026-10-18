@@ -28,11 +28,21 @@ class PurchaseDetailScreen extends ConsumerWidget {
   }
 }
 
-class _Body extends ConsumerWidget {
+class _Body extends ConsumerStatefulWidget {
   final int purchaseId;
   final Isar isar;
 
   const _Body({required this.purchaseId, required this.isar});
+
+  @override
+  ConsumerState<_Body> createState() => _BodyState();
+}
+
+class _BodyState extends ConsumerState<_Body> {
+  late final Stream<Purchase?> _purchaseStream = widget.isar.purchases
+      .watchObject(widget.purchaseId, fireImmediately: true);
+  late final Purchase? _initialPurchase =
+      widget.isar.purchases.getSync(widget.purchaseId);
 
   String _methodLabel(BuildContext context, PurchasePaymentMethod m) {
     final s = AppStrings.of(context);
@@ -47,16 +57,23 @@ class _Body extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return StreamBuilder<Purchase?>(
-      stream: isar.purchases.watchObject(purchaseId, fireImmediately: true),
+      stream: _purchaseStream,
+      initialData: _initialPurchase,
       builder: (context, snap) {
         final p = snap.data;
         if (p == null) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return Scaffold(
+              appBar: AppBar(),
+              body: const Center(child: CircularProgressIndicator()),
+            );
+          }
           return Scaffold(
             appBar: AppBar(),
             body: Center(child: Text(s.purchaseNotFound)),

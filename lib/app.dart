@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,14 +19,19 @@ class SellerBookApp extends ConsumerStatefulWidget {
 }
 
 class _SellerBookAppState extends ConsumerState<SellerBookApp> {
+  Timer? _autoBackupTimer;
+
   @override
   void initState() {
     super.initState();
-    // Fire-and-forget after first frame so it never blocks startup. The
-    // runner short-circuits if auto-backup is disabled, the Drive account
-    // isn't signed in, or the last backup was less than 12 hours ago.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      ref.read(autoBackupRunnerProvider).runIfDue();
+      // Fire-and-forget, well after the first frame: the backup encodes the
+      // whole DB on this isolate and would freeze the dashboard. The runner
+      // short-circuits if auto-backup is disabled, the Drive account isn't
+      // signed in, or the last backup was less than 12 hours ago.
+      _autoBackupTimer = Timer(const Duration(seconds: 15), () {
+        if (mounted) ref.read(autoBackupRunnerProvider).runIfDue();
+      });
 
       // Drop recycle-bin entries past the retention window. Also
       // fire-and-forget: a failure here must never keep the app from
@@ -40,20 +46,29 @@ class _SellerBookAppState extends ConsumerState<SellerBookApp> {
   }
 
   @override
+  void dispose() {
+    _autoBackupTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Pre-warm the Isar DB on app start
     ref.watch(isarProvider);
 
-    final settings = ref.watch(settingsProvider);
-    final mode = settings['themeMode'] as String? ?? 'system';
+    // Only what MaterialApp uses — watching the whole map rebuilt the app on
+    // every settings write.
+    final (mode, langCode, shopName) =
+        ref.watch(settingsProvider.select((s) => (
+              s['themeMode'] as String? ?? 'system',
+              s['language'] as String? ?? 'en',
+              s['shopName'] as String? ?? '',
+            )));
     final themeMode = switch (mode) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
       _ => ThemeMode.system,
     };
-
-    final langCode = settings['language'] as String? ?? 'en';
-    final shopName = settings['shopName'] as String? ?? '';
 
     return MaterialApp.router(
       // OS task switcher / browser tab title — show the user's shop name when

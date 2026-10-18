@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/order.dart';
+import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/models/trash_entry.dart';
@@ -20,19 +20,12 @@ ProductRepository productRepository(Ref ref) {
 @riverpod
 Stream<List<Product>> products(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  // Debug: print raw DB count
-  final allCount = await isar.products.count();
-  final activeCount = await isar.products.filter().isActiveEqualTo(true).count();
-  debugPrint('[ProductProvider] DB total: $allCount, active: $activeCount');
-  await for (final list in isar.products
+  yield* isar.products
       .where()
       .filter()
       .isActiveEqualTo(true)
       .sortByName()
-      .watch(fireImmediately: true)) {
-    debugPrint('[ProductProvider] Stream emitted ${list.length} products: ${list.map((p) => '${p.id}:${p.name}').join(', ')}');
-    yield list;
-  }
+      .watch(fireImmediately: true);
 }
 
 @riverpod
@@ -86,9 +79,10 @@ class ProductNotifier extends _$ProductNotifier {
       final trash = TrashService(isar);
 
       // Check if product is referenced in any orders
-      final orders = await isar.orders.where().findAll();
-      final inUse = orders.any(
-          (o) => o.items.any((item) => item.productId == id));
+      final inUse = await isar.orders
+          .filter()
+          .itemsElement((q) => q.productIdEqualTo(id))
+          .isNotEmpty();
       if (inUse) {
         // Soft-delete: mark inactive instead of removing
         final product = await isar.products.get(id);

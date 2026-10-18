@@ -85,6 +85,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: RefreshIndicator(
+        onRefresh: () async => ref.refresh(dashboardStatsProvider),
+        // The shell resizes on every keyboard frame, even while this tab is
+        // offstage; an identical const child lets Flutter skip the content.
+        child: LayoutBuilder(
+          builder: (context, constraints) => constraints.maxWidth >= 700
+              ? const _DashboardContent(isWide: true)
+              : const _DashboardContent(isWide: false),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Dashboard Content ──────────────────────────────────────────────────────
+
+class _DashboardContent extends ConsumerWidget {
+  final bool isWide;
+
+  const _DashboardContent({required this.isWide});
+
+  static final _statusLabels = [
+    for (final status in OrderStatus.values)
+      status.name[0].toUpperCase() + status.name.substring(1),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
     final statsAsync = ref.watch(dashboardStatsProvider);
     // Due info comes from the Due Book's own providers, so the dashboard and
@@ -95,182 +127,165 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ref.watch(duesCollectedThisMonthProvider).value ?? 0;
     final ordersAsync = ref.watch(ordersProvider);
     final expensesAsync = ref.watch(expensesProvider);
-    final theme = Theme.of(context);
+    final dateRange = resolveDashboardRange(
+        ref.watch(dashboardDateRangeProvider), DateTime.now());
+    // Amounts read CurrencyFormatter's static symbol, so redraw on a change.
+    ref.watch(settingsProvider.select((m) => m['currencySymbol']));
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: RefreshIndicator(
-        onRefresh: () async => ref.refresh(dashboardStatsProvider),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 700;
+    return CustomScrollView(
+      slivers: [
+        // ── Header ──
+        _buildHeader(context, statsAsync),
 
-            return CustomScrollView(
-              slivers: [
-                // ── Header ──
-                _buildHeader(statsAsync, theme),
-
-                // ── Date Range Filter ──
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: _DateRangeBar(),
-                  ),
-                ),
-
-                // ── 60+ days overdue alert ──
-                if (dueSummary.over60Count > 0)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: _OverdueBanner(summary: dueSummary),
-                    ),
-                  ),
-
-                // ── Body ──
-                SliverToBoxAdapter(
-                  // Keep showing the last numbers while stats recompute
-                  // after an order change, instead of flashing a skeleton.
-                  child: statsAsync.when(
-                    skipLoadingOnReload: true,
-                    data: (stats) {
-                      // Compute order status counts
-                      final statusCounts = <String, int>{};
-                      final allOrders =
-                          ordersAsync.value ?? <Order>[];
-                      for (final o in allOrders) {
-                        final label = o.orderStatus.name[0].toUpperCase() +
-                            o.orderStatus.name.substring(1);
-                        statusCounts[label] =
-                            (statusCounts[label] ?? 0) + 1;
-                      }
-
-                      // Compute daily expenses for last 7 days
-                      final allExpenses =
-                          expensesAsync.value ?? <Expense>[];
-                      final dailyExpenses = <int, double>{};
-                      for (int i = 0; i < stats.weeklySales.length; i++) {
-                        final day = stats.weeklySales[i].date;
-                        final dayEnd = day.add(const Duration(days: 1));
-                        double total = 0;
-                        for (final e in allExpenses) {
-                          if (e.date != null &&
-                              !e.date!.isBefore(day) &&
-                              e.date!.isBefore(dayEnd)) {
-                            total += e.amount;
-                          }
-                        }
-                        dailyExpenses[i] = total;
-                      }
-
-                      final dateRange = resolveDashboardRange(
-                          ref.watch(dashboardDateRangeProvider),
-                          DateTime.now());
-                      final totalExpensesThisMonth = _rangeExpenses(
-                        allExpenses,
-                        dateRange.start,
-                        dateRange.end,
-                      );
-
-                      return _DashboardBody(
-                        stats: stats,
-                        statusCounts: statusCounts,
-                        dailyExpenses: dailyExpenses,
-                        monthExpenses: totalExpensesThisMonth,
-                        receivable: dueSummary.total,
-                        collectedThisMonth: collectedThisMonth,
-                        isWide: isWide,
-                      );
-                    },
-                    loading: () => _DashboardSkeleton(isWide: isWide),
-                    error: (error, _) =>
-                        _ErrorBody(error: error.toString()),
-                  ),
-                ),
-
-                // ── Bottom sections ──
-                SliverToBoxAdapter(
-                  child: statsAsync.whenOrNull(
-                        skipLoadingOnReload: true,
-                        data: (stats) {
-                          final hasDues = dues.isNotEmpty;
-                          if (stats.lowStockProducts.isEmpty && !hasDues) {
-                            return const SizedBox(height: 24);
-                          }
-
-                          if (isWide) {
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (stats.lowStockProducts.isNotEmpty)
-                                    Expanded(
-                                      child: _SectionCard(
-                                        title: s.lowStockItems,
-                                        icon: tabler.Package.new,
-                                        iconColor: AppColors.statusPending,
-                                        action: TextButton(
-                                          onPressed: () =>
-                                              context.go('/inventory'),
-                                          child: Text(s.viewAll),
-                                        ),
-                                        child: LowStockList(
-                                            products:
-                                                stats.lowStockProducts),
-                                      ),
-                                    ),
-                                  if (stats.lowStockProducts.isNotEmpty &&
-                                      hasDues)
-                                    const SizedBox(width: 12),
-                                  if (hasDues)
-                                    Expanded(
-                                      child: _dueSection(
-                                          context, dueSummary, dues),
-                                    ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return Column(
-                            children: [
-                              if (stats.lowStockProducts.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      16, 0, 16, 12),
-                                  child: _SectionCard(
-                                    title: s.lowStockItems,
-                                    icon: tabler.Package.new,
-                                    iconColor: AppColors.statusPending,
-                                    action: TextButton(
-                                      onPressed: () =>
-                                          context.go('/inventory'),
-                                      child: Text(s.viewAll),
-                                    ),
-                                    child: LowStockList(
-                                        products: stats.lowStockProducts),
-                                  ),
-                                ),
-                              if (hasDues)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      16, 0, 16, 24),
-                                  child: _dueSection(
-                                      context, dueSummary, dues),
-                                ),
-                            ],
-                          );
-                        },
-                      ) ??
-                      const SizedBox.shrink(),
-                ),
-              ],
-            );
-          },
+        // ── Date Range Filter ──
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: _DateRangeBar(),
+          ),
         ),
-      ),
+
+        // ── 60+ days overdue alert ──
+        if (dueSummary.over60Count > 0)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: _OverdueBanner(summary: dueSummary),
+            ),
+          ),
+
+        // ── Body ──
+        SliverToBoxAdapter(
+          // Keep showing the last numbers while stats recompute
+          // after an order change, instead of flashing a skeleton.
+          child: statsAsync.when(
+            skipLoadingOnReload: true,
+            data: (stats) {
+              // Compute order status counts; labels keep the order in which
+              // each status first appears in the list
+              final counts = List.filled(OrderStatus.values.length, 0);
+              final firstSeen = <int>[];
+              for (final o in ordersAsync.value ?? <Order>[]) {
+                final i = o.orderStatus.index;
+                if (counts[i]++ == 0) firstSeen.add(i);
+              }
+              final statusCounts = <String, int>{
+                for (final i in firstSeen) _statusLabels[i]: counts[i],
+              };
+
+              // Compute daily expenses for the last 7 days and the range
+              // total in one pass
+              final weeklySales = stats.weeklySales;
+              final dayIndex = <DateTime, int>{
+                for (int i = 0; i < weeklySales.length; i++)
+                  weeklySales[i].date: i,
+              };
+              final dailyExpenses = <int, double>{
+                for (int i = 0; i < weeklySales.length; i++) i: 0,
+              };
+              final rangeEnd = DateTime(dateRange.end.year,
+                      dateRange.end.month, dateRange.end.day)
+                  .add(const Duration(days: 1));
+              double totalExpensesThisMonth = 0;
+              for (final e in expensesAsync.value ?? <Expense>[]) {
+                final date = e.date;
+                if (date == null) continue;
+                final day =
+                    dayIndex[DateTime(date.year, date.month, date.day)];
+                if (day != null) {
+                  dailyExpenses[day] = dailyExpenses[day]! + e.amount;
+                }
+                if (!date.isBefore(dateRange.start) &&
+                    date.isBefore(rangeEnd)) {
+                  totalExpensesThisMonth += e.amount;
+                }
+              }
+
+              return _DashboardBody(
+                stats: stats,
+                statusCounts: statusCounts,
+                dailyExpenses: dailyExpenses,
+                monthExpenses: totalExpensesThisMonth,
+                receivable: dueSummary.total,
+                collectedThisMonth: collectedThisMonth,
+                isWide: isWide,
+              );
+            },
+            loading: () => _DashboardSkeleton(isWide: isWide),
+            error: (error, _) => _ErrorBody(error: error.toString()),
+          ),
+        ),
+
+        // ── Bottom sections ──
+        SliverToBoxAdapter(
+          child: statsAsync.whenOrNull(
+                skipLoadingOnReload: true,
+                data: (stats) {
+                  final hasDues = dues.isNotEmpty;
+                  if (stats.lowStockProducts.isEmpty && !hasDues) {
+                    return const SizedBox(height: 24);
+                  }
+
+                  if (isWide) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (stats.lowStockProducts.isNotEmpty)
+                            Expanded(
+                              child: _SectionCard(
+                                title: s.lowStockItems,
+                                icon: tabler.Package.new,
+                                iconColor: AppColors.statusPending,
+                                action: TextButton(
+                                  onPressed: () => context.go('/inventory'),
+                                  child: Text(s.viewAll),
+                                ),
+                                child: LowStockList(
+                                    products: stats.lowStockProducts),
+                              ),
+                            ),
+                          if (stats.lowStockProducts.isNotEmpty && hasDues)
+                            const SizedBox(width: 12),
+                          if (hasDues)
+                            Expanded(
+                              child: _dueSection(context, dueSummary, dues),
+                            ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      if (stats.lowStockProducts.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: _SectionCard(
+                            title: s.lowStockItems,
+                            icon: tabler.Package.new,
+                            iconColor: AppColors.statusPending,
+                            action: TextButton(
+                              onPressed: () => context.go('/inventory'),
+                              child: Text(s.viewAll),
+                            ),
+                            child: LowStockList(
+                                products: stats.lowStockProducts),
+                          ),
+                        ),
+                      if (hasDues)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          child: _dueSection(context, dueSummary, dues),
+                        ),
+                    ],
+                  );
+                },
+              ) ??
+              const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 
@@ -290,21 +305,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  double _rangeExpenses(List<Expense> expenses, DateTime start, DateTime end) {
-    final endOfDay = DateTime(end.year, end.month, end.day).add(const Duration(days: 1));
-    double total = 0;
-    for (final e in expenses) {
-      if (e.date != null &&
-          !e.date!.isBefore(start) &&
-          e.date!.isBefore(endOfDay)) {
-        total += e.amount;
-      }
-    }
-    return total;
-  }
-
   SliverAppBar _buildHeader(
-      AsyncValue<DashboardStats> statsAsync, ThemeData theme) {
+      BuildContext context, AsyncValue<DashboardStats> statsAsync) {
     final s = AppStrings.of(context);
     return SliverAppBar(
       expandedHeight: 160,
@@ -313,10 +315,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       centerTitle: false,
-      title: Builder(
-        builder: (_) {
-          // Watch the settings map so a shop-name change rebuilds this title.
-          ref.watch(settingsProvider);
+      title: Consumer(
+        builder: (context, ref, _) {
+          // Only a shop-name change rebuilds this title.
+          ref.watch(settingsProvider.select((m) => m['shopName']));
           final shopName = ref.read(settingsProvider.notifier).shopName;
           return Text(
             shopName.isNotEmpty ? shopName : AppStrings.appName,
@@ -343,7 +345,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _getGreeting(),
+                        _getGreeting(context),
                         style: const TextStyle(
                             color: Colors.white70, fontSize: 12),
                       ),
@@ -424,7 +426,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  String _getGreeting() {
+  String _getGreeting(BuildContext context) {
     final s = AppStrings.of(context);
     final hour = DateTime.now().hour;
     if (hour < 12) return s.goodMorning;

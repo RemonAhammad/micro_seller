@@ -35,12 +35,38 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   PurchasePaymentMethod _paymentMethod = PurchasePaymentMethod.cash;
   bool _isLoading = false;
 
+  /// One unit-cost controller per item, keyed by productId, so typing is
+  /// never overwritten by a rebuild.
+  final Map<int, TextEditingController> _costCtrls = {};
+  late Listenable _totalsListenable;
+
   @override
   void initState() {
     super.initState();
+    _syncCostControllers();
     if (widget.supplierId != null) {
       _loadSupplier();
     }
+  }
+
+  /// Call whenever items are added to or removed from [_items].
+  void _syncCostControllers() {
+    final ids = {for (final i in _items) i.productId};
+    _costCtrls.removeWhere((id, ctrl) {
+      if (ids.contains(id)) return false;
+      // The removed row's field stays mounted until the next frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
+      return true;
+    });
+    for (final item in _items) {
+      _costCtrls.putIfAbsent(
+        item.productId,
+        () => TextEditingController(
+            text: item.unitCost > 0 ? item.unitCost.toString() : ''),
+      );
+    }
+    _totalsListenable =
+        Listenable.merge([..._costCtrls.values, _amountPaidCtrl]);
   }
 
   Future<void> _loadSupplier() async {
@@ -57,6 +83,9 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     _notesCtrl.dispose();
     _refCtrl.dispose();
     _scrollCtrl.dispose();
+    for (final c in _costCtrls.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -106,25 +135,32 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
           _items
             ..clear()
             ..addAll(updated);
+          _syncCostControllers();
         }),
       ),
     );
   }
 
+  // No setState: ListenableBuilders on the cost controllers redraw the totals.
   void _updateItemCost(int index, String value) {
     final cost = double.tryParse(value) ?? 0;
+    _items[index] = _items[index].copyWith(
+      unitCost: cost,
+      totalCost: cost * _items[index].qty,
+    );
+  }
+
+  void _removeItem(int index) {
     setState(() {
-      _items[index] = _items[index].copyWith(
-        unitCost: cost,
-        totalCost: cost * _items[index].qty,
-      );
+      _items.removeAt(index);
+      _syncCostControllers();
     });
   }
 
   void _updateItemQty(int index, int delta) {
     final newQty = _items[index].qty + delta;
     if (newQty <= 0) {
-      setState(() => _items.removeAt(index));
+      _removeItem(index);
       return;
     }
     setState(() {
@@ -359,21 +395,23 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
                     ],
-                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: TextButton(
-                    onPressed: _totalAmount > 0
-                        ? () => setState(() => _amountPaidCtrl.text =
-                            _totalAmount.toStringAsFixed(
-                                _totalAmount == _totalAmount.roundToDouble()
-                                    ? 0
-                                    : 2))
-                        : null,
-                    child: Text(s.payFull),
+                  child: ListenableBuilder(
+                    listenable: _totalsListenable,
+                    builder: (context, _) => TextButton(
+                      onPressed: _totalAmount > 0
+                          ? () => _amountPaidCtrl.text =
+                              _totalAmount.toStringAsFixed(
+                                  _totalAmount == _totalAmount.roundToDouble()
+                                      ? 0
+                                      : 2)
+                          : null,
+                      child: Text(s.payFull),
+                    ),
                   ),
                 ),
               ],
@@ -416,27 +454,30 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             const SizedBox(height: 20),
 
             // ── Summary ────────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  _summaryRow(theme, s.total,
-                      CurrencyFormatter.format(_totalAmount), isBold: true),
-                  _summaryRow(theme, s.paid,
-                      CurrencyFormatter.format(_amountPaid)),
-                  if (_balanceDue > 0)
-                    _summaryRow(
-                      theme,
-                      s.due,
-                      CurrencyFormatter.format(_balanceDue),
-                      valueColor: Colors.red,
-                      isBold: true,
-                    ),
-                ],
+            ListenableBuilder(
+              listenable: _totalsListenable,
+              builder: (context, _) => Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    _summaryRow(theme, s.total,
+                        CurrencyFormatter.format(_totalAmount), isBold: true),
+                    _summaryRow(theme, s.paid,
+                        CurrencyFormatter.format(_amountPaid)),
+                    if (_balanceDue > 0)
+                      _summaryRow(
+                        theme,
+                        s.due,
+                        CurrencyFormatter.format(_balanceDue),
+                        valueColor: Colors.red,
+                        isBold: true,
+                      ),
+                  ],
+                ),
               ),
             ),
 
@@ -459,7 +500,9 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
 
   Widget _buildItemTile(int index, ThemeData theme, ColorScheme cs) {
     final item = _items[index];
+    final costCtrl = _costCtrls[item.productId]!;
     return Padding(
+      key: ValueKey(item.productId),
       padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,7 +515,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                         fontWeight: FontWeight.w600, fontSize: 13)),
               ),
               GestureDetector(
-                onTap: () => setState(() => _items.removeAt(index)),
+                onTap: () => _removeItem(index),
                 child: ThinIcon(tabler.X.new,
                     size: 16, color: cs.error.withValues(alpha: 0.6)),
               ),
@@ -532,12 +575,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
                     ],
-                    controller: TextEditingController(
-                        text: item.unitCost > 0 ? item.unitCost.toString() : '')
-                      ..selection = TextSelection.collapsed(
-                          offset: item.unitCost > 0
-                              ? item.unitCost.toString().length
-                              : 0),
+                    controller: costCtrl,
                     onChanged: (val) => _updateItemCost(index, val),
                   ),
                 ),
@@ -546,13 +584,16 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
               // Total
               SizedBox(
                 width: 70,
-                child: Text(
-                  CurrencyFormatter.format(item.totalCost),
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: cs.primary),
+                child: ListenableBuilder(
+                  listenable: costCtrl,
+                  builder: (context, _) => Text(
+                    CurrencyFormatter.format(_items[index].totalCost),
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: cs.primary),
+                  ),
                 ),
               ),
             ],
@@ -740,8 +781,21 @@ class _ProductPickerSheet extends StatefulWidget {
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
 }
 
+/// A product with its search keys lowercased once per emission rather than
+/// on every keystroke.
+class _PickerProduct {
+  _PickerProduct(this.product)
+      : name = product.name.toLowerCase(),
+        sku = product.sku.toLowerCase();
+
+  final Product product;
+  final String name;
+  final String sku;
+}
+
 class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   late final List<PurchaseItem> _items;
+  late final Stream<List<_PickerProduct>> _products;
   final _searchCtrl = TextEditingController();
   String _query = '';
   late bool _onlySupplierProducts;
@@ -751,6 +805,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     super.initState();
     _items = List.of(widget.currentItems);
     _onlySupplierProducts = widget.supplierId > 0;
+    _products = widget.isar.products
+        .where()
+        .filter()
+        .isActiveEqualTo(true)
+        .sortByName()
+        .watch(fireImmediately: true)
+        .map((list) => [for (final p in list) _PickerProduct(p)]);
   }
 
   @override
@@ -791,227 +852,214 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final totalItems = _items.fold<int>(0, (s, i) => s + i.qty);
 
-    return StreamBuilder<List<Product>>(
-      stream: widget.isar.products
-          .where()
-          .filter()
-          .isActiveEqualTo(true)
-          .sortByName()
-          .watch(fireImmediately: true),
-      builder: (context, snapshot) {
-        final all = snapshot.data ?? [];
-        var filtered = all;
-        // Apply supplier filter
-        if (_onlySupplierProducts && widget.supplierId > 0) {
-          filtered = filtered
-              .where((p) => p.supplierId == widget.supplierId)
-              .toList();
-        }
-        // Apply search filter
-        if (_query.isNotEmpty) {
-          filtered = filtered
-              .where((p) =>
-                  p.name.toLowerCase().contains(_query) ||
-                  p.sku.toLowerCase().contains(_query))
-              .toList();
-        }
-
-        final totalItems = _items.fold<int>(0, (s, i) => s + i.qty);
-
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          maxChildSize: 0.95,
-          minChildSize: 0.4,
-          expand: false,
-          builder: (ctx, ctrl) => Column(
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: cs.outline.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Text(AppStrings.of(context).addItems,
-                        style: theme.textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700)),
-                    if (totalItems > 0) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text('$totalItems item${totalItems == 1 ? '' : 's'}',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: cs.primary)),
-                      ),
-                    ],
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text(AppStrings.of(context).done),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
+      expand: false,
+      builder: (ctx, ctrl) => Column(
+        children: [
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: cs.outline.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Text(AppStrings.of(context).addItems,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                if (totalItems > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: TextField(
-                  controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _query = v.toLowerCase()),
-                  decoration: InputDecoration(
-                    hintText: '${AppStrings.of(context).search}...',
-                    prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
-                    suffixIcon: _query.isNotEmpty
-                        ? IconButton(
-                            icon: const ThinIcon(tabler.X.new, size: 18),
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() => _query = '');
-                            },
-                          )
-                        : null,
-                    isDense: true,
+                    child: Text('$totalItems item${totalItems == 1 ? '' : 's'}',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: cs.primary)),
                   ),
+                ],
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(AppStrings.of(context).done),
                 ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v.toLowerCase()),
+              decoration: InputDecoration(
+                hintText: '${AppStrings.of(context).search}...',
+                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        icon: const ThinIcon(tabler.X.new, size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                      )
+                    : null,
+                isDense: true,
               ),
-              if (widget.supplierId > 0)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-                  child: Row(
-                    children: [
-                      FilterChip(
-                        label: Text(
-                          _onlySupplierProducts
-                              ? '${widget.supplierName} only'
-                              : 'All products',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        selected: _onlySupplierProducts,
-                        onSelected: (v) =>
-                            setState(() => _onlySupplierProducts = v),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    ],
+            ),
+          ),
+          if (widget.supplierId > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+              child: Row(
+                children: [
+                  FilterChip(
+                    label: Text(
+                      _onlySupplierProducts
+                          ? '${widget.supplierName} only'
+                          : 'All products',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    selected: _onlySupplierProducts,
+                    onSelected: (v) =>
+                        setState(() => _onlySupplierProducts = v),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
-                ),
-              Expanded(
-                child: filtered.isEmpty
-                    ? Center(
-                        child: Text(AppStrings.of(context).noProductsFound,
-                            style: TextStyle(
-                                color: cs.onSurface.withValues(alpha: 0.4))))
-                    : ListView.separated(
-                        controller: ctrl,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => Divider(
-                            height: 1,
-                            color: cs.outline.withValues(alpha: 0.1)),
-                        itemBuilder: (_, i) {
-                          final p = filtered[i];
-                          final qty = _qtyOf(p.id);
+                ],
+              ),
+            ),
+          Expanded(
+            child: StreamBuilder<List<_PickerProduct>>(
+              stream: _products,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData && !snapshot.hasError) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final all = snapshot.data ?? const <_PickerProduct>[];
+                final bySupplier =
+                    _onlySupplierProducts && widget.supplierId > 0;
+                final filtered = [
+                  for (final e in all)
+                    if ((!bySupplier ||
+                            e.product.supplierId == widget.supplierId) &&
+                        (_query.isEmpty ||
+                            e.name.contains(_query) ||
+                            e.sku.contains(_query)))
+                      e.product,
+                ];
 
-                          return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
+                if (filtered.isEmpty) {
+                  return Center(
+                      child: Text(AppStrings.of(context).noProductsFound,
+                          style: TextStyle(
+                              color: cs.onSurface.withValues(alpha: 0.4))));
+                }
+                return ListView.separated(
+                  controller: ctrl,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => Divider(
+                      height: 1, color: cs.outline.withValues(alpha: 0.1)),
+                  itemBuilder: (_, i) {
+                    final p = filtered[i];
+                    final qty = _qtyOf(p.id);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(p.name,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 13)),
-                                      Text(
-                                        '${AppStrings.of(context).stock}: ${p.stockQty}  ·  ${AppStrings.of(context).costPrice}: ${CurrencyFormatter.format(p.costPrice)}',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: cs.onSurface
-                                              .withValues(alpha: 0.5),
-                                        ),
-                                      ),
-                                    ],
+                                Text(p.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13)),
+                                Text(
+                                  '${AppStrings.of(context).stock}: ${p.stockQty}  ·  ${AppStrings.of(context).costPrice}: ${CurrencyFormatter.format(p.costPrice)}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: cs.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
-                                if (qty > 0)
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: cs.primary
-                                              .withValues(alpha: 0.3)),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        InkWell(
-                                          onTap: () => _setQty(p, qty - 1),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(6),
-                                            child: ThinIcon(tabler.Minus.new,
-                                                size: 16,
-                                                color: cs.primary),
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10),
-                                          child: Text('$qty',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: cs.primary)),
-                                        ),
-                                        InkWell(
-                                          onTap: () => _setQty(p, qty + 1),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(6),
-                                            child: ThinIcon(tabler.Plus.new,
-                                                size: 16,
-                                                color: cs.primary),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  SizedBox(
-                                    height: 34,
-                                    child: FilledButton.tonal(
-                                      onPressed: () => _setQty(p, 1),
-                                      style: FilledButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16),
-                                      ),
-                                      child: Text(AppStrings.of(context).add),
-                                    ),
-                                  ),
                               ],
                             ),
-                          );
-                        },
+                          ),
+                          if (qty > 0)
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: cs.primary.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  InkWell(
+                                    onTap: () => _setQty(p, qty - 1),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: ThinIcon(tabler.Minus.new,
+                                          size: 16, color: cs.primary),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                    child: Text('$qty',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: cs.primary)),
+                                  ),
+                                  InkWell(
+                                    onTap: () => _setQty(p, qty + 1),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: ThinIcon(tabler.Plus.new,
+                                          size: 16, color: cs.primary),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            SizedBox(
+                              height: 34,
+                              child: FilledButton.tonal(
+                                onPressed: () => _setQty(p, 1),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                ),
+                                child: Text(AppStrings.of(context).add),
+                              ),
+                            ),
+                        ],
                       ),
-              ),
-            ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

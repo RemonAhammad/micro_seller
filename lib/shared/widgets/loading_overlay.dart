@@ -1,5 +1,28 @@
 import 'package:flutter/material.dart';
 
+/// Runs [task] behind a modal spinner. The spinner is drawn before [task]
+/// starts (any synchronous work at its start would otherwise freeze the
+/// screen with no feedback), and its barrier blocks repeat taps until done.
+Future<T> runWithProgress<T>(
+    BuildContext context, Future<T> Function() task) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  showDialog<void>(
+    context: context,
+    useRootNavigator: true,
+    barrierDismissible: false,
+    builder: (_) => const PopScope(
+      canPop: false,
+      child: Center(child: CircularProgressIndicator()),
+    ),
+  );
+  await WidgetsBinding.instance.endOfFrame;
+  try {
+    return await task();
+  } finally {
+    navigator.pop();
+  }
+}
+
 class LoadingOverlay extends StatelessWidget {
   final bool isLoading;
   final Widget child;

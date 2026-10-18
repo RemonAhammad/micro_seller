@@ -69,16 +69,22 @@ List<OrderDue> _effectiveDues(Iterable<Order> orders) {
 /// owe. Caller owns the transaction.
 Future<int> recalculateOutstandingBalancesInTxn(Isar isar) async {
   final customers = await isar.customers.where().findAll();
-  var changed = 0;
+  // One id-ordered load grouped in Dart, not one full orders scan per
+  // customer — each group keeps id order, so the sums are unchanged.
+  final orders = await isar.orders.filter().customerIdGreaterThan(0).findAll();
+  final byCustomer = <int, List<Order>>{};
+  for (final o in orders) {
+    byCustomer.putIfAbsent(o.customerId, () => []).add(o);
+  }
+  final updated = <Customer>[];
   for (final c in customers) {
-    final orders = await isar.orders.filter().customerIdEqualTo(c.id).findAll();
-    final total = computeNetDue(orders);
+    final total = computeNetDue(byCustomer[c.id] ?? const []);
     if ((total - c.outstandingBalance).abs() > kDueEpsilon) {
-      await isar.customers.put(c.copyWith(outstandingBalance: total));
-      changed++;
+      updated.add(c.copyWith(outstandingBalance: total));
     }
   }
-  return changed;
+  await isar.customers.putAll(updated);
+  return updated.length;
 }
 
 /// Money collected on dues in `[start, end)` — payments received on a later

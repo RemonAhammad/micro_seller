@@ -63,7 +63,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    final movementsAsync = ref.watch(stockMovementsProvider);
     final productsAsync = ref.watch(productsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final theme = Theme.of(context);
@@ -296,26 +295,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           ),
 
           // ── Movements tab ──
-          movementsAsync.when(
-            data: (movements) {
-              if (movements.isEmpty) {
-                return EmptyState(
-                  icon: tabler.ArrowsSort.new,
-                  title: s.noStockMovements,
-                );
-              }
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: movements.length,
-                itemBuilder: (ctx, i) => AnimatedEntrance(
-                  index: i,
-                  child: StockMovementTile(movement: movements[i]),
-                ),
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
-          ),
+          const _MovementsTab(),
         ],
       ),
     );
@@ -356,6 +336,38 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
         ],
       ),
     );
+  }
+}
+
+/// The movement history, watched only while this tab is built — at the
+/// screen's root it stayed loaded and reloaded on every stock change while
+/// the Stock Levels tab was showing.
+class _MovementsTab extends ConsumerWidget {
+  const _MovementsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
+    return ref.watch(stockMovementsProvider).when(
+          data: (movements) {
+            if (movements.isEmpty) {
+              return EmptyState(
+                icon: tabler.ArrowsSort.new,
+                title: s.noStockMovements,
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: movements.length,
+              itemBuilder: (ctx, i) => AnimatedEntrance(
+                index: i,
+                child: StockMovementTile(movement: movements[i]),
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('$e')),
+        );
   }
 }
 

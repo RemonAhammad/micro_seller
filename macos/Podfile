@@ -38,5 +38,16 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
+
+    # Xcode 27 only builds for macOS 12.0+, but Flutter 3.44's generated
+    # FlutterMacOS.podspec still declares 10.15 (and flutter_additional_macos_build_settings
+    # only lifts pods below 10.14). Raise any pod below the app's own minimum
+    # (platform :osx above) so every target builds.
+    target.build_configurations.each do |config|
+      deployment_target = config.build_settings['MACOSX_DEPLOYMENT_TARGET']
+      if deployment_target && Gem::Version.new(deployment_target) < Gem::Version.new('13.0')
+        config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '13.0'
+      end
+    end
   end
 end

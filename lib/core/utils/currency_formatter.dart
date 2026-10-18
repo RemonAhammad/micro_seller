@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 class CurrencyFormatter {
   static String _symbol = '\$';
 
+  static final NumberFormat _amountFormat = NumberFormat('#,##0.##');
+
   static String get symbol => _symbol;
 
   static void setSymbol(String symbol) {
@@ -11,7 +13,7 @@ class CurrencyFormatter {
 
   static String format(double amount, {String? symbol}) {
     final sym = symbol ?? _symbol;
-    final formatted = NumberFormat('#,##0.##').format(amount);
+    final formatted = _amountFormat.format(amount);
     return '$sym$formatted';
   }
 

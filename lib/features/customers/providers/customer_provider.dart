@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/trash_entry.dart';
+import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/trash_service.dart';
 
@@ -11,7 +12,8 @@ part 'customer_provider.g.dart';
 @riverpod
 Stream<List<Customer>> customers(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.customers.where().sortByName().watch(fireImmediately: true);
+  final query = isar.customers.where().sortByName();
+  yield* reloadOn(isar.customers.watchLazy(), query.findAll);
 }
 
 @Riverpod(keepAlive: true)

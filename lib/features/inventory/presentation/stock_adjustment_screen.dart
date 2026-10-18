@@ -33,6 +33,7 @@ class _StockAdjustmentScreenState
   String _selectedCombinationKey = '';
   Supplier? _selectedSupplier;
   bool _supplierAutoLoaded = false;
+  Stream<Product?>? _productStream;
 
   @override
   void dispose() {
@@ -145,7 +146,7 @@ class _StockAdjustmentScreenState
       appBar: AppBar(title: Text(s.stockAdjustment)),
       body: isarAsync.when(
         data: (isar) => StreamBuilder<Product?>(
-          stream: isar.products
+          stream: _productStream ??= isar.products
               .watchObject(widget.productId, fireImmediately: true),
           builder: (ctx, snap) {
             final product = snap.data;

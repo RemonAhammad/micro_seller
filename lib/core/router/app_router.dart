@@ -63,8 +63,9 @@ CustomTransitionPage<T> _fadePage<T>(Widget child, GoRouterState state) {
   );
 }
 
+// First read is MaterialApp.router's build, after main() primed the flag.
 final appRouter = GoRouter(
-  initialLocation: '/splash',
+  initialLocation: TutorialService.splashShown ? '/' : '/splash',
   routes: [
     GoRoute(
       path: '/splash',
@@ -392,9 +393,10 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
     final width = MediaQuery.sizeOf(context).width;
     final expanded = width >= 600;
 
-    // Watch settings so the Row swaps live when sidebar position changes.
-    ref.watch(settingsProvider);
-    final position = ref.read(settingsProvider.notifier).sidebarPosition;
+    // Watch only the position so the Row swaps live when it changes, without
+    // rebuilding the shell on every other settings write.
+    final position = ref.watch(settingsProvider.select((s) =>
+        s['sidebarPosition'] as String? ?? Settings.sidebarPositionLeft));
     final isRight = position == Settings.sidebarPositionRight;
 
     final sidebar = _Sidebar(
@@ -454,9 +456,12 @@ class _Sidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watching the whole settings map keeps the sidebar live: any
-    // updateSidebarOrder call rebuilds it.
-    ref.watch(settingsProvider);
+    // Rebuild only when the order or the hidden set changes. Compared by
+    // content, since an import writes fresh lists even when nothing changed.
+    ref.watch(settingsProvider.select((s) => (
+          (s['sidebarOrder'] as List?)?.join(','),
+          (s['hiddenSidebarItems'] as List?)?.join(','),
+        )));
     final notifier = ref.read(settingsProvider.notifier);
     final order = notifier.sidebarOrder;
     // Items the user has toggled off in Settings → Sidebar Order. Settings

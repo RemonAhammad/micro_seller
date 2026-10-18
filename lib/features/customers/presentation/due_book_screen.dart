@@ -15,6 +15,7 @@ import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/loading_overlay.dart';
 import '../providers/dues_provider.dart';
 import 'widgets/due_actions.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -213,8 +214,9 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
   Future<void> _recalculate() async {
     final s = AppStrings.of(context);
     final isar = await ref.read(isarProvider.future);
-    final changed =
-        await isar.writeTxn(() => recalculateOutstandingBalancesInTxn(isar));
+    if (!mounted) return;
+    final changed = await runWithProgress(context,
+        () => isar.writeTxn(() => recalculateOutstandingBalancesInTxn(isar)));
     if (mounted) context.showSuccessSnackBar(s.balancesRecalculated(changed));
   }
 

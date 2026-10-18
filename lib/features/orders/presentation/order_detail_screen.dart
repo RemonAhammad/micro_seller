@@ -54,12 +54,11 @@ class _OrderDetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
-    final ordersAsync = ref.watch(ordersProvider);
+    final orderAsync = ref.watch(orderByIdProvider(orderId));
     final theme = Theme.of(context);
 
-    return ordersAsync.when(
-      data: (orders) {
-        final order = orders.where((o) => o.id == orderId).firstOrNull;
+    return orderAsync.when(
+      data: (order) {
         if (order == null) {
           return Scaffold(
             appBar: AppBar(),

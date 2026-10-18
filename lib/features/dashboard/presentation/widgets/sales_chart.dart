@@ -60,106 +60,109 @@ class _SalesChartState extends State<SalesChart> {
           ],
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 160,
-          child: BarChart(
-            BarChartData(
-              maxY: maxY == 0 ? 100 : maxY,
-              barTouchData: BarTouchData(
-                touchCallback: (event, response) {
-                  if (event.isInterestedForInteractions &&
-                      response?.spot != null) {
-                    setState(() =>
-                        _touchedIndex = response!.spot!.touchedBarGroupIndex);
-                  } else {
-                    setState(() => _touchedIndex = -1);
-                  }
-                },
-                touchTooltipData: BarTouchTooltipData(
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                    final sales = widget.weeklySales[group.x];
-                    final amount =
-                        _showRevenue ? sales.revenue : sales.profit;
-                    return BarTooltipItem(
-                      '${DateFormatter.formatShort(sales.date)}\n${CurrencyFormatter.format(amount)}',
-                      const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
-                    );
+        RepaintBoundary(
+          child: SizedBox(
+            height: 160,
+            child: BarChart(
+              BarChartData(
+                maxY: maxY == 0 ? 100 : maxY,
+                barTouchData: BarTouchData(
+                  touchCallback: (event, response) {
+                    final index = event.isInterestedForInteractions &&
+                            response?.spot != null
+                        ? response!.spot!.touchedBarGroupIndex
+                        : -1;
+                    // Rebuilding on every pointer move restarts the animation.
+                    if (index != _touchedIndex) {
+                      setState(() => _touchedIndex = index);
+                    }
                   },
-                ),
-              ),
-              titlesData: FlTitlesData(
-                show: true,
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final index = value.toInt();
-                      if (index >= 0 && index < widget.weeklySales.length) {
-                        final day = widget.weeklySales[index].date;
-                        final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            labels[day.weekday - 1],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: cs.onSurface.withValues(alpha: 0.45),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final sales = widget.weeklySales[group.x];
+                      final amount =
+                          _showRevenue ? sales.revenue : sales.profit;
+                      return BarTooltipItem(
+                        '${DateFormatter.formatShort(sales.date)}\n${CurrencyFormatter.format(amount)}',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      );
                     },
                   ),
                 ),
-                leftTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              ),
-              gridData: FlGridData(
-                show: true,
-                horizontalInterval: maxY == 0 ? 25 : maxY / 4,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: cs.onSurface.withValues(alpha: 0.05),
-                  strokeWidth: 1,
-                ),
-                drawVerticalLine: false,
-              ),
-              borderData: FlBorderData(show: false),
-              barGroups: widget.weeklySales.asMap().entries.map((e) {
-                final index = e.key;
-                final sales = e.value;
-                final value = _showRevenue ? sales.revenue : sales.profit;
-                final isTouched = index == _touchedIndex;
-                final color =
-                    _showRevenue ? AppColors.chartRevenue : AppColors.chartProfit;
-
-                return BarChartGroupData(
-                  x: index,
-                  barRods: [
-                    BarChartRodData(
-                      toY: value,
-                      color: isTouched ? color : color.withValues(alpha: 0.7),
-                      width: isTouched ? 20 : 16,
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(5)),
-                      backDrawRodData: BackgroundBarChartRodData(
-                        show: true,
-                        toY: maxY == 0 ? 100 : maxY,
-                        color: cs.onSurface.withValues(alpha: 0.03),
-                      ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < widget.weeklySales.length) {
+                          final day = widget.weeklySales[index].date;
+                          final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              labels[day.weekday - 1],
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: cs.onSurface.withValues(alpha: 0.45),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
                     ),
-                  ],
-                );
-              }).toList(),
+                  ),
+                  leftTitles:
+                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles:
+                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles:
+                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  horizontalInterval: maxY == 0 ? 25 : maxY / 4,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: cs.onSurface.withValues(alpha: 0.05),
+                    strokeWidth: 1,
+                  ),
+                  drawVerticalLine: false,
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: widget.weeklySales.asMap().entries.map((e) {
+                  final index = e.key;
+                  final sales = e.value;
+                  final value = _showRevenue ? sales.revenue : sales.profit;
+                  final isTouched = index == _touchedIndex;
+                  final color =
+                      _showRevenue ? AppColors.chartRevenue : AppColors.chartProfit;
+
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: value,
+                        color: isTouched ? color : color.withValues(alpha: 0.7),
+                        width: isTouched ? 20 : 16,
+                        borderRadius:
+                            const BorderRadius.vertical(top: Radius.circular(5)),
+                        backDrawRodData: BackgroundBarChartRodData(
+                          show: true,
+                          toY: maxY == 0 ? 100 : maxY,
+                          color: cs.onSurface.withValues(alpha: 0.03),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),
@@ -218,33 +221,35 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
           // Pie chart
           Expanded(
             flex: 3,
-            child: PieChart(
-              PieChartData(
-                pieTouchData: PieTouchData(
-                  touchCallback: (event, response) {
-                    if (event.isInterestedForInteractions &&
-                        response?.touchedSection != null) {
-                      setState(() => _touchedIndex =
-                          response!.touchedSection!.touchedSectionIndex);
-                    } else {
-                      setState(() => _touchedIndex = -1);
-                    }
-                  },
+            child: RepaintBoundary(
+              child: PieChart(
+                PieChartData(
+                  pieTouchData: PieTouchData(
+                    touchCallback: (event, response) {
+                      final index = event.isInterestedForInteractions &&
+                              response?.touchedSection != null
+                          ? response!.touchedSection!.touchedSectionIndex
+                          : -1;
+                      if (index != _touchedIndex) {
+                        setState(() => _touchedIndex = index);
+                      }
+                    },
+                  ),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 28,
+                  sections: entries.asMap().entries.map((e) {
+                    final i = e.key;
+                    final entry = e.value;
+                    final color = _statusColors[entry.key] ?? cs.outline;
+                    final isTouched = i == _touchedIndex;
+                    return PieChartSectionData(
+                      value: entry.value.toDouble(),
+                      color: color,
+                      radius: isTouched ? 32 : 26,
+                      title: '',
+                    );
+                  }).toList(),
                 ),
-                sectionsSpace: 2,
-                centerSpaceRadius: 28,
-                sections: entries.asMap().entries.map((e) {
-                  final i = e.key;
-                  final entry = e.value;
-                  final color = _statusColors[entry.key] ?? cs.outline;
-                  final isTouched = i == _touchedIndex;
-                  return PieChartSectionData(
-                    value: entry.value.toDouble(),
-                    color: color,
-                    radius: isTouched ? 32 : 26,
-                    title: '',
-                  );
-                }).toList(),
               ),
             ),
           ),
@@ -356,118 +361,120 @@ class RevenueExpenseChart extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 140,
-          child: LineChart(
-            LineChartData(
-              maxY: maxY == 0 ? 100 : maxY,
-              minY: 0,
-              gridData: FlGridData(
-                show: true,
-                horizontalInterval: maxY == 0 ? 25 : maxY / 4,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: cs.onSurface.withValues(alpha: 0.05),
-                  strokeWidth: 1,
+        RepaintBoundary(
+          child: SizedBox(
+            height: 140,
+            child: LineChart(
+              LineChartData(
+                maxY: maxY == 0 ? 100 : maxY,
+                minY: 0,
+                gridData: FlGridData(
+                  show: true,
+                  horizontalInterval: maxY == 0 ? 25 : maxY / 4,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: cs.onSurface.withValues(alpha: 0.05),
+                    strokeWidth: 1,
+                  ),
+                  drawVerticalLine: false,
                 ),
-                drawVerticalLine: false,
-              ),
-              borderData: FlBorderData(show: false),
-              titlesData: FlTitlesData(
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final i = value.toInt();
-                      if (i >= 0 && i < weeklySales.length) {
-                        final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            labels[weeklySales[i].date.weekday - 1],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: cs.onSurface.withValues(alpha: 0.45),
+                borderData: FlBorderData(show: false),
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final i = value.toInt();
+                        if (i >= 0 && i < weeklySales.length) {
+                          final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              labels[weeklySales[i].date.weekday - 1],
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: cs.onSurface.withValues(alpha: 0.45),
+                              ),
                             ),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                ),
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (spots) => spots.map((s) {
+                      final isExpense = s.barIndex == 1;
+                      return LineTooltipItem(
+                        CurrencyFormatter.format(s.y),
+                        TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          height: isExpense ? 1.5 : 1,
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
-                leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-              ),
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (spots) => spots.map((s) {
-                    final isExpense = s.barIndex == 1;
-                    return LineTooltipItem(
-                      CurrencyFormatter.format(s.y),
-                      TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        height: isExpense ? 1.5 : 1,
+                lineBarsData: [
+                  // Revenue line
+                  LineChartBarData(
+                    spots: weeklySales
+                        .asMap()
+                        .entries
+                        .map((e) => FlSpot(
+                            e.key.toDouble(), e.value.revenue))
+                        .toList(),
+                    color: AppColors.chartRevenue,
+                    barWidth: 2.5,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, _, __, ___) =>
+                          FlDotCirclePainter(
+                        radius: 3,
+                        color: AppColors.chartRevenue,
+                        strokeWidth: 0,
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: AppColors.chartRevenue.withValues(alpha: 0.08),
+                    ),
+                    isCurved: true,
+                    preventCurveOverShooting: true,
+                  ),
+                  // Expense line
+                  LineChartBarData(
+                    spots: List.generate(
+                      weeklySales.length,
+                      (i) => FlSpot(
+                          i.toDouble(), dailyExpenses[i] ?? 0),
+                    ),
+                    color: AppColors.statusCancelled,
+                    barWidth: 2,
+                    dashArray: [6, 4],
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, _, __, ___) =>
+                          FlDotCirclePainter(
+                        radius: 2.5,
+                        color: AppColors.statusCancelled,
+                        strokeWidth: 0,
+                      ),
+                    ),
+                    isCurved: true,
+                    preventCurveOverShooting: true,
+                  ),
+                ],
               ),
-              lineBarsData: [
-                // Revenue line
-                LineChartBarData(
-                  spots: weeklySales
-                      .asMap()
-                      .entries
-                      .map((e) => FlSpot(
-                          e.key.toDouble(), e.value.revenue))
-                      .toList(),
-                  color: AppColors.chartRevenue,
-                  barWidth: 2.5,
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, _, __, ___) =>
-                        FlDotCirclePainter(
-                      radius: 3,
-                      color: AppColors.chartRevenue,
-                      strokeWidth: 0,
-                    ),
-                  ),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: AppColors.chartRevenue.withValues(alpha: 0.08),
-                  ),
-                  isCurved: true,
-                  preventCurveOverShooting: true,
-                ),
-                // Expense line
-                LineChartBarData(
-                  spots: List.generate(
-                    weeklySales.length,
-                    (i) => FlSpot(
-                        i.toDouble(), dailyExpenses[i] ?? 0),
-                  ),
-                  color: AppColors.statusCancelled,
-                  barWidth: 2,
-                  dashArray: [6, 4],
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, _, __, ___) =>
-                        FlDotCirclePainter(
-                      radius: 2.5,
-                      color: AppColors.statusCancelled,
-                      strokeWidth: 0,
-                    ),
-                  ),
-                  isCurved: true,
-                  preventCurveOverShooting: true,
-                ),
-              ],
             ),
           ),
         ),

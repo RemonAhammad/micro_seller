@@ -5,11 +5,13 @@ import '../models/order.dart';
 
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
-  static bool _initialized = false;
+  static Future<void>? _initFuture;
 
-  static Future<void> init() async {
-    if (_initialized) return;
+  /// Memoized, so concurrent callers share one init (main starts it without
+  /// awaiting on most platforms; checkAndNotify waits for it).
+  static Future<void> init() => _initFuture ??= _initialize();
 
+  static Future<void> _initialize() async {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/launcher_icon');
     const darwinSettings = DarwinInitializationSettings(
@@ -25,7 +27,6 @@ class NotificationService {
         macOS: darwinSettings,
       ),
     );
-    _initialized = true;
   }
 
   static Future<void> showLowStockAlert(List<Product> products) async {
@@ -97,19 +98,28 @@ class NotificationService {
     );
   }
 
-  /// Check and trigger notifications based on current data
-  static Future<void> checkAndNotify(Isar isar) async {
-    // The Dashboard fires this without awaiting it: if init() never
-    // completed (unsupported platform, tests) showing would throw unhandled.
-    if (!_initialized) return;
+  /// Check and trigger notifications based on current data. Pass [lowStock]
+  /// (active products at or below threshold) to skip the product query.
+  static Future<void> checkAndNotify(Isar isar,
+      {List<Product>? lowStock}) async {
+    // The Dashboard fires this without awaiting it, possibly while main's
+    // init() is still running. If init never started or failed
+    // (unsupported platform, tests) showing would throw unhandled.
+    final init = _initFuture;
+    if (init == null) return;
+    try {
+      await init;
+    } catch (_) {
+      return;
+    }
 
     // Low stock check
-    final products =
-        await isar.products.filter().isActiveEqualTo(true).findAll();
-    final lowStock =
-        products.where((p) => p.isLowStock || p.isOutOfStock).toList();
-    if (lowStock.isNotEmpty) {
-      await showLowStockAlert(lowStock);
+    final lowStockProducts = lowStock ??
+        (await isar.products.filter().isActiveEqualTo(true).findAll())
+            .where((p) => p.isLowStock || p.isOutOfStock)
+            .toList();
+    if (lowStockProducts.isNotEmpty) {
+      await showLowStockAlert(lowStockProducts);
     }
 
     // Unpaid orders check

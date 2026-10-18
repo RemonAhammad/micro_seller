@@ -47,12 +47,16 @@ class ProductCard extends StatelessWidget {
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(16)),
                 child: product.imagePath.isNotEmpty
-                    ? Image.file(
-                        File(product.imagePath),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (_, __, ___) =>
-                            _ProductImagePlaceholder(product: product),
+                    ? LayoutBuilder(
+                        builder: (context, constraints) => Image.file(
+                          File(product.imagePath),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          cacheWidth:
+                              _decodeWidth(context, constraints.maxWidth),
+                          errorBuilder: (_, __, ___) =>
+                              _ProductImagePlaceholder(product: product),
+                        ),
                       )
                     : _ProductImagePlaceholder(product: product),
               ),
@@ -92,6 +96,13 @@ class ProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Decodes the photo near the tile's pixel width instead of its stored size;
+/// the 1.4 headroom covers BoxFit.cover cropping into a taller box.
+int? _decodeWidth(BuildContext context, double maxWidth) {
+  if (!maxWidth.isFinite || maxWidth <= 0) return null;
+  return (maxWidth * MediaQuery.devicePixelRatioOf(context) * 1.4).ceil();
 }
 
 class _ProductImagePlaceholder extends StatelessWidget {

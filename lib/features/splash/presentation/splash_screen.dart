@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,9 +55,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   double _t(double s, double e, [Curve c = Curves.linear]) =>
       Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _master, curve: Interval(s, e, curve: c))).value;
 
-  Future<void> _navigateNext() async {
-    await TutorialService.setSplashShown();
+  void _navigateNext() {
+    unawaited(TutorialService.setSplashShown());
     if (!mounted) return;
+    // The repeating controllers would otherwise keep rebuilding the splash
+    // through the route transition.
+    for (final c in [_pulse, _orbit, _shimmer, _wave, _particleCtrl]) {
+      c.stop();
+    }
     GoRouter.of(context).go('/');
   }
 

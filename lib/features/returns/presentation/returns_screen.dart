@@ -35,9 +35,6 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
     super.dispose();
   }
 
-  List<Order> _filterReturns(List<Order> allOrders) =>
-      allOrders.where((o) => o.isReturn).toList();
-
   List<int> _getCounts(List<Order> returns) {
     int requested = 0, received = 0, refunded = 0, rejected = 0;
     for (final o in returns) {
@@ -65,15 +62,15 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    final ordersAsync = ref.watch(ordersProvider);
+    // Only the return orders, newest first — not every order filtered here.
+    final returnsAsync = ref.watch(returnOrdersProvider);
     final tabs = _tabLabels(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(s.returnsAndRefunds),
-        bottom: ordersAsync.whenOrNull(
-              data: (allOrders) {
-                final returns = _filterReturns(allOrders);
+        bottom: returnsAsync.whenOrNull(
+              data: (returns) {
                 final counts = _getCounts(returns);
                 return TabBar(
                   controller: _tabController,
@@ -97,9 +94,8 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
               tabs: tabs.map((t) => Tab(text: t)).toList(),
             ),
       ),
-      body: ordersAsync.when(
-        data: (allOrders) {
-          final returns = _filterReturns(allOrders);
+      body: returnsAsync.when(
+        data: (returns) {
           final requested = returns
               .where((o) =>
                   o.returnStatus == ReturnStatus.requested ||

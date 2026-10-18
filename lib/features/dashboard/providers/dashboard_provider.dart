@@ -3,10 +3,10 @@ import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
+import '../../../data/services/isar_revisions.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/notification_service.dart';
 import '../../../data/services/report_service.dart';
-import '../../orders/providers/order_provider.dart';
 import '../../reports/providers/reports_provider.dart';
 
 part 'dashboard_provider.freezed.dart';
@@ -31,6 +31,9 @@ abstract class DashboardStats with _$DashboardStats {
     @Default(0) int pendingOrders,
     @Default([]) List<Product> lowStockProducts,
     @Default([]) List<DailySales> weeklySales,
+    /// Every order (returns included) per status, in order of first
+    /// appearance newest-first — the order-status pie's slices.
+    @Default(<OrderStatus, int>{}) Map<OrderStatus, int> statusCounts,
   }) = _DashboardStats;
 }
 
@@ -85,8 +88,9 @@ class DashboardDateRange extends _$DashboardDateRange {
 @riverpod
 Future<DashboardStats> dashboardStats(Ref ref) async {
   // Recompute whenever an order changes — the cards used to stay stale
-  // until a pull-to-refresh.
-  ref.watch(ordersProvider);
+  // until a pull-to-refresh. The revision counter only notices the write;
+  // it doesn't reload every order the way watching ordersProvider did.
+  ref.watch(ordersRevisionProvider);
   final isar = await ref.watch(isarProvider.future);
   final range =
       resolveDashboardRange(ref.watch(dashboardDateRangeProvider), DateTime.now());
@@ -99,100 +103,133 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
   final week = reportWindow(
       DateTime(todayStart.year, todayStart.month, todayStart.day - 6), todayStart);
 
-  // Profit is Reports → Gross profit for the same window (list price −
-  // discounts − returns − cost of goods), from the same builder, so the two
-  // screens can't disagree. Returns are loaded the way Reports loads them.
-  final products = await isar.products.where().findAll();
-  final productsById = {for (final p in products) p.id: p};
-  final cancelledIds = await loadCancelledOrderIds(isar);
-  Future<SalesReport> salesFor(({DateTime start, DateTime end}) w) async =>
-      buildSalesReport(
-        orders: await loadOrdersAndReturns(isar, w.start, w.end),
-        cancelledOrderIds: cancelledIds,
-        productsById: productsById,
-        expenses: const [], // gross profit only — expenses have their own card
-        start: w.start,
-        end: w.end,
-      );
-
-  final thisMonthProfit = (await salesFor(window)).grossProfit;
-  final weekProfit = {
-    for (final p in (await salesFor(week)).profitSeries) p.bucket: p.value,
-  };
-
-  // Use targeted Isar queries instead of loading ALL orders
-  final totalOrders = await isar.orders.count();
-
-  final nonCancelledFilter = isar.orders.filter().not().orderStatusEqualTo(OrderStatus.cancelled);
-
-  // Today's orders (non-cancelled, created on the range's last day)
-  final todayOrders = await nonCancelledFilter
-      .createdAtBetween(today.start, today.end, includeUpper: false)
-      .findAll();
-  final todayRegular = todayOrders.where((o) => !o.isReturn).toList();
-  final todayRefunds = todayOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
-  final todayRevenue = todayRegular.fold(0.0, (s, o) => s + o.totalAmount)
-      - todayRefunds.fold(0.0, (s, o) => s + o.refundAmount);
-
-  // Range orders (non-cancelled, within the selected date range)
-  final rangeOrders = await nonCancelledFilter
-      .createdAtBetween(window.start, window.end, includeUpper: false)
-      .findAll();
-  final rangeRegular = rangeOrders.where((o) => !o.isReturn).toList();
-  final rangeRefunds = rangeOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
-  final totalRefunded = rangeRefunds.fold(0.0, (s, o) => s + o.refundAmount);
-  final thisMonthRevenue = rangeRegular.fold(0.0, (s, o) => s + o.totalAmount) - totalRefunded;
-
-  // Pending orders count
-  final pendingOrders = await isar.orders
-      .filter()
-      .orderStatusEqualTo(OrderStatus.pending)
-      .or()
-      .orderStatusEqualTo(OrderStatus.confirmed)
-      .count();
-
-  // Low stock products
-  final lowStockProducts = products
-      .where((p) => p.isActive && (p.isLowStock || p.isOutOfStock))
-      .toList();
-
-  // Weekly sales — the 7 days ending on the range's last day, fetched once
-  // and bucketed locally
-  final weekOrders = await nonCancelledFilter
-      .createdAtBetween(week.start, week.end, includeUpper: false)
-      .findAll();
-
-  final weeklySales = <DailySales>[];
-  for (int i = 6; i >= 0; i--) {
-    final dayStart =
-        DateTime(todayStart.year, todayStart.month, todayStart.day - i);
-    final dayEnd = DateTime(dayStart.year, dayStart.month, dayStart.day + 1);
-
-    final dayOrders = weekOrders.where((o) =>
-        o.createdAt != null &&
-        !o.createdAt!.isBefore(dayStart) &&
-        o.createdAt!.isBefore(dayEnd)).toList();
-
-    final dayRegular = dayOrders.where((o) => !o.isReturn).toList();
-    final dayRefunded = dayOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
-    final dayRefundTotal = dayRefunded.fold(0.0, (s, o) => s + o.refundAmount);
-    final revenue = dayRegular.fold(0.0, (s, o) => s + o.totalAmount) - dayRefundTotal;
-
-    weeklySales.add(DailySales(
-        date: dayStart, revenue: revenue, profit: weekProfit[dayStart] ?? 0));
+  bool within(Order o, ({DateTime start, DateTime end}) w) {
+    final at = o.createdAt;
+    return at != null && !at.isBefore(w.start) && at.isBefore(w.end);
   }
+
+  final stats = await isar.txn(() async {
+    // Profit is Reports → Gross profit for the same window (list price −
+    // discounts − returns − cost of goods), from the same builder, so the
+    // two screens can't disagree.
+    final products = await isar.products.where().findAll();
+    final productsById = {for (final p in products) p.id: p};
+    final cancelledIds = await loadCancelledOrderIds(isar);
+    final returns = await loadReturns(isar);
+
+    // Every order created in the selected range or the last 7 days, loaded
+    // once (today is inside the week). A filter keeps id order, so each
+    // subset below sums the same orders in the same order as the separate
+    // queries did.
+    final union = await isar.orders
+        .filter()
+        .createdAtBetween(
+            window.start.isBefore(week.start) ? window.start : week.start,
+            window.end.isAfter(week.end) ? window.end : week.end,
+            includeUpper: false)
+        .findAll();
+    List<Order> sales(({DateTime start, DateTime end}) w) =>
+        union.where((o) => !o.isReturn && within(o, w)).toList();
+    List<Order> nonCancelled(({DateTime start, DateTime end}) w) => union
+        .where((o) => o.orderStatus != OrderStatus.cancelled && within(o, w))
+        .toList();
+
+    SalesReport salesFor(({DateTime start, DateTime end}) w) => buildSalesReport(
+          orders: [...sales(w), ...returns],
+          cancelledOrderIds: cancelledIds,
+          productsById: productsById,
+          expenses: const [], // gross profit only — expenses have their own card
+          start: w.start,
+          end: w.end,
+        );
+
+    final thisMonthProfit = salesFor(window).grossProfit;
+    final weekProfit = {
+      for (final p in salesFor(week).profitSeries) p.bucket: p.value,
+    };
+
+    final totalOrders = await isar.orders.count();
+
+    // Today's orders (non-cancelled, created on the range's last day)
+    final todayOrders = nonCancelled(today);
+    final todayRegular = todayOrders.where((o) => !o.isReturn).toList();
+    final todayRefunds = todayOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
+    final todayRevenue = todayRegular.fold(0.0, (s, o) => s + o.totalAmount)
+        - todayRefunds.fold(0.0, (s, o) => s + o.refundAmount);
+
+    // Range orders (non-cancelled, within the selected date range)
+    final rangeOrders = nonCancelled(window);
+    final rangeRegular = rangeOrders.where((o) => !o.isReturn).toList();
+    final rangeRefunds = rangeOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
+    final totalRefunded = rangeRefunds.fold(0.0, (s, o) => s + o.refundAmount);
+    final thisMonthRevenue = rangeRegular.fold(0.0, (s, o) => s + o.totalAmount) - totalRefunded;
+
+    // Pending orders count
+    final pendingOrders = await isar.orders
+        .filter()
+        .orderStatusEqualTo(OrderStatus.pending)
+        .or()
+        .orderStatusEqualTo(OrderStatus.confirmed)
+        .count();
+
+    // Low stock products
+    final lowStockProducts = products
+        .where((p) => p.isActive && (p.isLowStock || p.isOutOfStock))
+        .toList();
+
+    // Weekly sales — the 7 days ending on the range's last day, bucketed
+    // locally
+    final weekOrders = nonCancelled(week);
+    final weeklySales = <DailySales>[];
+    for (int i = 6; i >= 0; i--) {
+      final dayStart =
+          DateTime(todayStart.year, todayStart.month, todayStart.day - i);
+      final dayEnd = DateTime(dayStart.year, dayStart.month, dayStart.day + 1);
+
+      final dayOrders = weekOrders.where((o) =>
+          o.createdAt != null &&
+          !o.createdAt!.isBefore(dayStart) &&
+          o.createdAt!.isBefore(dayEnd)).toList();
+
+      final dayRegular = dayOrders.where((o) => !o.isReturn).toList();
+      final dayRefunded = dayOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
+      final dayRefundTotal = dayRefunded.fold(0.0, (s, o) => s + o.refundAmount);
+      final revenue = dayRegular.fold(0.0, (s, o) => s + o.totalAmount) - dayRefundTotal;
+
+      weeklySales.add(DailySales(
+          date: dayStart, revenue: revenue, profit: weekProfit[dayStart] ?? 0));
+    }
+
+    // Status pie: one status per order, newest first (the order the screen
+    // used to count the full orders list in), without loading the orders.
+    final statuses = await isar.orders
+        .where()
+        .sortByCreatedAtDesc()
+        .orderStatusProperty()
+        .findAll();
+    final statusCounts = <OrderStatus, int>{};
+    for (final status in statuses) {
+      statusCounts[status] = (statusCounts[status] ?? 0) + 1;
+    }
+
+    return DashboardStats(
+      todayRevenue: todayRevenue,
+      thisMonthRevenue: thisMonthRevenue,
+      thisMonthProfit: thisMonthProfit,
+      totalOrders: totalOrders,
+      pendingOrders: pendingOrders,
+      lowStockProducts: lowStockProducts,
+      weeklySales: weeklySales,
+      statusCounts: statusCounts,
+    );
+  });
 
   // Low-stock / unpaid reminders on first load and pull-to-refresh only —
   // not on every recompute, which now happens whenever an order is saved.
-  if (!ref.isReload) NotificationService.checkAndNotify(isar);
+  // Outside the txn: its own queries must not run in the txn's zone.
+  if (!ref.isReload) {
+    NotificationService.checkAndNotify(isar, lowStock: stats.lowStockProducts);
+  }
 
-  return DashboardStats(
-    todayRevenue: todayRevenue,
-    thisMonthRevenue: thisMonthRevenue,
-    thisMonthProfit: thisMonthProfit,
-    totalOrders: totalOrders,
-    pendingOrders: pendingOrders,
-    lowStockProducts: lowStockProducts,
-    weeklySales: weeklySales,
-  );
+  return stats;
 }

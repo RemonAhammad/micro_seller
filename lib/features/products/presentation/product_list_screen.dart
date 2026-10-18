@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/product_provider.dart';
@@ -153,24 +154,14 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           }
 
           if (_showGrid) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final cols = (constraints.maxWidth / 180).floor().clamp(2, 6);
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: cols,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.78,
-                  ),
-                  itemCount: products.length,
-                  itemBuilder: (ctx, i) => AnimatedEntrance(
-                    index: i,
-                    child: ProductCard(product: products[i]),
-                  ),
-                );
-              },
+            return GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const _ProductGridDelegate(),
+              itemCount: products.length,
+              itemBuilder: (ctx, i) => AnimatedEntrance(
+                index: i,
+                child: ProductCard(product: products[i]),
+              ),
             );
           }
 
@@ -198,6 +189,29 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       ),
     );
   }
+}
+
+/// Picks the column count at layout time, so a height-only change (the
+/// keyboard animating) relays out the grid without rebuilding its cards.
+class _ProductGridDelegate extends SliverGridDelegate {
+  const _ProductGridDelegate();
+
+  @override
+  SliverGridLayout getLayout(SliverConstraints constraints) {
+    // +32 adds back the grid's 16 px side padding: breakpoints stay at
+    // (body width / 180).
+    final cols =
+        ((constraints.crossAxisExtent + 32) / 180).floor().clamp(2, 6);
+    return SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: cols,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 0.78,
+    ).getLayout(constraints);
+  }
+
+  @override
+  bool shouldRelayout(_ProductGridDelegate oldDelegate) => false;
 }
 
 class _ProductListTile extends ConsumerWidget {

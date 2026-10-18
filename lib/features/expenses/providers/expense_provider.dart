@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/expense.dart';
 import '../../../data/models/trash_entry.dart';
+import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/trash_service.dart';
 
@@ -11,10 +12,8 @@ part 'expense_provider.g.dart';
 @riverpod
 Stream<List<Expense>> expenses(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.expenses
-      .where()
-      .sortByCreatedAtDesc()
-      .watch(fireImmediately: true);
+  final query = isar.expenses.where().sortByCreatedAtDesc();
+  yield* reloadOn(isar.expenses.watchLazy(), query.findAll);
 }
 
 @Riverpod(keepAlive: true)

@@ -22,9 +22,9 @@ import 'notification_service.dart';
 const String kAutoBackupErrorKey = 'autoBackupError';
 
 /// Workmanager unique-name for the daily backup task. Re-using the same
-/// name with `existingWorkPolicy: replace` makes "schedule" idempotent —
-/// toggling Auto Backup off and on again, or re-registering from main()
-/// on every cold start, won't queue duplicates.
+/// name makes "schedule" idempotent — toggling Auto Backup off and on again
+/// (`replace`), or re-registering from main() on every cold start (`keep`),
+/// won't queue duplicates.
 const String _autoBackupTaskName = 'auto-backup-daily';
 
 /// Target wall-clock time. The worker fires once per day at 00:05 local
@@ -129,14 +129,16 @@ class AutoBackupRunner {
 
   /// Schedule the next backup for the upcoming 00:05 local time. Idempotent —
   /// reusing the same uniqueName with `replace` cancels any pending instance
-  /// (e.g. user toggled off and on, app re-launched). Android-only.
+  /// (e.g. user toggled off and on). The app-start path passes
+  /// `replace: false` (`keep`): replacing on every cold start re-enqueues
+  /// the pending run and can cancel one that is running. Android-only.
   ///
   /// Implemented as a one-off + self-rescheduling chain rather than
   /// `registerPeriodicTask` because WorkManager's periodic API can only
   /// promise an *interval* (every 24 h from registration time), not a
   /// specific clock time. The chain pattern lets us land on 00:05 every day
   /// regardless of when Auto Backup was switched on.
-  static Future<void> scheduleAutoBackup() async {
+  static Future<void> scheduleAutoBackup({bool replace = true}) async {
     if (!Platform.isAndroid) return;
     try {
       final delay = _durationUntilNextScheduledTime();
@@ -144,7 +146,8 @@ class AutoBackupRunner {
         _autoBackupTaskName,
         _autoBackupTaskName,
         initialDelay: delay,
-        existingWorkPolicy: ExistingWorkPolicy.replace,
+        existingWorkPolicy:
+            replace ? ExistingWorkPolicy.replace : ExistingWorkPolicy.keep,
         constraints: Constraints(
           networkType: NetworkType.connected,
           requiresBatteryNotLow: true,

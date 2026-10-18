@@ -227,7 +227,14 @@ class Settings extends _$Settings {
   /// foreground provider's in-memory state can be stale until we sync.
   Future<void> refreshAutoBackupError() async {
     final prefs = await SharedPreferences.getInstance();
-    state = {...state, 'autoBackupError': prefs.getString(_keyAutoBackupError)};
+    // The worker's isolate has its own prefs cache; without a reload this
+    // isolate's cache never sees its write.
+    await prefs.reload();
+    final error = prefs.getString(_keyAutoBackupError);
+    // Called on every app resume — don't rebuild watchers for no change.
+    if (error != autoBackupError) {
+      state = {...state, 'autoBackupError': error};
+    }
   }
 
   Future<void> clearAutoBackupError() async {
@@ -294,72 +301,97 @@ class Settings extends _$Settings {
   /// Apply a previously-exported settings map (from a backup). Unknown keys
   /// are ignored; missing keys keep their current values. Each known key is
   /// validated and only applied if it parses correctly.
+  ///
+  /// Persists every key, then assigns state once — each assignment rebuilds
+  /// every settings watcher.
   Future<void> importSettings(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    final changes = <String, dynamic>{};
+    final writes = <Future<bool>>[];
+
     final shopName = data['shopName'];
     if (shopName is String && shopName.isNotEmpty) {
-      await updateShopName(shopName);
+      changes['shopName'] = shopName;
+      writes.add(prefs.setString(_keyShopName, shopName));
     }
     final shopPhone = data['shopPhone'];
     if (shopPhone is String) {
-      await updateShopPhone(shopPhone);
+      changes['shopPhone'] = shopPhone;
+      writes.add(prefs.setString(_keyShopPhone, shopPhone));
     }
     final currency = data['currencySymbol'];
     if (currency is String && currency.isNotEmpty) {
-      await updateCurrencySymbol(currency);
+      CurrencyFormatter.setSymbol(currency);
+      changes['currencySymbol'] = currency;
+      writes.add(prefs.setString(_keyCurrency, currency));
     }
     final threshold = data['lowStockThreshold'];
     if (threshold is num) {
-      await updateLowStockThreshold(threshold.toInt());
+      changes['lowStockThreshold'] = threshold.toInt();
+      writes.add(prefs.setInt(_keyThreshold, threshold.toInt()));
     }
     final theme = data['themeMode'];
     if (theme is String && const {'light', 'dark', 'system'}.contains(theme)) {
-      await updateThemeMode(theme);
+      changes['themeMode'] = theme;
+      writes.add(prefs.setString(_keyThemeMode, theme));
     }
     final taxRate = data['taxRate'];
     if (taxRate is num) {
-      await updateTaxRate(taxRate.toDouble());
+      changes['taxRate'] = taxRate.toDouble();
+      writes.add(prefs.setDouble(_keyTaxRate, taxRate.toDouble()));
     }
     final language = data['language'];
     if (language is String && language.isNotEmpty) {
-      await updateLanguage(language);
+      changes['language'] = language;
+      writes.add(prefs.setString(_keyLanguage, language));
     }
     final downloadDir = data['downloadDirectory'];
     if (downloadDir is String) {
-      await updateDownloadDirectory(downloadDir);
+      changes['downloadDirectory'] = downloadDir;
+      writes.add(prefs.setString(_keyDownloadDir, downloadDir));
     }
     final order = data['sidebarOrder'];
     if (order is List) {
-      await updateSidebarOrder(order.map((e) => e.toString()).toList());
+      final reconciled =
+          reconcileSidebarOrder(order.map((e) => e.toString()).toList());
+      changes['sidebarOrder'] = reconciled;
+      writes.add(prefs.setString(_keySidebarOrder, jsonEncode(reconciled)));
     }
     final position = data['sidebarPosition'];
     if (position is String &&
         (position == sidebarPositionLeft || position == sidebarPositionRight)) {
-      await updateSidebarPosition(position);
+      changes['sidebarPosition'] = position;
+      writes.add(prefs.setString(_keySidebarPosition, position));
     }
     final autoBackup = data['autoBackup'];
     if (autoBackup is bool) {
-      await updateAutoBackup(autoBackup);
+      changes['autoBackup'] = autoBackup;
+      writes.add(prefs.setBool(_keyAutoBackup, autoBackup));
     }
     final secFp = data['securityFingerprintEnabled'];
     if (secFp is bool) {
-      await updateSecurityFingerprintEnabled(secFp);
+      changes['securityFingerprintEnabled'] = secFp;
+      writes.add(prefs.setBool(_keySecurityFingerprint, secFp));
     }
     final secPin = data['securityPinEnabled'];
     if (secPin is bool) {
-      await updateSecurityPinEnabled(secPin);
+      changes['securityPinEnabled'] = secPin;
+      writes.add(prefs.setBool(_keySecurityPin, secPin));
     }
     final hidden = data['hiddenSidebarItems'];
     if (hidden is List) {
-      // Reset & re-apply: clear current hidden set, then add each key from
-      // backup. toggleSidebarItemHidden auto-strips 'settings'.
-      final current = hiddenSidebarItems.toSet();
-      for (final k in current) {
-        await toggleSidebarItemHidden(k, false);
-      }
-      for (final raw in hidden) {
-        final k = raw.toString();
-        if (k.isNotEmpty) await toggleSidebarItemHidden(k, true);
-      }
+      // Replaces the current hidden set. Settings can never be hidden
+      // (soft-lockout), same as toggleSidebarItemHidden.
+      final list = hidden
+          .map((e) => e.toString())
+          .where((k) => k.isNotEmpty && k != 'settings')
+          .toSet()
+          .toList();
+      changes['hiddenSidebarItems'] = list;
+      writes.add(prefs.setString(_keyHiddenSidebarItems, jsonEncode(list)));
     }
+
+    await Future.wait(writes);
+    if (changes.isNotEmpty) state = {...state, ...changes};
   }
 }
