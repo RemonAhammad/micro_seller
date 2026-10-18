@@ -59,7 +59,7 @@ lib/
 │   │   ├── category.dart         # id, name, createdAt
 │   │   ├── customer.dart         # id, name, phone, address, tag(new/regular/vip), stats
 │   │   ├── expense.dart          # id, title, amount, category(logistics/packaging/marketing/supplies/other), date
-│   │   ├── order.dart            # id, orderNumber, customer info, items, totals, payment/order status, paymentMethod, delivery, recurring, return fields. Also `returnValueFor` (what returning items is worth) and `roundMoney`
+│   │   ├── order.dart            # id, orderNumber, customer info, items, totals, payment/order status, paymentMethod, delivery, recurring, return fields. Also `orderTotals` (the form's tax/total, rounded to 2 decimals), `returnValueFor` (what returning items is worth) and `roundMoney`
 │   │   ├── order_item.dart       # @embedded: productId, name, sku, qty, unitPrice, costPrice, totalPrice, variantCombinationKey, variantDisplayLabel
 │   │   ├── product.dart          # id, name, sku, prices, stockQty, category, qrCode, isActive, variantAttributes, variantCombinations
 │   │   ├── product_variant.dart  # @embedded (deprecated): flat name/value/priceAdjustment/stockQty/sku
@@ -119,7 +119,7 @@ lib/
 │   │   │       ├── sales_chart.dart                # SalesChart (bar), OrderStatusChart (pie), RevenueExpenseChart (line)
 │   │   │       ├── low_stock_list.dart
 │   │   │       └── due_summary_card.dart           # Due Book on the dashboard: total receivable, aging bar (<30 / 30–60 / 60+ days, per customer by oldest due), top 3 to chase with WhatsApp remind + collect
-│   │   └── providers/dashboard_provider.dart       # DashboardDateRange notifier + stats provider (watches date range and `ordersProvider`, so cards update without pull-to-refresh; profit = `buildSalesReport(...).grossProfit`, the Reports number)
+│   │   └── providers/dashboard_provider.dart       # DashboardDateRange notifier + stats provider (watches date range and `ordersProvider`, so cards update without pull-to-refresh; profit = `buildSalesReport(...).grossProfit`, the Reports number). Presets are re-resolved against now by `resolveDashboardRange` (the notifier keeps the dates from when a preset was picked, stale once the app stays open past midnight), and every card uses the same `reportWindow`
 │   ├── expenses/
 │   │   ├── presentation/
 │   │   │   ├── expense_list_screen.dart            # Month summary banner + list + CSV export button
@@ -155,7 +155,7 @@ lib/
 │   │   ├── presentation/reports_screen.dart        # One date range (Today / This week / This month / Last month / This year / Custom) + 4 tabs; Export → current tab as PDF or CSV
 │   │   ├── presentation/widgets/report_tabs.dart   # SalesReportTab, DuesReportTab, InventoryReportTab, PurchasesReportTab
 │   │   ├── presentation/widgets/report_widgets.dart # ReportSectionCard, KpiGrid, PnlTable, BreakdownBars, NetSalesChart, ReportEmpty
-│   │   └── providers/reports_provider.dart         # salesReport / duesReport / inventoryReport / purchasesReport (from, to) — load Isar rows for `reportWindow` [start, end) and call report_service builders. `loadOrdersAndReturns` / `loadCancelledOrderIds` are shared with the Dashboard
+│   │   └── providers/reports_provider.dart         # salesReport / duesReport / inventoryReport / purchasesReport (from, to) — load Isar rows for `reportWindow` [start, end) and call report_service builders. `loadOrdersAndReturns` / `loadCancelledOrderIds` are shared with the Dashboard. salesReport / inventoryReport watch `ordersProvider` (+ expenses / products), so the Reports tab — kept mounted by the shell — stays live like the Dashboard
 │   ├── splash/
 │   │   └── presentation/splash_screen.dart         # Animated 3s splash: pulsing rings, logo scale+rotate, title slide, tagline fade, loader
 │   ├── returns/
@@ -252,7 +252,7 @@ The order creation/edit screen is designed for fast, frictionless use:
 - **Pricing:**
   - Discount + delivery fee fields
   - **Per-order Tax/VAT (%) field** — defaults from settings tax rate, editable per order
-  - Tax auto-calculated: `(subtotal - discount) * taxRate / 100`, shown as helper text
+  - Tax auto-calculated: `(subtotal - discount) * taxRate / 100`, shown as helper text. Tax and total come from `orderTotals` and are rounded to 2 decimals, so "Pay Full" (which types the 2-decimal total) really pays in full
   - Amount paid field with "Pay Full" quick button (fills total)
 
 - **Payment method:** ChoiceChips (Cash / Card / bKash / Nagad / Bank / Other)
@@ -311,7 +311,7 @@ The order creation/edit screen is designed for fast, frictionless use:
 2. Create return screen shows items with variant info via `displayName`, qty selector, reason chips
 3. **Refund amount capped at `amountPaid`** on original order (validation + auto-fill cap)
 4. Refund of 0 allowed (e.g. exchange)
-5. **Valued at what the customer paid:** `createReturnOrder` stores `returnValueFor(original, items)` as the return's subtotal / discountAmount / taxAmount / totalAmount: list price, minus the items' pro-rata share of the order discount, plus their share of the tax (delivery isn't refunded). The refund pre-fill uses the same function. At list price, a full return of a discounted order credited the customer the discount against their *other* dues. Returns created before this keep their list-price value (no migration — balances were settled against it).
+5. **Valued at what the customer paid:** `createReturnOrder` stores `returnValueFor(original, items)` as the return's subtotal / discountAmount / taxAmount / totalAmount: list price, minus the items' pro-rata share of the order discount, plus their share of the tax (delivery isn't refunded). Not rounded, so piecewise returns add up to exactly the order. The refund pre-fill uses the same function; submitting it unedited refunds the exact value, and the check allows half a paisa over `amountPaid` (the field shows 2 decimals; `processRefund` caps at `amountPaid`). At list price, a full return of a discounted order credited the customer the discount against their *other* dues. Returns created before this keep their list-price value (no migration — balances were settled against it).
 6. Creates a new order with `RET-XXX` numbering, `isReturn: true`, linked via `originalOrderId`
 7. Return detail screen shows only the 3-step return flow (Requested → Received → Refunded), **not** the regular order status stepper
 8. On approve: **restores stock** (base + variant) for all items via restock StockMovements
@@ -350,7 +350,7 @@ One formula, `buildSalesReport`, feeds both Reports → Gross profit and the Das
 
 Sellers sell on credit ("baki"); the Due Book is where they get paid back. Own sidebar tab **Due Book** (`/dues`, branch 13, key `dues`), also reached from the Customers appbar and the Dashboard unpaid card.
 
-- **Dues are computed from orders, never from `Customer.outstandingBalance`.** That counter drifts (`updateOrder` doesn't adjust it; recurring copies didn't bill the customer until the Due Book fixed `processRecurringOrders`). The customer's total is `computeNetDue` — every order's effective due *including credits* (an exchange return worth more than an order's remaining due), floored at 0 — so it matches the counter and the statement; collections are capped at it. `computeOrderDues` takes all of a customer's orders *including returns*: excluded are cancelled orders and return orders; each order's effective due is `balanceDue − value of its refunded returns`, because `processRefund` lowers the original's `amountPaid` by the refund but not its `totalAmount`.
+- **Dues are computed from orders, never from `Customer.outstandingBalance`.** That counter drifts (`updateOrder` doesn't adjust it; recurring copies didn't bill the customer until the Due Book fixed `processRecurringOrders`). The customer's total is `computeNetDue` — every order's effective due *including credits* (an exchange return worth more than an order's remaining due), floored at 0, ignoring orders within `kDueEpsilon` of settled (sub-paisa leftovers on several orders used to add up to a "due" on no order, and `orderDues.first` crashed the Due Book) — so it matches the counter and the statement; collections are capped at it. `computeOrderDues` takes all of a customer's orders *including returns*: excluded are cancelled orders and return orders; each order's effective due is `balanceDue − value of its refunded returns`, because `processRefund` lowers the original's `amountPaid` by the refund but not its `totalAmount`.
 - **Collect** (`OrderNotifier.collectFromCustomer`): one amount applied oldest-first across the customer's due orders, capped at the total due (no advance credit). One `Payment` per touched order sharing a `groupId`. Cash collections can add to the open cash register in the same transaction. The sheet's allocation preview mirrors the notifier's loop.
 - **Remind**: localized WhatsApp text via `https://wa.me/<digits>?text=`. A Bangladeshi local mobile (`01…`, 11 digits) with ৳ gets the `88` prefix; other numbers pass through as typed. No phone / launch failure → share sheet.
 - **Statement**: `StatementService` PDF (running balance). Orders before payment history existed have no `Payment` rows, so each order's unlogged `amountPaid` is shown as a payment on the order date — the closing balance always matches the orders.

@@ -137,9 +137,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   double get _taxRate => double.tryParse(_taxRateCtrl.text) ?? 0;
 
-  double get _taxAmount => _taxRate > 0 ? (_subtotal - _discount).clamp(0, double.infinity) * _taxRate / 100 : 0;
+  ({double tax, double total}) get _totals => orderTotals(
+        subtotal: _subtotal,
+        discount: _discount,
+        taxRate: _taxRate,
+        delivery: _delivery,
+      );
 
-  double get _total => (_subtotal - _discount + _taxAmount + _delivery).clamp(0, double.infinity);
+  double get _taxAmount => _totals.tax;
+
+  double get _total => _totals.total;
   double get _amountPaid => double.tryParse(_amountPaidCtrl.text) ?? 0;
 
   /// What the customer still owes on this order — goes to the Due Book.

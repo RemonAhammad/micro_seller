@@ -37,49 +37,49 @@ abstract class DashboardStats with _$DashboardStats {
 /// Preset filter options for the dashboard date range.
 enum DateRangePreset { today, thisWeek, thisMonth, custom }
 
+typedef DashboardRange = ({DateTime start, DateTime end, DateRangePreset preset});
+
+/// The dates [range] covers as of [now]. Presets are relative to today, but
+/// the notifier keeps the dates from when the preset was picked — stale once
+/// the app stays open past midnight (or into a new month). Custom ranges are
+/// kept as picked.
+({DateTime start, DateTime end}) resolveDashboardRange(
+        DashboardRange range, DateTime now) =>
+    range.preset == DateRangePreset.custom
+        ? (start: range.start, end: range.end)
+        : _presetDates(range.preset, now);
+
+({DateTime start, DateTime end}) _presetDates(
+    DateRangePreset preset, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  final start = switch (preset) {
+    DateRangePreset.thisWeek =>
+      DateTime(today.year, today.month, today.day - (now.weekday - 1)),
+    DateRangePreset.thisMonth => DateTime(now.year, now.month, 1),
+    _ => today,
+  };
+  return (start: start, end: now);
+}
+
 @riverpod
 class DashboardDateRange extends _$DashboardDateRange {
   @override
-  ({DateTime start, DateTime end, DateRangePreset preset}) build() {
-    final now = DateTime.now();
-    return (
-      start: DateTime(now.year, now.month, 1),
-      end: now,
-      preset: DateRangePreset.thisMonth,
-    );
+  DashboardRange build() => _preset(DateRangePreset.thisMonth);
+
+  DashboardRange _preset(DateRangePreset preset) {
+    final r = _presetDates(preset, DateTime.now());
+    return (start: r.start, end: r.end, preset: preset);
   }
 
   void setRange(DateTime start, DateTime end) {
     state = (start: start, end: end, preset: DateRangePreset.custom);
   }
 
-  void setThisMonth() {
-    final now = DateTime.now();
-    state = (
-      start: DateTime(now.year, now.month, 1),
-      end: now,
-      preset: DateRangePreset.thisMonth,
-    );
-  }
+  void setThisMonth() => state = _preset(DateRangePreset.thisMonth);
 
-  void setThisWeek() {
-    final now = DateTime.now();
-    final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    state = (
-      start: DateTime(weekStart.year, weekStart.month, weekStart.day),
-      end: now,
-      preset: DateRangePreset.thisWeek,
-    );
-  }
+  void setThisWeek() => state = _preset(DateRangePreset.thisWeek);
 
-  void setToday() {
-    final now = DateTime.now();
-    state = (
-      start: DateTime(now.year, now.month, now.day),
-      end: now,
-      preset: DateRangePreset.today,
-    );
-  }
+  void setToday() => state = _preset(DateRangePreset.today);
 }
 
 @riverpod
@@ -88,13 +88,16 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
   // until a pull-to-refresh.
   ref.watch(ordersProvider);
   final isar = await ref.watch(isarProvider.future);
-  final dateRange = ref.watch(dashboardDateRangeProvider);
-  final startDate = dateRange.start;
-  final endDate = dateRange.end;
+  final range =
+      resolveDashboardRange(ref.watch(dashboardDateRangeProvider), DateTime.now());
 
-  final todayStart = DateTime(endDate.year, endDate.month, endDate.day);
-  final weekStart =
-      DateTime(todayStart.year, todayStart.month, todayStart.day - 6);
+  // One window per card for every number on it, revenue and profit alike:
+  // [start of the first day, start of the day after the last).
+  final window = reportWindow(range.start, range.end);
+  final todayStart = DateTime(range.end.year, range.end.month, range.end.day);
+  final today = reportWindow(todayStart, todayStart);
+  final week = reportWindow(
+      DateTime(todayStart.year, todayStart.month, todayStart.day - 6), todayStart);
 
   // Profit is Reports → Gross profit for the same window (list price −
   // discounts − returns − cost of goods), from the same builder, so the two
@@ -102,22 +105,19 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
   final products = await isar.products.where().findAll();
   final productsById = {for (final p in products) p.id: p};
   final cancelledIds = await loadCancelledOrderIds(isar);
-  Future<SalesReport> salesFor(DateTime from, DateTime to) async {
-    final w = reportWindow(from, to);
-    return buildSalesReport(
-      orders: await loadOrdersAndReturns(isar, w.start, w.end),
-      cancelledOrderIds: cancelledIds,
-      productsById: productsById,
-      expenses: const [], // gross profit only — expenses have their own card
-      start: w.start,
-      end: w.end,
-    );
-  }
+  Future<SalesReport> salesFor(({DateTime start, DateTime end}) w) async =>
+      buildSalesReport(
+        orders: await loadOrdersAndReturns(isar, w.start, w.end),
+        cancelledOrderIds: cancelledIds,
+        productsById: productsById,
+        expenses: const [], // gross profit only — expenses have their own card
+        start: w.start,
+        end: w.end,
+      );
 
-  final thisMonthProfit = (await salesFor(startDate, endDate)).grossProfit;
+  final thisMonthProfit = (await salesFor(window)).grossProfit;
   final weekProfit = {
-    for (final p in (await salesFor(weekStart, todayStart)).profitSeries)
-      p.bucket: p.value,
+    for (final p in (await salesFor(week)).profitSeries) p.bucket: p.value,
   };
 
   // Use targeted Isar queries instead of loading ALL orders
@@ -125,9 +125,9 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
 
   final nonCancelledFilter = isar.orders.filter().not().orderStatusEqualTo(OrderStatus.cancelled);
 
-  // Today's orders (non-cancelled, non-return, created on the endDate's day)
+  // Today's orders (non-cancelled, created on the range's last day)
   final todayOrders = await nonCancelledFilter
-      .createdAtGreaterThan(todayStart)
+      .createdAtBetween(today.start, today.end, includeUpper: false)
       .findAll();
   final todayRegular = todayOrders.where((o) => !o.isReturn).toList();
   final todayRefunds = todayOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
@@ -136,8 +136,7 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
 
   // Range orders (non-cancelled, within the selected date range)
   final rangeOrders = await nonCancelledFilter
-      .createdAtGreaterThan(startDate)
-      .createdAtLessThan(endDate.add(const Duration(days: 1)))
+      .createdAtBetween(window.start, window.end, includeUpper: false)
       .findAll();
   final rangeRegular = rangeOrders.where((o) => !o.isReturn).toList();
   final rangeRefunds = rangeOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
@@ -157,10 +156,10 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
       .where((p) => p.isActive && (p.isLowStock || p.isOutOfStock))
       .toList();
 
-  // Weekly sales — last 7 days from endDate, fetch once, bucket locally
+  // Weekly sales — the 7 days ending on the range's last day, fetched once
+  // and bucketed locally
   final weekOrders = await nonCancelledFilter
-      .createdAtGreaterThan(weekStart)
-      .createdAtLessThan(endDate.add(const Duration(days: 1)))
+      .createdAtBetween(week.start, week.end, includeUpper: false)
       .findAll();
 
   final weeklySales = <DailySales>[];

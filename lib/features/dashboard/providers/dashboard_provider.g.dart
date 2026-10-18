@@ -13,11 +13,7 @@ part of 'dashboard_provider.dart';
 final dashboardDateRangeProvider = DashboardDateRangeProvider._();
 
 final class DashboardDateRangeProvider
-    extends
-        $NotifierProvider<
-          DashboardDateRange,
-          ({DateTime end, DateRangePreset preset, DateTime start})
-        > {
+    extends $NotifierProvider<DashboardDateRange, DashboardRange> {
   DashboardDateRangeProvider._()
     : super(
         from: null,
@@ -37,43 +33,28 @@ final class DashboardDateRangeProvider
   DashboardDateRange create() => DashboardDateRange();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(
-    ({DateTime end, DateRangePreset preset, DateTime start}) value,
-  ) {
+  Override overrideWithValue(DashboardRange value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride:
-          $SyncValueProvider<
-            ({DateTime end, DateRangePreset preset, DateTime start})
-          >(value),
+      providerOverride: $SyncValueProvider<DashboardRange>(value),
     );
   }
 }
 
 String _$dashboardDateRangeHash() =>
-    r'3104e875bb99ec012c1510bd7a89028d6b7fb67c';
+    r'acad9e0ba4f2047dd13718fc823e64811470dfdf';
 
-abstract class _$DashboardDateRange
-    extends
-        $Notifier<({DateTime end, DateRangePreset preset, DateTime start})> {
-  ({DateTime end, DateRangePreset preset, DateTime start}) build();
+abstract class _$DashboardDateRange extends $Notifier<DashboardRange> {
+  DashboardRange build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<
-              ({DateTime end, DateRangePreset preset, DateTime start}),
-              ({DateTime end, DateRangePreset preset, DateTime start})
-            >;
+    final ref = this.ref as $Ref<DashboardRange, DashboardRange>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                ({DateTime end, DateRangePreset preset, DateTime start}),
-                ({DateTime end, DateRangePreset preset, DateTime start})
-              >,
-              ({DateTime end, DateRangePreset preset, DateTime start}),
+              AnyNotifier<DashboardRange, DashboardRange>,
+              DashboardRange,
               Object?,
               Object?
             >;
@@ -118,4 +99,4 @@ final class DashboardStatsProvider
   }
 }
 
-String _$dashboardStatsHash() => r'a9e653bd6e2b0b24ed5be3ea64dc5b87b111d086';
+String _$dashboardStatsHash() => r'aef3e66dfeb45ca19d6867e7bb890972a24ba576';

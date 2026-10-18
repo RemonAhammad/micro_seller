@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
+import '../../../data/services/dues_service.dart';
 import '../../orders/providers/order_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
@@ -57,9 +58,12 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
 
   double get _maxRefundable => widget.originalOrder.amountPaid;
 
+  /// The pre-filled refund at full precision; the field shows it rounded.
+  double _suggestedRefund = 0;
+
   void _updateRefundAmount() {
-    final capped = _returnTotal.clamp(0.0, _maxRefundable);
-    _refundCtrl.text = capped.toStringAsFixed(2);
+    _suggestedRefund = _returnTotal.clamp(0.0, _maxRefundable);
+    _refundCtrl.text = _suggestedRefund.toStringAsFixed(2);
   }
 
   Future<void> _submit() async {
@@ -69,8 +73,14 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
       );
       return;
     }
-    final refund = double.tryParse(_refundCtrl.text) ?? 0;
-    if (refund < 0 || refund > _maxRefundable) {
+    // Left as suggested → refund the exact value, so it cancels the return's
+    // credit to the paisa. The field rounds it, and can round up past
+    // `amountPaid`; allow that half-paisa (processRefund caps at amountPaid).
+    final typed = _refundCtrl.text.trim();
+    final refund = typed == _suggestedRefund.toStringAsFixed(2)
+        ? _suggestedRefund
+        : double.tryParse(typed) ?? 0;
+    if (refund < 0 || refund > _maxRefundable + kDueEpsilon) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(AppStrings.of(context)
             .refundRange(CurrencyFormatter.format(_maxRefundable))),

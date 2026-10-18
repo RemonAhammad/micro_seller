@@ -28,7 +28,8 @@ class CustomerDue {
   /// Net of credits — may be less than the sum of [orderDues].
   final double totalDue;
 
-  DateTime? get oldestDueDate => orderDues.first.order.createdAt;
+  DateTime? get oldestDueDate =>
+      orderDues.isEmpty ? null : orderDues.first.order.createdAt;
 
   int get daysOutstanding {
     final since = oldestDueDate;

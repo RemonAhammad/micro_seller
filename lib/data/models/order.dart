@@ -223,27 +223,42 @@ class Order {
 /// Rounds a money amount to 2 decimals.
 double roundMoney(double v) => (v * 100).roundToDouble() / 100;
 
+/// Tax and total exactly as the order form computes and stores them: tax on
+/// the goods after discount, both rounded to 2 decimals. Unrounded, "Pay
+/// Full" (which types the 2-decimal total) left a half-paisa unpaid — the
+/// order read "Partial" and the dust could add up to a phantom due.
+({double tax, double total}) orderTotals({
+  required double subtotal,
+  double discount = 0,
+  double taxRate = 0,
+  double delivery = 0,
+}) {
+  final taxable = subtotal - discount;
+  final tax =
+      taxRate > 0 && taxable > 0 ? roundMoney(taxable * taxRate / 100) : 0.0;
+  final total = subtotal - discount + tax + delivery;
+  return (tax: tax, total: total > 0 ? roundMoney(total) : 0.0);
+}
+
 /// What the customer actually paid for [items] — some of [original]'s items,
 /// at the quantities being returned — and so what returning them is worth:
 /// list price, less their pro-rata share of the order discount, plus their
 /// share of the tax. Delivery isn't refunded.
 ///
 /// The return order stores this, so the refund suggestion, the Due Book
-/// credit and the reports all value the return the same way.
+/// credit and the reports all value the return the same way. Deliberately
+/// not rounded: partial returns of one order then add up to exactly the
+/// order, where per-return rounding left a paisa owed (or credited) once
+/// everything had come back. Screens format it to 2 decimals.
 ({double subtotal, double discount, double tax, double total}) returnValueFor(
     Order original, List<OrderItem> items) {
-  final subtotal =
-      roundMoney(items.fold(0.0, (sum, item) => sum + item.totalPrice));
-  final discount = roundMoney(subtotal * (1 - original.discountFactor));
+  final subtotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  final goods = original.goodsTotal;
+  final discount = goods > 0
+      ? (goods - original.netGoods) * subtotal / goods
+      : 0.0;
   final net = subtotal - discount;
   final originalNet = original.netGoods;
-  final tax = originalNet > 0
-      ? roundMoney(original.taxAmount * net / originalNet)
-      : 0.0;
-  return (
-    subtotal: subtotal,
-    discount: discount,
-    tax: tax,
-    total: roundMoney(net + tax),
-  );
+  final tax = originalNet > 0 ? original.taxAmount * net / originalNet : 0.0;
+  return (subtotal: subtotal, discount: discount, tax: tax, total: net + tax);
 }

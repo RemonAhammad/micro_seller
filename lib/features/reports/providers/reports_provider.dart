@@ -11,6 +11,9 @@ import '../../../data/models/supplier.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/report_service.dart';
 import '../../customers/providers/dues_provider.dart';
+import '../../expenses/providers/expense_provider.dart';
+import '../../orders/providers/order_provider.dart';
+import '../../products/providers/product_provider.dart';
 
 part 'reports_provider.g.dart';
 
@@ -47,6 +50,10 @@ Future<Set<int>> loadCancelledOrderIds(Isar isar) async => (await isar.orders
 
 @riverpod
 Future<SalesReport> salesReport(Ref ref, DateTime from, DateTime to) async {
+  // Live, like the Dashboard: the Reports tab stays mounted, and a stale
+  // report next to a live Dashboard profit would disagree with it.
+  ref.watch(ordersProvider);
+  ref.watch(expensesProvider);
   final isar = await ref.watch(isarProvider.future);
   final w = reportWindow(from, to);
   final orders = await loadOrdersAndReturns(isar, w.start, w.end);
@@ -113,6 +120,8 @@ Future<DuesReport> duesReport(Ref ref, DateTime from, DateTime to) async {
 @riverpod
 Future<InventoryReport> inventoryReport(
     Ref ref, DateTime from, DateTime to) async {
+  ref.watch(ordersProvider);
+  ref.watch(productsProvider);
   final isar = await ref.watch(isarProvider.future);
   final w = reportWindow(from, to);
   final products = await isar.products.where().findAll();

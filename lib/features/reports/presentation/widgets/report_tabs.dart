@@ -21,7 +21,10 @@ Widget _async<T>(
   Widget Function(T data) data,
 ) {
   final s = AppStrings.of(context);
+  // Reports recompute when orders change; keep the last numbers up
+  // meanwhile instead of flashing the shimmer.
   return value.when(
+    skipLoadingOnReload: true,
     data: data,
     loading: () => const Padding(
       padding: EdgeInsets.all(16),

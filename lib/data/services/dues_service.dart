@@ -32,8 +32,15 @@ List<OrderDue> computeOrderDues(Iterable<Order> orders) =>
 /// left on it goes negative), floored at 0. This is the number the counter,
 /// the statement and a collection cap all agree on — summing only the
 /// positive [computeOrderDues] would overstate it.
+///
+/// Orders within [kDueEpsilon] of settled are left out, as in
+/// [computeOrderDues]: otherwise sub-paisa leftovers on several orders add
+/// up to a "due" that no order shows — which can't be collected, and left
+/// the Due Book with a customer owing money on no order.
 double computeNetDue(Iterable<Order> orders) {
-  final net = _effectiveDues(orders).fold<double>(0, (s, d) => s + d.due);
+  final net = _effectiveDues(orders)
+      .where((d) => d.due.abs() > kDueEpsilon)
+      .fold<double>(0, (s, d) => s + d.due);
   return net > kDueEpsilon ? net : 0;
 }
 

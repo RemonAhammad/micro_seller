@@ -18,6 +18,7 @@ import 'package:micro_seller/data/models/product.dart';
 import 'package:micro_seller/data/services/dues_service.dart';
 import 'package:micro_seller/data/services/isar_service.dart';
 import 'package:micro_seller/data/services/report_service.dart';
+import 'package:micro_seller/features/customers/providers/dues_provider.dart';
 import 'package:micro_seller/features/dashboard/providers/dashboard_provider.dart';
 import 'package:micro_seller/features/orders/providers/order_provider.dart';
 import 'package:micro_seller/features/reports/providers/reports_provider.dart';
@@ -90,12 +91,12 @@ void main() {
   Future<Order> sell(Product p, int qty,
       {double discount = 0, double taxRate = 0, double delivery = 0, double? paid}) async {
     final goods = p.sellingPrice * qty;
-    final tax = taxRate > 0
-        ? ((goods - discount).clamp(0, double.infinity) * taxRate / 100).toDouble()
-        : 0.0;
-    final total =
-        (goods - discount + tax + delivery).clamp(0, double.infinity).toDouble();
-    final amountPaid = paid ?? total;
+    final t = orderTotals(
+        subtotal: goods, discount: discount, taxRate: taxRate, delivery: delivery);
+    final tax = t.tax;
+    final total = t.total;
+    // "Pay Full" types the total with 2 decimals.
+    final amountPaid = paid ?? double.parse(total.toStringAsFixed(2));
     final id = await orders().createOrder(Order(
       orderNumber: 'ORD-${DateTime.now().microsecondsSinceEpoch}',
       customerId: customerId,
@@ -158,6 +159,7 @@ void main() {
     final today = DateTime.now();
     final p = salesReportProvider(today, today);
     container.listen(p, (_, _) {});
+    await Future<void>.delayed(const Duration(milliseconds: 300));
     return container.read(p.future);
   }
 
@@ -247,5 +249,65 @@ void main() {
       await sell(p, 1, discount: 100);
       expect((await dashboard()).thisMonthProfit, 200); // no pull-to-refresh
     });
+
+    test('a mounted Reports tab stays live too, and agrees with the Dashboard', () async {
+      final p = await addProduct();
+      expect((await report()).grossProfit, 0); // Reports opened first
+      await sell(p, 1, discount: 100);
+      expect((await dashboard()).thisMonthProfit, 200);
+      expect((await report()).grossProfit, 200);
+      await sell(p, 1, discount: 100);
+      expect((await dashboard()).thisMonthProfit, 400);
+      expect((await report()).grossProfit, 400);
+    });
+
+    test('a preset picked yesterday still covers today, revenue and profit alike', () async {
+      container.dispose();
+      container = ProviderContainer(overrides: [
+        isarProvider.overrideWith((ref) async => isar),
+        dashboardDateRangeProvider.overrideWith(_PickedYesterday.new),
+      ]);
+      await sell(await addProduct(), 1); // 1000, cost 700
+      final d = await dashboard();
+      expect(d.thisMonthRevenue, 1000);
+      expect(d.todayRevenue, 1000);
+      expect(d.thisMonthProfit, 300);
+    });
+
+    test('"Pay Full" on a 7.5% tax order leaves nothing owed', () async {
+      final sale = await sell(await addProduct(price: 999, cost: 500), 1, taxRate: 7.5);
+      expect(sale.paymentStatus, PaymentStatus.paid);
+      expect(await customerDue(), 0);
+    });
+
+    test('sub-paisa leftovers on old orders do not crash the Due Book', () async {
+      // Saved before totals were rounded; "Pay Full" typed 2 decimals.
+      await isar.writeTxn(() async {
+        for (final (total, paid) in [(10.5315, 10.53), (10.542, 10.54), (10.5525, 10.55)]) {
+          await isar.orders.put(Order(
+            orderNumber: 'OLD-$total',
+            customerId: customerId,
+            customerName: 'Rahim',
+            totalAmount: total,
+            amountPaid: paid,
+            paymentStatus: PaymentStatus.partial,
+            orderStatus: OrderStatus.completed,
+            createdAt: DateTime.now(),
+          ));
+        }
+      });
+      container.listen(duesProvider, (_, _) {});
+      expect(await container.read(duesProvider.future), isEmpty);
+      expect(container.read(dueSummaryProvider)?.total, 0);
+    });
   });
+}
+
+/// The Dashboard's "This month", as picked yesterday and never re-tapped.
+class _PickedYesterday extends DashboardDateRange {
+  @override
+  DashboardRange build() {
+    final y = DateTime.now().subtract(const Duration(days: 1));
+    return (start: DateTime(y.year, y.month, 1), end: y, preset: DateRangePreset.thisMonth);
+  }
 }

@@ -296,6 +296,21 @@ void main() {
       expect(rows['taxCollected'], 45);
     });
 
+    test('a zero deduction exports as 0, not -0', () {
+      // No discounts, returns or expenses: those rows used to be -0.0,
+      // which the PDF printed as "-0".
+      final rows = sales([_sale(1, [_item(1, 1, 1000, cost: 700)])])
+          .toTables((k) => k)
+          .first
+          .rows;
+      for (final row in rows) {
+        final cell = row[1];
+        if (cell is double && cell == 0) {
+          expect(cell.isNegative, isFalse, reason: '${row[0]}');
+        }
+      }
+    });
+
     test('Stock & Returns values a return the same way as the P&L', () {
       final o = _sale(1, [_item(1, 1, 1000, cost: 700)], discount: 100, tax: 45);
       final r = buildInventoryReport(

@@ -163,7 +163,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         dailyExpenses[i] = total;
                       }
 
-                      final dateRange = ref.watch(dashboardDateRangeProvider);
+                      final dateRange = resolveDashboardRange(
+                          ref.watch(dashboardDateRangeProvider),
+                          DateTime.now());
                       final totalExpensesThisMonth = _rangeExpenses(
                         allExpenses,
                         dateRange.start,
@@ -764,10 +766,12 @@ class _DateRangeBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
-    final dateRange = ref.watch(dashboardDateRangeProvider);
+    final range = ref.watch(dashboardDateRangeProvider);
     final notifier = ref.read(dashboardDateRangeProvider.notifier);
     final theme = Theme.of(context);
-    final activePreset = dateRange.preset;
+    final activePreset = range.preset;
+    // The dates the stats use: a preset picked yesterday means today now.
+    final dateRange = resolveDashboardRange(range, DateTime.now());
 
     final rangeLabel =
         '${_chipDateFormat.format(dateRange.start)} - ${_chipDateFormat.format(dateRange.end)}';

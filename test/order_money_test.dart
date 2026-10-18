@@ -10,22 +10,19 @@ OrderItem _item(int qty, double price, {int productId = 1}) => OrderItem(
       totalPrice: qty * price,
     );
 
-/// An order totalled exactly the way the order form does it
-/// (`_taxAmount` / `_total` in order_form_screen.dart).
+/// An order totalled exactly the way the order form does it.
 Order _order(List<OrderItem> items,
     {double discount = 0, double taxRate = 0, double delivery = 0}) {
   final subtotal = items.fold<double>(0, (s, i) => s + i.totalPrice);
-  final tax = taxRate > 0
-      ? (subtotal - discount).clamp(0, double.infinity) * taxRate / 100
-      : 0.0;
+  final t = orderTotals(
+      subtotal: subtotal, discount: discount, taxRate: taxRate, delivery: delivery);
   return Order(
     items: items,
     subtotal: subtotal,
     discountAmount: discount,
-    taxAmount: tax.toDouble(),
+    taxAmount: t.tax,
     deliveryFee: delivery,
-    totalAmount:
-        (subtotal - discount + tax + delivery).clamp(0, double.infinity).toDouble(),
+    totalAmount: t.total,
   );
 }
 
@@ -74,6 +71,30 @@ void main() {
     });
   });
 
+  group('orderTotals', () {
+    test('tax is on the goods after discount', () {
+      final t = orderTotals(subtotal: 1000, discount: 100, taxRate: 5, delivery: 60);
+      expect(t.tax, 45);
+      expect(t.total, 1005);
+    });
+
+    test('"Pay Full" types the total, and that pays it in full', () {
+      // 999 at 7.5% is 74.925 tax: unrounded, the 2-decimal "Pay Full"
+      // amount fell half a paisa short and the order read "Partial".
+      for (final (subtotal, rate) in [(999.0, 7.5), (10.03, 5.0), (10.05, 5.0), (333.33, 15.0)]) {
+        final t = orderTotals(subtotal: subtotal, taxRate: rate);
+        final payFull = double.parse(t.total.toStringAsFixed(2));
+        expect(payFull >= t.total, isTrue, reason: '$subtotal @ $rate%');
+        expect(t.tax * 100, closeTo((t.tax * 100).roundToDouble(), 1e-6));
+      }
+    });
+
+    test('never below 0', () {
+      expect(orderTotals(subtotal: 100, discount: 300).total, 0);
+      expect(orderTotals(subtotal: 100, discount: 300, taxRate: 5).tax, 0);
+    });
+  });
+
   group('returnValueFor', () {
     test('full return = what the customer paid, minus delivery', () {
       // ৳1,000 − ৳100 discount + 5% tax (৳45) + ৳60 delivery = ৳1,005 billed.
@@ -109,25 +130,25 @@ void main() {
       expect(v.total, 0);
     });
 
-    test('shares are whole paisa and add up to the order', () {
-      final items = [
-        _item(1, 333.33),
-        _item(1, 333.33, productId: 2),
-        _item(1, 333.34, productId: 3),
-      ];
-      final o = _order(items, discount: 100, taxRate: 7.5);
-      final parts = [for (final i in items) returnValueFor(o, [i])];
-      for (final p in parts) {
-        for (final v in [p.discount, p.tax, p.total]) {
-          expect(v * 100, closeTo((v * 100).roundToDouble(), 1e-6));
-        }
+    test('returning everything piece by piece adds up to exactly the order', () {
+      // Rounding each piece to the paisa used to leave 0.01 owed (or
+      // credited) once all of it had come back: 3 × 10.00 with 2.00 off
+      // came back as 3 × 9.33 = 27.99.
+      for (final (prices, discount, rate) in [
+        ([10.0, 10.0, 10.0], 2.0, 0.0),
+        ([10.0, 10.0, 10.0], 1.0, 0.0),
+        ([333.33, 333.33, 333.34], 100.0, 7.5),
+        ([99.99, 0.01, 450.0, 12.5], 17.0, 15.0),
+      ]) {
+        final items = [
+          for (var i = 0; i < prices.length; i++) _item(1, prices[i], productId: i + 1)
+        ];
+        final o = _order(items, discount: discount, taxRate: rate);
+        final pieces = items.map((i) => returnValueFor(o, [i]).total);
+        expect(pieces.fold<double>(0, (s, v) => s + v), closeTo(o.totalAmount, 1e-9),
+            reason: '$prices − $discount @ $rate%');
+        expect(returnValueFor(o, items).total, closeTo(o.totalAmount, 1e-9));
       }
-      final whole = returnValueFor(o, items);
-      expect(whole.total, closeTo(o.totalAmount, 0.006));
-      expect(parts.fold<double>(0, (s, p) => s + p.discount),
-          closeTo(o.discountAmount, 0.011));
-      expect(parts.fold<double>(0, (s, p) => s + p.total),
-          closeTo(whole.total, 0.021));
     });
   });
 

@@ -46,6 +46,9 @@ String formatCell(Object c) => switch (c) {
 bool _inRange(DateTime? d, DateTime start, DateTime end) =>
     d != null && !d.isBefore(start) && d.isBefore(end);
 
+/// A deduction as a negative cell — but 0 stays 0: `-0.0` exports as "-0".
+double _deduction(double v) => v == 0 ? 0 : -v;
+
 /// When a return "happens" for reporting: when its goods came back.
 DateTime? returnDate(Order r) => r.updatedAt ?? r.createdAt;
 
@@ -142,13 +145,13 @@ class SalesReport {
   List<ReportTable> toTables(ReportTr tr) => [
         ReportTable(tr('profitAndLoss'), [tr('item'), tr('amount')], [
           [tr('grossSales'), grossSales],
-          [tr('discounts'), -discounts],
-          [tr('returnsLabel'), -returnsValue],
+          [tr('discounts'), _deduction(discounts)],
+          [tr('returnsLabel'), _deduction(returnsValue)],
           [tr('netSales'), netSales],
-          [tr('costOfGoods'), -cogs],
+          [tr('costOfGoods'), _deduction(cogs)],
           [tr('grossProfit'), grossProfit],
           [tr('deliveryCharges'), deliveryCharges],
-          [tr('totalExpenses'), -expenses],
+          [tr('totalExpenses'), _deduction(expenses)],
           [tr('netProfit'), netProfit],
           [tr('netMargin'), '${marginPct.toStringAsFixed(1)}%'],
           [tr('taxCollected'), taxCollected],

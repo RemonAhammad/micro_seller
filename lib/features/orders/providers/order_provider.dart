@@ -400,16 +400,20 @@ class OrderNotifier extends _$OrderNotifier {
         final num = (count + 1).toString().padLeft(3, '0');
         final returnOrderNumber = 'RET-$num';
 
+        // The screen's copy may be stale; value and mark the stored order.
+        final original =
+            await isar.orders.get(originalOrder.id) ?? originalOrder;
+
         // Valued at what the customer paid for these goods — their share of
         // the order discount off, their share of the tax on — not list
         // price. A list-price value credited the customer the discount.
-        final value = returnValueFor(originalOrder, returnItems);
+        final value = returnValueFor(original, returnItems);
 
         final returnOrder = Order(
           orderNumber: returnOrderNumber,
-          customerId: originalOrder.customerId,
-          customerName: originalOrder.customerName,
-          customerPhone: originalOrder.customerPhone,
+          customerId: original.customerId,
+          customerName: original.customerName,
+          customerPhone: original.customerPhone,
           items: returnItems,
           subtotal: value.subtotal,
           discountAmount: value.discount,
@@ -418,21 +422,21 @@ class OrderNotifier extends _$OrderNotifier {
           refundAmount: refundAmount,
           amountPaid: 0,
           paymentStatus: PaymentStatus.unpaid,
-          paymentMethod: originalOrder.paymentMethod,
+          paymentMethod: original.paymentMethod,
           orderStatus: OrderStatus.pending,
           isReturn: true,
-          originalOrderId: originalOrder.id,
+          originalOrderId: original.id,
           returnStatus: ReturnStatus.requested,
           returnReason: reason,
           returnNotes: returnNotes,
-          notes: 'Return for ${originalOrder.orderNumber}',
+          notes: 'Return for ${original.orderNumber}',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
         await isar.orders.put(returnOrder);
 
         // Mark original order as having a return
-        await isar.orders.put(originalOrder.copyWith(
+        await isar.orders.put(original.copyWith(
           returnStatus: ReturnStatus.requested,
           updatedAt: DateTime.now(),
         ));

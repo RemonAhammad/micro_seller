@@ -64,7 +64,7 @@ final class SalesReportProvider
   }
 }
 
-String _$salesReportHash() => r'ef2a226af2921a99aa4eb562f90392f2c3c17f92';
+String _$salesReportHash() => r'024617cadf5beafdaae4f850ca8705ce77553e9f';
 
 final class SalesReportFamily extends $Family
     with
@@ -214,7 +214,7 @@ final class InventoryReportProvider
   }
 }
 
-String _$inventoryReportHash() => r'21c7c94647a3f7805d924225cf5f9a9ceb316f48';
+String _$inventoryReportHash() => r'd127b440b28bdb988cb717caef010718b9d4ef87';
 
 final class InventoryReportFamily extends $Family
     with

@@ -214,6 +214,34 @@ void main() {
     });
   });
 
+  group('sub-paisa leftovers', () {
+    // Orders saved before totals were rounded: 5% tax on 10.03 / 10.04 /
+    // 10.05 is 10.5315 / 10.542 / 10.5525, and "Pay Full" typed 10.53 /
+    // 10.54 / 10.55. Each order is settled; together they used to add up
+    // to 0.006 — a "due" on no order, which crashed the Due Book.
+    final dusty = [
+      _order(1, 10.5315, paid: 10.53, day: 1),
+      _order(2, 10.542, paid: 10.54, day: 2),
+      _order(3, 10.5525, paid: 10.55, day: 3),
+    ];
+
+    test('do not add up to a due no order shows', () {
+      expect(computeOrderDues(dusty), isEmpty);
+      expect(computeNetDue(dusty), 0);
+    });
+
+    test('a real due next to them is still counted in full', () {
+      expect(computeNetDue([...dusty, _order(4, 100, day: 4)]), 100);
+    });
+
+    test('a customer row with no due orders has no oldest date', () {
+      final row = CustomerDue(
+          customer: Customer(id: 1, name: 'Rahim'), orderDues: const [], totalDue: 0);
+      expect(row.oldestDueDate, isNull);
+      expect(row.daysOutstanding, 0);
+    });
+  });
+
   group('StatementService.buildRows', () {
     final service = StatementService();
 
