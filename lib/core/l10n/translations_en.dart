@@ -630,4 +630,15 @@ const translationsEn = <String, String>{
   'dailyNetSales': 'Daily net sales',
   'monthlyNetSales': 'Monthly net sales',
   'dateRangeTo': 'to',
+
+  // Rating prompt
+  'rateTitle': 'Enjoying {app}?',
+  'rateMessage': 'You\'ve been managing your shop with {app} for a while. A quick rating helps other sellers find it.',
+  'rateNow': 'Rate now',
+  'rateLater': 'Later',
+  'noThanks': 'No thanks',
+  'thanksFeedback': 'Thanks for the feedback!',
+  'rateThisApp': 'Rate this app',
+  'rateThisAppSubtitle': 'Help other sellers find {app}',
+  'about': 'About',
 };

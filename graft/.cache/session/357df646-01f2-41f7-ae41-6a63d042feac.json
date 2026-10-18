@@ -1,8 +1,8 @@
 {
-  "lastQuery": "remove the pig icons from the app",
+  "lastQuery": "is it automatically ask to user? to review/ratings?",
   "perAgentQuery": {},
   "graftReads": 0,
-  "sourceReads": 19,
+  "sourceReads": 20,
   "savedTokens": 0,
   "injectedPointers": [
     "lib/features/customers/presentation/widgets/due_actions.dart:L70-L95",
@@ -29,11 +29,14 @@
     "XCTestCase",
     "lib/core/constants/app_icons.dart:L24-L49",
     "lib/features/products/presentation/product_form_screen.dart:L190-L196",
-    "lib/features/orders/presentation/order_form_screen.dart:L221-L221"
+    "lib/features/orders/presentation/order_form_screen.dart:L221-L221",
+    "lib/features/dashboard/presentation/dashboard_screen.dart:L50-L84",
+    "lib/data/services/review_service.dart:L20-L20",
+    "lib/data/services/drive_service.dart:L226-L237"
   ],
   "nudges": 2,
-  "inputCostMicros": 70010073,
-  "inputTokensBilled": 115695841,
-  "lastBillingUuid": "cb194c5b-dfc8-4b19-98dd-8a371ffcd0c9",
+  "inputCostMicros": 75439722,
+  "inputTokensBilled": 126133578,
+  "lastBillingUuid": "421e3f80-59bb-4952-810b-e3dda7a8bff3",
   "host": "claude-code"
 }

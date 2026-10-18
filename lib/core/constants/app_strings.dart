@@ -617,6 +617,19 @@ class _L10nStrings {
   String get sortRecentlyPaid => _l10n.tr('sortRecentlyPaid');
   String get sortNameDesc => _l10n.tr('sortNameDesc');
   String get duesCollectedThisMonth => _l10n.tr('duesCollectedThisMonth');
+
+  // Rating prompt
+  String rateTitle(String app) => _l10n.tr('rateTitle').replaceAll('{app}', app);
+  String rateMessage(String app) =>
+      _l10n.tr('rateMessage').replaceAll('{app}', app);
+  String get rateNow => _l10n.tr('rateNow');
+  String get rateLater => _l10n.tr('rateLater');
+  String get noThanks => _l10n.tr('noThanks');
+  String get thanksFeedback => _l10n.tr('thanksFeedback');
+  String get rateThisApp => _l10n.tr('rateThisApp');
+  String rateThisAppSubtitle(String app) =>
+      _l10n.tr('rateThisAppSubtitle').replaceAll('{app}', app);
+  String get about => _l10n.tr('about');
   String overdue60Banner(int count, String amount) => _l10n
       .tr('overdue60Banner')
       .replaceAll('{count}', '$count')

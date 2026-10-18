@@ -1,6 +1,6 @@
 {
-  "nodeCount": 4048,
-  "edgeCount": 552,
+  "nodeCount": 4074,
+  "edgeCount": 556,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 4048,
+  "totalCount": 4074,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-09-29T19:37:25.761Z",
-  "lastFile": "feedback_thin_icons.md"
+  "syncedAt": "2026-10-01T06:35:31.847Z",
+  "lastFile": "rate_app_dialog.dart"
 }

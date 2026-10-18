@@ -9,6 +9,11 @@ import '../../../features/expenses/providers/expense_provider.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/expense.dart';
 import '../../../data/services/update_service.dart';
+import '../../../data/services/isar_service.dart';
+import '../../../data/services/review_service.dart';
+import '../../../data/services/tutorial_service.dart';
+import '../../../core/extensions/context_extensions.dart';
+import '../../../shared/widgets/rate_app_dialog.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../settings/providers/settings_provider.dart';
@@ -36,7 +41,46 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       UpdateService.checkForUpdate();
+      _maybeAskForReview();
     });
+  }
+
+  /// Ported from the Fuel Cost app: ask happy, regular sellers for a Play
+  /// rating. See [ReviewService] for the eligibility and back-off rules.
+  Future<void> _maybeAskForReview() async {
+    // The showcase tour runs on first launch — a dialog on top of its
+    // spotlight overlay would trap the user, so let the tour finish first.
+    if (!await TutorialService.isTourCompleted()) return;
+    if (!mounted) return;
+    final isar = await ref.read(isarProvider.future);
+    if (!await ReviewService.isEligible(isar)) return;
+    // Never ask and then do nothing (non-Play installs, iOS, desktop).
+    if (!await ReviewService.canPrompt()) return;
+    if (!mounted) return;
+
+    // Let the entrance animations settle before interrupting.
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (!mounted) return;
+
+    final choice = await showDialog<RateAppChoice>(
+      context: context,
+      builder: (_) => const RateAppDialog(),
+    );
+
+    switch (choice) {
+      case RateAppChoice.rate:
+        await ReviewService.requestReview();
+        await ReviewService.markRated();
+      case RateAppChoice.decline:
+        await ReviewService.markDeclined();
+        if (mounted) {
+          context.showSnackBar(AppStrings.of(context).thanksFeedback);
+        }
+      // "Later", or dismissed by tapping outside — ask again after a cooldown.
+      case RateAppChoice.later:
+      case null:
+        await ReviewService.markSnoozed();
+    }
   }
 
   @override

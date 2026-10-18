@@ -630,4 +630,15 @@ const translationsTr = <String, String>{
   'dailyNetSales': 'Günlük Net Satışlar',
   'monthlyNetSales': 'Aylık Net Satışlar',
   'dateRangeTo': '-',
+
+  // Rating prompt
+  'rateTitle': '{app} hoşunuza gidiyor mu?',
+  'rateMessage': 'Bir süredir mağazanızı {app} ile yönetiyorsunuz. Kısa bir puanlama, diğer satıcıların uygulamayı bulmasına yardımcı olur.',
+  'rateNow': 'Şimdi puanla',
+  'rateLater': 'Daha sonra',
+  'noThanks': 'Hayır, teşekkürler',
+  'thanksFeedback': 'Geri bildiriminiz için teşekkürler!',
+  'rateThisApp': 'Uygulamayı puanla',
+  'rateThisAppSubtitle': 'Diğer satıcıların {app} uygulamasını bulmasına yardım edin',
+  'about': 'Hakkında',
 };

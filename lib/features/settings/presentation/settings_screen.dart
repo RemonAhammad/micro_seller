@@ -30,6 +30,8 @@ import '../../../shared/widgets/auth_gate.dart';
 import '../../../data/services/auth_gate_service.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../../../data/services/review_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -851,7 +853,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           const SizedBox(height: 16),
 
           // About
-          _SectionHeader(s.tr('about')),
+          _SectionHeader(s.about),
           _SettingsCard(
             children: [
               ListTile(
@@ -859,15 +861,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ThinIcon(tabler.Star.new, color: Colors.amber.shade700),
+                ),
+                title: Text(s.rateThisApp),
+                subtitle: Text(s.rateThisAppSubtitle(AppStrings.appName)),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                // The tap is already an opt-in, so skip the gate dialog.
+                onTap: () async {
+                  await ReviewService.requestReview();
+                  await ReviewService.markRated();
+                },
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const ThinIcon(tabler.InfoCircle.new, color: AppColors.primary),
                 ),
                 title: Text(s.appVersion),
-                trailing: Text(
-                  '1.0.0',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                // Was a hardcoded '1.0.0' — read the real version + build.
+                trailing: FutureBuilder<PackageInfo>(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, snap) => Text(
+                    snap.hasData
+                        ? '${snap.data!.version} (${snap.data!.buildNumber})'
+                        : '',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  ),
                 ),
               ),
             ],

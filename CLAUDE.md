@@ -94,6 +94,7 @@ lib/
 │       ├── tutorial_service.dart    # SharedPreferences flags: splash_shown, tour_completed; resetAll()
 │       ├── auth_gate_service.dart   # Biometric (local_auth) + 4-digit PIN (SHA-256 with per-install salt, stored in SharedPreferences). Used to gate destructive actions like Clear All Data. Two-layer control: `.env` (`ENABLE_FINGERPRINT_GATE` / `ENABLE_PIN_GATE`) gates each toggle's *visibility* in Settings → Security; user settings (`securityFingerprintEnabled` / `securityPinEnabled`) control whether each path is *active*. Each toggle is verified independently against its own auth method only.
 │       ├── auto_backup_runner.dart  # Two surfaces: (a) `runIfDue()` fires once on app startup (post-frame, fast catch-up) and (b) a top-level `autoBackupCallbackDispatcher` registered with WorkManager runs at **00:05 local time daily** in a separate isolate (Android only). Implemented as a self-rescheduling chain of `registerOneOffTask` calls (with `initialDelay = duration to next 00:05`) rather than `registerPeriodicTask`, because WorkManager's periodic API only promises an interval, not a clock time. The worker re-opens Isar from disk, calls `DriveService.backupToDrive(interactive: false)` with a `_exportSettingsFromPrefs` snapshot, writes `lastBackupTime` on success, then re-registers itself for the next 00:05. On revoked access (`notSignedIn` / `signInFailed` / `developerError`) the worker writes `kAutoBackupErrorKey` to SharedPreferences, fires `NotificationService.showAutoBackupPaused()` *once* (subsequent revoke runs skip the notification to avoid spam), and stops the chain — the Settings → Drive banner re-arms it after the user signs back in. `scheduleAutoBackup()` / `cancelAutoBackup()` static helpers register/cancel the chain; called from `main.dart` on startup and from the Settings toggle.
+│       ├── review_service.dart      # Rating prompt (ported from Fuel Cost): eligibility (≥5 real sales orders), back-off (Later = 30-day snooze, max 3 asks; rate/decline = never again), requestReview() → Play in-app review sheet or store listing
 │       ├── update_service.dart      # In-app update via Play Store (immediate for critical, flexible for normal)
 │       └── pdf_service.dart         # Order invoice PDF + WhatsApp text. Renders the receipt as a Flutter widget tree (`_ReceiptWidget`) and captures it to a PNG via `screenshot.captureFromWidget` (Skia + HarfBuzz → full Unicode shaping for Bengali conjuncts, Arabic ligatures, Thai/Devanagari/CJK, color emoji), then embeds the PNG into a single-page A4 `pw.Document`. Bottom-right "Powered by ⬡ Micro Seller" watermark. Trade-off: PDF text is rasterised, not selectable — accepted for guaranteed Unicode correctness. Earlier `pw.Document`-only and `Printing.convertHtml` paths were tried and failed (broken Indic shaping / WebView hangs respectively).
 ├── features/
@@ -516,6 +517,14 @@ All from the Due Book's providers (`duesProvider` → `dueSummaryProvider`, plus
 - One-time only — flagged via SharedPreferences (`tour_completed`)
 - Dismissing or completing marks it as done
 - `TutorialService.resetAll()` available for future "Replay Tour" in settings
+
+### Rating Prompt (Play in-app review)
+
+- Ported from the Fuel Cost app. `ReviewService` (rules) + `RateAppDialog` (gate: **Rate now / Later / No thanks**) — only sellers who choose "Rate now" see Google Play's review sheet (stars + optional written review).
+- **When:** Dashboard post-frame, only if the showcase tour is done, the seller has **≥ 5 real sales orders** (no returns, no cancelled), the back-off allows it, and `InAppReview.isAvailable()` is true (so we never ask and then do nothing on iOS/desktop/non-Play installs). 1.2 s delay after load.
+- **Back-off** (SharedPreferences `review_prompt_*`, per-device — not in the backup): Later or dismiss = 30-day snooze, max 3 asks; Rate or No thanks = never again.
+- **Settings → About → Rate this app** opens the sheet directly (no gate) or the store listing. The About section also shows the real version (`PackageInfo`) — it used to be a hardcoded `1.0.0`.
+- Google only shows the sheet for builds **installed from Play** (e.g. internal testing) and enforces a silent quota — no sheet in debug is expected.
 
 ### In-App Update (Play Store)
 

@@ -630,4 +630,15 @@ const translationsTh = <String, String>{
   'dailyNetSales': 'ยอดขายสุทธิรายวัน',
   'monthlyNetSales': 'ยอดขายสุทธิรายเดือน',
   'dateRangeTo': 'ถึง',
+
+  // Rating prompt
+  'rateTitle': 'ชอบ {app} ไหม?',
+  'rateMessage': 'คุณใช้ {app} บริหารร้านมาสักพักแล้ว การให้คะแนนสั้นๆ ช่วยให้ผู้ขายคนอื่นพบแอปนี้ได้ง่ายขึ้น',
+  'rateNow': 'ให้คะแนนเลย',
+  'rateLater': 'ไว้ทีหลัง',
+  'noThanks': 'ไม่ ขอบคุณ',
+  'thanksFeedback': 'ขอบคุณสำหรับความคิดเห็น!',
+  'rateThisApp': 'ให้คะแนนแอป',
+  'rateThisAppSubtitle': 'ช่วยให้ผู้ขายคนอื่นค้นพบ {app}',
+  'about': 'เกี่ยวกับ',
 };

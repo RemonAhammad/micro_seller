@@ -630,4 +630,15 @@ const translationsFr = <String, String>{
   'dailyNetSales': 'Ventes nettes quotidiennes',
   'monthlyNetSales': 'Ventes nettes mensuelles',
   'dateRangeTo': 'au',
+
+  // Rating prompt
+  'rateTitle': 'Vous aimez {app} ?',
+  'rateMessage': 'Vous gérez votre boutique avec {app} depuis un moment. Une petite note aide d\'autres vendeurs à la découvrir.',
+  'rateNow': 'Noter maintenant',
+  'rateLater': 'Plus tard',
+  'noThanks': 'Non merci',
+  'thanksFeedback': 'Merci pour votre avis !',
+  'rateThisApp': 'Noter l\'application',
+  'rateThisAppSubtitle': 'Aidez d\'autres vendeurs à trouver {app}',
+  'about': 'À propos',
 };

@@ -630,4 +630,15 @@ const translationsVi = <String, String>{
   'dailyNetSales': 'Doanh thu thuần theo ngày',
   'monthlyNetSales': 'Doanh thu thuần theo tháng',
   'dateRangeTo': 'đến',
+
+  // Rating prompt
+  'rateTitle': 'Bạn thích {app} chứ?',
+  'rateMessage': 'Bạn đã quản lý cửa hàng bằng {app} một thời gian rồi. Một đánh giá nhanh sẽ giúp những người bán khác tìm thấy ứng dụng.',
+  'rateNow': 'Đánh giá ngay',
+  'rateLater': 'Để sau',
+  'noThanks': 'Không, cảm ơn',
+  'thanksFeedback': 'Cảm ơn phản hồi của bạn!',
+  'rateThisApp': 'Đánh giá ứng dụng',
+  'rateThisAppSubtitle': 'Giúp những người bán khác tìm thấy {app}',
+  'about': 'Giới thiệu',
 };

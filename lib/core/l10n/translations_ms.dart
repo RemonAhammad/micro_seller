@@ -630,4 +630,15 @@ const translationsMs = <String, String>{
   'dailyNetSales': 'Jualan Bersih Harian',
   'monthlyNetSales': 'Jualan Bersih Bulanan',
   'dateRangeTo': 'hingga',
+
+  // Rating prompt
+  'rateTitle': 'Suka {app}?',
+  'rateMessage': 'Anda sudah agak lama menguruskan kedai dengan {app}. Penilaian ringkas membantu penjual lain menemukannya.',
+  'rateNow': 'Nilai sekarang',
+  'rateLater': 'Nanti',
+  'noThanks': 'Tidak, terima kasih',
+  'thanksFeedback': 'Terima kasih atas maklum balas anda!',
+  'rateThisApp': 'Nilaikan aplikasi',
+  'rateThisAppSubtitle': 'Bantu penjual lain menemui {app}',
+  'about': 'Tentang',
 };

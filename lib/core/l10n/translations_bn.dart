@@ -630,4 +630,15 @@ const translationsBn = <String, String>{
   'dailyNetSales': 'দৈনিক নিট বিক্রি',
   'monthlyNetSales': 'মাসিক নিট বিক্রি',
   'dateRangeTo': 'থেকে',
+
+  // Rating prompt
+  'rateTitle': '{app} কেমন লাগছে?',
+  'rateMessage': 'আপনি অনেকদিন ধরে {app} দিয়ে আপনার দোকান পরিচালনা করছেন। একটি রেটিং অন্য বিক্রেতাদের অ্যাপটি খুঁজে পেতে সাহায্য করবে।',
+  'rateNow': 'এখনই রেটিং দিন',
+  'rateLater': 'পরে',
+  'noThanks': 'না, ধন্যবাদ',
+  'thanksFeedback': 'আপনার মতামতের জন্য ধন্যবাদ!',
+  'rateThisApp': 'অ্যাপ রেট করুন',
+  'rateThisAppSubtitle': 'অন্য বিক্রেতাদের {app} খুঁজে পেতে সাহায্য করুন',
+  'about': 'সম্পর্কে',
 };

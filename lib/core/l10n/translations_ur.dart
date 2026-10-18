@@ -630,4 +630,15 @@ const translationsUr = <String, String>{
   'dailyNetSales': 'روزانہ خالص فروخت',
   'monthlyNetSales': 'ماہانہ خالص فروخت',
   'dateRangeTo': 'سے',
+
+  // Rating prompt
+  'rateTitle': 'کیا آپ کو {app} پسند آ رہا ہے؟',
+  'rateMessage': 'آپ کچھ عرصے سے {app} کے ساتھ اپنی دکان چلا رہے ہیں۔ ایک مختصر ریٹنگ دوسرے فروخت کنندگان کو اسے تلاش کرنے میں مدد دیتی ہے۔',
+  'rateNow': 'ابھی ریٹ کریں',
+  'rateLater': 'بعد میں',
+  'noThanks': 'نہیں، شکریہ',
+  'thanksFeedback': 'آپ کی رائے کا شکریہ!',
+  'rateThisApp': 'ایپ کو ریٹ کریں',
+  'rateThisAppSubtitle': 'دوسرے فروخت کنندگان کو {app} تلاش کرنے میں مدد کریں',
+  'about': 'متعلق',
 };

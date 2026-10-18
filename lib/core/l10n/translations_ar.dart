@@ -629,4 +629,15 @@ const translationsAr = <String, String>{
   'dailyNetSales': 'صافي المبيعات اليومي',
   'monthlyNetSales': 'صافي المبيعات الشهري',
   'dateRangeTo': 'إلى',
+
+  // Rating prompt
+  'rateTitle': 'هل يعجبك {app}؟',
+  'rateMessage': 'تدير متجرك باستخدام {app} منذ فترة. تقييم سريع يساعد البائعين الآخرين على اكتشافه.',
+  'rateNow': 'قيّم الآن',
+  'rateLater': 'لاحقًا',
+  'noThanks': 'لا، شكرًا',
+  'thanksFeedback': 'شكرًا على ملاحظاتك!',
+  'rateThisApp': 'قيّم التطبيق',
+  'rateThisAppSubtitle': 'ساعد البائعين الآخرين في العثور على {app}',
+  'about': 'حول',
 };
