@@ -197,7 +197,7 @@ final class CustomerPaymentsProvider
   }
 }
 
-String _$customerPaymentsHash() => r'1a9d4b044b16150926be335d00e6ab828558a605';
+String _$customerPaymentsHash() => r'de5f695787609efefe0dc13888e8b78232c17894';
 
 /// A customer's payment history, newest first.
 

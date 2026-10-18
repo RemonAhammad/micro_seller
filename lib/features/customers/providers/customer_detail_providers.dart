@@ -43,25 +43,39 @@ class CustomerOrdersPage {
 /// returns and cancelled ones included — as a job for a worker isolate
 /// ([runDbJob]). One extra row tells whether more exist.
 ///
-/// Through the customerId index. It lists equal keys in stored-id byte order,
-/// not id order, so ties on createdAt are broken by id explicitly (ascending,
-/// the order the old id-order scan's sort kept them in for short lists).
+/// Through the customerId index, ordered here rather than by Isar: the index
+/// lists equal keys in stored-id byte order, not id order, and Isar can't
+/// sort by id to break createdAt ties. Newest first with nulls last, as
+/// `sortByCreatedAtDesc` did; ties by id ascending — the order the old
+/// id-order scan kept them in for up to 20 orders (Isar sorts longer lists
+/// unstably, so beyond that the old tie order was arbitrary). Only the ids
+/// and dates are read for every order; whole orders just for the page.
 CustomerOrdersPage Function(Isar) customerOrdersJob(
         int customerId, int limit) =>
-    (db) {
-      final rows = db.orders
-          .where()
-          .customerIdEqualTo(customerId)
-          .sortByCreatedAtDesc()
-          .thenById()
-          .limit(limit + 1)
-          .findAllSync();
-      final hasMore = rows.length > limit;
-      return CustomerOrdersPage(
-        hasMore ? rows.sublist(0, limit) : rows,
-        hasMore: hasMore,
-      );
-    };
+    (db) => db.txnSync(() {
+          final byCustomer = db.orders.where().customerIdEqualTo(customerId);
+          final ids = byCustomer.idProperty().findAllSync();
+          final dates = byCustomer.createdAtProperty().findAllSync();
+          final newestFirst = List.generate(ids.length, (i) => i)
+            ..sort((a, b) {
+              final x = dates[a], y = dates[b];
+              final byDate = x == null
+                  ? (y == null ? 0 : 1)
+                  : (y == null ? -1 : y.compareTo(x));
+              return byDate != 0 ? byDate : ids[a].compareTo(ids[b]);
+            });
+          final pageIds = [
+            for (final i in newestFirst.take(limit + 1)) ids[i],
+          ];
+          final rows = [
+            for (final o in db.orders.getAllSync(pageIds)) ?o,
+          ];
+          final hasMore = rows.length > limit;
+          return CustomerOrdersPage(
+            hasMore ? rows.sublist(0, limit) : rows,
+            hasMore: hasMore,
+          );
+        });
 
 /// A customer's purchase history, live and paged: their newest
 /// [kCustomerOrdersPageSize] orders, more on [loadMore]. Loaded on a worker

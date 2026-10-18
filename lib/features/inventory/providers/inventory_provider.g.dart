@@ -8,9 +8,12 @@ part of 'inventory_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Every movement newest first, read in createdAt-index order on a worker.
 
 @ProviderFor(stockMovements)
 final stockMovementsProvider = StockMovementsProvider._();
+
+/// Every movement newest first, read in createdAt-index order on a worker.
 
 final class StockMovementsProvider
     extends
@@ -22,6 +25,7 @@ final class StockMovementsProvider
     with
         $FutureModifier<List<StockMovement>>,
         $StreamProvider<List<StockMovement>> {
+  /// Every movement newest first, read in createdAt-index order on a worker.
   StockMovementsProvider._()
     : super(
         from: null,
@@ -48,7 +52,63 @@ final class StockMovementsProvider
   }
 }
 
-String _$stockMovementsHash() => r'd1e2de1e7e3c7cd5d9ff4865c4421c015d7dd8ee';
+String _$stockMovementsHash() => r'93c1d13519607beb87b1e303e21f963967f6d5a7';
+
+/// The movement history, paged: the newest [kMovementPageSize] movements,
+/// more on [loadMore].
+
+@ProviderFor(StockMovementPages)
+final stockMovementPagesProvider = StockMovementPagesProvider._();
+
+/// The movement history, paged: the newest [kMovementPageSize] movements,
+/// more on [loadMore].
+final class StockMovementPagesProvider
+    extends $StreamNotifierProvider<StockMovementPages, StockMovementPage> {
+  /// The movement history, paged: the newest [kMovementPageSize] movements,
+  /// more on [loadMore].
+  StockMovementPagesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'stockMovementPagesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$stockMovementPagesHash();
+
+  @$internal
+  @override
+  StockMovementPages create() => StockMovementPages();
+}
+
+String _$stockMovementPagesHash() =>
+    r'c0e474966c12ad0f814d0fc0481fd897bb375fcd';
+
+/// The movement history, paged: the newest [kMovementPageSize] movements,
+/// more on [loadMore].
+
+abstract class _$StockMovementPages extends $StreamNotifier<StockMovementPage> {
+  Stream<StockMovementPage> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<StockMovementPage>, StockMovementPage>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<StockMovementPage>, StockMovementPage>,
+              AsyncValue<StockMovementPage>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
 
 @ProviderFor(productStockMovements)
 final productStockMovementsProvider = ProductStockMovementsFamily._();

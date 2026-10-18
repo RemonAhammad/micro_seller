@@ -4,6 +4,7 @@ import '../../../data/models/supplier.dart';
 import '../../../data/models/purchase.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
+import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
 
 
@@ -13,52 +14,48 @@ part 'supplier_provider.g.dart';
 @riverpod
 Stream<List<Supplier>> suppliers(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.suppliers
-      .where()
-      .sortByName()
-      .watch(fireImmediately: true);
+  final query = isar.suppliers.where().sortByName();
+  yield* reloadOn(isar.suppliers.watchLazy(), query.findAll);
 }
 
 @riverpod
 Stream<List<Purchase>> purchases(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.purchases
-      .where()
-      .sortByCreatedAtDesc()
-      .watch(fireImmediately: true);
+  final query = isar.purchases.where().sortByCreatedAtDesc();
+  yield* reloadOn(isar.purchases.watchLazy(), query.findAll);
 }
 
 @riverpod
 Stream<List<Purchase>> supplierPurchases(Ref ref, int supplierId) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.purchases
+  final query = isar.purchases
       .filter()
       .supplierIdEqualTo(supplierId)
-      .sortByCreatedAtDesc()
-      .watch(fireImmediately: true);
+      .sortByCreatedAtDesc();
+  yield* reloadOn(isar.purchases.watchLazy(), query.findAll);
 }
 
 @riverpod
 Stream<List<Product>> supplierProducts(Ref ref, int supplierId) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.products
+  final query = isar.products
       .filter()
       .supplierIdEqualTo(supplierId)
       .and()
       .isActiveEqualTo(true)
-      .sortByName()
-      .watch(fireImmediately: true);
+      .sortByName();
+  yield* reloadOn(isar.products.watchLazy(), query.findAll);
 }
 
 @riverpod
 Stream<List<StockMovement>> supplierStockMovements(
     Ref ref, int supplierId) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.stockMovements
+  final query = isar.stockMovements
       .filter()
       .supplierIdEqualTo(supplierId)
-      .sortByCreatedAtDesc()
-      .watch(fireImmediately: true);
+      .sortByCreatedAtDesc();
+  yield* reloadOn(isar.stockMovements.watchLazy(), query.findAll);
 }
 
 @Riverpod(keepAlive: true)

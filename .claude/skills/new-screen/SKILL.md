@@ -10,7 +10,8 @@ description: Conventions for adding a screen, route, or Riverpod provider/notifi
 - Riverpod 3 details: use plain `Ref`, and `@riverpod class FooNotifier` generates `fooProvider`. `AsyncValue.value` is nullable; `valueOrNull` no longer exists.
 - Mutations: `state = await AsyncValue.guard(() async { final isar = await ref.read(isarProvider.future); await isar.writeTxn(() async { ... }); });`
 - **Every related write goes in one `writeTxn`.** If an operation changes stock, it updates **both** the base `stockQty` and the matching `VariantCombination.stockQty`, and writes a `StockMovement`. If it changes money, it updates customer or supplier totals, and on delete or cancel it reverses them.
-- Lists: a `Stream` provider over `isar.<x>.where()...watch(fireImmediately: true)`.
+- Lists: a `Stream` provider that yields `reloadOn(isar.<x>.watchLazy(), query.findAll)` (`lib/data/services/isar_reload.dart`) — not `query.watch(fireImmediately: true)`, which replays one full reload per write while the tab is offstage (Riverpod 3 pauses it). Big collections load in a worker: `reloadOn(..., () => runDbJob(isar, job))` with `job` built by a top-level function from plain values (`db_worker.dart`); long lists page (see `order_pages_provider.dart`). Providers that only need to know *that* something changed watch a revision counter (`isar_revisions.dart`) instead of a whole list.
+- Index where-clauses don't return equal keys in id order: re-sort by id before summing money.
 
 ## Routes (`lib/core/router/app_router.dart`)
 - A new screen normally goes as a sub-route of an existing `StatefulShellBranch`. Adding a sidebar branch changes `sidebarOrder`, `hiddenSidebarItems` and the backup settings, so only do it when there's a real reason.
