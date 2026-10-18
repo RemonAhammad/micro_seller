@@ -138,54 +138,86 @@ Each release:
 3. `flutter build appbundle --release`
 4. Upload AAB to Play Console → Production → Create new release
 5. Write release notes (max 500 chars)
-<h1 align="center">Hi,  <img src="https://raw.githubusercontent.com/MartinHeinz/MartinHeinz/master/wave.gif" width="70px"> I'm Remon Ahammad</h1>
-<h3 align="center">Flutter App developer</h3>
 
-|  Followers | ![GitHub followers](https://img.shields.io/github/followers/remonahammad?logo=GitHub&style=for-the-badge) | Profile views  |<img src="https://komarev.com/ghpvc/?username=remonahammad&label=Profile%20views&color=0e75b6&style=flat" alt="remonahammad" />|
-|:-------------:|:-------------:|:-------------:|:-------------:|
+CI can build the same AAB for you: see **GitHub Releases (CI/CD)** below.
 
-| ----------- | ----------- |
-|:-------------------:|:-------------:|
-| [![Check out remonahammad's profile on stardev.io](https://stardev.io/developers/remonahammad/badge/languages/global.svg)](https://stardev.io/developers/remonahammad) |  <p align="left"><img src="https://i.giphy.com/RThN0hOS2GO4M.gif" /></p> |
+---
 
--------------------------------
+## GitHub Releases (CI/CD)
 
-<h3 align="left">About me:</h3>
+GitHub Actions checks every change and publishes signed APKs as GitHub Releases, so anyone can download Micro Seller from the repo's Releases page. Play Store uploads stay manual, but you can upload the AAB that CI builds.
 
-- 🖥️💻📱 I’m currently working on **Flutter App Development**
+### What runs when
 
-- 🖥️💻🌐 I’m currently learning **Flutter Web and App**
+| Trigger | Workflow | Result |
+| --- | --- | --- |
+| Pull request, push to `main` | `.github/workflows/ci.yml` | Checks: dependencies match `pubspec.lock`, generated code is committed, translation parity, `flutter analyze` (errors and warnings fail), `flutter test` with no skipped tests |
+| Tag `vX.Y.Z` | `.github/workflows/release.yml` | The checks, then a signed AAB and APKs (universal, arm64-v8a, armeabi-v7a, x86_64) with `SHA256SUMS.txt`, verified, then a **draft** release that you publish by hand |
+| Actions → Release → Run workflow (on `main`) | `.github/workflows/release.yml` | The same signed build as artifacts only, kept 3 days; no release |
 
-- 🎃 I regularly publish my video on **[YouTube](https://www.youtube.com/channel/UCo7eZmGvKyGsIpVPtkLxfjA)**
+CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`, and the committed `pubspec.lock`. If you move to another Flutter version, change it there too.
 
-- 📬 How to reach me **remonahammad@gmail.com**
+### One-time setup
 
-- 🏸 I love playing **Badminton**
+1. **Settings → Actions → General**:
+   - Workflow permissions: "Read repository contents". Untick "Allow GitHub Actions to create and approve pull requests".
+   - Actions permissions: allow GitHub-created actions plus `subosito/flutter-action@*`.
+   - Fork pull requests: "Require approval for all external contributors".
+2. **Settings → Environments → New environment `release`**:
+   - Required reviewers: yourself.
+   - Deployment branches and tags: "Selected branches and tags", then add branch `main` and tag `v*`.
+3. **Environment secrets and variable**, from the Mac that has the keystore (`brew install gh`, then `gh auth login`). Check the key alias first with `keytool -list -keystore /Users/remon/Documents/upload-keystore.jks`.
 
-- 🤭 Fun fact **I am not only funny. I am seriously funny.**
+   ```bash
+   R=RemonAhammad/micro_seller
+   base64 -i /Users/remon/Documents/upload-keystore.jks | gh secret set ANDROID_KEYSTORE_BASE64 --env release -R $R
+   gh secret set ANDROID_KEYSTORE_PASSWORD --env release -R $R   # prompts for the value
+   gh secret set ANDROID_KEY_PASSWORD --env release -R $R
+   gh secret set ANDROID_KEY_ALIAS --env release -R $R --body "<alias>"
+   gh secret set DOTENV --env release -R $R < .env               # the real .env
+   gh variable set ANDROID_SIGNING_CERT_SHA256 --env release -R $R --body "<SHA-256>"
+   ```
 
-<h3 align="left">Connect with me:</h3>
-<a href="https://www.linkedin.com/in/remonahammad/">
-    <img src="https://img.shields.io/badge/linkedin-%230077B5.svg?&style=for-the-badge&logo=linkedin&logoColor=white" />
-<a href="https://www.facebook.com/remonahammad.personal/">
-    <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" />
-<a href="https://www.youtube.com/channel/UCo7eZmGvKyGsIpVPtkLxfjA">
-    <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" />
- <a href="https://stackoverflow.com/users/18158216/blackshadow">
-    <img src="https://img.shields.io/badge/Stack_Overflow-FE7A16?style=for-the-badge&logo=stack-overflow&logoColor=white" />   	 	
+   - **`ANDROID_SIGNING_CERT_SHA256`:** the upload key's certificate fingerprint, from Play Console → App integrity → App signing → **Upload key certificate**, or `keytool -list -v … -alias <alias>`. Colons and case don't matter. CI refuses to build with, or ship anything signed by, any other key.
+   - **`DOTENV`:** must contain `GOOGLE_OAUTH_WEB_CLIENT_ID`, or the release fails (Drive sign-in needs it). Like a local build's `.env`, it ends up as plain text inside the APK.
+   - **Passwords:** they go into `key.properties` exactly as stored, so avoid a backslash in them (a Java-properties escape).
+4. **Settings → Rules → Rulesets → New tag ruleset**: target `v*`; restrict creations, updates and deletions; block force pushes; bypass list: Repository admin.
+5. Optional: **Settings → General → Releases**, turn on release immutability.
 
-### Status & Languages
+### Cutting a release
 
-|   Used Languages    | I have known Languages & Tools   |
-|:-------------------:|:-------------:|
-|  [![Blackshadow's Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?count_private=true&username=remonahammad&langs_count=10&layout=compact&hide=html,css,c,c%2B%2B,Makefile,java,javascript,cmake,kotlin,ruby,shell,batchfile,powershell,swift,objective-c&theme=dark)](https://github.com/remonahammad?tab=repositories)  | <p align="left"> <a href="https://developer.android.com" target="_blank"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/android/android-original-wordmark.svg" alt="android" width="40" height="40"/> </a> <a href="https://dart.dev" target="_blank"> <img src="https://www.vectorlogo.zone/logos/dartlang/dartlang-icon.svg" alt="dart" width="40" height="40"/> </a> <a href="https://firebase.google.com/" target="_blank"> <img src="https://www.vectorlogo.zone/logos/firebase/firebase-icon.svg" alt="firebase" width="40" height="40"/> </a> <a href="https://flutter.dev" target="_blank"> <img src="https://www.vectorlogo.zone/logos/flutterio/flutterio-icon.svg" alt="flutter" width="40" height="40"/> </a> <a href="https://git-scm.com/" target="_blank"> <img src="https://www.vectorlogo.zone/logos/git-scm/git-scm-icon.svg" alt="git" width="40" height="40"/> </a> <a href="https://www.adobe.com/in/products/illustrator.html" target="_blank"> <img src="https://www.vectorlogo.zone/logos/adobe_illustrator/adobe_illustrator-icon.svg" alt="illustrator" width="40" height="40"/> </a> <a href="https://www.java.com" target="_blank"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/java/java-original.svg" alt="java" width="40" height="40"/> </a> <a href="https://www.photoshop.com/en" target="_blank"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/photoshop/photoshop-line.svg" alt="photoshop" width="40" height="40"/> </a> <a href="https://www.sqlite.org/" target="_blank"> <img src="https://www.vectorlogo.zone/logos/sqlite/sqlite-icon.svg" alt="sqlite" width="40" height="40"/> </a> </p> |
+1. **Bump the version.** Change `version:` in `pubspec.yaml` (the `release` skill does it), e.g. `1.0.4+9` → `1.0.5+10`; the build number must always grow. Commit, push, and wait for CI to pass.
+2. **Tag and push.** Tag the commit on `main` and push the tag, one tag at a time:
 
-|  Stats      |  Streak  |
-|:-------------:|:-------------:| 
-| ![Blackshadow's github stats](https://github-readme-stats.vercel.app/api?username=remonahammad&show_icons=true&theme=dark)  | [![Blackshadow's GitHub Streak](https://github-readme-streak-stats.herokuapp.com/?user=remonahammad&theme=dark)](https://github.com/remonahammad?tab=repositories) |
+   ```bash
+   git tag -a v1.0.5 -m "Micro Seller 1.0.5"
+   git push origin v1.0.5
+   ```
 
-<img src="https://activity-graph.herokuapp.com/graph?username=remonahammad&theme=react-dark&bg_color=20232a&hide_border=true" width="100%"/>
+   The tag must equal `v` plus the version name in `pubspec.yaml` (the part before `+`). A name with a `-`, like `1.0.5-rc.1+10` tagged `v1.0.5-rc.1`, becomes a pre-release.
+3. **Approve.** Open the run under **Actions** and approve the `release` environment when asked.
+4. **Publish.** When the run finishes, a **draft** release waits on the Releases page with the four APKs and `SHA256SUMS.txt`. Review it, then click **Publish release**. Re-running the workflow refreshes a draft; a published release never changes.
+5. **Collect the artifacts.** From the run's **Artifacts**:
+   - **`play-bundle`:** the AAB, signed with the upload key. Upload it to Play Console as usual.
+   - **`symbols`:** each build's `--split-debug-info` output and R8 `mapping.txt`. You need them to decode obfuscated crash stack traces (`flutter symbolize`). Artifacts expire after 90 days, so **download and archive** them.
 
---------------
+### Installing a GitHub APK
 
-<img height="120" alt="Thanks for visiting my profile" width="100%" src="https://raw.githubusercontent.com/BrunnerLivio/brunnerlivio/master/images/marquee.svg" />
+- **Which APK:** `micro-seller-vX-universal.apk` runs on every phone. `-arm64-v8a` is smaller and fits most phones; `armeabi-v7a` is for old 32-bit phones and `x86_64` for emulators and Chromebooks.
+- **Stay on one file type.** Flutter numbers split APKs `1000 × ABI + build number`, so a phone on the arm64 APK can't move to the universal one: Android sees it as a downgrade.
+- **Play installs.** The Play Store version is signed by Google's key, so a GitHub APK can't update a Play install, or the other way round. To switch: back up (Drive or local backup), uninstall, then install.
+- **Updates.** Play in-app updates and in-app review don't work for GitHub installs; both fail silently. Users update by downloading the next release.
+
+### Troubleshooting
+
+| Failure | Fix |
+| --- | --- |
+| `Generated files are out of date` | Run `dart run build_runner build --delete-conflicting-outputs` and commit the result. |
+| `pub get --enforce-lockfile` fails | `pubspec.lock` doesn't match `pubspec.yaml`. Run `flutter pub get` with Flutter 3.44.9 and commit both files. |
+| `N test(s) skipped` | The real-Isar tests couldn't load the Isar core library, and they must run in CI. |
+| `Tag vX doesn't match pubspec.yaml` | Delete the tag (`git push --delete origin vX`, which needs the ruleset bypass), fix the version, and tag again. |
+| `Alias … holds certificate …, expected …` | Wrong keystore or alias secret, or a wrong `ANDROID_SIGNING_CERT_SHA256`. |
+| `REQUIRE_RELEASE_SIGNING=true but android/key.properties is missing` | The signing step didn't run; check the environment secrets. |
+| `vX is already published` | Releases are final: bump the version and push a new tag. |
+
+To check a local build with the same checks as CI (signer, version, 16 KB alignment), run `tool/ci/verify_android_artifacts.sh <cert-sha256> <version-name> <build-number> <apk-or-aab>...`.

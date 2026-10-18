@@ -743,6 +743,17 @@ Also: `dashboard_range_test`, `dues_test`, `order_money_test`, `report_service_t
 ### Toolchain
 
 - Builds are done with **Flutter 3.44.9** (stable framework); `pubspec.lock` requires Flutter ≥ 3.44.0
+- **`pubspec.lock` is committed** (`!pubspec.lock` overrides the `*.lock` ignore): Isar's generated schemas assert `Isar.version == version`, so a fresh resolve to a newer `isar_community` breaks the build at compile time. `.gitattributes` keeps LF line endings, because riverpod_generator hashes provider sources into `.g.dart`.
+
+### CI/CD (GitHub Actions)
+
+Setup, secrets and the release steps are in [RELEASE.md](RELEASE.md) → GitHub Releases (CI/CD).
+
+- `.github/actions/setup-flutter` is the one place the CI Flutter version (3.44.9) is pinned; it runs `flutter pub get --enforce-lockfile`.
+- `ci.yml` (PRs, pushes to `main`, and called by `release.yml`): generated code must be committed and current, l10n parity, `flutter analyze --no-fatal-infos` (errors and warnings fail), `flutter test` — and **no skipped tests**, since the real-Isar tests skip themselves when the Isar core library isn't found.
+- `release.yml` (tag `vX.Y.Z` = `v` + pubspec version name, or a manual run on `main`): signed AAB + universal and split APKs in the `release` environment (required reviewer; signing secrets live only there), checked by `tool/ci/verify_android_artifacts.sh`, then a **draft** GitHub Release that is published by hand. The AAB and the obfuscation symbols are run artifacts (they expire: archive them).
+- `REQUIRE_RELEASE_SIGNING=true` makes `android/app/build.gradle.kts` fail instead of falling back to the debug key when `key.properties` is missing.
+- Actions are pinned to commit SHAs; Dependabot (`.github/dependabot.yml`) keeps them current.
 
 ### Build Commands
 
@@ -758,7 +769,10 @@ flutter build appbundle --release --obfuscate \
   --split-debug-info=build/debug-info --tree-shake-icons
 # Output: build/app/outputs/bundle/release/app-release.aab
 
-# Verify 16 KB alignment of every native library in the AAB
+# Verify signer, version and 16 KB alignment (every LOAD segment, arm64 + x86_64)
+# of APKs/AABs — the same checks as CI's release job:
+#   NDK_VERSION=27.0.12077973 tool/ci/verify_android_artifacts.sh <cert-sha256> <name> <code> <files>
+# Quick manual look at the first LOAD segment of the arm64 libs:
 LREAD=$ANDROID_HOME/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-readelf
 cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/arm64-v8a
 for f in *.so; do
@@ -784,7 +798,7 @@ Android, iOS (min 16.0), Web, macOS (min 13.0), Linux, Windows. Web has no worke
 | Skill | `new-collection` | Adding an Isar model — `kIsarSchemas`, backup encode/decode (`buildBackupMap` + `restoreBackupSync`) + `kBackupVersion` bump, clear in `clearAllCollectionsInTxnSync` (restore *and* Clear All Data), trash decision |
 | Skill | `new-screen` | Screen / route / notifier conventions (keepAlive, writeTxn, sub-route before `:id`, shared widgets) |
 | Skill | `verify` | After any change: build_runner (if needed) → `flutter analyze` → l10n parity |
-| Skill | `release` | `/release` only — version bump, obfuscated AAB, 16 KB alignment check |
+| Skill | `release` | `/release` only — version bump, obfuscated AAB, `tool/ci/verify_android_artifacts.sh`; pushing the `vX.Y.Z` tag lets CI build the GitHub Release |
 | Skill | `sync-docs` | Keep this file matching the code after a feature |
 | Agent | `invariant-reviewer` | Read-only review of a diff against the money/stock/backup invariants above |
 | Agent | `translator` | Fill the 11 non-English locale files for new keys |

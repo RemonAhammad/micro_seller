@@ -46,7 +46,7 @@ final class SuppliersProvider
   }
 }
 
-String _$suppliersHash() => r'7470e8abe6ab3d2ad6a09b1356e5e94e346018ff';
+String _$suppliersHash() => r'2b501b67b2cf1154aafecc74fff366d708565c90';
 
 @ProviderFor(purchases)
 final purchasesProvider = PurchasesProvider._();
@@ -85,7 +85,7 @@ final class PurchasesProvider
   }
 }
 
-String _$purchasesHash() => r'476862a41c51fd3bb1093f2c657750338e2c1f8b';
+String _$purchasesHash() => r'e583b3cca873b0ad3f25a70eeeb04d6227b0660a';
 
 @ProviderFor(supplierPurchases)
 final supplierPurchasesProvider = SupplierPurchasesFamily._();
@@ -142,7 +142,7 @@ final class SupplierPurchasesProvider
   }
 }
 
-String _$supplierPurchasesHash() => r'a4d2229007d6a7375b4c52821420e9c9c2c461d1';
+String _$supplierPurchasesHash() => r'067fb903827d9bc8000aeb3175b56514de1e0a36';
 
 final class SupplierPurchasesFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<Purchase>>, int> {
@@ -217,7 +217,7 @@ final class SupplierProductsProvider
   }
 }
 
-String _$supplierProductsHash() => r'dd423261a9919454d74b6066d81dab0ccf9de43b';
+String _$supplierProductsHash() => r'41388b9f61a92b3b046dfd27dd84912b2128cad7';
 
 final class SupplierProductsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<Product>>, int> {
@@ -296,7 +296,7 @@ final class SupplierStockMovementsProvider
 }
 
 String _$supplierStockMovementsHash() =>
-    r'd83718b21934131580d7647040fd0089384344ab';
+    r'a3817f5275b03eef59e4805cff52814d80f4b600';
 
 final class SupplierStockMovementsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<StockMovement>>, int> {

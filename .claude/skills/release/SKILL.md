@@ -16,14 +16,10 @@ Only run this when the user asks for it. It changes `pubspec.yaml` and builds fo
      --split-debug-info=build/debug-info --tree-shake-icons
    ```
    Output: `build/app/outputs/bundle/release/app-release.aab`. Keep `build/debug-info` because it's needed to decode obfuscated crash stack traces for this version.
-4. **16 KB alignment check.** Every row must be `0x4000` or `0x10000`:
+4. **Verify the AAB** with the same script CI's release job runs. It checks that exactly one certificate signed it and that it's the expected upload key (not the debug fallback), and that every LOAD segment of every 64-bit `.so` is aligned to 16 KB:
    ```bash
-   LREAD=$ANDROID_HOME/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-readelf
-   cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/arm64-v8a
-   for f in *.so; do
-     align=$("$LREAD" -lW "$f" | awk '/^  LOAD/ {print $NF; exit}')
-     printf "%-35s %s\n" "$f" "$align"
-   done
+   NDK_VERSION=27.0.12077973 tool/ci/verify_android_artifacts.sh \
+     "<upload cert SHA-256>" <version-name> <build-number> build/app/outputs/bundle/release/app-release.aab
    ```
-   If any library shows `0x1000`, **fail the release** and name the plugin that ships it. Play Store rejects these for Android 15+.
-5. **Report:** the new version, the AAB path and size, the alignment table, and the "Play Console Submission Checklist" items from `RELEASE.md` that apply. Don't commit, tag or upload unless the user asks.
+   The fingerprint is in Play Console → App integrity → Upload key certificate, or `keytool -list -v -keystore … -alias <alias>`. If a library is misaligned, **fail the release** and name the plugin that ships it. Play Store rejects these for Android 15+.
+5. **Report:** the new version, the AAB path and size, the verification table, and the "Play Console Submission Checklist" items from `RELEASE.md` that apply. Don't commit, tag or upload unless the user asks. For a **GitHub Release**, the user pushes tag `v<version-name>` after committing the bump: `.github/workflows/release.yml` builds and verifies the signed APKs and drafts the release (RELEASE.md → GitHub Releases).
