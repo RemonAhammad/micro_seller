@@ -18,6 +18,7 @@ import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/debouncer.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/variant_utils.dart';
 import '../../../shared/widgets/app_text_field.dart';
@@ -71,6 +72,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // ── Hierarchical Variant State ──
   final List<_AttributeEntry> _attributes = [];
   List<_CombinationEntry> _combinations = [];
+
+  // Typing an attribute name or option only schedules a regeneration; the
+  // combinations table refreshes once typing pauses. _submit flushes it.
+  final _regenDebouncer = Debouncer(delay: const Duration(milliseconds: 300));
+  bool _regenPending = false;
 
   @override
   void initState() {
@@ -132,7 +138,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         a.dispose();
       }
       _attributes.clear();
-      _combinations.clear();
+      for (final c in _combinations) {
+        c.dispose();
+      }
 
       for (final attr in product.variantAttributes) {
         _attributes.add(_AttributeEntry(
@@ -142,20 +150,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       }
 
       // Populate combinations
-      for (final combo in product.variantCombinations) {
-        _combinations.add(_CombinationEntry(
-          key: combo.combinationKey,
-          displayLabel: combo.displayLabel,
-          stockCtrl: TextEditingController(
-              text: combo.stockQty > 0 ? combo.stockQty.toString() : ''),
-          priceCtrl: TextEditingController(
-              text: combo.priceAdjustment != 0
-                  ? combo.priceAdjustment.toString()
-                  : ''),
-          skuCtrl: TextEditingController(text: combo.sku),
-          isActive: combo.isActive,
-        ));
-      }
+      _combinations = product.variantCombinations
+          .map(_CombinationEntry.fromCombination)
+          .toList();
     });
   }
 
@@ -171,6 +168,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _categoryCtrl.dispose();
     _qrCtrl.dispose();
     _scrollCtrl.dispose();
+    _regenDebouncer.dispose();
     for (final a in _attributes) {
       a.dispose();
     }
@@ -192,8 +190,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     setState(() {
       _attributes[index].dispose();
       _attributes.removeAt(index);
-      _regenerateCombinations();
     });
+    _regenerateCombinations();
   }
 
   void _addOption(int attrIndex) {
@@ -208,11 +206,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _attributes[attrIndex].optionCtrls[optIndex].dispose();
       _attributes[attrIndex].optionCtrls.removeAt(optIndex);
       _attributes[attrIndex].options.removeAt(optIndex);
-      _regenerateCombinations();
+    });
+    _regenerateCombinations();
+  }
+
+  /// Called on every keystroke in an attribute name / option field. The text
+  /// is already applied; only the (comparatively costly) table rebuild waits.
+  void _scheduleRegeneration() {
+    _regenPending = true;
+    _regenDebouncer.run(() {
+      if (mounted && _regenPending) _regenerateCombinations();
     });
   }
 
+  /// Rebuilds the combination list from the current attributes. Entries whose
+  /// key still exists are kept as they are (same controllers, so typed stock /
+  /// price / SKU and the active flag carry over), only their label is updated.
+  /// New keys get fresh entries; entries for keys that are gone are disposed.
   void _regenerateCombinations() {
+    _regenPending = false;
+
     // Build VariantAttribute list from current state
     final attrs = _attributes
         .where((a) =>
@@ -227,43 +240,47 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ))
         .toList();
 
-    // Get existing combination values to preserve
-    final existingCombos = _combinations.map((c) => VariantCombination(
-      combinationKey: c.key,
-      displayLabel: c.displayLabel,
-      stockQty: int.tryParse(c.stockCtrl.text) ?? 0,
-      priceAdjustment: double.tryParse(c.priceCtrl.text) ?? 0,
-      sku: c.skuCtrl.text,
-      isActive: c.isActive,
-    )).toList();
-
-    final newCombos = generateCombinations(
+    // Keys, labels and auto-SKUs only — existing values come from the entries.
+    final generated = generateCombinations(
       attrs,
-      existing: existingCombos,
       baseSku: _skuCtrl.text.trim(),
     );
 
-    // Dispose old controllers
+    // Old entries by key, in list order. A key can repeat when an attribute
+    // has the same option twice (or two attributes share a name).
+    final reusable = <String, List<_CombinationEntry>>{};
     for (final c in _combinations) {
-      c.dispose();
+      (reusable[c.key] ??= []).add(c);
+    }
+    final lastByKey = {for (final c in _combinations) c.key: c};
+
+    final next = <_CombinationEntry>[];
+    for (final combo in generated) {
+      final pool = reusable[combo.combinationKey];
+      final previous = lastByKey[combo.combinationKey];
+      if (pool != null && pool.isNotEmpty) {
+        next.add(pool.removeAt(0)..displayLabel = combo.displayLabel);
+      } else if (previous != null) {
+        // Another copy of a repeated key: like before, it starts from the
+        // existing values for that key.
+        next.add(_CombinationEntry.copyOf(previous, combo.displayLabel));
+      } else {
+        next.add(_CombinationEntry.fromCombination(combo));
+      }
     }
 
-    setState(() {
-      _combinations = newCombos.map((combo) {
-        return _CombinationEntry(
-          key: combo.combinationKey,
-          displayLabel: combo.displayLabel,
-          stockCtrl: TextEditingController(
-              text: combo.stockQty > 0 ? combo.stockQty.toString() : ''),
-          priceCtrl: TextEditingController(
-              text: combo.priceAdjustment != 0
-                  ? combo.priceAdjustment.toString()
-                  : ''),
-          skuCtrl: TextEditingController(text: combo.sku),
-          isActive: combo.isActive,
-        );
-      }).toList();
-    });
+    final removed = [for (final pool in reusable.values) ...pool];
+    setState(() => _combinations = next);
+
+    // Their rows still hold these controllers until the rebuild unmounts
+    // them, so dispose after the frame.
+    if (removed.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        for (final c in removed) {
+          c.dispose();
+        }
+      });
+    }
   }
 
   // ── Image ──
@@ -396,6 +413,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // ── Submit ──
 
   Future<void> _submit() async {
+    // Apply attribute / option typing still waiting on the debounce, so the
+    // last keystrokes are in _combinations before anything reads it.
+    if (_regenPending) _regenerateCombinations();
+
     if (!_formKey.currentState!.validate()) {
       // Scroll to top so user can see validation errors
       _scrollCtrl.animateTo(0,
@@ -511,575 +532,636 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final isEdit = widget.product != null || widget.productId != null;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final categoriesAsync = ref.watch(categoriesProvider);
+    final combinations = _combinations;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? s.editProduct : s.addProduct),
       ),
+      // Only the combination rows (plain TextFields) are built lazily. Every
+      // FormField stays in the first SliverToBoxAdapter, which is always
+      // mounted: a lazily built FormField that scrolls out of the cache extent
+      // is unmounted, and Form.validate() would silently skip it.
       body: Form(
         key: _formKey,
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           controller: _scrollCtrl,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Image picker ───────────────────────────────────────────────
-              Center(
-                child: GestureDetector(
-                  onTap: _isCompressing ? null : _showImageSourceSheet,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: cs.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: cs.primary.withValues(alpha: 0.2),
-                        width: 2,
-                      ),
-                    ),
-                    child: _isCompressing
-                        ? const Center(child: CircularProgressIndicator())
-                        : _imagePath != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.file(
-                              File(_imagePath!),
-                              fit: BoxFit.cover,
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Image picker ───────────────────────────────────────────────
+                    Center(
+                      child: GestureDetector(
+                        onTap: _isCompressing ? null : _showImageSourceSheet,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: cs.primary.withValues(alpha: 0.2),
+                              width: 2,
                             ),
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ThinIcon(
-                                tabler.PhotoPlus.new,
-                                size: 36,
-                                color: cs.primary.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Add Photo',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: cs.primary.withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ],
                           ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // ── Basic Info ─────────────────────────────────────────────────
-              const _SectionLabel('Basic Info'),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: s.productName,
-                controller: _nameCtrl,
-                textCapitalization: TextCapitalization.words,
-                validator: (v) => Validators.required(v, 'Product name'),
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 12),
-
-              // ── Category with chips ────────────────────────────────────────
-              AppTextField(
-                label: s.category,
-                controller: _categoryCtrl,
-                textCapitalization: TextCapitalization.words,
-                validator: (v) => Validators.required(v, 'Category'),
-                textInputAction: TextInputAction.next,
-                onChanged: (_) => setState(() {}),
-              ),
-              categoriesAsync.when(
-                data: (cats) {
-                  final query = _categoryCtrl.text.trim().toLowerCase();
-                  final filtered = cats
-                      .where((c) =>
-                          query.isEmpty ||
-                          c.name.toLowerCase().contains(query))
-                      .toList();
-                  if (filtered.isEmpty) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: filtered
-                          .map((c) => ActionChip(
-                                label: Text(c.name,
-                                    style: const TextStyle(fontSize: 12)),
-                                onPressed: () => setState(
-                                    () => _categoryCtrl.text = c.name),
-                                visualDensity: VisualDensity.compact,
-                              ))
-                          .toList(),
-                    ),
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 12),
-
-              // ── Supplier (optional) ────────────────────────────────────────
-              InkWell(
-                onTap: _pickSupplier,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: cs.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: cs.outline.withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    children: [
-                      ThinIcon(tabler.TruckDelivery.new,
-                          color: cs.onSurface.withValues(alpha: 0.5),
-                          size: 20),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _selectedSupplier != null
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(s.suppliers,
+                          child: _isCompressing
+                              ? const Center(child: CircularProgressIndicator())
+                              : _imagePath != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.file(
+                                    File(_imagePath!),
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ThinIcon(
+                                      tabler.PhotoPlus.new,
+                                      size: 36,
+                                      color: cs.primary.withValues(alpha: 0.5),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Add Photo',
                                       style: TextStyle(
-                                          fontSize: 11,
-                                          color: cs.onSurface
-                                              .withValues(alpha: 0.5))),
-                                  Text(_selectedSupplier!.name,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14)),
-                                ],
-                              )
-                            : Text(s.supplierOptional,
-                                style: TextStyle(
-                                    color: cs.onSurface.withValues(alpha: 0.5),
-                                    fontSize: 14)),
-                      ),
-                      if (_selectedSupplier != null)
-                        GestureDetector(
-                          onTap: () =>
-                              setState(() => _selectedSupplier = null),
-                          child: ThinIcon(tabler.X.new,
-                              size: 18,
-                              color: cs.onSurface.withValues(alpha: 0.5)),
-                        )
-                      else
-                        ThinIcon(tabler.ChevronRight.new,
-                            size: 14,
-                            color: cs.onSurface.withValues(alpha: 0.4)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              AppTextField(
-                label: s.sku,
-                controller: _skuCtrl,
-                textCapitalization: TextCapitalization.characters,
-                validator: Validators.sku,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 12),
-
-              // ── QR / Barcode ───────────────────────────────────────────────
-              AppTextField(
-                label: s.qrBarcode,
-                controller: _qrCtrl,
-                textInputAction: TextInputAction.next,
-                suffixIcon: IconButton(
-                  icon: const ThinIcon(tabler.Scan.new),
-                  tooltip: s.scan,
-                  onPressed: _scanQr,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              AppTextField(
-                label: s.description,
-                controller: _descCtrl,
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 20),
-
-              // ── Pricing ────────────────────────────────────────────────────
-              const _SectionLabel('Pricing'),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      label: s.sellingPrice,
-                      controller: _sellingPriceCtrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                      ],
-                      validator: (v) =>
-                          Validators.positiveNumber(v, 'Selling price'),
-                      textInputAction: TextInputAction.next,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppTextField(
-                      label: s.costPrice,
-                      controller: _costPriceCtrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                      ],
-                      validator: (v) => Validators.costPriceNotExceedingSelling(
-                          v, _sellingPriceCtrl.text),
-                      textInputAction: TextInputAction.next,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Inventory ──────────────────────────────────────────────────
-              const _SectionLabel('Inventory'),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      label: s.stockQuantity,
-                      controller: _stockCtrl,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
-                      validator: (v) =>
-                          Validators.nonNegativeInt(v, 'Stock quantity'),
-                      textInputAction: TextInputAction.next,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppTextField(
-                      label: s.lowStockThreshold,
-                      controller: _thresholdCtrl,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
-                      textInputAction: TextInputAction.done,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Variant Attributes ─────────────────────────────────────────
-              Row(
-                children: [
-                  _SectionLabel(s.variantAttributes),
-                  const Spacer(),
-                  if (_attributes.length < 3)
-                    TextButton.icon(
-                      onPressed: _addAttribute,
-                      icon: const ThinIcon(tabler.Plus.new, size: 16),
-                      label: Text(s.add, style: const TextStyle(fontSize: 12)),
-                    ),
-                ],
-              ),
-              if (_attributes.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    s.tr('noVariantsHint'),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: cs.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ..._attributes.asMap().entries.map((entry) {
-                final i = entry.key;
-                final attr = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: cs.outline.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  labelText: s.attributeName,
-                                  hintText: s.tr('variantName'),
-                                  isDense: true,
-                                ),
-                                controller: attr.nameCtrl,
-                                autofocus: i == _attributes.length - 1 && attr.nameCtrl.text.isEmpty,
-                                onChanged: (_) {
-                                  // Update options list and regenerate
-                                  _regenerateCombinations();
-                                },
-                              ),
-                            ),
-                            IconButton(
-                              icon: ThinIcon(tabler.X.new,
-                                  size: 18, color: cs.error),
-                              onPressed: () => _removeAttribute(i),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(s.tr('option'),
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: cs.onSurface.withValues(alpha: 0.5))),
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            ...attr.options.asMap().entries.map((optEntry) {
-                              final oi = optEntry.key;
-                              return SizedBox(
-                                width: 100,
-                                height: 36,
-                                child: TextField(
-                                  controller: attr.optionCtrls[oi],
-                                  decoration: InputDecoration(
-                                    hintText: s.option,
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 8),
-                                    suffixIcon: GestureDetector(
-                                      onTap: () => _removeOption(i, oi),
-                                      child: ThinIcon(tabler.X.new,
-                                          size: 14,
-                                          color: cs.onSurface
-                                              .withValues(alpha: 0.4)),
+                                        fontSize: 11,
+                                        color: cs.primary.withValues(alpha: 0.6),
+                                      ),
                                     ),
-                                    suffixIconConstraints:
-                                        const BoxConstraints(
-                                            maxWidth: 24, maxHeight: 24),
-                                  ),
-                                  style: const TextStyle(fontSize: 13),
-                                  onChanged: (val) {
-                                    attr.options[oi] = val;
-                                    _regenerateCombinations();
-                                  },
+                                  ],
                                 ),
-                              );
-                            }),
-                            SizedBox(
-                              height: 36,
-                              child: TextButton.icon(
-                                onPressed: () => _addOption(i),
-                                icon: const ThinIcon(tabler.Plus.new, size: 14),
-                                label: Text(s.add,
-                                    style: const TextStyle(fontSize: 11)),
-                                style: TextButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── Basic Info ─────────────────────────────────────────────────
+                    const _SectionLabel('Basic Info'),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      label: s.productName,
+                      controller: _nameCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      validator: (v) => Validators.required(v, 'Product name'),
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ── Category with chips ────────────────────────────────────────
+                    AppTextField(
+                      label: s.category,
+                      controller: _categoryCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      validator: (v) => Validators.required(v, 'Category'),
+                      textInputAction: TextInputAction.next,
+                    ),
+                    _CategoryChips(controller: _categoryCtrl),
+                    const SizedBox(height: 12),
+
+                    // ── Supplier (optional) ────────────────────────────────────────
+                    InkWell(
+                      onTap: _pickSupplier,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: cs.surface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: cs.outline.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          children: [
+                            ThinIcon(tabler.TruckDelivery.new,
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                                size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _selectedSupplier != null
+                                  ? Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(s.suppliers,
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                color: cs.onSurface
+                                                    .withValues(alpha: 0.5))),
+                                        Text(_selectedSupplier!.name,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14)),
+                                      ],
+                                    )
+                                  : Text(s.supplierOptional,
+                                      style: TextStyle(
+                                          color: cs.onSurface.withValues(alpha: 0.5),
+                                          fontSize: 14)),
                             ),
+                            if (_selectedSupplier != null)
+                              GestureDetector(
+                                onTap: () =>
+                                    setState(() => _selectedSupplier = null),
+                                child: ThinIcon(tabler.X.new,
+                                    size: 18,
+                                    color: cs.onSurface.withValues(alpha: 0.5)),
+                              )
+                            else
+                              ThinIcon(tabler.ChevronRight.new,
+                                  size: 14,
+                                  color: cs.onSurface.withValues(alpha: 0.4)),
                           ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    AppTextField(
+                      label: s.sku,
+                      controller: _skuCtrl,
+                      textCapitalization: TextCapitalization.characters,
+                      validator: Validators.sku,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ── QR / Barcode ───────────────────────────────────────────────
+                    AppTextField(
+                      label: s.qrBarcode,
+                      controller: _qrCtrl,
+                      textInputAction: TextInputAction.next,
+                      suffixIcon: IconButton(
+                        icon: const ThinIcon(tabler.Scan.new),
+                        tooltip: s.scan,
+                        onPressed: _scanQr,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    AppTextField(
+                      label: s.description,
+                      controller: _descCtrl,
+                      maxLines: 3,
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Pricing ────────────────────────────────────────────────────
+                    const _SectionLabel('Pricing'),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppTextField(
+                            label: s.sellingPrice,
+                            controller: _sellingPriceCtrl,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                            ],
+                            validator: (v) =>
+                                Validators.positiveNumber(v, 'Selling price'),
+                            textInputAction: TextInputAction.next,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppTextField(
+                            label: s.costPrice,
+                            controller: _costPriceCtrl,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                            ],
+                            validator: (v) => Validators.costPriceNotExceedingSelling(
+                                v, _sellingPriceCtrl.text),
+                            textInputAction: TextInputAction.next,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                );
-              }),
+                    const SizedBox(height: 20),
 
-              // ── Combinations ───────────────────────────────────────────────
-              if (_combinations.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _SectionLabel(
-                        '${s.combinations} (${_combinations.length})'),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: _regenerateCombinations,
-                      child: Text(s.regenerate,
-                          style: const TextStyle(fontSize: 11)),
+                    // ── Inventory ──────────────────────────────────────────────────
+                    const _SectionLabel('Inventory'),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppTextField(
+                            label: s.stockQuantity,
+                            controller: _stockCtrl,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            validator: (v) =>
+                                Validators.nonNegativeInt(v, 'Stock quantity'),
+                            textInputAction: TextInputAction.next,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppTextField(
+                            label: s.lowStockThreshold,
+                            controller: _thresholdCtrl,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            textInputAction: TextInputAction.done,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Bulk actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: _BulkSetField(
-                        label: s.setAllStock,
-                        onApply: (val) {
-                          final v = int.tryParse(val);
-                          if (v == null) return;
-                          setState(() {
-                            for (final c in _combinations) {
-                              c.stockCtrl.text = val;
-                            }
-                          });
-                        },
-                      ),
+                    const SizedBox(height: 20),
+
+                    // ── Variant Attributes ─────────────────────────────────────────
+                    Row(
+                      children: [
+                        _SectionLabel(s.variantAttributes),
+                        const Spacer(),
+                        if (_attributes.length < 3)
+                          TextButton.icon(
+                            onPressed: _addAttribute,
+                            icon: const ThinIcon(tabler.Plus.new, size: 16),
+                            label: Text(s.add, style: const TextStyle(fontSize: 12)),
+                          ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _BulkSetField(
-                        label: s.setAllPrice,
-                        onApply: (val) {
-                          setState(() {
-                            for (final c in _combinations) {
-                              c.priceCtrl.text = val;
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ..._combinations.asMap().entries.map((entry) {
-                  final ci = entry.key;
-                  final combo = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: combo.isActive
-                            ? null
-                            : cs.onSurface.withValues(alpha: 0.04),
-                        border: Border.all(
-                          color: combo.isActive
-                              ? cs.outline.withValues(alpha: 0.2)
-                              : cs.outline.withValues(alpha: 0.1),
+                    if (_attributes.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          s.tr('noVariantsHint'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurface.withValues(alpha: 0.5),
+                          ),
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                    ..._attributes.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final attr = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: cs.outline.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Checkbox(
-                                  value: combo.isActive,
-                                  onChanged: (v) => setState(
-                                      () => _combinations[ci].isActive =
-                                          v ?? true),
-                                  visualDensity: VisualDensity.compact,
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  combo.displayLabel,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                    color: combo.isActive
-                                        ? null
-                                        : cs.onSurface.withValues(alpha: 0.4),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      decoration: InputDecoration(
+                                        labelText: s.attributeName,
+                                        hintText: s.tr('variantName'),
+                                        isDense: true,
+                                      ),
+                                      controller: attr.nameCtrl,
+                                      autofocus: i == _attributes.length - 1 && attr.nameCtrl.text.isEmpty,
+                                      onChanged: (_) => _scheduleRegeneration(),
+                                    ),
                                   ),
-                                ),
+                                  IconButton(
+                                    icon: ThinIcon(tabler.X.new,
+                                        size: 18, color: cs.error),
+                                    onPressed: () => _removeAttribute(i),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(s.tr('option'),
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: cs.onSurface.withValues(alpha: 0.5))),
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  ...attr.options.asMap().entries.map((optEntry) {
+                                    final oi = optEntry.key;
+                                    return SizedBox(
+                                      width: 100,
+                                      height: 36,
+                                      child: TextField(
+                                        controller: attr.optionCtrls[oi],
+                                        decoration: InputDecoration(
+                                          hintText: s.option,
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 8),
+                                          suffixIcon: GestureDetector(
+                                            onTap: () => _removeOption(i, oi),
+                                            child: ThinIcon(tabler.X.new,
+                                                size: 14,
+                                                color: cs.onSurface
+                                                    .withValues(alpha: 0.4)),
+                                          ),
+                                          suffixIconConstraints:
+                                              const BoxConstraints(
+                                                  maxWidth: 24, maxHeight: 24),
+                                        ),
+                                        style: const TextStyle(fontSize: 13),
+                                        onChanged: (val) {
+                                          attr.options[oi] = val;
+                                          _scheduleRegeneration();
+                                        },
+                                      ),
+                                    );
+                                  }),
+                                  SizedBox(
+                                    height: 36,
+                                    child: TextButton.icon(
+                                      onPressed: () => _addOption(i),
+                                      icon: const ThinIcon(tabler.Plus.new, size: 14),
+                                      label: Text(s.add,
+                                          style: const TextStyle(fontSize: 11)),
+                                      style: TextButton.styleFrom(
+                                        padding:
+                                            const EdgeInsets.symmetric(horizontal: 8),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          if (combo.isActive) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    decoration: InputDecoration(
-                                      labelText: s.stock,
-                                      isDense: true,
-                                    ),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    controller: combo.stockCtrl,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    decoration: InputDecoration(
-                                      labelText: s.priceAdjustment,
-                                      isDense: true,
-                                    ),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true, signed: true),
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.allow(
-                                          RegExp(r'^-?\d*\.?\d*')),
-                                    ],
-                                    controller: combo.priceCtrl,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    decoration: InputDecoration(
-                                      labelText: s.sku,
-                                      isDense: true,
-                                    ),
-                                    controller: combo.skuCtrl,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                        ),
+                      );
+                    }),
+
+                    // ── Combinations ───────────────────────────────────────────────
+                    if (combinations.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          _SectionLabel(
+                              '${s.combinations} (${combinations.length})'),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: _regenerateCombinations,
+                            child: Text(s.regenerate,
+                                style: const TextStyle(fontSize: 11)),
+                          ),
                         ],
                       ),
-                    ),
-                  );
-                }),
-              ],
-              const SizedBox(height: 32),
-
-              AppButton(
-                label: isEdit ? 'Update Product' : 'Add Product',
-                onPressed: _submit,
-                isLoading: _isLoading,
-                isFullWidth: true,
-                height: 52,
-                icon: isEdit ? tabler.DeviceFloppy.new : tabler.Plus.new,
+                      const SizedBox(height: 4),
+                      // Bulk actions
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _BulkSetField(
+                              label: s.setAllStock,
+                              onApply: (val) {
+                                final v = int.tryParse(val);
+                                if (v == null) return;
+                                setState(() {
+                                  for (final c in _combinations) {
+                                    c.stockCtrl.text = val;
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _BulkSetField(
+                              label: s.setAllPrice,
+                              onApply: (val) {
+                                setState(() {
+                                  for (final c in _combinations) {
+                                    c.priceCtrl.text = val;
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
+
+            // ── Combination rows (lazy) ──────────────────────────────────────
+            if (combinations.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                sliver: SliverList.builder(
+                  itemCount: combinations.length,
+                  // Rows are keyed by their entry, which survives regeneration,
+                  // so a row keeps its element when entries shift around it.
+                  findChildIndexCallback: (key) {
+                    if (key is! ObjectKey) return null;
+                    final i = combinations
+                        .indexWhere((c) => identical(c, key.value));
+                    return i < 0 ? null : i;
+                  },
+                  itemBuilder: (context, i) => _CombinationRow(
+                    key: ObjectKey(combinations[i]),
+                    entry: combinations[i],
+                  ),
+                ),
+              ),
+
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 36),
+              sliver: SliverToBoxAdapter(
+                child: AppButton(
+                  label: isEdit ? 'Update Product' : 'Add Product',
+                  onPressed: _submit,
+                  isLoading: _isLoading,
+                  isFullWidth: true,
+                  height: 52,
+                  icon: isEdit ? tabler.DeviceFloppy.new : tabler.Plus.new,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Combination Row ─────────────────────────────────────────────────────────
+
+/// One combination's checkbox + stock / price adjustment / SKU fields. Owns
+/// its checkbox setState so toggling a row rebuilds only that row.
+class _CombinationRow extends StatefulWidget {
+  final _CombinationEntry entry;
+
+  const _CombinationRow({super.key, required this.entry});
+
+  @override
+  State<_CombinationRow> createState() => _CombinationRowState();
+}
+
+class _CombinationRowState extends State<_CombinationRow> {
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final combo = widget.entry;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: combo.isActive ? null : cs.onSurface.withValues(alpha: 0.04),
+          border: Border.all(
+            color: combo.isActive
+                ? cs.outline.withValues(alpha: 0.2)
+                : cs.outline.withValues(alpha: 0.1),
           ),
         ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Checkbox(
+                    value: combo.isActive,
+                    onChanged: (v) =>
+                        setState(() => combo.isActive = v ?? true),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    combo.displayLabel,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: combo.isActive
+                          ? null
+                          : cs.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (combo.isActive) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: s.stock,
+                        isDense: true,
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      controller: combo.stockCtrl,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: s.priceAdjustment,
+                        isDense: true,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true, signed: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^-?\d*\.?\d*')),
+                      ],
+                      controller: combo.priceCtrl,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: s.sku,
+                        isDense: true,
+                      ),
+                      controller: combo.skuCtrl,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Category Chips ──────────────────────────────────────────────────────────
+
+/// Existing categories matching what's typed in the category field. Listens
+/// to the field's controller itself, so typing there rebuilds only the chips.
+class _CategoryChips extends ConsumerWidget {
+  final TextEditingController controller;
+
+  const _CategoryChips({required this.controller});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoriesProvider);
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) => categoriesAsync.when(
+        data: (cats) {
+          final query = value.text.trim().toLowerCase();
+          final filtered = cats
+              .where((c) =>
+                  query.isEmpty || c.name.toLowerCase().contains(query))
+              .toList();
+          if (filtered.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: filtered
+                  .map((c) => ActionChip(
+                        label: Text(c.name,
+                            style: const TextStyle(fontSize: 12)),
+                        onPressed: () => controller.text = c.name,
+                        visualDensity: VisualDensity.compact,
+                      ))
+                  .toList(),
+            ),
+          );
+        },
+        loading: () => const SizedBox.shrink(),
+        error: (_, _) => const SizedBox.shrink(),
       ),
     );
   }
@@ -1106,15 +1188,32 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _BulkSetField extends StatelessWidget {
+class _BulkSetField extends StatefulWidget {
   final String label;
   final void Function(String) onApply;
 
   const _BulkSetField({required this.label, required this.onApply});
 
   @override
+  State<_BulkSetField> createState() => _BulkSetFieldState();
+}
+
+class _BulkSetFieldState extends State<_BulkSetField> {
+  // Owned here: built in build(), it was recreated (and leaked) on every
+  // rebuild of the form, wiping whatever had been typed.
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final ctrl = TextEditingController();
+    final ctrl = _ctrl;
+    final label = widget.label;
+    final onApply = widget.onApply;
     return Row(
       children: [
         Expanded(
@@ -1169,7 +1268,7 @@ class _AttributeEntry {
 
 class _CombinationEntry {
   final String key;
-  final String displayLabel;
+  String displayLabel;
   final TextEditingController stockCtrl;
   final TextEditingController priceCtrl;
   final TextEditingController skuCtrl;
@@ -1183,6 +1282,33 @@ class _CombinationEntry {
     required this.skuCtrl,
     this.isActive = true,
   });
+
+  factory _CombinationEntry.fromCombination(VariantCombination combo) =>
+      _CombinationEntry(
+        key: combo.combinationKey,
+        displayLabel: combo.displayLabel,
+        stockCtrl: TextEditingController(
+            text: combo.stockQty > 0 ? combo.stockQty.toString() : ''),
+        priceCtrl: TextEditingController(
+            text: combo.priceAdjustment != 0
+                ? combo.priceAdjustment.toString()
+                : ''),
+        skuCtrl: TextEditingController(text: combo.sku),
+        isActive: combo.isActive,
+      );
+
+  /// A separate entry seeded from [other]'s parsed values — for a key that
+  /// the attributes generate more than once.
+  factory _CombinationEntry.copyOf(
+          _CombinationEntry other, String displayLabel) =>
+      _CombinationEntry.fromCombination(VariantCombination(
+        combinationKey: other.key,
+        displayLabel: displayLabel,
+        stockQty: int.tryParse(other.stockCtrl.text) ?? 0,
+        priceAdjustment: double.tryParse(other.priceCtrl.text) ?? 0,
+        sku: other.skuCtrl.text,
+        isActive: other.isActive,
+      ));
 
   void dispose() {
     stockCtrl.dispose();
@@ -1287,7 +1413,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                     controller: ctrl,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => Divider(
+                    separatorBuilder: (_, _) => Divider(
                         height: 1, color: cs.outline.withValues(alpha: 0.1)),
                     itemBuilder: (_, i) {
                       final s = filtered[i];

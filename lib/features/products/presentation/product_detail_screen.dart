@@ -2,10 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar_community/isar.dart';
-import '../../../data/models/product.dart';
+import '../providers/product_detail_providers.dart';
 import '../providers/product_provider.dart';
-import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
@@ -24,38 +22,17 @@ class ProductDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isarAsync = ref.watch(isarProvider);
+    final s = AppStrings.of(context);
+    final theme = Theme.of(context);
 
-    return isarAsync.when(
-      data: (isar) => _ProductDetailBody(productId: productId, isar: isar),
+    // Live, so an edit or a stock adjustment shows on return.
+    return ref.watch(productByIdProvider(productId)).when(
+      skipLoadingOnReload: true,
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
-    );
-  }
-}
-
-class _ProductDetailBody extends ConsumerWidget {
-  final int productId;
-  final Isar isar;
-
-  const _ProductDetailBody({required this.productId, required this.isar});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(context);
-    final theme = Theme.of(context);
-
-    return FutureBuilder<Product?>(
-      future: isar.products.get(productId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final product = snapshot.data;
+      data: (product) {
         if (product == null) {
           return Scaffold(
             appBar: AppBar(),

@@ -46,6 +46,7 @@ class Payment {
   String transactionId;
   String note;
   String groupId;
+  @Index()
   DateTime? paidAt;
   DateTime? createdAt;
 

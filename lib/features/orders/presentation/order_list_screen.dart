@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/order_pages_provider.dart';
 import '../providers/order_provider.dart';
-import '../../../data/models/order.dart';
 import '../../../data/services/csv_export_service.dart';
+import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
@@ -22,28 +23,25 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   static const _tabCount = 5;
+  bool _exporting = false;
 
   List<String> _tabLabels(BuildContext context) {
     final s = AppStrings.of(context);
     return [s.all, s.pending, s.tr('active'), s.completed, s.cancelled];
   }
 
-  List<int> _getCounts(List<Order> orders) {
-    final regular = orders.where((o) => !o.isReturn).toList();
-    int pending = 0, active = 0, completed = 0, cancelled = 0;
-    for (final o in regular) {
-      switch (o.orderStatus) {
-        case OrderStatus.pending:
-          pending++;
-        case OrderStatus.confirmed || OrderStatus.shipped:
-          active++;
-        case OrderStatus.completed:
-          completed++;
-        case OrderStatus.cancelled:
-          cancelled++;
-      }
+  /// Exports every order, not just the loaded pages.
+  Future<void> _exportCsv() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final isar = await ref.read(isarProvider.future);
+      final orders = await loadAllOrdersNewestFirst(isar);
+      if (orders.isEmpty) return;
+      await CsvExportService().exportOrders(orders);
+    } finally {
+      if (mounted) setState(() => _exporting = false);
     }
-    return [regular.length, pending, active, completed, cancelled];
   }
 
   @override
@@ -61,7 +59,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    final ordersAsync = ref.watch(ordersProvider);
+    final countsAsync = ref.watch(orderTabCountsProvider);
     final tabs = _tabLabels(context);
 
     return Scaffold(
@@ -71,16 +69,11 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
           IconButton(
             icon: const ThinIcon(tabler.FileDownload.new),
             tooltip: s.exportCsv,
-            onPressed: () async {
-              final orders = ref.read(ordersProvider).value ?? [];
-              if (orders.isEmpty) return;
-              await CsvExportService().exportOrders(orders);
-            },
+            onPressed: _exporting ? null : _exportCsv,
           ),
         ],
-        bottom: ordersAsync.whenOrNull(
-              data: (allOrders) {
-                final counts = _getCounts(allOrders);
+        bottom: countsAsync.whenOrNull(
+              data: (counts) {
                 return TabBar(
                   controller: _tabController,
                   isScrollable: true,
@@ -105,39 +98,11 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
               tabs: tabs.map((t) => Tab(text: t)).toList(),
             ),
       ),
-      body: ordersAsync.when(
-        data: (allOrders) {
-          final regular = allOrders.where((o) => !o.isReturn).toList();
-
-          final pending = regular
-              .where((o) => o.orderStatus == OrderStatus.pending)
-              .toList();
-          final active = regular
-              .where((o) =>
-                  o.orderStatus == OrderStatus.confirmed ||
-                  o.orderStatus == OrderStatus.shipped)
-              .toList();
-          final completed = regular
-              .where((o) => o.orderStatus == OrderStatus.completed)
-              .toList();
-          final cancelled = regular
-              .where((o) => o.orderStatus == OrderStatus.cancelled)
-              .toList();
-
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _OrderList(orders: regular),
-              _OrderList(orders: pending),
-              _OrderList(orders: active),
-              _OrderList(orders: completed),
-              _OrderList(orders: cancelled),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) =>
-            Center(child: Text('${AppStrings.of(context).error}: $e')),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          for (final tab in OrderTab.values) _OrderList(tab: tab),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/orders/add'),
@@ -186,40 +151,89 @@ class _TabLabel extends StatelessWidget {
   }
 }
 
-class _OrderList extends ConsumerWidget {
-  final List<Order> orders;
+/// One tab's orders, paged: nearing the end of the loaded rows loads the next
+/// page, with a spinner row below while more exist.
+class _OrderList extends ConsumerStatefulWidget {
+  final OrderTab tab;
 
-  const _OrderList({required this.orders});
+  const _OrderList({required this.tab});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(context);
-    if (orders.isEmpty) {
-      return EmptyState(
-        icon: tabler.Receipt.new,
-        title: s.noDataFound,
-        subtitle: s.addFirstOrder,
-      );
-    }
+  ConsumerState<_OrderList> createState() => _OrderListState();
+}
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: orders.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (ctx, i) {
-        final order = orders[i];
-        return AnimatedEntrance(
-          index: i,
-          child: OrderCard(
-            order: order,
-            onStatusChange: (status) {
-              ref
-                  .read(orderProvider.notifier)
-                  .updateStatus(order.id, status);
-            },
-          ),
+class _OrderListState extends ConsumerState<_OrderList> {
+  /// How close to the last loaded row the next page is requested.
+  static const _loadMoreAhead = 20;
+  bool _loadMoreScheduled = false;
+
+  // After the frame: the notifier's state can't change during a build.
+  void _loadMoreSoon() {
+    if (_loadMoreScheduled) return;
+    _loadMoreScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMoreScheduled = false;
+      if (mounted) ref.read(orderPagesProvider(widget.tab).notifier).loadMore();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    return ref.watch(orderPagesProvider(widget.tab)).when(
+          data: (page) {
+            final orders = page.orders;
+            if (orders.isEmpty) {
+              return EmptyState(
+                icon: tabler.Receipt.new,
+                title: s.noDataFound,
+                subtitle: s.addFirstOrder,
+              );
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length + (page.hasMore ? 1 : 0),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (ctx, i) {
+                if (page.hasMore && i >= orders.length - _loadMoreAhead) {
+                  _loadMoreSoon();
+                }
+                if (i == orders.length) return const _LoadingMoreRow();
+                final order = orders[i];
+                return AnimatedEntrance(
+                  index: i,
+                  child: OrderCard(
+                    order: order,
+                    onStatusChange: (status) {
+                      ref
+                          .read(orderProvider.notifier)
+                          .updateStatus(order.id, status);
+                    },
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('${s.error}: $e')),
         );
-      },
+  }
+}
+
+class _LoadingMoreRow extends StatelessWidget {
+  const _LoadingMoreRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: SizedBox.square(
+          dimension: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
     );
   }
 }

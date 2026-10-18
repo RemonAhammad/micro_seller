@@ -53,6 +53,7 @@ class Order {
 
   Id id;
   String orderNumber;
+  @Index()
   int customerId;
   String customerName;
   String customerPhone;
@@ -102,6 +103,7 @@ class Order {
   int recurringIntervalDays;
   DateTime? nextRecurringDate;
 
+  @Index()
   DateTime? createdAt;
   DateTime? updatedAt;
 

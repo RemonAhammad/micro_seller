@@ -66,6 +66,20 @@ class SupplierNotifier extends _$SupplierNotifier {
   @override
   FutureOr<void> build() {}
 
+  /// The products [items] refer to, by id, read with one `getAll` — for the
+  /// loops that update several products in one writeTxn. Missing products
+  /// are left out.
+  Future<Map<int, Product>> _productsById(
+      Isar isar, List<PurchaseItem> items) async {
+    final ids = {for (final item in items) item.productId}.toList();
+    final products = <int, Product>{};
+    if (ids.isEmpty) return products;
+    for (final p in await isar.products.getAll(ids)) {
+      if (p != null) products[p.id] = p;
+    }
+    return products;
+  }
+
   Future<void> addSupplier(Supplier supplier) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
@@ -96,16 +110,18 @@ class SupplierNotifier extends _$SupplierNotifier {
             .filter()
             .supplierIdEqualTo(id)
             .findAll();
-        for (final p in purchases) {
-          await isar.purchases.put(p.copyWith(supplierId: 0));
+        if (purchases.isNotEmpty) {
+          await isar.purchases.putAll(
+              [for (final p in purchases) p.copyWith(supplierId: 0)]);
         }
         // Unlink products linked to this supplier (set supplierId = 0)
         final products = await isar.products
             .filter()
             .supplierIdEqualTo(id)
             .findAll();
-        for (final p in products) {
-          await isar.products.put(p.copyWith(supplierId: 0));
+        if (products.isNotEmpty) {
+          await isar.products.putAll(
+              [for (final p in products) p.copyWith(supplierId: 0)]);
         }
         await isar.suppliers.delete(id);
       });
@@ -139,28 +155,42 @@ class SupplierNotifier extends _$SupplierNotifier {
           final reason = purchase.supplierName.isNotEmpty
               ? 'Purchase from ${purchase.supplierName}'
               : 'Purchase';
-          for (final item in purchase.items) {
-            if (item.productId <= 0 || item.qty <= 0) continue;
-            final product = await isar.products.get(item.productId);
-            if (product != null) {
-              final updated = product.copyWith(
-                stockQty: product.stockQty + item.qty,
-                costPrice: updateCostPrice && item.unitCost > 0
-                    ? item.unitCost
-                    : product.costPrice,
-                updatedAt: DateTime.now(),
-              );
-              await isar.products.put(updated);
-              await isar.stockMovements.put(StockMovement(
-                productId: item.productId,
-                productName: item.productName,
-                type: StockMovementType.restock,
-                qty: item.qty,
-                reason: reason,
-                supplierId: purchase.supplierId,
-                createdAt: DateTime.now(),
-              ));
-            }
+          final items = [
+            for (final item in purchase.items)
+              if (item.productId > 0 && item.qty > 0) item,
+          ];
+          // Batched: one getAll, then one putAll each for products and
+          // movements. Items apply in order to the in-memory product, so two
+          // lines of one product compose (stock adds up, the last cost wins)
+          // exactly as the sequential get → put did.
+          final products = await _productsById(isar, items);
+          final changed = <int>{};
+          final movements = <StockMovement>[];
+          for (final item in items) {
+            final product = products[item.productId];
+            if (product == null) continue;
+            products[item.productId] = product.copyWith(
+              stockQty: product.stockQty + item.qty,
+              costPrice: updateCostPrice && item.unitCost > 0
+                  ? item.unitCost
+                  : product.costPrice,
+              updatedAt: DateTime.now(),
+            );
+            changed.add(item.productId);
+            movements.add(StockMovement(
+              productId: item.productId,
+              productName: item.productName,
+              type: StockMovementType.restock,
+              qty: item.qty,
+              reason: reason,
+              supplierId: purchase.supplierId,
+              createdAt: DateTime.now(),
+            ));
+          }
+          if (changed.isNotEmpty) {
+            await isar.products
+                .putAll([for (final id in changed) products[id]!]);
+            await isar.stockMovements.putAll(movements);
           }
         }
       });
@@ -187,24 +217,35 @@ class SupplierNotifier extends _$SupplierNotifier {
           }
         }
 
-        // Reverse stock (deduct what was added)
-        for (final item in purchase.items) {
-          if (item.productId <= 0 || item.qty <= 0) continue;
-          final product = await isar.products.get(item.productId);
-          if (product != null) {
-            await isar.products.put(product.copyWith(
-              stockQty: (product.stockQty - item.qty).clamp(0, 999999),
-              updatedAt: DateTime.now(),
-            ));
-            await isar.stockMovements.put(StockMovement(
-              productId: item.productId,
-              productName: item.productName,
-              type: StockMovementType.adjustment,
-              qty: -item.qty,
-              reason: 'Deleted purchase',
-              createdAt: DateTime.now(),
-            ));
-          }
+        // Reverse stock (deduct what was added) — batched like
+        // createPurchase; the 0-clamp applies per item, in order.
+        final items = [
+          for (final item in purchase.items)
+            if (item.productId > 0 && item.qty > 0) item,
+        ];
+        final products = await _productsById(isar, items);
+        final changed = <int>{};
+        final movements = <StockMovement>[];
+        for (final item in items) {
+          final product = products[item.productId];
+          if (product == null) continue;
+          products[item.productId] = product.copyWith(
+            stockQty: (product.stockQty - item.qty).clamp(0, 999999),
+            updatedAt: DateTime.now(),
+          );
+          changed.add(item.productId);
+          movements.add(StockMovement(
+            productId: item.productId,
+            productName: item.productName,
+            type: StockMovementType.adjustment,
+            qty: -item.qty,
+            reason: 'Deleted purchase',
+            createdAt: DateTime.now(),
+          ));
+        }
+        if (changed.isNotEmpty) {
+          await isar.products.putAll([for (final id in changed) products[id]!]);
+          await isar.stockMovements.putAll(movements);
         }
 
         await isar.purchases.delete(id);

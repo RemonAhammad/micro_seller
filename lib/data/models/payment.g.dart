@@ -77,6 +77,19 @@ const PaymentSchema = CollectionSchema(
         ),
       ],
     ),
+    r'paidAt': IndexSchema(
+      id: -701685063105958775,
+      name: r'paidAt',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'paidAt',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
   },
   links: {},
   embeddedSchemas: {},
@@ -218,6 +231,14 @@ extension PaymentQueryWhereSort on QueryBuilder<Payment, Payment, QWhere> {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'orderId'),
+      );
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhere> anyPaidAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'paidAt'),
       );
     });
   }
@@ -496,6 +517,132 @@ extension PaymentQueryWhere on QueryBuilder<Payment, Payment, QWhereClause> {
           lower: [lowerOrderId],
           includeLower: includeLower,
           upper: [upperOrderId],
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhereClause> paidAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'paidAt', value: [null]),
+      );
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhereClause> paidAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'paidAt',
+          lower: [null],
+          includeLower: false,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhereClause> paidAtEqualTo(
+    DateTime? paidAt,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'paidAt', value: [paidAt]),
+      );
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhereClause> paidAtNotEqualTo(
+    DateTime? paidAt,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'paidAt',
+                lower: [],
+                upper: [paidAt],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'paidAt',
+                lower: [paidAt],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'paidAt',
+                lower: [paidAt],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'paidAt',
+                lower: [],
+                upper: [paidAt],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhereClause> paidAtGreaterThan(
+    DateTime? paidAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'paidAt',
+          lower: [paidAt],
+          includeLower: include,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhereClause> paidAtLessThan(
+    DateTime? paidAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'paidAt',
+          lower: [],
+          upper: [paidAt],
+          includeUpper: include,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Payment, Payment, QAfterWhereClause> paidAtBetween(
+    DateTime? lowerPaidAt,
+    DateTime? upperPaidAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'paidAt',
+          lower: [lowerPaidAt],
+          includeLower: includeLower,
+          upper: [upperPaidAt],
           includeUpper: includeUpper,
         ),
       );

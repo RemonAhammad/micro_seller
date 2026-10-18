@@ -19,6 +19,7 @@ import 'package:micro_seller/data/models/order.dart';
 import 'package:micro_seller/data/models/payment.dart';
 import 'package:micro_seller/data/models/stock_movement.dart';
 import 'package:micro_seller/data/services/dues_service.dart';
+import 'package:micro_seller/data/services/db_worker.dart';
 import 'package:micro_seller/data/services/isar_service.dart';
 import 'package:micro_seller/data/services/local_backup_service.dart';
 import 'package:micro_seller/features/customers/providers/dues_provider.dart';
@@ -71,6 +72,7 @@ void main() {
   setUpAll(() async {
     if (coreLibrary == null) return;
     await Isar.initializeIsarCore(libraries: {Abi.current(): coreLibrary});
+    dbWorkerCoreLibrary = coreLibrary; // providers load on worker isolates
     dir = await Directory.systemTemp.createTemp('micro_seller_perf');
     isar = await Isar.open(kIsarSchemas,
         directory: dir.path, name: 'perf_test', inspector: false);

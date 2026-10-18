@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/payment.dart';
+import '../../../data/services/db_worker.dart';
 import '../../../data/services/dues_service.dart';
 import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
@@ -37,71 +38,67 @@ class CustomerDue {
   }
 }
 
-/// Every customer who owes money, computed live from orders. Re-emits
-/// whenever orders, customers or payments change.
+/// Every customer who owes money, computed from orders — a synchronous job
+/// for a worker isolate ([runDbJob]), shared by the Due Book and the Dues
+/// report so the two can't disagree.
+List<CustomerDue> loadDuesSync(Isar db) => db.txnSync(() {
+      // A filter (not an index where-clause) keeps id order, so each
+      // customer's orders, their sums and the final tie order are stable.
+      final orders = db.orders.filter().customerIdGreaterThan(0).findAllSync();
+      final byCustomer = <int, List<Order>>{};
+      for (final o in orders) {
+        byCustomer.putIfAbsent(o.customerId, () => []).add(o);
+      }
+
+      final debts = <int, double>{};
+      for (final entry in byCustomer.entries) {
+        final totalDue = computeNetDue(entry.value);
+        if (totalDue > 0) debts[entry.key] = totalDue;
+      }
+      if (debts.isEmpty) return <CustomerDue>[];
+
+      final ids = debts.keys.toList();
+      final customers = db.customers.getAllSync(ids);
+      // Latest non-null paidAt of a positive payment per debtor — what
+      // sortByPaidAtDesc().findFirst() returned (nulls sort last). Two
+      // property reads instead of loading payments or one lookup per debtor.
+      final positive = db.payments.filter().amountGreaterThan(0);
+      final payer = positive.customerIdProperty().findAllSync();
+      final paidAt = positive.paidAtProperty().findAllSync();
+      final lastPaidAt = <int, DateTime>{};
+      for (var i = 0; i < payer.length; i++) {
+        final at = paidAt[i];
+        if (at == null || !debts.containsKey(payer[i])) continue;
+        final prev = lastPaidAt[payer[i]];
+        if (prev == null || at.isAfter(prev)) lastPaidAt[payer[i]] = at;
+      }
+
+      final result = <CustomerDue>[];
+      for (var i = 0; i < ids.length; i++) {
+        final customer = customers[i];
+        if (customer == null) continue;
+        result.add(CustomerDue(
+          customer: customer,
+          orderDues: computeOrderDues(byCustomer[ids[i]]!),
+          totalDue: debts[ids[i]]!,
+          lastPaymentAt: lastPaidAt[ids[i]],
+        ));
+      }
+      result.sort((a, b) => b.daysOutstanding.compareTo(a.daysOutstanding));
+      return result;
+    });
+
+/// Every customer who owes money, live. Re-emits whenever orders or
+/// customers change; computed on a worker isolate.
 @riverpod
 Stream<List<CustomerDue>> dues(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-
-  Future<List<CustomerDue>> load() => isar.txn(() async {
-        // A filter (not an index where-clause) keeps id order, so each
-        // customer's orders, their sums and the final tie order are stable.
-        final orders =
-            await isar.orders.filter().customerIdGreaterThan(0).findAll();
-        final byCustomer = <int, List<Order>>{};
-        for (final o in orders) {
-          byCustomer.putIfAbsent(o.customerId, () => []).add(o);
-        }
-
-        final debts = <int, double>{};
-        for (final entry in byCustomer.entries) {
-          final totalDue = computeNetDue(entry.value);
-          if (totalDue > 0) debts[entry.key] = totalDue;
-        }
-        // anyOf over no ids would match every payment.
-        if (debts.isEmpty) return <CustomerDue>[];
-
-        // One batched read and one indexed payments query, instead of a
-        // customer lookup and a full payments scan per debtor.
-        final ids = debts.keys.toList();
-        final customers = await isar.customers.getAll(ids);
-        final payments = await isar.payments
-            .where()
-            .anyOf(ids, (q, int id) => q.customerIdEqualTo(id))
-            .filter()
-            .amountGreaterThan(0)
-            .findAll();
-        // Latest non-null paidAt — what sortByPaidAtDesc().findFirst()
-        // returned per customer (nulls sort last).
-        final lastPaidAt = <int, DateTime>{};
-        for (final p in payments) {
-          final at = p.paidAt;
-          if (at == null) continue;
-          final prev = lastPaidAt[p.customerId];
-          if (prev == null || at.isAfter(prev)) lastPaidAt[p.customerId] = at;
-        }
-
-        final result = <CustomerDue>[];
-        for (var i = 0; i < ids.length; i++) {
-          final customer = customers[i];
-          if (customer == null) continue;
-          result.add(CustomerDue(
-            customer: customer,
-            orderDues: computeOrderDues(byCustomer[ids[i]]!),
-            totalDue: debts[ids[i]]!,
-            lastPaymentAt: lastPaidAt[ids[i]],
-          ));
-        }
-        result.sort((a, b) => b.daysOutstanding.compareTo(a.daysOutstanding));
-        return result;
-      });
-
   // Payments only change alongside orders, but customers can be renamed or
   // deleted independently — watch both. One order save writes both
   // collections; reloadOn turns that (and any burst) into a single reload.
   yield* reloadOn(
     mergeChanges([isar.orders.watchLazy(), isar.customers.watchLazy()]),
-    load,
+    () => runDbJob(isar, loadDuesSync),
   );
 }
 
@@ -166,8 +163,12 @@ Stream<double> duesCollectedThisMonth(Ref ref) async* {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month);
     final end = DateTime(now.year, now.month + 1);
-    final payments =
-        await isar.payments.filter().paidAtBetween(start, end).findAll();
+    // paidAt index, then id order — the order the sum always added them in.
+    final payments = (await isar.payments
+        .where()
+        .paidAtBetween(start, end)
+        .findAll())
+      ..sort((a, b) => a.id.compareTo(b.id));
     final orders = await isar.orders
         .getAll(payments.map((p) => p.orderId).toSet().toList());
     final byId = {
@@ -185,6 +186,9 @@ Stream<double> duesCollectedThisMonth(Ref ref) async* {
 Stream<List<Payment>> customerPayments(Ref ref, int customerId) async* {
   final isar = await ref.watch(isarProvider.future);
   final query =
-      isar.payments.filter().customerIdEqualTo(customerId).sortByPaidAtDesc();
+      isar.payments.where().customerIdEqualTo(customerId).sortByPaidAtDesc()
+          // Index lookups don't return equal keys in id order; tie-break
+          // explicitly, as the old id-ordered filter scan did.
+          .thenById();
   yield* reloadOn(isar.payments.watchLazy(), query.findAll);
 }

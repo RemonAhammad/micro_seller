@@ -20,6 +20,7 @@ class StockMovement {
   });
 
   Id id;
+  @Index()
   int productId;
   String productName;
 
@@ -32,6 +33,7 @@ class StockMovement {
   /// Optional supplier id (0 = not linked to any supplier)
   int supplierId;
 
+  @Index()
   DateTime? createdAt;
 
   @ignore

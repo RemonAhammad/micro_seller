@@ -6,17 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
-import '../../../data/models/category.dart';
-import '../../../data/models/payment.dart';
-import '../../../data/models/trash_entry.dart';
-import '../../../data/models/customer.dart';
-import '../../../data/models/expense.dart';
-import '../../../data/models/order.dart';
-import '../../../data/models/product.dart';
-import '../../../data/models/stock_movement.dart';
-import '../../../data/models/supplier.dart';
-import '../../../data/models/purchase.dart';
-import '../../../data/models/cash_register.dart';
 import '../../../data/services/auto_backup_runner.dart';
 import '../../../data/services/drive_service.dart';
 import '../../../data/services/local_backup_service.dart';
@@ -302,22 +291,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     if (!passed || !mounted) return;
 
     final isar = await ref.read(isarProvider.future);
-    await isar.writeTxn(() async {
-      await isar.products.clear();
-      await isar.orders.clear();
-      await isar.customers.clear();
-      await isar.expenses.clear();
-      await isar.stockMovements.clear();
-      await isar.categories.clear();
-      await isar.suppliers.clear();
-      await isar.purchases.clear();
-      await isar.cashRegisters.clear();
-      await isar.payments.clear();
-      // "Clear all" has to mean all: leaving the recycle bin behind would
-      // both retain data the user asked to wipe and leave entries pointing
-      // at ids that no longer exist.
-      await isar.trashEntries.clear();
-    });
+    // "Clear all" has to mean all: every collection, the recycle bin
+    // included (leaving it would both retain data the user asked to wipe and
+    // leave entries pointing at ids that no longer exist). The same clear as
+    // a restore, in one transaction on a worker isolate.
+    await _localBackupService.clearAll(isar);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).allDataCleared)));

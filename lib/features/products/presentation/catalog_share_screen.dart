@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -292,6 +291,11 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
   Future<void> _run(Future<void> Function() task) async {
     setState(() => _busy = true);
     try {
+      // Paint the progress bar before any work (each page capture starts
+      // with a synchronous build/layout on this isolate); after that the
+      // work yields — photo decode, PNG/JPEG encode, PDF assembly on a
+      // background isolate — so the bar keeps animating.
+      await WidgetsBinding.instance.endOfFrame;
       await task();
     } catch (e) {
       if (mounted) {

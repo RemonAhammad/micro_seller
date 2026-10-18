@@ -22,6 +22,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -45,6 +46,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   final _transactionIdCtrl = TextEditingController();
   final _deliveryAddressCtrl = TextEditingController();
   final _taxRateCtrl = TextEditingController();
+  // Held in State: one made in build was swapped on every rebuild (resetting
+  // the cursor) and never disposed.
+  final _recurringDaysCtrl = TextEditingController(text: '30');
+
+  /// The fields the totals depend on. Only the widgets that show totals listen
+  /// to them, so a keystroke doesn't rebuild the whole form.
+  late final Listenable _moneyFields = Listenable.merge([_discountCtrl, _deliveryCtrl, _taxRateCtrl, _amountPaidCtrl]);
 
   Customer? _selectedCustomer;
   final List<OrderItem> _items = [];
@@ -52,7 +60,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   PaymentMethod _paymentMethod = PaymentMethod.cash;
   DateTime? _estimatedDeliveryDate;
   bool _isRecurring = false;
-  int _recurringDays = 30;
   bool _isLoading = false;
 
   Order? _existingOrder;
@@ -113,7 +120,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _deliveryAddressCtrl.text = order.deliveryAddress;
     _estimatedDeliveryDate = order.estimatedDeliveryDate;
     _isRecurring = order.isRecurring;
-    _recurringDays = order.recurringIntervalDays > 0 ? order.recurringIntervalDays : 30;
+    _recurringDaysCtrl.text = '${order.recurringIntervalDays > 0 ? order.recurringIntervalDays : 30}';
     _orderStatus = order.orderStatus;
     _paymentMethod = order.paymentMethod;
     setState(() {});
@@ -128,30 +135,30 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _transactionIdCtrl.dispose();
     _deliveryAddressCtrl.dispose();
     _taxRateCtrl.dispose();
+    _recurringDaysCtrl.dispose();
     super.dispose();
   }
 
-  double get _subtotal => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
-  double get _discount => double.tryParse(_discountCtrl.text) ?? 0;
-  double get _delivery => double.tryParse(_deliveryCtrl.text) ?? 0;
+  /// Parses the money fields and sums the items once. Each place that shows a
+  /// total reads one of these instead of a chain of getters.
+  _FormTotals _readTotals() {
+    final subtotal = _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+    final discount = double.tryParse(_discountCtrl.text) ?? 0;
+    final delivery = double.tryParse(_deliveryCtrl.text) ?? 0;
+    final taxRate = double.tryParse(_taxRateCtrl.text) ?? 0;
+    final totals = orderTotals(subtotal: subtotal, discount: discount, taxRate: taxRate, delivery: delivery);
+    return _FormTotals(
+      subtotal: subtotal,
+      discount: discount,
+      delivery: delivery,
+      taxRate: taxRate,
+      tax: totals.tax,
+      total: totals.total,
+      paid: double.tryParse(_amountPaidCtrl.text) ?? 0,
+    );
+  }
 
-  double get _taxRate => double.tryParse(_taxRateCtrl.text) ?? 0;
-
-  ({double tax, double total}) get _totals => orderTotals(
-        subtotal: _subtotal,
-        discount: _discount,
-        taxRate: _taxRate,
-        delivery: _delivery,
-      );
-
-  double get _taxAmount => _totals.tax;
-
-  double get _total => _totals.total;
-  double get _amountPaid => double.tryParse(_amountPaidCtrl.text) ?? 0;
-
-  /// What the customer still owes on this order — goes to the Due Book.
-  double get _dueAmount => (_total - _amountPaid).clamp(0, double.infinity);
-  bool get _overpaid => _amountPaid > _total + 0.005;
+  int get _recurringDays => int.tryParse(_recurringDaysCtrl.text) ?? 30;
 
   // ─── Customer ────────────────────────────────────────────────────────
 
@@ -240,7 +247,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       return;
     }
 
-    if (_overpaid) {
+    final t = _readTotals();
+    if (t.overpaid) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).amountPaidExceedsTotal)));
       return;
     }
@@ -249,9 +257,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
     try {
       final notifier = ref.read(orderProvider.notifier);
-      final amountPaid = double.tryParse(_amountPaidCtrl.text) ?? 0;
+      final amountPaid = t.paid;
+      final recurringDays = _recurringDays;
 
-      final paymentStatus = amountPaid >= _total
+      final paymentStatus = amountPaid >= t.total
           ? PaymentStatus.paid
           : amountPaid > 0
           ? PaymentStatus.partial
@@ -263,11 +272,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           customerName: _selectedCustomer?.name ?? '',
           customerPhone: _selectedCustomer?.phone ?? '',
           items: _items,
-          subtotal: _subtotal,
-          discountAmount: _discount,
-          deliveryFee: _delivery,
-          taxAmount: _taxAmount,
-          totalAmount: _total,
+          subtotal: t.subtotal,
+          discountAmount: t.discount,
+          deliveryFee: t.delivery,
+          taxAmount: t.tax,
+          totalAmount: t.total,
           amountPaid: amountPaid,
           paymentStatus: paymentStatus,
           paymentMethod: _paymentMethod,
@@ -277,8 +286,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           deliveryAddress: _deliveryAddressCtrl.text.trim(),
           estimatedDeliveryDate: _estimatedDeliveryDate,
           isRecurring: _isRecurring,
-          recurringIntervalDays: _isRecurring ? _recurringDays : 0,
-          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: _recurringDays)) : null,
+          recurringIntervalDays: _isRecurring ? recurringDays : 0,
+          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: recurringDays)) : null,
           updatedAt: DateTime.now(),
         );
 
@@ -299,11 +308,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           customerName: _selectedCustomer?.name ?? '',
           customerPhone: _selectedCustomer?.phone ?? '',
           items: _items,
-          subtotal: _subtotal,
-          discountAmount: _discount,
-          deliveryFee: _delivery,
-          taxAmount: _taxAmount,
-          totalAmount: _total,
+          subtotal: t.subtotal,
+          discountAmount: t.discount,
+          deliveryFee: t.delivery,
+          taxAmount: t.tax,
+          totalAmount: t.total,
           amountPaid: amountPaid,
           paymentStatus: paymentStatus,
           paymentMethod: _paymentMethod,
@@ -313,8 +322,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           deliveryAddress: _deliveryAddressCtrl.text.trim(),
           estimatedDeliveryDate: _estimatedDeliveryDate,
           isRecurring: _isRecurring,
-          recurringIntervalDays: _isRecurring ? _recurringDays : 0,
-          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: _recurringDays)) : null,
+          recurringIntervalDays: _isRecurring ? recurringDays : 0,
+          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: recurringDays)) : null,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -355,16 +364,21 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final currencySymbol = settings.currencySymbol;
     final taxRate = settings.taxRate;
 
-    Future<void> withProgress(Future<void> Function() task) async {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
+    // Rendered once per sheet and shared by Share / Download / Print. Dropped
+    // on failure so the next tap retries instead of replaying the error.
+    Future<Uint8List>? receipt;
+    Future<Uint8List> receiptBytes() async {
+      final pending = receipt ??= pdfService.generateOrderReceipt(
+        order,
+        shopName: shopName,
+        currencySymbol: currencySymbol,
+        taxRate: taxRate,
       );
       try {
-        await task();
-      } finally {
-        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+        return await pending;
+      } catch (_) {
+        if (identical(receipt, pending)) receipt = null;
+        rethrow;
       }
     }
 
@@ -379,13 +393,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.sharePdf,
             color: Colors.teal,
             onTap: () async {
-              await withProgress(() async {
-                final bytes = await pdfService.generateOrderReceipt(
-                  order,
-                  shopName: shopName,
-                  currencySymbol: currencySymbol,
-                  taxRate: taxRate,
-                );
+              await runWithProgress(context, () async {
+                final bytes = await receiptBytes();
                 final dir = await getTemporaryDirectory();
                 final file = File('${dir.path}/${order.orderNumber}.pdf');
                 await file.writeAsBytes(bytes);
@@ -399,13 +408,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.downloadPdf,
             color: Colors.blue,
             onTap: () async {
-              final bytes = await pdfService.generateOrderReceipt(
-                order,
-                shopName: shopName,
-                currencySymbol: currencySymbol,
-                taxRate: taxRate,
-              );
-
+              // Folder first: cancelling the picker shouldn't cost a render.
               var downloadDir = settings.downloadDirectory;
               if (downloadDir.isEmpty) {
                 if (!mounted) return;
@@ -414,13 +417,18 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 downloadDir = picked;
                 await ref.read(settingsProvider.notifier).updateDownloadDirectory(downloadDir);
               }
+              if (!mounted) return;
 
-              final file = File('$downloadDir/${order.orderNumber}_invoice.pdf');
-              await file.writeAsBytes(bytes);
+              final path = await runWithProgress(context, () async {
+                final file = File('$downloadDir/${order.orderNumber}_invoice.pdf');
+                await file.writeAsBytes(await receiptBytes());
+                return file.path;
+              });
+              // After the spinner closes: runWithProgress pops the top route.
               if (mounted) {
                 await showPdfSavedSheet(
                   context: context,
-                  filePath: file.path,
+                  filePath: path,
                   savedToDirectory: downloadDir,
                 );
               }
@@ -432,12 +440,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.print,
             color: Colors.indigo,
             onTap: () async {
-              final bytes = await pdfService.generateOrderReceipt(
-                order,
-                shopName: shopName,
-                currencySymbol: currencySymbol,
-                taxRate: taxRate,
-              );
+              final bytes = await runWithProgress(context, receiptBytes);
               await Printing.layoutPdf(onLayout: (_) async => bytes);
             },
           ),
@@ -581,8 +584,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
                             decoration: const InputDecoration(isDense: true),
-                            controller: TextEditingController(text: '$_recurringDays'),
-                            onChanged: (v) => _recurringDays = int.tryParse(v) ?? 30,
+                            controller: _recurringDaysCtrl,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -810,7 +812,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 controller: _discountCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-                onChanged: (_) => setState(() {}),
               ),
             ),
             const SizedBox(width: 12),
@@ -820,20 +821,25 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 controller: _deliveryCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-                onChanged: (_) => setState(() {}),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          label: s.taxVat,
-          controller: _taxRateCtrl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-          onChanged: (_) => setState(() {}),
-          prefixIcon: const ThinIcon(tabler.Percentage.new, size: 18),
-          helperText: _taxAmount > 0 ? 'Tax: ${CurrencyFormatter.format(_taxAmount)}' : null,
+        // Rebuilt on its own: the helper text shows the computed tax.
+        ListenableBuilder(
+          listenable: _moneyFields,
+          builder: (context, _) {
+            final tax = _readTotals().tax;
+            return AppTextField(
+              label: s.taxVat,
+              controller: _taxRateCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+              prefixIcon: const ThinIcon(tabler.Percentage.new, size: 18),
+              helperText: tax > 0 ? 'Tax: ${CurrencyFormatter.format(tax)}' : null,
+            );
+          },
         ),
       ],
     );
@@ -889,21 +895,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       PaymentMethod.other: s.other,
     };
 
-    final Widget status;
-    if (_total <= 0) {
-      status = const SizedBox.shrink();
-    } else if (_overpaid) {
-      status = _paymentStatusLine(tabler.AlertCircle.new, s.amountPaidExceedsTotal, cs.error);
-    } else if (_dueAmount <= 0.005) {
-      status = _paymentStatusLine(tabler.CircleCheck.new, s.paidInFull, AppColors.paymentPaid);
-    } else {
-      status = _paymentStatusLine(
-        tabler.Notebook.new,
-        s.goesToDueBook(CurrencyFormatter.format(_dueAmount)),
-        AppColors.paymentPartial,
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -919,25 +910,43 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 controller: _amountPaidCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-                onChanged: (_) => setState(() {}),
               ),
             ),
             const SizedBox(width: 8),
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: TextButton(
-                onPressed: _total > 0
-                    ? () => setState(
-                        () => _amountPaidCtrl.text = _total.toStringAsFixed(_total == _total.roundToDouble() ? 0 : 2),
-                      )
-                    : null,
+              child: ListenableBuilder(
+                listenable: _moneyFields,
+                builder: (context, child) {
+                  final total = _readTotals().total;
+                  return TextButton(
+                    // Setting the text notifies _moneyFields; no setState needed.
+                    onPressed: total > 0
+                        ? () => _amountPaidCtrl.text = total.toStringAsFixed(total == total.roundToDouble() ? 0 : 2)
+                        : null,
+                    child: child!,
+                  );
+                },
                 child: Text(s.payFull),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        status,
+        ListenableBuilder(
+          listenable: _moneyFields,
+          builder: (context, _) {
+            final t = _readTotals();
+            if (t.total <= 0) return const SizedBox.shrink();
+            if (t.overpaid) return _paymentStatusLine(tabler.AlertCircle.new, s.amountPaidExceedsTotal, cs.error);
+            if (t.due <= 0.005) return _paymentStatusLine(tabler.CircleCheck.new, s.paidInFull, AppColors.paymentPaid);
+            return _paymentStatusLine(
+              tabler.Notebook.new,
+              s.goesToDueBook(CurrencyFormatter.format(t.due)),
+              AppColors.paymentPartial,
+            );
+          },
+        ),
         const SizedBox(height: 12),
         Text(s.paymentMethod, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
@@ -997,34 +1006,45 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Summary rows
-          _summaryRow(s.subtotal, CurrencyFormatter.format(_subtotal), theme),
-          if (_discount > 0)
-            _summaryRow(s.discount, '- ${CurrencyFormatter.format(_discount)}', theme, valueColor: Colors.green),
-          if (_taxRate > 0)
-            _summaryRow(
-              '${s.tax} (${_taxRate.toStringAsFixed(_taxRate == _taxRate.roundToDouble() ? 0 : 1)}%)',
-              CurrencyFormatter.format(_taxAmount),
-              theme,
-            ),
-          if (_delivery > 0) _summaryRow(s.delivery, CurrencyFormatter.format(_delivery), theme),
-          const Divider(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(s.total, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-              Text(
-                CurrencyFormatter.format(_total),
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: cs.primary),
-              ),
-            ],
+          // Summary rows — the only part of the footer that follows the money fields.
+          ListenableBuilder(
+            listenable: _moneyFields,
+            builder: (context, _) {
+              final t = _readTotals();
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _summaryRow(s.subtotal, CurrencyFormatter.format(t.subtotal), theme),
+                  if (t.discount > 0)
+                    _summaryRow(s.discount, '- ${CurrencyFormatter.format(t.discount)}', theme, valueColor: Colors.green),
+                  if (t.taxRate > 0)
+                    _summaryRow(
+                      '${s.tax} (${t.taxRate.toStringAsFixed(t.taxRate == t.taxRate.roundToDouble() ? 0 : 1)}%)',
+                      CurrencyFormatter.format(t.tax),
+                      theme,
+                    ),
+                  if (t.delivery > 0) _summaryRow(s.delivery, CurrencyFormatter.format(t.delivery), theme),
+                  const Divider(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(s.total, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        CurrencyFormatter.format(t.total),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: cs.primary),
+                      ),
+                    ],
+                  ),
+                  if (t.total > 0 && t.paid > 0)
+                    _summaryRow(s.amountPaid, CurrencyFormatter.format(t.paid), theme,
+                        valueColor: AppColors.paymentPaid),
+                  if (t.total > 0 && t.due > 0.005)
+                    _summaryRow(s.due, CurrencyFormatter.format(t.due), theme,
+                        valueColor: AppColors.paymentPartial),
+                ],
+              );
+            },
           ),
-          if (_total > 0 && _amountPaid > 0)
-            _summaryRow(s.amountPaid, CurrencyFormatter.format(_amountPaid), theme,
-                valueColor: AppColors.paymentPaid),
-          if (_total > 0 && _dueAmount > 0.005)
-            _summaryRow(s.due, CurrencyFormatter.format(_dueAmount), theme,
-                valueColor: AppColors.paymentPartial),
           const SizedBox(height: 12),
           AppButton(
             label: _isEditing ? s.editOrder : s.addOrder,
@@ -1054,6 +1074,32 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ),
     );
   }
+}
+
+/// One read of the order form's money: items subtotal, the parsed discount /
+/// delivery / tax-rate / amount-paid fields, and [orderTotals]' tax and total.
+class _FormTotals {
+  final double subtotal;
+  final double discount;
+  final double delivery;
+  final double taxRate;
+  final double tax;
+  final double total;
+  final double paid;
+
+  const _FormTotals({
+    required this.subtotal,
+    required this.discount,
+    required this.delivery,
+    required this.taxRate,
+    required this.tax,
+    required this.total,
+    required this.paid,
+  });
+
+  /// What the customer still owes on this order — goes to the Due Book.
+  double get due => (total - paid).clamp(0, double.infinity);
+  bool get overpaid => paid > total + 0.005;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

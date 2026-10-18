@@ -1,16 +1,19 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:screenshot/screenshot.dart';
+import 'package:flutter_svg/flutter_svg.dart' show SvgStringLoader, vg;
 
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../models/product.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
+import 'pdf_assembly.dart';
+import 'pdf_service.dart';
+import 'widget_capture.dart';
 
 /// What to include on each catalog tile. Sellers share these into chat
 /// threads, so the defaults lean toward "customer-facing": photo and price
@@ -38,15 +41,36 @@ class CatalogOptions {
       );
 }
 
-/// A product paired with its already-decoded image bytes.
+/// A product paired with its already-decoded photo.
 ///
-/// The decoding has to happen *before* the widget is handed to
-/// `captureFromWidget` — see [CatalogService._load].
+/// The decoding has to happen *before* the widget is handed to the capture —
+/// see [CatalogService._load].
 class _CatalogItem {
   final Product product;
-  final Uint8List? image;
 
-  const _CatalogItem(this.product, this.image);
+  /// Decoded at tile size; owned by the generating run, which disposes it.
+  final ui.Image? photo;
+
+  /// The product has a photo file but it couldn't be decoded — drawn as a
+  /// plain grey tile (what `Image.memory`'s errorBuilder used to paint),
+  /// not the placeholder icon.
+  final bool photoUnreadable;
+
+  const _CatalogItem(this.product, {this.photo, this.photoUnreadable = false});
+
+  bool get needsPlaceholder => photo == null && !photoUnreadable;
+}
+
+/// Images one catalog run draws with `RawImage`, so no widget on the page
+/// loads anything asynchronously.
+class _CatalogArt {
+  /// Session-cached by [loadPdfWatermarkIcon]; not owned by the run.
+  final ui.Image? watermarkIcon;
+
+  /// The tile placeholder (Tabler "package"), rasterized once per run.
+  final ui.Image? placeholderIcon;
+
+  const _CatalogArt({this.watermarkIcon, this.placeholderIcon});
 }
 
 /// Generates a shareable product catalog.
@@ -62,11 +86,14 @@ class CatalogService {
 
   /// Tiles per page (2 columns × 3 rows).
   ///
-  /// Pagination is not cosmetic: `captureFromWidget` multiplies `targetSize`
-  /// by `pixelRatio` to size its buffer, so the size must be finite and the
+  /// Pagination is not cosmetic: the capture multiplies `targetSize` by
+  /// `pixelRatio` to size its buffer, so the size must be finite and the
   /// content must fit it. A scrolling/unbounded page silently produces an
   /// undecodable PNG.
   static const int perPage = 6;
+
+  /// Tile photo / placeholder edge, logical px.
+  static const double _photoSize = 84;
 
   /// Single PNG of the first page — the most shareable form in a chat thread.
   ///
@@ -80,15 +107,29 @@ class CatalogService {
     CatalogOptions options = const CatalogOptions(),
   }) async {
     final items = await _load(products.take(perPage).toList(), options);
-    return _capture(
-      items,
-      shopName: shopName,
-      shopPhone: shopPhone,
-      sym: currencySymbol ?? CurrencyFormatter.symbol,
-      options: options,
-      pageIndex: 0,
-      pageCount: 1,
-    );
+    ui.Image? placeholder;
+    try {
+      if (options.includePhotos &&
+          items.any((item) => item.needsPlaceholder)) {
+        placeholder = await _rasterizePlaceholderIcon();
+      }
+      return await _capture(
+        items,
+        shopName: shopName,
+        shopPhone: shopPhone,
+        sym: currencySymbol ?? CurrencyFormatter.symbol,
+        options: options,
+        pageIndex: 0,
+        pageCount: 1,
+        art: _CatalogArt(
+          watermarkIcon: await loadPdfWatermarkIcon(),
+          placeholderIcon: placeholder,
+        ),
+      );
+    } finally {
+      _dispose(items);
+      placeholder?.dispose();
+    }
   }
 
   /// Multi-page PDF — one `pw.Page` per rasterised chunk of [perPage] items.
@@ -109,32 +150,47 @@ class CatalogService {
     }
     if (chunks.isEmpty) chunks.add(const []);
 
-    final pdf = pw.Document();
-    for (var i = 0; i < chunks.length; i++) {
-      final items = await _load(chunks[i], options);
-      final png = await _capture(
-        items,
-        shopName: shopName,
-        shopPhone: shopPhone,
-        sym: sym,
-        options: options,
-        pageIndex: i,
-        pageCount: chunks.length,
-      );
-      final image = pw.MemoryImage(png);
-      pdf.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.zero,
-          build: (_) => pw.Image(
-            image,
-            fit: pw.BoxFit.fitWidth,
-            alignment: pw.Alignment.topCenter,
-          ),
-        ),
-      );
+    final watermarkIcon = await loadPdfWatermarkIcon();
+    ui.Image? placeholder;
+    var placeholderTried = false;
+    final pages = <Uint8List>[];
+    try {
+      for (var i = 0; i < chunks.length; i++) {
+        // One page's photos at a time: decoded, drawn, then released.
+        final items = await _load(chunks[i], options);
+        try {
+          if (!placeholderTried &&
+              options.includePhotos &&
+              items.any((item) => item.needsPlaceholder)) {
+            placeholderTried = true;
+            placeholder = await _rasterizePlaceholderIcon();
+          }
+          pages.add(await _capture(
+            items,
+            shopName: shopName,
+            shopPhone: shopPhone,
+            sym: sym,
+            options: options,
+            pageIndex: i,
+            pageCount: chunks.length,
+            art: _CatalogArt(
+              watermarkIcon: watermarkIcon,
+              placeholderIcon: placeholder,
+            ),
+          ));
+        } finally {
+          _dispose(items);
+        }
+      }
+    } finally {
+      placeholder?.dispose();
     }
-    return pdf.save();
+    // Every page is a fixed full-canvas SizedBox on an opaque white
+    // Material → JPEG.
+    return assemblePdf(pages, jpegPages: (
+      width: (_pageWidth * kPdfCapturePixelRatio).round(),
+      height: (_pageHeight * kPdfCapturePixelRatio).round(),
+    ));
   }
 
   /// Plain-text price list, for pasting straight into a chat message.
@@ -182,16 +238,22 @@ class CatalogService {
 
   // ── internals ──────────────────────────────────────────────────────────
 
-  /// Decodes every product image to bytes up front.
+  /// Decodes every product photo up front, at the size its tile draws it.
   ///
-  /// `Image.file` resolves its bytes asynchronously, so an off-screen capture
-  /// races it and paints empty tiles. `Image.memory` over pre-read bytes has
-  /// no such race. Unreadable or missing files degrade to a placeholder tile
-  /// rather than failing the whole catalog.
+  /// An image widget (`Image.file` / `Image.memory`) decodes asynchronously,
+  /// so the off-screen capture raced it — painting empty tiles, or costing a
+  /// second capture and a long wait — and decoded each photo at full camera
+  /// resolution for an 84 px tile. A `ui.Image` decoded here at tile size ×
+  /// pixelRatio (cover-fit, never upscaled) is drawn synchronously by
+  /// `RawImage`. Decoding is one photo at a time to cap peak memory on
+  /// low-end phones. Missing or unreadable files degrade to a placeholder
+  /// tile rather than failing the whole catalog; the caller disposes the
+  /// photos ([_dispose]).
   Future<List<_CatalogItem>> _load(
     List<Product> products,
     CatalogOptions options,
   ) async {
+    final px = (_photoSize * kPdfCapturePixelRatio).round();
     final out = <_CatalogItem>[];
     for (final p in products) {
       Uint8List? bytes;
@@ -203,9 +265,73 @@ class CatalogService {
           bytes = null;
         }
       }
-      out.add(_CatalogItem(p, bytes));
+      if (bytes == null) {
+        out.add(_CatalogItem(p));
+        continue;
+      }
+      try {
+        final photo = await decodeImageForBox(
+          await ui.ImmutableBuffer.fromUint8List(bytes),
+          width: px,
+          height: px,
+          fit: BoxFit.cover,
+        );
+        out.add(_CatalogItem(p, photo: photo));
+      } catch (_) {
+        out.add(_CatalogItem(p, photoUnreadable: true));
+      }
     }
     return out;
+  }
+
+  void _dispose(List<_CatalogItem> items) {
+    for (final item in items) {
+      item.photo?.dispose();
+    }
+  }
+
+  /// The placeholder tile's Tabler "package" icon as a bitmap, so the page
+  /// has no async SVG load in it. Drawn the way `ThinIcon` → `SvgPicture`
+  /// draws it: the SVG (stroke [kIconStroke]) fitted (contain) into the box
+  /// and tinted with a srcIn color filter. The box is the full 84 px tile —
+  /// the tile's `Container` passes its tight constraints through
+  /// `ThinIcon`'s 30 px `SizedBox`. Null on failure: the tile then falls
+  /// back to `ThinIcon`, which the capture's retry picks up.
+  Future<ui.Image?> _rasterizePlaceholderIcon() async {
+    try {
+      final svg = const tabler.Package()
+          .svgTemplate
+          .replaceAll('<STROKE_WIDTH>', kIconStroke.toString());
+      final info = await vg.loadPicture(SvgStringLoader(svg), null);
+      try {
+        final px = (_photoSize * kPdfCapturePixelRatio).round();
+        final viewBox = info.size;
+        final scale = math.min(px / viewBox.width, px / viewBox.height);
+        final recorder = ui.PictureRecorder();
+        Canvas(recorder)
+          ..translate((px - viewBox.width * scale) / 2,
+              (px - viewBox.height * scale) / 2)
+          ..scale(scale)
+          ..saveLayer(
+            Offset.zero & viewBox,
+            Paint()
+              ..colorFilter = const ColorFilter.mode(
+                  _CatalogPageWidget._grey600, BlendMode.srcIn),
+          )
+          ..drawPicture(info.picture)
+          ..restore();
+        final picture = recorder.endRecording();
+        try {
+          return await picture.toImage(px, px);
+        } finally {
+          picture.dispose();
+        }
+      } finally {
+        info.picture.dispose();
+      }
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Uint8List> _capture(
@@ -216,8 +342,9 @@ class CatalogService {
     required CatalogOptions options,
     required int pageIndex,
     required int pageCount,
+    required _CatalogArt art,
   }) {
-    return ScreenshotController().captureFromWidget(
+    return captureWidgetPng(
       _CatalogPageWidget(
         items: items,
         shopName: shopName,
@@ -226,17 +353,21 @@ class CatalogService {
         options: options,
         pageIndex: pageIndex,
         pageCount: pageCount,
+        art: art,
       ),
-      pixelRatio: 2.0,
+      pixelRatio: kPdfCapturePixelRatio,
       targetSize: const Size(_pageWidth, _pageHeight),
-      // Longer than PdfService's 100ms: this tree decodes several embedded
-      // images, and the capture must not run before they've been painted.
-      delay: const Duration(milliseconds: 300),
+      // Photos, placeholder and watermark are all pre-decoded bitmaps now, so
+      // nothing on the page loads asynchronously and one capture suffices.
+      // 100 ms (as the other PDFs) still covers the ThinIcon fallback if the
+      // placeholder couldn't be rasterized; it was 300 ms when the tiles
+      // decoded their own photos.
+      delay: const Duration(milliseconds: 100),
     );
   }
 }
 
-/// One fixed-size A4 catalog page. Rasterised via `captureFromWidget`.
+/// One fixed-size A4 catalog page. Rasterised via [captureWidgetPng].
 class _CatalogPageWidget extends StatelessWidget {
   final List<_CatalogItem> items;
   final String shopName;
@@ -245,6 +376,7 @@ class _CatalogPageWidget extends StatelessWidget {
   final CatalogOptions options;
   final int pageIndex;
   final int pageCount;
+  final _CatalogArt art;
 
   const _CatalogPageWidget({
     required this.items,
@@ -254,6 +386,7 @@ class _CatalogPageWidget extends StatelessWidget {
     required this.options,
     required this.pageIndex,
     required this.pageCount,
+    required this.art,
   });
 
   static const _teal = Color(0xFF00897B);
@@ -263,7 +396,7 @@ class _CatalogPageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Same scaffolding PdfService documents: captureFromWidget injects only
+    // Same scaffolding PdfService documents: the capture injects only
     // Directionality, so MediaQuery / DefaultTextStyle / Material are wired
     // by hand. MaterialApp cannot be used — it looks for a MediaQuery
     // ancestor that doesn't exist off-screen.
@@ -459,8 +592,10 @@ class _CatalogPageWidget extends StatelessWidget {
   }
 
   Widget _photo(_CatalogItem item) {
-    const size = 84.0;
-    if (item.image == null) {
+    const size = CatalogService._photoSize;
+    final photo = item.photo;
+    if (photo == null && !item.photoUnreadable) {
+      final icon = art.placeholderIcon;
       return Container(
         width: size,
         height: size,
@@ -468,24 +603,32 @@ class _CatalogPageWidget extends StatelessWidget {
           color: _grey100,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const ThinIcon(tabler.Package.new,
-            color: _grey600, size: 30),
+        // Same box as ThinIcon's SizedBox; the bitmap is contain-fitted into
+        // it like the SVG was.
+        child: icon != null
+            ? SizedBox.square(
+                dimension: 30,
+                child: RawImage(image: icon, fit: BoxFit.contain),
+              )
+            : const ThinIcon(tabler.Package.new, color: _grey600, size: 30),
       );
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: Image.memory(
-        item.image!,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        errorBuilder: (_, __, ___) => Container(
-          width: size,
-          height: size,
-          color: _grey100,
-        ),
-      ),
+      child: photo != null
+          ? RawImage(
+              image: photo,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+            )
+          // A photo file that couldn't be decoded — what Image.memory's
+          // errorBuilder drew.
+          : Container(
+              width: size,
+              height: size,
+              color: _grey100,
+            ),
     );
   }
 
@@ -511,12 +654,7 @@ class _CatalogPageWidget extends StatelessWidget {
                 style: TextStyle(color: _grey600, fontSize: 9),
               ),
               const SizedBox(width: 6),
-              Image.asset(
-                'assets/icons/app_icon.png',
-                width: 16,
-                height: 16,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
+              PdfWatermarkIcon(icon: art.watermarkIcon),
               const SizedBox(width: 4),
               const Text(
                 AppStrings.appName,

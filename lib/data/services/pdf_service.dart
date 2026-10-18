@@ -1,19 +1,20 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:screenshot/screenshot.dart';
 import '../models/order.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
+import 'pdf_assembly.dart';
+import 'widget_capture.dart';
 
 /// Generates the order receipt PDF by:
 ///   1. Building the receipt as a Flutter widget tree.
-///   2. Rendering it off-screen to a PNG via Skia (`screenshot` package).
+///   2. Rendering it off-screen to a PNG via Skia ([captureWidgetPng]).
 ///      Skia uses HarfBuzz for OpenType shaping, so Bengali conjuncts,
 ///      Arabic ligatures, Thai marks, CJK, and emoji all render correctly.
-///   3. Embedding that PNG into a single-page `pw.Document` at A4 size.
+///   3. Embedding that PNG into a single-page `pw.Document` at A4 size
+///      ([assemblePdf], on a background isolate).
 ///
 /// Trade-off vs. native pw widgets: the resulting PDF text is not selectable
 /// (it's a rasterised image). For a receipt that's an acceptable price for
@@ -26,44 +27,33 @@ class PdfService {
     double taxRate = 0.0,
   }) async {
     final sym = currencySymbol ?? CurrencyFormatter.symbol;
+    final watermarkIcon = await loadPdfWatermarkIcon();
 
     // Capture the Flutter-rendered receipt to a PNG. We have to pass a
-    // FINITE targetSize — the screenshot package multiplies it by pixelRatio
-    // to get the buffer size, and `infinity * pixelRatio` produces an
-    // unrenderable image (the symptom: a red error placeholder when the PDF
-    // tries to decode the broken PNG bytes).
+    // FINITE targetSize — the capture multiplies it by pixelRatio to get the
+    // buffer size, and `infinity * pixelRatio` produces an unrenderable image
+    // (the symptom: a red error placeholder when the PDF tries to decode the
+    // broken PNG bytes).
     //
     // 794×1400 logical px ≈ A4 portrait at 96 DPI with extra height for tall
     // invoices. Anything taller gets clipped — for now this is more than
     // enough for the receipt layout (header + items table + totals + footer).
-    final controller = ScreenshotController();
-    final pngBytes = await controller.captureFromWidget(
+    final pngBytes = await captureWidgetPng(
       _ReceiptWidget(
         order: order,
         shopName: shopName,
         sym: sym,
         taxRate: taxRate,
+        watermarkIcon: watermarkIcon,
       ),
-      pixelRatio: 2.0,
+      pixelRatio: kPdfCapturePixelRatio,
       targetSize: const Size(794, 1400),
       delay: const Duration(milliseconds: 100),
     );
 
-    // Wrap in a single-page A4 PDF document.
-    final pdf = pw.Document();
-    final image = pw.MemoryImage(pngBytes);
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.zero,
-        build: (_) => pw.Image(
-          image,
-          fit: pw.BoxFit.fitWidth,
-          alignment: pw.Alignment.topCenter,
-        ),
-      ),
-    );
-    return pdf.save();
+    // Single-page A4 PDF. The receipt is sized to its content (not a full
+    // page), so it stays PNG — see [assemblePdf].
+    return assemblePdf([pngBytes]);
   }
 
   String generateWhatsAppText(Order order, {String? currencySymbol}) {
@@ -117,12 +107,14 @@ class _ReceiptWidget extends StatelessWidget {
   final String shopName;
   final String sym;
   final double taxRate;
+  final ui.Image? watermarkIcon;
 
   const _ReceiptWidget({
     required this.order,
     required this.shopName,
     required this.sym,
     required this.taxRate,
+    required this.watermarkIcon,
   });
 
   static const _teal = Color(0xFF00897B);
@@ -156,7 +148,7 @@ class _ReceiptWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // `screenshot.captureFromWidget` only injects Directionality, not the
+    // The off-screen capture only injects Directionality, not the
     // MediaQuery / Material context that real Material widgets need. So we
     // wire those up by hand at the minimum level required for Text/Table/
     // Container to render. (Using MaterialApp here fails because it tries
@@ -201,10 +193,10 @@ class _ReceiptWidget extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Positioned(
+                Positioned(
                   right: 24,
                   bottom: 20,
-                  child: PdfWatermark(),
+                  child: PdfWatermark(icon: watermarkIcon),
                 ),
               ],
             ),
@@ -443,11 +435,72 @@ class _ReceiptWidget extends StatelessWidget {
   }
 }
 
+/// The pixelRatio every PDF page is captured at (2× the 96-DPI A4 canvas).
+const double kPdfCapturePixelRatio = 2.0;
+
+const String _kWatermarkAsset = 'assets/icons/app_icon.png';
+const double _kWatermarkIconSize = 16;
+
+Future<ui.Image?>? _watermarkIcon;
+
+/// The watermark's app icon, decoded once per session at the size it's drawn
+/// (16 px × [kPdfCapturePixelRatio] — a few KB, vs. the 1024 px asset an
+/// `Image.asset` decodes). Drawn with `RawImage`, so a capture doesn't wait
+/// for an async asset load. Null if the asset can't be decoded.
+Future<ui.Image?> loadPdfWatermarkIcon() {
+  return _watermarkIcon ??= () async {
+    try {
+      final px = (_kWatermarkIconSize * kPdfCapturePixelRatio).round();
+      return await decodeImageForBox(
+        await ui.ImmutableBuffer.fromAsset(_kWatermarkAsset),
+        width: px,
+        height: px,
+        fit: BoxFit.contain,
+      );
+    } catch (_) {
+      return null;
+    }
+  }();
+}
+
+/// The 16 px app icon in the PDF watermarks. Draws the pre-decoded [icon]
+/// from [loadPdfWatermarkIcon]; without one, falls back to the async
+/// `Image.asset` (which a capture only picks up on its retry).
+class PdfWatermarkIcon extends StatelessWidget {
+  const PdfWatermarkIcon({super.key, this.icon});
+
+  final ui.Image? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = icon;
+    if (image != null) {
+      return RawImage(
+        image: image,
+        width: _kWatermarkIconSize,
+        height: _kWatermarkIconSize,
+        scale: kPdfCapturePixelRatio,
+      );
+    }
+    return Image.asset(
+      _kWatermarkAsset,
+      width: _kWatermarkIconSize,
+      height: _kWatermarkIconSize,
+      // If the asset can't be found at runtime, just skip the icon
+      // rather than painting a broken-image placeholder onto the PDF.
+      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
 /// Bottom-right watermark: app icon + "Micro Seller" wordmark. Subtle
 /// (slightly faded) so it reads as branding rather than competing with the
 /// invoice content.
 class PdfWatermark extends StatelessWidget {
-  const PdfWatermark();
+  const PdfWatermark({super.key, this.icon});
+
+  /// From [loadPdfWatermarkIcon].
+  final ui.Image? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -466,14 +519,7 @@ class PdfWatermark extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Image.asset(
-            'assets/icons/app_icon.png',
-            width: 16,
-            height: 16,
-            // If the asset can't be found at runtime, just skip the icon
-            // rather than painting a broken-image placeholder onto the PDF.
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-          ),
+          PdfWatermarkIcon(icon: icon),
           const SizedBox(width: 4),
           const Text(
             AppStrings.appName,

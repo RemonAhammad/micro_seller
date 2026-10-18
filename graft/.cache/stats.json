@@ -1,6 +1,6 @@
 {
-  "nodeCount": 4183,
-  "edgeCount": 661,
+  "nodeCount": 4476,
+  "edgeCount": 826,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 4183,
+  "totalCount": 4476,
   "readyCount": 0,
   "staleCount": 0,
-  "dirty": true,
+  "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-10-18T10:40:29.454Z",
-  "lastFile": "animated_entrance_test.dart"
+  "syncedAt": "2026-10-18T11:45:25.876Z",
+  "lastFile": "pdf_visual_check_test.dart"
 }

@@ -215,8 +215,10 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
     final s = AppStrings.of(context);
     final isar = await ref.read(isarProvider.future);
     if (!mounted) return;
-    final changed = await runWithProgress(context,
-        () => isar.writeTxn(() => recalculateOutstandingBalancesInTxn(isar)));
+    // Load, compute and write in one transaction on a worker isolate — with
+    // thousands of orders, doing it here froze the spinner.
+    final changed = await runWithProgress(
+        context, () => recalculateOutstandingBalances(isar));
     if (mounted) context.showSuccessSnackBar(s.balancesRecalculated(changed));
   }
 

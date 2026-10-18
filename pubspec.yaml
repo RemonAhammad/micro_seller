@@ -94,6 +94,8 @@ dependencies:
   # and a Settings banner — never silent.
   workmanager: ^0.10.10
   tabler_icons_next: ^3.48.0
+  # Direct only to size the SVG picture cache (tabler_icons_next renders via it).
+  flutter_svg: ^2.0.10+1
   in_app_review: ^2.0.12
 dev_dependencies:
   flutter_test:

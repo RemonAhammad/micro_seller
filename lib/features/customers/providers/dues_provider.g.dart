@@ -8,14 +8,14 @@ part of 'dues_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Every customer who owes money, computed live from orders. Re-emits
-/// whenever orders, customers or payments change.
+/// Every customer who owes money, live. Re-emits whenever orders or
+/// customers change; computed on a worker isolate.
 
 @ProviderFor(dues)
 final duesProvider = DuesProvider._();
 
-/// Every customer who owes money, computed live from orders. Re-emits
-/// whenever orders, customers or payments change.
+/// Every customer who owes money, live. Re-emits whenever orders or
+/// customers change; computed on a worker isolate.
 
 final class DuesProvider
     extends
@@ -27,8 +27,8 @@ final class DuesProvider
     with
         $FutureModifier<List<CustomerDue>>,
         $StreamProvider<List<CustomerDue>> {
-  /// Every customer who owes money, computed live from orders. Re-emits
-  /// whenever orders, customers or payments change.
+  /// Every customer who owes money, live. Re-emits whenever orders or
+  /// customers change; computed on a worker isolate.
   DuesProvider._()
     : super(
         from: null,
@@ -55,7 +55,7 @@ final class DuesProvider
   }
 }
 
-String _$duesHash() => r'c1d48263c7879d059b9c4efa53d9e027e6c3b544';
+String _$duesHash() => r'6c9ea059ded23bdfd8e92a6ee2c9601a46387ad3';
 
 @ProviderFor(dueSummary)
 final dueSummaryProvider = DueSummaryProvider._();
@@ -135,7 +135,7 @@ final class DuesCollectedThisMonthProvider
 }
 
 String _$duesCollectedThisMonthHash() =>
-    r'4ae7fe006b5e7b816f9b9304abdac33a6243511b';
+    r'96f37880c717847d07a81e68609b33bd57584423';
 
 /// A customer's payment history, newest first.
 
@@ -197,7 +197,7 @@ final class CustomerPaymentsProvider
   }
 }
 
-String _$customerPaymentsHash() => r'181d0f32202364f376f693939235558922da1ab1';
+String _$customerPaymentsHash() => r'1a9d4b044b16150926be335d00e6ab828558a605';
 
 /// A customer's payment history, newest first.
 

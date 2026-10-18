@@ -20,6 +20,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/payment_method_chips.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../returns/presentation/create_return_screen.dart';
@@ -46,15 +47,49 @@ class OrderDetailScreen extends ConsumerWidget {
   }
 }
 
-class _OrderDetailBody extends ConsumerWidget {
+class _OrderDetailBody extends ConsumerStatefulWidget {
   final int orderId;
 
   const _OrderDetailBody({required this.orderId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_OrderDetailBody> createState() => _OrderDetailBodyState();
+}
+
+class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
+  /// The last receipt PDF rendered on this screen, so Share then Print (or
+  /// Download) reuses it instead of rendering again. Keyed on everything the
+  /// receipt shows: the order (id + last edit — every order write bumps
+  /// `updatedAt`) and the shop settings it prints. Dropped with the screen.
+  Object? _receiptKey;
+  Uint8List? _receiptPdf;
+
+  Future<Uint8List> _receipt(
+    BuildContext context,
+    Order order, {
+    required String shopName,
+    required String currencySymbol,
+    required double taxRate,
+  }) async {
+    final key = (order.id, order.updatedAt, shopName, currencySymbol, taxRate);
+    final cached = _receiptPdf;
+    if (cached != null && _receiptKey == key) return cached;
+    final bytes = await runWithProgress(
+      context,
+      () => PdfService().generateOrderReceipt(order,
+          shopName: shopName,
+          currencySymbol: currencySymbol,
+          taxRate: taxRate),
+    );
+    _receiptKey = key;
+    _receiptPdf = bytes;
+    return bytes;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    final orderAsync = ref.watch(orderByIdProvider(orderId));
+    final orderAsync = ref.watch(orderByIdProvider(widget.orderId));
     final theme = Theme.of(context);
 
     return orderAsync.when(
@@ -372,7 +407,7 @@ class _OrderDetailBody extends ConsumerWidget {
         break;
 
       case 'share_pdf':
-        final bytes = await pdfService.generateOrderReceipt(order,
+        final bytes = await _receipt(context, order,
             shopName: shopName,
             currencySymbol: currencySymbol,
             taxRate: taxRate);
@@ -383,15 +418,10 @@ class _OrderDetailBody extends ConsumerWidget {
         break;
 
       case 'download_pdf':
-        final bytes = await pdfService.generateOrderReceipt(order,
-            shopName: shopName,
-            currencySymbol: currencySymbol,
-            taxRate: taxRate);
-
+        // Folder first: cancelling the picker shouldn't cost a render.
         // Get saved download directory or ask user to pick one
         var downloadDir = settings.downloadDirectory;
         if (downloadDir.isEmpty) {
-          if (!context.mounted) break;
           final picked = await FilePicker.getDirectoryPath(
             dialogTitle: 'Choose download folder',
           );
@@ -402,6 +432,12 @@ class _OrderDetailBody extends ConsumerWidget {
               .read(settingsProvider.notifier)
               .updateDownloadDirectory(downloadDir);
         }
+        if (!context.mounted) break;
+
+        final bytes = await _receipt(context, order,
+            shopName: shopName,
+            currencySymbol: currencySymbol,
+            taxRate: taxRate);
 
         final fileName = '${order.orderNumber}_receipt.pdf';
         final file = File('$downloadDir/$fileName');
@@ -416,7 +452,7 @@ class _OrderDetailBody extends ConsumerWidget {
         break;
 
       case 'print':
-        final bytes = await pdfService.generateOrderReceipt(order,
+        final bytes = await _receipt(context, order,
             shopName: shopName,
             currencySymbol: currencySymbol,
             taxRate: taxRate);
@@ -466,7 +502,7 @@ class _OrderDetailBody extends ConsumerWidget {
           await ref
               .read(orderProvider.notifier)
               .deleteOrder(order.id);
-          context.pop();
+          if (context.mounted) context.pop();
         }
         break;
     }

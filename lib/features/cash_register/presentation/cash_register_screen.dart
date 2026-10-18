@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/cash_register_provider.dart';
+import '../../../data/models/cash_register.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_strings.dart';
@@ -25,112 +26,126 @@ class CashRegisterScreen extends ConsumerWidget {
       body: registersAsync.when(
         data: (registers) {
           final openReg = registers.where((r) => !r.isClosed).firstOrNull;
+          final closed = registers.where((r) => r.isClosed).toList();
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Current register status
-                if (openReg != null) ...[
-                  _OpenRegisterCard(register: openReg, theme: theme, cs: cs, ref: ref),
-                ] else ...[
-                  _ClosedStateCard(theme: theme, cs: cs, ref: ref),
-                ],
+          // Slivers, so the history (about one session a day) only builds
+          // the sessions on screen — and a cash in/out doesn't rebuild them
+          // all.
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Current register status
+                      if (openReg != null) ...[
+                        _OpenRegisterCard(
+                            register: openReg, theme: theme, cs: cs, ref: ref),
+                      ] else ...[
+                        _ClosedStateCard(theme: theme, cs: cs, ref: ref),
+                      ],
 
-                const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                // History
-                Text(s.history,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
+                      // History
+                      Text(s.history,
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
 
-                if (registers.where((r) => r.isClosed).isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: Text(s.noRegisterHistory,
-                          style: TextStyle(
-                              color: cs.onSurface.withValues(alpha: 0.4))),
-                    ),
-                  )
-                else
-                  ...registers
-                      .where((r) => r.isClosed)
-                      .toList()
-                      .asMap()
-                      .entries
-                      .map((entry) {
-                    final r = entry.value;
-                    return AnimatedEntrance(
-                            index: entry.key,
-                            child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: cs.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: cs.outline.withValues(alpha: 0.1)),
+                      if (closed.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: Text(s.noRegisterHistory,
+                                style: TextStyle(
+                                    color:
+                                        cs.onSurface.withValues(alpha: 0.4))),
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  DateFormatter.format(r.openedAt),
-                                  style: theme.textTheme.bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(s.closed,
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.green)),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            _historyRow(theme, s.tr('opening'),
-                                CurrencyFormatter.format(r.openingAmount)),
-                            _historyRow(theme, s.cashIn,
-                                CurrencyFormatter.format(r.totalCashIn)),
-                            _historyRow(theme, s.cashOut,
-                                CurrencyFormatter.format(r.totalCashOut)),
-                            _historyRow(theme, s.tr('expected'),
-                                CurrencyFormatter.format(r.expectedClosing)),
-                            _historyRow(theme, s.tr('closing'),
-                                CurrencyFormatter.format(r.closingAmount ?? 0),
-                                isBold: true),
-                            if (r.difference.abs() > 0.01)
-                              _historyRow(
-                                theme,
-                                s.tr('difference'),
-                                '${r.difference > 0 ? '+' : ''}${CurrencyFormatter.format(r.difference)}',
-                                valueColor: r.difference > 0
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                          ],
-                        ),
-                      ));
-                  }),
-              ],
-            ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                sliver: SliverList.builder(
+                  itemCount: closed.length,
+                  itemBuilder: (context, i) => AnimatedEntrance(
+                    index: i,
+                    child: _historyCard(context, closed[i]),
+                  ),
+                ),
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
+      ),
+    );
+  }
+
+  Widget _historyCard(BuildContext context, CashRegister r) {
+    final s = AppStrings.of(context);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormatter.format(r.openedAt),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(s.closed,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _historyRow(theme, s.tr('opening'),
+              CurrencyFormatter.format(r.openingAmount)),
+          _historyRow(
+              theme, s.cashIn, CurrencyFormatter.format(r.totalCashIn)),
+          _historyRow(
+              theme, s.cashOut, CurrencyFormatter.format(r.totalCashOut)),
+          _historyRow(theme, s.tr('expected'),
+              CurrencyFormatter.format(r.expectedClosing)),
+          _historyRow(theme, s.tr('closing'),
+              CurrencyFormatter.format(r.closingAmount ?? 0),
+              isBold: true),
+          if (r.difference.abs() > 0.01)
+            _historyRow(
+              theme,
+              s.tr('difference'),
+              '${r.difference > 0 ? '+' : ''}${CurrencyFormatter.format(r.difference)}',
+              valueColor: r.difference > 0 ? Colors.green : Colors.red,
+            ),
+        ],
       ),
     );
   }

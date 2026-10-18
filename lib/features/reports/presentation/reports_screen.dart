@@ -126,6 +126,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     setState(() => _exporting = true);
     try {
+      // Paint the spinner before any work: each page capture starts with a
+      // synchronous build/layout on this isolate. After that the work yields
+      // (PNG encode, PDF assembly on a background isolate), so it keeps
+      // animating until the share sheet opens.
+      await WidgetsBinding.instance.endOfFrame;
       final tables = await _currentTables(s.tr);
       if (pdf) {
         final bytes = await ReportPdfService().generate(

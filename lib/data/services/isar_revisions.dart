@@ -1,6 +1,7 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../models/customer.dart';
 import '../models/expense.dart';
 import '../models/order.dart';
 import '../models/payment.dart';
@@ -28,6 +29,15 @@ class OrdersRevision extends _$OrdersRevision {
   @override
   int build() {
     _bump(ref, (isar) => isar.orders.watchLazy(), () => state++);
+    return 0;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class CustomersRevision extends _$CustomersRevision {
+  @override
+  int build() {
+    _bump(ref, (isar) => isar.customers.watchLazy(), () => state++);
     return 0;
   }
 }

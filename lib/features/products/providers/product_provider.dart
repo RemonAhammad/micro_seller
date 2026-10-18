@@ -6,6 +6,8 @@ import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/models/trash_entry.dart';
 import '../../../data/repositories/product_repository.dart';
+import '../../../data/services/db_worker.dart';
+import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/trash_service.dart';
 
@@ -20,13 +22,14 @@ ProductRepository productRepository(Ref ref) {
 @riverpod
 Stream<List<Product>> products(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.products
-      .where()
-      .filter()
-      .isActiveEqualTo(true)
-      .sortByName()
-      .watch(fireImmediately: true);
+  yield* reloadOn(
+      isar.products.watchLazy(), () => runDbJob(isar, _activeProductsByName));
 }
+
+/// Active products by name, straight from the (isActive, name) index — no
+/// filter scan or sort — on a worker isolate (products carry their variants).
+List<Product> _activeProductsByName(Isar db) =>
+    db.products.where().isActiveEqualToAnyName(true).findAllSync();
 
 @riverpod
 Stream<List<Product>> lowStockProducts(Ref ref) async* {

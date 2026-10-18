@@ -48,7 +48,7 @@ final class CashRegistersProvider
   }
 }
 
-String _$cashRegistersHash() => r'b4012dfbc7a2883e49d32d77cd3ad18f800876a9';
+String _$cashRegistersHash() => r'f18d99dab64c7fd0af81c737c386e9af0f9544d4';
 
 /// Returns the currently open register (if any)
 

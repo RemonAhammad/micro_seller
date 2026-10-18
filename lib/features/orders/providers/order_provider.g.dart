@@ -46,7 +46,132 @@ final class OrdersProvider
   }
 }
 
-String _$ordersHash() => r'472ceeaf6df416c4ee199ddd25280ed749f27366';
+String _$ordersHash() => r'0e44b9b5af0225e773bc6182e96be19629488d08';
+
+/// Return orders only, newest first — the Returns screen's list, without
+/// loading every order to filter them.
+
+@ProviderFor(returnOrders)
+final returnOrdersProvider = ReturnOrdersProvider._();
+
+/// Return orders only, newest first — the Returns screen's list, without
+/// loading every order to filter them.
+
+final class ReturnOrdersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Order>>,
+          List<Order>,
+          Stream<List<Order>>
+        >
+    with $FutureModifier<List<Order>>, $StreamProvider<List<Order>> {
+  /// Return orders only, newest first — the Returns screen's list, without
+  /// loading every order to filter them.
+  ReturnOrdersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'returnOrdersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$returnOrdersHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Order>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Order>> create(Ref ref) {
+    return returnOrders(ref);
+  }
+}
+
+String _$returnOrdersHash() => r'60908a7288cff1fbc561ec32db8fe1d50e600d96';
+
+/// One order, live — without reloading every order on each write.
+
+@ProviderFor(orderById)
+final orderByIdProvider = OrderByIdFamily._();
+
+/// One order, live — without reloading every order on each write.
+
+final class OrderByIdProvider
+    extends $FunctionalProvider<AsyncValue<Order?>, Order?, Stream<Order?>>
+    with $FutureModifier<Order?>, $StreamProvider<Order?> {
+  /// One order, live — without reloading every order on each write.
+  OrderByIdProvider._({
+    required OrderByIdFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'orderByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$orderByIdHash();
+
+  @override
+  String toString() {
+    return r'orderByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Order?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Order?> create(Ref ref) {
+    final argument = this.argument as int;
+    return orderById(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OrderByIdProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$orderByIdHash() => r'd7f7648feeaea342f7f3532c7b5079d2969fb3cf';
+
+/// One order, live — without reloading every order on each write.
+
+final class OrderByIdFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Order?>, int> {
+  OrderByIdFamily._()
+    : super(
+        retry: null,
+        name: r'orderByIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// One order, live — without reloading every order on each write.
+
+  OrderByIdProvider call(int id) =>
+      OrderByIdProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'orderByIdProvider';
+}
 
 @ProviderFor(pendingOrders)
 final pendingOrdersProvider = PendingOrdersProvider._();
@@ -111,7 +236,7 @@ final class OrderNotifierProvider
   OrderNotifier create() => OrderNotifier();
 }
 
-String _$orderNotifierHash() => r'4ce747d4e713e6ed348e0be45e99191c45ec1b6a';
+String _$orderNotifierHash() => r'1f5c4f110db7873ca39957a9da22fa4f56f8759c';
 
 abstract class _$OrderNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

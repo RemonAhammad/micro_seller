@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart' show SvgStringLoader;
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
 /// Stroke widths for the thin Tabler outline icons (Tabler's own default is
@@ -46,6 +47,35 @@ abstract final class AppIcons {
   static const ThinIconBuilder lowStock = tabler.BoxOff.new;
   static const ThinIconBuilder alert = tabler.AlertTriangle.new;
   static const ThinIconBuilder whatsapp = tabler.BrandWhatsapp.new;
+
+  // ── Warmed into the SVG cache after the first frame (main.dart); the
+  // sidebar's icons come from sidebarItems so the two can't drift apart ──
+  static const List<ThinIconBuilder> dashboardSet = [
+    revenue, profit, pending, collected, lowStock, alert, whatsapp,
+  ];
+}
+
+/// Parses [icons] at [strokeWidth] into flutter_svg's cache, one at a time,
+/// so a screen that shows them later draws them in its first frame instead
+/// of a frame late, after an isolate parse.
+///
+/// The cache key has to match what a [ThinIcon] asks for. Tabler's `Icon`
+/// hands `SvgPicture.string` its `svgTemplate` with the `<STROKE_WIDTH>`
+/// placeholder replaced by `strokeWidth.toString()` and no theme;
+/// flutter_svg keys that on the string, the theme (the default `SvgTheme()`,
+/// since the app sets no `DefaultSvgTheme`) and the color mapper (none).
+/// Size and color aren't in the key: the color is a paint-time `ColorFilter`.
+Future<void> warmThinIcons(
+  Iterable<ThinIconBuilder> icons, {
+  double strokeWidth = kIconStroke,
+}) async {
+  for (final builder in icons) {
+    final icon = builder(strokeWidth: strokeWidth);
+    if (icon is! tabler.Icon) continue;
+    final svg = icon.svgTemplate
+        .replaceAll('<STROKE_WIDTH>', strokeWidth.toString());
+    await SvgStringLoader(svg).loadBytes(null);
+  }
 }
 
 /// Drop-in for Material's `Icon`, drawing a thin Tabler icon. [color] and

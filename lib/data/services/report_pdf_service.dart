@@ -1,10 +1,10 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:screenshot/screenshot.dart';
+import 'pdf_assembly.dart';
 import 'pdf_service.dart';
 import 'report_service.dart';
+import 'widget_capture.dart';
 
 /// Renders a Reports tab ([ReportTable]s) to a multi-page PDF. Same widget →
 /// PNG → PDF pipeline as the invoice and statement (Skia/HarfBuzz shaping,
@@ -44,9 +44,10 @@ class ReportPdfService {
       }
     }
 
-    final pdf = pw.Document();
+    final watermarkIcon = await loadPdfWatermarkIcon();
+    final images = <Uint8List>[];
     for (var i = 0; i < pages.length; i++) {
-      final png = await ScreenshotController().captureFromWidget(
+      images.add(await captureWidgetPng(
         _ReportPage(
           shopName: shopName,
           reportTitle: reportTitle,
@@ -55,21 +56,21 @@ class ReportPdfService {
           showHeader: i == 0,
           footer: pageOf(i + 1, pages.length),
           textDirection: textDirection,
+          watermarkIcon: watermarkIcon,
         ),
-        pixelRatio: 2.0,
+        pixelRatio: kPdfCapturePixelRatio,
         // Must be finite — see PdfService.generateOrderReceipt.
         targetSize: const Size(_pageWidth, _pageHeight),
         delay: const Duration(milliseconds: 100),
-      );
-      final image = pw.MemoryImage(png);
-      pdf.addPage(pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.zero,
-        build: (_) => pw.Image(image,
-            fit: pw.BoxFit.fitWidth, alignment: pw.Alignment.topCenter),
       ));
     }
-    return pdf.save();
+    // A page with a table spans the full canvas on an opaque white Material
+    // → JPEG. A table-less page is only as wide as its header text and keeps
+    // its PNG (see assemblePdf).
+    return assemblePdf(images, jpegPages: (
+      width: (_pageWidth * kPdfCapturePixelRatio).round(),
+      height: (_pageHeight * kPdfCapturePixelRatio).round(),
+    ));
   }
 }
 
@@ -82,6 +83,7 @@ class _ReportPage extends StatelessWidget {
     required this.showHeader,
     required this.footer,
     required this.textDirection,
+    required this.watermarkIcon,
   });
 
   final String shopName;
@@ -91,6 +93,7 @@ class _ReportPage extends StatelessWidget {
   final bool showHeader;
   final String footer;
   final TextDirection textDirection;
+  final ui.Image? watermarkIcon;
 
   static const _teal = Color(0xFF00897B);
   static const _grey100 = Color(0xFFF5F5F5);
@@ -146,7 +149,8 @@ class _ReportPage extends StatelessWidget {
                   child: Text(footer,
                       style: const TextStyle(color: _grey600, fontSize: 10)),
                 ),
-                const PositionedDirectional(end: 40, bottom: 22, child: PdfWatermark()),
+                PositionedDirectional(
+                    end: 40, bottom: 22, child: PdfWatermark(icon: watermarkIcon)),
               ],
             ),
           ),

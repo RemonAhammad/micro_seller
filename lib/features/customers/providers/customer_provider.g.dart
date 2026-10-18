@@ -46,7 +46,7 @@ final class CustomersProvider
   }
 }
 
-String _$customersHash() => r'13bd7cb28544c3cf5095853f983f0c4ad3173e07';
+String _$customersHash() => r'f5727a20a1e93e8cb2c21dd1e602514dde597f58';
 
 @ProviderFor(CustomerNotifier)
 final customerProvider = CustomerNotifierProvider._();
@@ -72,7 +72,7 @@ final class CustomerNotifierProvider
   CustomerNotifier create() => CustomerNotifier();
 }
 
-String _$customerNotifierHash() => r'668e1c5bfb6ef5a61c4a57a0f54b8d5a3a8e7dde';
+String _$customerNotifierHash() => r'889ec2fbc249579f6c26af782d0b38912f7ece90';
 
 abstract class _$CustomerNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

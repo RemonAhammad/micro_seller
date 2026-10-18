@@ -52,7 +52,34 @@ const StockMovementSchema = CollectionSchema(
   deserialize: _stockMovementDeserialize,
   deserializeProp: _stockMovementDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'productId': IndexSchema(
+      id: 5580769080710688203,
+      name: r'productId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'productId',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
+    r'createdAt': IndexSchema(
+      id: -3433535483987302584,
+      name: r'createdAt',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'createdAt',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
+  },
   links: {},
   embeddedSchemas: {},
 
@@ -174,6 +201,22 @@ extension StockMovementQueryWhereSort
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhere> anyProductId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'productId'),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhere> anyCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'createdAt'),
+      );
+    });
+  }
 }
 
 extension StockMovementQueryWhere
@@ -244,6 +287,229 @@ extension StockMovementQueryWhere
           lower: lowerId,
           includeLower: includeLower,
           upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  productIdEqualTo(int productId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'productId', value: [productId]),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  productIdNotEqualTo(int productId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'productId',
+                lower: [],
+                upper: [productId],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'productId',
+                lower: [productId],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'productId',
+                lower: [productId],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'productId',
+                lower: [],
+                upper: [productId],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  productIdGreaterThan(int productId, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'productId',
+          lower: [productId],
+          includeLower: include,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  productIdLessThan(int productId, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'productId',
+          lower: [],
+          upper: [productId],
+          includeUpper: include,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  productIdBetween(
+    int lowerProductId,
+    int upperProductId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'productId',
+          lower: [lowerProductId],
+          includeLower: includeLower,
+          upper: [upperProductId],
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  createdAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'createdAt', value: [null]),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  createdAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [null],
+          includeLower: false,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  createdAtEqualTo(DateTime? createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'createdAt', value: [createdAt]),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  createdAtNotEqualTo(DateTime? createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [],
+                upper: [createdAt],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [createdAt],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [createdAt],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [],
+                upper: [createdAt],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  createdAtGreaterThan(DateTime? createdAt, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [createdAt],
+          includeLower: include,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  createdAtLessThan(DateTime? createdAt, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [],
+          upper: [createdAt],
+          includeUpper: include,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterWhereClause>
+  createdAtBetween(
+    DateTime? lowerCreatedAt,
+    DateTime? upperCreatedAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [lowerCreatedAt],
+          includeLower: includeLower,
+          upper: [upperCreatedAt],
           includeUpper: includeUpper,
         ),
       );

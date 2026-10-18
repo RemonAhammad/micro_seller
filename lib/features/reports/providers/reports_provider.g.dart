@@ -64,7 +64,7 @@ final class SalesReportProvider
   }
 }
 
-String _$salesReportHash() => r'024617cadf5beafdaae4f850ca8705ce77553e9f';
+String _$salesReportHash() => r'1143e214d77df1f72a418b952e5270117e30b00a';
 
 final class SalesReportFamily extends $Family
     with
@@ -139,7 +139,7 @@ final class DuesReportProvider
   }
 }
 
-String _$duesReportHash() => r'd6ce6211efaff60ac6d40bb19e8f2fba9364a321';
+String _$duesReportHash() => r'5e18add4894e3ddb1004153851b2c1469586288f';
 
 final class DuesReportFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<DuesReport>, (DateTime, DateTime)> {
@@ -214,7 +214,7 @@ final class InventoryReportProvider
   }
 }
 
-String _$inventoryReportHash() => r'd127b440b28bdb988cb717caef010718b9d4ef87';
+String _$inventoryReportHash() => r'1a2b03f1f695f8db1ed35409045b2e5ddbc3989f';
 
 final class InventoryReportFamily extends $Family
     with
@@ -293,7 +293,7 @@ final class PurchasesReportProvider
   }
 }
 
-String _$purchasesReportHash() => r'591631dcce6ab2bf4da4848ae858da6c214d4de9';
+String _$purchasesReportHash() => r'8f920b181030fc683615d65489a546c42ef69f43';
 
 final class PurchasesReportFamily extends $Family
     with

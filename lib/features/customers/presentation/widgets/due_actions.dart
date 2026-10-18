@@ -18,6 +18,7 @@ import '../../../../data/services/dues_service.dart';
 import '../../../../data/services/isar_service.dart';
 import '../../../../data/services/statement_service.dart';
 import '../../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../../shared/widgets/loading_overlay.dart';
 import '../../../../shared/widgets/payment_method_chips.dart';
 import '../../../cash_register/providers/cash_register_provider.dart';
 import '../../../orders/providers/order_provider.dart';
@@ -121,27 +122,41 @@ Future<void> shareCustomerStatement(
   );
 
   try {
-    final isar = await ref.read(isarProvider.future);
-    final orders =
-        await isar.orders.filter().customerIdEqualTo(customer.id).findAll();
-    final payments =
-        await isar.payments.filter().customerIdEqualTo(customer.id).findAll();
+    // Spinner up (and repeat taps blocked) while the statement renders; it
+    // comes down before the share sheet opens.
+    final file = await runWithProgress(context, () async {
+      final isar = await ref.read(isarProvider.future);
+      // Index lookups don't return equal keys in id order. Sort by id — the
+      // order the old filter() query gave — so the running balance is
+      // computed over the rows in exactly the same order as before.
+      final orders = (await isar.orders
+          .where()
+          .customerIdEqualTo(customer.id)
+          .findAll())
+        ..sort((a, b) => a.id.compareTo(b.id));
+      final payments = (await isar.payments
+          .where()
+          .customerIdEqualTo(customer.id)
+          .findAll())
+        ..sort((a, b) => a.id.compareTo(b.id));
 
-    final service = StatementService();
-    final rows = service.buildRows(orders, payments, labels: labels);
-    final bytes = await service.generateStatementPdf(
-      customer: customer,
-      rows: rows,
-      labels: labels,
-      shopName: settings.shopName,
-      shopPhone: settings.shopPhone,
-      currencySymbol: settings.currencySymbol,
-      textDirection: direction,
-    );
-    final dir = await getTemporaryDirectory();
-    final safeName = customer.name.replaceAll(RegExp(r'[^\w]+'), '_');
-    final file = File('${dir.path}/statement_$safeName.pdf');
-    await file.writeAsBytes(bytes);
+      final service = StatementService();
+      final rows = service.buildRows(orders, payments, labels: labels);
+      final bytes = await service.generateStatementPdf(
+        customer: customer,
+        rows: rows,
+        labels: labels,
+        shopName: settings.shopName,
+        shopPhone: settings.shopPhone,
+        currencySymbol: settings.currencySymbol,
+        textDirection: direction,
+      );
+      final dir = await getTemporaryDirectory();
+      final safeName = customer.name.replaceAll(RegExp(r'[^\w]+'), '_');
+      final file = File('${dir.path}/statement_$safeName.pdf');
+      await file.writeAsBytes(bytes);
+      return file;
+    });
     await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   } catch (e) {
     if (context.mounted) context.showErrorSnackBar(s.error);

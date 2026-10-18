@@ -341,15 +341,36 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
 /// The movement history, watched only while this tab is built — at the
 /// screen's root it stayed loaded and reloaded on every stock change while
-/// the Stock Levels tab was showing.
-class _MovementsTab extends ConsumerWidget {
+/// the Stock Levels tab was showing. Paged: nearing the end of the loaded
+/// rows loads the next page, with a spinner row below while more exist.
+class _MovementsTab extends ConsumerStatefulWidget {
   const _MovementsTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MovementsTab> createState() => _MovementsTabState();
+}
+
+class _MovementsTabState extends ConsumerState<_MovementsTab> {
+  /// How close to the last loaded row the next page is requested.
+  static const _loadMoreAhead = 20;
+  bool _loadMoreScheduled = false;
+
+  // After the frame: the notifier's state can't change during a build.
+  void _loadMoreSoon() {
+    if (_loadMoreScheduled) return;
+    _loadMoreScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMoreScheduled = false;
+      if (mounted) ref.read(stockMovementPagesProvider.notifier).loadMore();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    return ref.watch(stockMovementsProvider).when(
-          data: (movements) {
+    return ref.watch(stockMovementPagesProvider).when(
+          data: (page) {
+            final movements = page.movements;
             if (movements.isEmpty) {
               return EmptyState(
                 icon: tabler.ArrowsSort.new,
@@ -358,11 +379,27 @@ class _MovementsTab extends ConsumerWidget {
             }
             return ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: movements.length,
-              itemBuilder: (ctx, i) => AnimatedEntrance(
-                index: i,
-                child: StockMovementTile(movement: movements[i]),
-              ),
+              itemCount: movements.length + (page.hasMore ? 1 : 0),
+              itemBuilder: (ctx, i) {
+                if (page.hasMore && i >= movements.length - _loadMoreAhead) {
+                  _loadMoreSoon();
+                }
+                if (i == movements.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: SizedBox.square(
+                        dimension: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  );
+                }
+                return AnimatedEntrance(
+                  index: i,
+                  child: StockMovementTile(movement: movements[i]),
+                );
+              },
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),

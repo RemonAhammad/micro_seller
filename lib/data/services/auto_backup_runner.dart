@@ -243,6 +243,9 @@ Future<bool> _runBackgroundBackup() async {
       isar,
       settings: settingsSnapshot,
       interactive: false,
+      // This isolate has no UI to keep responsive — encode right here
+      // instead of spawning another isolate.
+      encodeOnWorker: false,
     );
 
     await prefs.setString(

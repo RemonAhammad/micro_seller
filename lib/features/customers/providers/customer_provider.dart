@@ -12,7 +12,8 @@ part 'customer_provider.g.dart';
 @riverpod
 Stream<List<Customer>> customers(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  final query = isar.customers.where().sortByName();
+  // The name index returns them in name order — no sort per reload.
+  final query = isar.customers.where().anyName();
   yield* reloadOn(isar.customers.watchLazy(), query.findAll);
 }
 
@@ -52,10 +53,7 @@ class CustomerNotifier extends _$CustomerNotifier {
         if (customer == null) return;
 
         // Clear customerId on related orders (keep orders, unlink customer)
-        final orders = await isar.orders
-            .filter()
-            .customerIdEqualTo(id)
-            .findAll();
+        final orders = await isar.orders.where().customerIdEqualTo(id).findAll();
         for (final order in orders) {
           await isar.orders.put(order.copyWith(
             customerId: 0,

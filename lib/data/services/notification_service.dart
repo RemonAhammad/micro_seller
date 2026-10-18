@@ -122,17 +122,17 @@ class NotificationService {
       await showLowStockAlert(lowStockProducts);
     }
 
-    // Unpaid orders check
-    final unpaidOrders = await isar.orders
+    // Unpaid orders check — the reminder text only needs how many, so count
+    // natively instead of loading every unpaid order.
+    final unpaidCount = await isar.orders
         .filter()
         .not()
         .paymentStatusEqualTo(PaymentStatus.paid)
         .not()
         .orderStatusEqualTo(OrderStatus.cancelled)
-        .findAll();
-    if (unpaidOrders.isNotEmpty) {
-      final totalDue = unpaidOrders.fold(0.0, (s, o) => s + o.balanceDue);
-      await showPaymentReminder(unpaidOrders.length, totalDue);
+        .count();
+    if (unpaidCount > 0) {
+      await showPaymentReminder(unpaidCount, 0);
     }
   }
 }

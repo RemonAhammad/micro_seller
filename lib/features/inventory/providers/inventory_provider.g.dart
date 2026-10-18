@@ -48,7 +48,7 @@ final class StockMovementsProvider
   }
 }
 
-String _$stockMovementsHash() => r'4333ce7c65f3e27d62ed94df2f10696484347f92';
+String _$stockMovementsHash() => r'd1e2de1e7e3c7cd5d9ff4865c4421c015d7dd8ee';
 
 @ProviderFor(productStockMovements)
 final productStockMovementsProvider = ProductStockMovementsFamily._();
@@ -108,7 +108,7 @@ final class ProductStockMovementsProvider
 }
 
 String _$productStockMovementsHash() =>
-    r'88cc90881cbc4dacee95cd36857fa42cf3f689d3';
+    r'b9539ca0353d1bae5b8eee78a025e50bdb8d3c83';
 
 final class ProductStockMovementsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<StockMovement>>, int> {

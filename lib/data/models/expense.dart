@@ -25,6 +25,7 @@ class Expense {
   @Enumerated(EnumType.name)
   ExpenseCategory category;
 
+  @Index()
   DateTime? date;
   String notes;
   DateTime? createdAt;

@@ -22,6 +22,8 @@ class Customer {
   });
 
   Id id;
+  // Value (not hash) index: gives the customers list its name order.
+  @Index(type: IndexType.value)
   String name;
   String phone;
   String address;

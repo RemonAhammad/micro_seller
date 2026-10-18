@@ -6,6 +6,32 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../providers/dashboard_provider.dart';
 
+// fl_chart charts are implicitly animated and compare their data with `==`,
+// callbacks included. A closure written inline in `build` is a new object
+// every build, so unchanged data compared unequal and every parent rebuild
+// restarted the animation. The callbacks below are State methods (tear-offs
+// of the same method on the same State compare equal) or static functions,
+// so only a real data change animates.
+
+const _weekdayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+/// Hands out one grid-line callback per color. The line is painted, not
+/// built, and the chart only repaints when its data compares unequal — a
+/// single fixed callback would leave the grid in the old color after a theme
+/// switch. A new callback only when the color changes keeps both right.
+class GridLineCallback {
+  Color? _color;
+  GetDrawingGridLine? _line;
+
+  GetDrawingGridLine forColor(Color color) {
+    if (_line == null || color != _color) {
+      _color = color;
+      _line = (_) => FlLine(color: color, strokeWidth: 1);
+    }
+    return _line!;
+  }
+}
+
 // ─── Weekly Sales Bar Chart ─────────────────────────────────────────────────
 
 class SalesChart extends StatefulWidget {
@@ -21,11 +47,64 @@ class _SalesChartState extends State<SalesChart> {
   int _touchedIndex = -1;
   bool _showRevenue = true;
 
+  final _gridLine = GridLineCallback();
+
+  /// Day-label color, read by [_bottomTitle]; set in [build].
+  Color _labelColor = Colors.transparent;
+
+  void _onTouch(FlTouchEvent event, BarTouchResponse? response) {
+    final index = event.isInterestedForInteractions && response?.spot != null
+        ? response!.spot!.touchedBarGroupIndex
+        : -1;
+    // Rebuilding on every pointer move restarts the animation.
+    if (index != _touchedIndex) {
+      setState(() => _touchedIndex = index);
+    }
+  }
+
+  BarTooltipItem _tooltipItem(
+    BarChartGroupData group,
+    int groupIndex,
+    BarChartRodData rod,
+    int rodIndex,
+  ) {
+    final sales = widget.weeklySales[group.x];
+    final amount = _showRevenue ? sales.revenue : sales.profit;
+    return BarTooltipItem(
+      '${DateFormatter.formatShort(sales.date)}\n${CurrencyFormatter.format(amount)}',
+      const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: 11,
+      ),
+    );
+  }
+
+  Widget _bottomTitle(double value, TitleMeta meta) {
+    final index = value.toInt();
+    if (index >= 0 && index < widget.weeklySales.length) {
+      final day = widget.weeklySales[index].date;
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(
+          _weekdayInitials[day.weekday - 1],
+          style: TextStyle(
+            fontSize: 10,
+            color: _labelColor,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    _labelColor = cs.onSurface.withValues(alpha: 0.45);
 
     if (widget.weeklySales.isEmpty) {
       return const SizedBox(height: 160);
@@ -67,30 +146,9 @@ class _SalesChartState extends State<SalesChart> {
               BarChartData(
                 maxY: maxY == 0 ? 100 : maxY,
                 barTouchData: BarTouchData(
-                  touchCallback: (event, response) {
-                    final index = event.isInterestedForInteractions &&
-                            response?.spot != null
-                        ? response!.spot!.touchedBarGroupIndex
-                        : -1;
-                    // Rebuilding on every pointer move restarts the animation.
-                    if (index != _touchedIndex) {
-                      setState(() => _touchedIndex = index);
-                    }
-                  },
+                  touchCallback: _onTouch,
                   touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final sales = widget.weeklySales[group.x];
-                      final amount =
-                          _showRevenue ? sales.revenue : sales.profit;
-                      return BarTooltipItem(
-                        '${DateFormatter.formatShort(sales.date)}\n${CurrencyFormatter.format(amount)}',
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11,
-                        ),
-                      );
-                    },
+                    getTooltipItem: _tooltipItem,
                   ),
                 ),
                 titlesData: FlTitlesData(
@@ -98,25 +156,7 @@ class _SalesChartState extends State<SalesChart> {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index >= 0 && index < widget.weeklySales.length) {
-                          final day = widget.weeklySales[index].date;
-                          final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              labels[day.weekday - 1],
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: cs.onSurface.withValues(alpha: 0.45),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
+                      getTitlesWidget: _bottomTitle,
                     ),
                   ),
                   leftTitles:
@@ -129,10 +169,8 @@ class _SalesChartState extends State<SalesChart> {
                 gridData: FlGridData(
                   show: true,
                   horizontalInterval: maxY == 0 ? 25 : maxY / 4,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: cs.onSurface.withValues(alpha: 0.05),
-                    strokeWidth: 1,
-                  ),
+                  getDrawingHorizontalLine: _gridLine
+                      .forColor(cs.onSurface.withValues(alpha: 0.05)),
                   drawVerticalLine: false,
                 ),
                 borderData: FlBorderData(show: false),
@@ -193,6 +231,16 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
     'Cancelled': AppColors.statusCancelled,
   };
 
+  void _onTouch(FlTouchEvent event, PieTouchResponse? response) {
+    final index = event.isInterestedForInteractions &&
+            response?.touchedSection != null
+        ? response!.touchedSection!.touchedSectionIndex
+        : -1;
+    if (index != _touchedIndex) {
+      setState(() => _touchedIndex = index);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
@@ -224,17 +272,7 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
             child: RepaintBoundary(
               child: PieChart(
                 PieChartData(
-                  pieTouchData: PieTouchData(
-                    touchCallback: (event, response) {
-                      final index = event.isInterestedForInteractions &&
-                              response?.touchedSection != null
-                          ? response!.touchedSection!.touchedSectionIndex
-                          : -1;
-                      if (index != _touchedIndex) {
-                        setState(() => _touchedIndex = index);
-                      }
-                    },
-                  ),
+                  pieTouchData: PieTouchData(touchCallback: _onTouch),
                   sectionsSpace: 2,
                   centerSpaceRadius: 28,
                   sections: entries.asMap().entries.map((e) {
@@ -315,7 +353,7 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
 
 // ─── Revenue vs Expense Line Chart ──────────────────────────────────────────
 
-class RevenueExpenseChart extends StatelessWidget {
+class RevenueExpenseChart extends StatefulWidget {
   final List<DailySales> weeklySales;
   final Map<int, double> dailyExpenses; // day index → amount
 
@@ -326,10 +364,71 @@ class RevenueExpenseChart extends StatelessWidget {
   });
 
   @override
+  State<RevenueExpenseChart> createState() => _RevenueExpenseChartState();
+}
+
+class _RevenueExpenseChartState extends State<RevenueExpenseChart> {
+  final _gridLine = GridLineCallback();
+
+  /// Day-label color, read by [_bottomTitle]; set in [build].
+  Color _labelColor = Colors.transparent;
+
+  Widget _bottomTitle(double value, TitleMeta meta) {
+    final weeklySales = widget.weeklySales;
+    final i = value.toInt();
+    if (i >= 0 && i < weeklySales.length) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(
+          _weekdayInitials[weeklySales[i].date.weekday - 1],
+          style: TextStyle(
+            fontSize: 10,
+            color: _labelColor,
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  static List<LineTooltipItem> _tooltipItems(List<LineBarSpot> spots) =>
+      spots.map((spot) {
+        final isExpense = spot.barIndex == 1;
+        return LineTooltipItem(
+          CurrencyFormatter.format(spot.y),
+          TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            height: isExpense ? 1.5 : 1,
+          ),
+        );
+      }).toList();
+
+  static FlDotPainter _revenueDot(
+          FlSpot spot, double xPercentage, LineChartBarData bar, int index) =>
+      FlDotCirclePainter(
+        radius: 3,
+        color: AppColors.chartRevenue,
+        strokeWidth: 0,
+      );
+
+  static FlDotPainter _expenseDot(
+          FlSpot spot, double xPercentage, LineChartBarData bar, int index) =>
+      FlDotCirclePainter(
+        radius: 2.5,
+        color: AppColors.statusCancelled,
+        strokeWidth: 0,
+      );
+
+  @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final weeklySales = widget.weeklySales;
+    final dailyExpenses = widget.dailyExpenses;
+    _labelColor = cs.onSurface.withValues(alpha: 0.45);
 
     if (weeklySales.isEmpty) return const SizedBox(height: 140);
 
@@ -371,10 +470,8 @@ class RevenueExpenseChart extends StatelessWidget {
                 gridData: FlGridData(
                   show: true,
                   horizontalInterval: maxY == 0 ? 25 : maxY / 4,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: cs.onSurface.withValues(alpha: 0.05),
-                    strokeWidth: 1,
-                  ),
+                  getDrawingHorizontalLine: _gridLine
+                      .forColor(cs.onSurface.withValues(alpha: 0.05)),
                   drawVerticalLine: false,
                 ),
                 borderData: FlBorderData(show: false),
@@ -382,23 +479,7 @@ class RevenueExpenseChart extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final i = value.toInt();
-                        if (i >= 0 && i < weeklySales.length) {
-                          final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              labels[weeklySales[i].date.weekday - 1],
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: cs.onSurface.withValues(alpha: 0.45),
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
+                      getTitlesWidget: _bottomTitle,
                     ),
                   ),
                   leftTitles: const AxisTitles(
@@ -408,20 +489,9 @@ class RevenueExpenseChart extends StatelessWidget {
                   rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
                 ),
-                lineTouchData: LineTouchData(
+                lineTouchData: const LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (spots) => spots.map((s) {
-                      final isExpense = s.barIndex == 1;
-                      return LineTooltipItem(
-                        CurrencyFormatter.format(s.y),
-                        TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          height: isExpense ? 1.5 : 1,
-                        ),
-                      );
-                    }).toList(),
+                    getTooltipItems: _tooltipItems,
                   ),
                 ),
                 lineBarsData: [
@@ -435,14 +505,9 @@ class RevenueExpenseChart extends StatelessWidget {
                         .toList(),
                     color: AppColors.chartRevenue,
                     barWidth: 2.5,
-                    dotData: FlDotData(
+                    dotData: const FlDotData(
                       show: true,
-                      getDotPainter: (spot, _, __, ___) =>
-                          FlDotCirclePainter(
-                        radius: 3,
-                        color: AppColors.chartRevenue,
-                        strokeWidth: 0,
-                      ),
+                      getDotPainter: _revenueDot,
                     ),
                     belowBarData: BarAreaData(
                       show: true,
@@ -460,15 +525,10 @@ class RevenueExpenseChart extends StatelessWidget {
                     ),
                     color: AppColors.statusCancelled,
                     barWidth: 2,
-                    dashArray: [6, 4],
-                    dotData: FlDotData(
+                    dashArray: const [6, 4],
+                    dotData: const FlDotData(
                       show: true,
-                      getDotPainter: (spot, _, __, ___) =>
-                          FlDotCirclePainter(
-                        radius: 2.5,
-                        color: AppColors.statusCancelled,
-                        strokeWidth: 0,
-                      ),
+                      getDotPainter: _expenseDot,
                     ),
                     isCurved: true,
                     preventCurveOverShooting: true,

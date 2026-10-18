@@ -93,7 +93,7 @@ final class ProductsProvider
   }
 }
 
-String _$productsHash() => r'bc6211e6e988bca5786d0e2a6f50fb48c207df30';
+String _$productsHash() => r'341cff6e730a838d03e66789c54e47b11e1fdf72';
 
 @ProviderFor(lowStockProducts)
 final lowStockProductsProvider = LowStockProductsProvider._();
@@ -158,7 +158,7 @@ final class ProductNotifierProvider
   ProductNotifier create() => ProductNotifier();
 }
 
-String _$productNotifierHash() => r'3e16baf4af4ef742be8fd0fad7261b78a106b279';
+String _$productNotifierHash() => r'2664323accc204b81d3f87012bd3966639f94899';
 
 abstract class _$ProductNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

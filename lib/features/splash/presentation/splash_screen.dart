@@ -26,7 +26,20 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   late final AnimationController _wave;
   late final AnimationController _particleCtrl;
 
-  late final List<_Particle> _particles;
+  /// One particle. There used to be a list of 35, but each was built from a
+  /// fresh `Random(77)`, so all 35 were the same particle stacked on one
+  /// spot; [_buildParticle] draws what that stack composited to.
+  late final _Particle _particle;
+
+  // Timeline (fractions of the 2.5 s master), built once in initState: they
+  // used to be built per call, ~17 CurvedAnimations a frame, each leaving a
+  // status listener on _master that was never removed.
+  final List<CurvedAnimation> _curves = [];
+  late final Animation<double> _logoScale, _logoOp, _logoRot;
+  late final Animation<double> _ringFade, _ring1, _ring2, _ring3;
+  late final Animation<double> _titleOp, _titleSlideIn, _subOp, _pillsOp;
+  late final Animation<double> _bottomOp, _progress;
+  late final List<Animation<double>> _pillIn;
 
   @override
   void initState() {
@@ -44,7 +57,25 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _wave = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000))..repeat();
     _particleCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 6000))..repeat();
 
-    _particles = List.generate(35, (_) => _Particle.random(Random(77)));
+    _particle = _Particle.random(Random(77));
+
+    _logoScale = _interval(0.0, 0.25, Curves.elasticOut);
+    _logoOp = _interval(0.0, 0.1);
+    _logoRot = _interval(0.0, 0.25, Curves.easeOut);
+    _ringFade = _interval(0.05, 0.35);
+    _ring1 = _interval(0.05, 0.3, Curves.easeOutBack);
+    _ring2 = _interval(0.08, 0.33, Curves.easeOutBack);
+    _ring3 = _interval(0.12, 0.38, Curves.easeOutBack);
+    _titleOp = _interval(0.25, 0.4);
+    _titleSlideIn = _interval(0.25, 0.4, Curves.easeOutCubic);
+    _subOp = _interval(0.35, 0.48);
+    _pillsOp = _interval(0.42, 0.6);
+    _bottomOp = _interval(0.55, 0.65);
+    _progress = _interval(0.55, 1.0, Curves.easeInOut);
+    _pillIn = [
+      for (var i = 0; i < _featureData.length; i++)
+        _interval(0.4 + i * 0.018, 0.58 + i * 0.018, Curves.easeOutBack),
+    ];
 
     _master.forward();
     _master.addStatusListener((s) {
@@ -52,8 +83,13 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     });
   }
 
-  double _t(double s, double e, [Curve c = Curves.linear]) =>
-      Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _master, curve: Interval(s, e, curve: c))).value;
+  /// [_master] eased over [s, e] of its run. (A 0→1 Tween on top, as this
+  /// used to have, returns its input unchanged.)
+  Animation<double> _interval(double s, double e, [Curve c = Curves.linear]) {
+    final curved = CurvedAnimation(parent: _master, curve: Interval(s, e, curve: c));
+    _curves.add(curved);
+    return curved;
+  }
 
   void _navigateNext() {
     unawaited(TutorialService.setSplashShown());
@@ -68,6 +104,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   @override
   void dispose() {
+    for (final a in _curves) {
+      a.dispose();
+    }
     for (final c in [_master, _pulse, _orbit, _shimmer, _wave, _particleCtrl]) {
       c.dispose();
     }
@@ -79,6 +118,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final sz = MediaQuery.of(context).size;
     final w = sz.width;
     final h = sz.height;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
 
     // Responsive sizes — everything relative to screen
     final logoIcon = (w * 0.22).clamp(80.0, 130.0);
@@ -98,19 +138,20 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         animation: Listenable.merge([_master, _pulse, _orbit, _shimmer, _wave, _particleCtrl]),
         builder: (context, _) {
           // ── Timeline (compressed to 2.5s) ──
-          final logoScale = _t(0.0, 0.25, Curves.elasticOut);
-          final logoOp = _t(0.0, 0.1);
-          final logoRot = _t(0.0, 0.25, Curves.easeOut);
-          final ringFade = _t(0.05, 0.35);
-          final ring1 = _t(0.05, 0.3, Curves.easeOutBack);
-          final ring2 = _t(0.08, 0.33, Curves.easeOutBack);
-          final ring3 = _t(0.12, 0.38, Curves.easeOutBack);
-          final titleOp = _t(0.25, 0.4);
-          final titleSlide = 1.0 - _t(0.25, 0.4, Curves.easeOutCubic);
-          final subOp = _t(0.35, 0.48);
-          final pillsOp = _t(0.42, 0.6);
-          final bottomOp = _t(0.55, 0.65);
-          final progress = _t(0.55, 1.0, Curves.easeInOut);
+          final logoScale = _logoScale.value;
+          final logoOp = _logoOp.value;
+          final logoRot = _logoRot.value;
+          final ringFade = _ringFade.value;
+          final ring1 = _ring1.value;
+          final ring2 = _ring2.value;
+          final ring3 = _ring3.value;
+          final titleOp = _titleOp.value;
+          final titleSlide = 1.0 - _titleSlideIn.value;
+          final subOp = _subOp.value;
+          final pillsOp = _pillsOp.value;
+          final bottomOp = _bottomOp.value;
+          final progress = _progress.value;
+          final particle = _buildParticle(sz, pillsOp);
 
           return Container(
             width: double.infinity,
@@ -129,43 +170,13 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             ),
             child: Stack(
               children: [
-                // ── BG: Particles rising ──
-                ..._buildParticles(sz, pillsOp),
+                // ── BG: Particle rising ──
+                ?particle,
 
-                // ── BG: Wave at bottom ──
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: h * 0.18,
-                  child: Opacity(
-                    opacity: subOp * 0.2,
-                    child: CustomPaint(
-                      painter: _WavePainter(phase: _wave.value, color: Colors.white),
-                      size: Size(w, h * 0.18),
-                    ),
-                  ),
-                ),
-
-                // ── BG: Top radial glow ──
-                Positioned(
-                  top: -h * 0.12,
-                  left: w * 0.5 - w * 0.55,
-                  child: Opacity(
-                    opacity: ringFade * 0.12,
-                    child: Container(
-                      width: w * 1.1,
-                      height: w * 1.1,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(colors: [
-                          Colors.white.withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0),
-                        ]),
-                      ),
-                    ),
-                  ),
-                ),
+                // (A bottom wave and a top radial glow used to sit here: at
+                // most 0.2 × 0.05 and 0.12 × 0.1 white — 2.6 and 3.1 / 255,
+                // too faint to see — yet each cost an opacity layer every
+                // frame, the glow's about half the screen.)
 
                 // ── Content ──
                 SafeArea(
@@ -240,39 +251,19 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                             ),
                                           ],
                                         ),
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(logoIcon * 0.24),
-                                              child: Image.asset(
-                                                'assets/icons/app_icon.png',
-                                                width: logoIcon,
-                                                height: logoIcon,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            // Shine sweep
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(logoIcon * 0.24),
-                                              child: ShaderMask(
-                                                shaderCallback: (b) {
-                                                  final x = -1 + _shimmer.value * 3;
-                                                  return LinearGradient(
-                                                    begin: Alignment(x, -1),
-                                                    end: Alignment(x + 1, 1),
-                                                    colors: [
-                                                      Colors.transparent,
-                                                      Colors.white.withValues(alpha: 0.2),
-                                                      Colors.transparent,
-                                                    ],
-                                                  ).createShader(b);
-                                                },
-                                                blendMode: BlendMode.srcATop,
-                                                child: SizedBox(width: logoIcon, height: logoIcon),
-                                              ),
-                                            ),
-                                          ],
+                                        // (A "shine" ShaderMask used to sit over the
+                                        // logo, but srcATop over an empty box draws
+                                        // nothing.)
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(logoIcon * 0.24),
+                                          child: Image.asset(
+                                            'assets/icons/app_icon.png',
+                                            width: logoIcon,
+                                            height: logoIcon,
+                                            fit: BoxFit.cover,
+                                            // The asset is 1024 px; decode at display size.
+                                            cacheWidth: (logoIcon * dpr).round(),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -542,8 +533,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   Widget _pill(int i, ({ThinIconBuilder icon, String label}) f, double h, double iconSz, double textSz) {
-    final d = i * 0.018;
-    final p = _t(0.4 + d, 0.58 + d, Curves.easeOutBack).clamp(0.0, 1.0);
+    final p = _pillIn[i].value.clamp(0.0, 1.0);
     return Opacity(
       opacity: p,
       child: Transform.scale(
@@ -604,31 +594,43 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
   }
 
-  List<Widget> _buildParticles(Size sz, double fade) {
-    return _particles.map((p) {
-      final t = (_particleCtrl.value + p.offset) % 1.0;
-      final y = sz.height * (1.0 - t);
-      final x = p.x * sz.width + sin(t * pi * 3 + p.phase) * 35;
-      final op = sin(t * pi) * p.alpha * fade;
-      return Positioned(
-        left: x,
-        top: y,
-        child: Opacity(
-          opacity: op.clamp(0.0, 1.0),
-          child: Container(
-            width: p.size,
-            height: p.size,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: Colors.white.withValues(alpha: 0.35), blurRadius: p.size * 3),
-              ],
-            ),
-          ),
+  /// How many identical copies of the particle used to be stacked.
+  static const _particleCopies = 35;
+
+  /// The particle, drawn as the 35 stacked copies composited, without their
+  /// 35 opacity layers and 35 blurs. Each copy was Opacity([op]) over a white
+  /// dot with a white α 0.35 blurred shadow. The dot: 35 layers at [op] cover
+  /// 1 − (1 − op)^35 of it. The glow: each copy's is so faint (the blur
+  /// spreads a 3 px dot over a σ ≈ 6 px Gaussian, peaking near 0.035 × 0.35
+  /// × op) that 35 of them add up linearly to 35× one — more than one shadow
+  /// can reach at α 1, so it is split over three identical shadows.
+  Widget? _buildParticle(Size sz, double fade) {
+    final p = _particle;
+    final t = (_particleCtrl.value + p.offset) % 1.0;
+    // Each copy's Opacity rounded op to 8 bits and painted nothing at 0.
+    final alpha = Color.getAlphaFromOpacity(sin(t * pi) * p.alpha * fade);
+    if (alpha == 0) return null;
+    final op = alpha / 255;
+    final y = sz.height * (1.0 - t);
+    final x = p.x * sz.width + sin(t * pi * 3 + p.phase) * 35;
+    final core = 1 - pow(1 - op, _particleCopies).toDouble();
+    final glow = BoxShadow(
+      color: Colors.white.withValues(alpha: (_particleCopies * op * 0.35 / 3).clamp(0.0, 1.0)),
+      blurRadius: p.size * 3,
+    );
+    return Positioned(
+      left: x,
+      top: y,
+      child: Container(
+        width: p.size,
+        height: p.size,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: core),
+          shape: BoxShape.circle,
+          boxShadow: [glow, glow, glow],
         ),
-      );
-    }).toList();
+      ),
+    );
   }
 }
 
@@ -643,34 +645,4 @@ class _Particle {
         alpha: 0.08 + r.nextDouble() * 0.15,
         phase: r.nextDouble() * pi * 2,
       );
-}
-
-class _WavePainter extends CustomPainter {
-  final double phase;
-  final Color color;
-  _WavePainter({required this.phase, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (int w = 0; w < 4; w++) {
-      final paint = Paint()
-        ..color = color.withValues(alpha: 0.05 - w * 0.008)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.8;
-      final path = Path();
-      for (double x = 0; x <= size.width; x += 2) {
-        final y = size.height * 0.5 +
-            sin((x / size.width * pi * 2) + phase * pi * 2 + w * 0.7) * (20 + w * 7) +
-            cos((x / size.width * pi * 3) + phase * pi * 1.3 + w * 1.1) * (12 + w * 5);
-        if (x == 0)
-          path.moveTo(x, y);
-        else
-          path.lineTo(x, y);
-      }
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_WavePainter old) => old.phase != phase;
 }

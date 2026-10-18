@@ -2,13 +2,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar_community/isar.dart';
 import '../../../data/models/customer.dart';
-import '../../../data/models/order.dart';
+import '../providers/customer_detail_providers.dart';
 import '../providers/customer_provider.dart';
 import '../providers/dues_provider.dart';
 import 'widgets/due_actions.dart';
-import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
@@ -27,37 +25,16 @@ class CustomerDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isarAsync = ref.watch(isarProvider);
-
-    return isarAsync.when(
-      data: (isar) => _CustomerDetailBody(customerId: customerId, isar: isar),
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
-    );
-  }
-}
-
-class _CustomerDetailBody extends ConsumerWidget {
-  final int customerId;
-  final Isar isar;
-
-  const _CustomerDetailBody({required this.customerId, required this.isar});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
 
     // Live, so collecting a payment from here refreshes the stats below.
-    return StreamBuilder<Customer?>(
-      stream: isar.customers.watchObject(customerId, fireImmediately: true),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
-        }
-        final customer = snap.data;
+    return ref.watch(customerByIdProvider(customerId)).when(
+      skipLoadingOnReload: true,
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
+      data: (customer) {
         if (customer == null) {
           return Scaffold(
               appBar: AppBar(),
@@ -110,187 +87,235 @@ class _CustomerDetailBody extends ConsumerWidget {
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Avatar and info header
-                Center(
+          // Slivers, so the purchase history only builds the cards on screen.
+          body: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                sliver: SliverToBoxAdapter(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: tagColor.withOpacity(0.15),
-                          shape: BoxShape.circle,
+                      // Avatar and info header
+                      Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: tagColor.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  customer.name[0].toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w800,
+                                    color: tagColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              customer.name,
+                              style: theme.textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                            if (customer.phone.isNotEmpty)
+                              Text(
+                                customer.phone,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.6),
+                                ),
+                              ),
+                          ],
                         ),
-                        child: Center(
-                          child: Text(
-                            customer.name[0].toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w800,
-                              color: tagColor,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Stats
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _StatChip(
+                              label: s.orders,
+                              value: '${customer.totalOrders}',
+                              icon: tabler.Receipt.new,
+                              color: theme.colorScheme.primary,
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        customer.name,
-                        style: theme.textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      if (customer.phone.isNotEmpty)
-                        Text(
-                          customer.phone,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color:
-                                theme.colorScheme.onSurface.withOpacity(0.6),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _StatChip(
+                              label: s.totalSpent,
+                              value: CurrencyFormatter.formatCompact(
+                                  customer.totalSpent),
+                              icon: tabler.Cash.new,
+                              color: AppColors.statusCompleted,
+                            ),
                           ),
-                        ),
+                          if (customer.outstandingBalance > 0) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _StatChip(
+                                label: s.outstanding,
+                                value: CurrencyFormatter.formatCompact(
+                                    customer.outstandingBalance),
+                                icon: tabler.CashOff.new,
+                                color: AppColors.paymentUnpaid,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      _DueActions(customer: customer),
+
+                      if (customer.address.isNotEmpty ||
+                          customer.notes.isNotEmpty) ...[
+                        _InfoCard(children: [
+                          if (customer.address.isNotEmpty)
+                            _InfoRow(s.address, customer.address),
+                          if (customer.notes.isNotEmpty)
+                            _InfoRow(s.notes, customer.notes),
+                          _InfoRow(s.tr('memberSince'),
+                              DateFormatter.format(customer.createdAt)),
+                        ]),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Purchase History Chart
+                      _PurchaseChartSection(customerId: customerId),
+
+                      _PaymentHistory(customerId: customerId),
+
+                      // Customer orders
+                      Text(s.purchaseHistory,
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                sliver: _PurchaseHistoryList(customerId: customerId),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
 
-                // Stats
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatChip(
-                        label: s.orders,
-                        value: '${customer.totalOrders}',
-                        icon: tabler.Receipt.new,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatChip(
-                        label: s.totalSpent,
-                        value:
-                            CurrencyFormatter.formatCompact(customer.totalSpent),
-                        icon: tabler.Cash.new,
-                        color: AppColors.statusCompleted,
-                      ),
-                    ),
-                    if (customer.outstandingBalance > 0) ...[
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatChip(
-                          label: s.outstanding,
-                          value: CurrencyFormatter.formatCompact(
-                              customer.outstandingBalance),
-                          icon: tabler.CashOff.new,
-                          color: AppColors.paymentUnpaid,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 16),
+/// The 6-month purchase chart, hidden until loaded and when the customer has
+/// no orders apart from cancelled ones.
+class _PurchaseChartSection extends ConsumerWidget {
+  const _PurchaseChartSection({required this.customerId});
 
-                _DueActions(customer: customer),
+  final int customerId;
 
-                if (customer.address.isNotEmpty ||
-                    customer.notes.isNotEmpty) ...[
-                  _InfoCard(children: [
-                    if (customer.address.isNotEmpty)
-                      _InfoRow(s.address, customer.address),
-                    if (customer.notes.isNotEmpty)
-                      _InfoRow(s.notes, customer.notes),
-                    _InfoRow(s.tr('memberSince'),
-                        DateFormatter.format(customer.createdAt)),
-                  ]),
-                  const SizedBox(height: 16),
-                ],
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final spending =
+        ref.watch(customerMonthlySpendingProvider(customerId)).value;
+    if (spending == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: _PurchaseHistoryChart(monthlySpending: spending),
+    );
+  }
+}
 
-                // Purchase History Chart
-                FutureBuilder<List<Order>>(
-                  future: isar.orders
-                      .filter()
-                      .customerIdEqualTo(customerId)
-                      .not()
-                      .orderStatusEqualTo(OrderStatus.cancelled)
-                      .sortByCreatedAt()
-                      .findAll(),
-                  builder: (context, orderSnap) {
-                    final orders = orderSnap.data ?? [];
-                    if (orders.isEmpty) return const SizedBox.shrink();
+/// The customer's orders, newest first, as a lazily built sliver. Paged:
+/// nearing the end of the loaded rows loads the next page, with a spinner
+/// row below while more exist.
+class _PurchaseHistoryList extends ConsumerStatefulWidget {
+  const _PurchaseHistoryList({required this.customerId});
 
-                    final now = DateTime.now();
-                    final monthlySpending = <DateTime, double>{};
-                    for (int i = 5; i >= 0; i--) {
-                      final month = DateTime(now.year, now.month - i, 1);
-                      monthlySpending[month] = 0;
-                    }
-                    for (final order in orders) {
-                      if (order.createdAt == null) continue;
-                      final key = DateTime(
-                          order.createdAt!.year, order.createdAt!.month, 1);
-                      if (monthlySpending.containsKey(key)) {
-                        monthlySpending[key] =
-                            monthlySpending[key]! + order.totalAmount;
-                      }
-                    }
+  final int customerId;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _PurchaseHistoryChart(
-                          monthlySpending: monthlySpending),
-                    );
-                  },
-                ),
+  @override
+  ConsumerState<_PurchaseHistoryList> createState() =>
+      _PurchaseHistoryListState();
+}
 
-                _PaymentHistory(customerId: customerId),
+class _PurchaseHistoryListState extends ConsumerState<_PurchaseHistoryList> {
+  /// How close to the last loaded row the next page is requested.
+  static const _loadMoreAhead = 20;
+  bool _loadMoreScheduled = false;
 
-                // Customer orders
-                Text(s.purchaseHistory,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                FutureBuilder<List<Order>>(
-                  future: isar.orders
-                      .filter()
-                      .customerIdEqualTo(customerId)
-                      .sortByCreatedAtDesc()
-                      .findAll(),
-                  builder: (ctx, snap) {
-                    final orders = snap.data ?? [];
-                    if (orders.isEmpty) {
-                      return Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            s.addFirstOrder,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface
-                                  .withOpacity(0.4),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                    return Column(
-                      children: orders
-                          .map((o) => Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: OrderCard(order: o),
-                              ))
-                          .toList(),
-                    );
-                  },
-                ),
-              ],
+  // After the frame: the notifier's state can't change during a build.
+  void _loadMoreSoon() {
+    if (_loadMoreScheduled) return;
+    _loadMoreScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMoreScheduled = false;
+      if (mounted) {
+        ref.read(customerOrdersProvider(widget.customerId).notifier).loadMore();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final theme = Theme.of(context);
+
+    final empty = SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Text(
+            s.addFirstOrder,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.4),
             ),
           ),
+        ),
+      ),
+    );
+
+    return ref.watch(customerOrdersProvider(widget.customerId)).when(
+      skipLoadingOnReload: true,
+      loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+      error: (_, _) => empty,
+      data: (page) {
+        final orders = page.orders;
+        if (orders.isEmpty) return empty;
+        return SliverList.builder(
+          itemCount: orders.length + (page.hasMore ? 1 : 0),
+          itemBuilder: (_, i) {
+            if (page.hasMore && i >= orders.length - _loadMoreAhead) {
+              _loadMoreSoon();
+            }
+            if (i == orders.length) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: SizedBox.square(
+                    dimension: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: OrderCard(order: orders[i]),
+            );
+          },
         );
       },
     );

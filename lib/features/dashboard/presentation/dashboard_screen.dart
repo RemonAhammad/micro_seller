@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/dashboard_provider.dart';
-import '../../../features/orders/providers/order_provider.dart';
 import '../../../features/expenses/providers/expense_provider.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/expense.dart';
@@ -125,7 +124,6 @@ class _DashboardContent extends ConsumerWidget {
     final dueSummary = ref.watch(dueSummaryProvider) ?? const DueSummary();
     final collectedThisMonth =
         ref.watch(duesCollectedThisMonthProvider).value ?? 0;
-    final ordersAsync = ref.watch(ordersProvider);
     final expensesAsync = ref.watch(expensesProvider);
     final dateRange = resolveDashboardRange(
         ref.watch(dashboardDateRangeProvider), DateTime.now());
@@ -161,16 +159,11 @@ class _DashboardContent extends ConsumerWidget {
           child: statsAsync.when(
             skipLoadingOnReload: true,
             data: (stats) {
-              // Compute order status counts; labels keep the order in which
-              // each status first appears in the list
-              final counts = List.filled(OrderStatus.values.length, 0);
-              final firstSeen = <int>[];
-              for (final o in ordersAsync.value ?? <Order>[]) {
-                final i = o.orderStatus.index;
-                if (counts[i]++ == 0) firstSeen.add(i);
-              }
+              // Order status counts come counted from the provider, in the
+              // order each status first appears newest-first.
               final statusCounts = <String, int>{
-                for (final i in firstSeen) _statusLabels[i]: counts[i],
+                for (final e in stats.statusCounts.entries)
+                  _statusLabels[e.key.index]: e.value,
               };
 
               // Compute daily expenses for the last 7 days and the range

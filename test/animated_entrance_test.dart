@@ -40,7 +40,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(_opacity(tester, 'Item 0'), greaterThan(0));
     expect(_opacity(tester, 'Item 0'), lessThan(1));
-    // Past maxStaggerIndex but on the first screen: still animates.
+    // Past maxStaggerIndex but built at offset 0: still animates.
     expect(_entranceFade('Item 15'), findsOneWidget);
 
     await tester.pumpAndSettle();

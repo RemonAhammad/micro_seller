@@ -46,7 +46,7 @@ final class ExpensesProvider
   }
 }
 
-String _$expensesHash() => r'45382a7460ac7c2b122160e1d338413038e6dc28';
+String _$expensesHash() => r'2e5f3bfcfdd8f8d466c4334a6666ae6009e614e9';
 
 @ProviderFor(ExpenseNotifier)
 final expenseProvider = ExpenseNotifierProvider._();

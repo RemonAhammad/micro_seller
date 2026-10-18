@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart' show svg;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'app.dart';
+import 'core/constants/app_icons.dart';
+import 'core/constants/sidebar_items.dart';
 import 'core/utils/currency_formatter.dart';
 import 'data/services/auto_backup_runner.dart';
 import 'data/services/notification_service.dart';
@@ -49,6 +52,11 @@ void main() async {
     ),
   );
 
+  // The app draws ~140 distinct (icon, stroke) SVGs; flutter_svg keeps 100
+  // by default, so icons evicted while navigating were re-parsed in an
+  // isolate and popped in a frame late.
+  svg.cache.maximumSize = 300;
+
   runApp(
     const ProviderScope(
       child: SellerBookApp(),
@@ -60,6 +68,11 @@ void main() async {
       if (kDebugMode) debugPrint('[main] notification init failed: $e');
     }));
   }
+
+  // After the first frame, so it stays off the startup path.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(_warmIcons());
+  });
 
   // Workmanager — Android only, after the first frame so it stays off the
   // startup path. Initialized once per process; the dispatcher is a
@@ -78,6 +91,21 @@ void main() async {
       if (kDebugMode) debugPrint('[main] workmanager init failed: $e');
     }
   });
+}
+
+/// Parse the sidebar icons (at both strokes: the active tab is drawn bolder)
+/// and the dashboard's into the SVG cache, so switching tabs doesn't wait a
+/// frame on an isolate parse. Best effort — an icon that isn't warmed just
+/// loads the way it always did.
+Future<void> _warmIcons() async {
+  try {
+    final sidebar = [for (final item in sidebarItems) item.icon];
+    await warmThinIcons(sidebar);
+    await warmThinIcons(sidebar, strokeWidth: kIconStrokeSelected);
+    await warmThinIcons(AppIcons.dashboardSet);
+  } catch (e) {
+    if (kDebugMode) debugPrint('[main] icon warm-up failed: $e');
+  }
 }
 
 /// Load .env (OAuth client IDs etc). Don't crash the app if it's missing —

@@ -1,15 +1,15 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:screenshot/screenshot.dart';
 import '../models/customer.dart';
 import '../models/order.dart';
 import '../models/payment.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
 import 'dues_service.dart';
+import 'pdf_assembly.dart';
 import 'pdf_service.dart';
+import 'widget_capture.dart';
 
 /// Localized labels for the statement. The service has no BuildContext, so
 /// the caller resolves these from `AppStrings.of(context)`.
@@ -163,10 +163,11 @@ class StatementService {
     }
     if (chunks.isEmpty) chunks.add(const []);
     final closing = rows.isEmpty ? 0.0 : rows.last.balance;
+    final watermarkIcon = await loadPdfWatermarkIcon();
 
-    final pdf = pw.Document();
+    final pages = <Uint8List>[];
     for (var i = 0; i < chunks.length; i++) {
-      final png = await ScreenshotController().captureFromWidget(
+      pages.add(await captureWidgetPng(
         _StatementPage(
           customer: customer,
           rows: chunks[i],
@@ -178,21 +179,19 @@ class StatementService {
           pageIndex: i,
           pageCount: chunks.length,
           textDirection: textDirection,
+          watermarkIcon: watermarkIcon,
         ),
-        pixelRatio: 2.0,
+        pixelRatio: kPdfCapturePixelRatio,
         // Must be finite — see PdfService.generateOrderReceipt.
         targetSize: const Size(_pageWidth, _pageHeight),
         delay: const Duration(milliseconds: 100),
-      );
-      final image = pw.MemoryImage(png);
-      pdf.addPage(pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.zero,
-        build: (_) => pw.Image(image,
-            fit: pw.BoxFit.fitWidth, alignment: pw.Alignment.topCenter),
       ));
     }
-    return pdf.save();
+    // Every page fills the full canvas on an opaque white Material → JPEG.
+    return assemblePdf(pages, jpegPages: (
+      width: (_pageWidth * kPdfCapturePixelRatio).round(),
+      height: (_pageHeight * kPdfCapturePixelRatio).round(),
+    ));
   }
 }
 
@@ -208,6 +207,7 @@ class _StatementPage extends StatelessWidget {
     required this.pageIndex,
     required this.pageCount,
     required this.textDirection,
+    required this.watermarkIcon,
   });
 
   final Customer customer;
@@ -220,6 +220,7 @@ class _StatementPage extends StatelessWidget {
   final int pageIndex;
   final int pageCount;
   final TextDirection textDirection;
+  final ui.Image? watermarkIcon;
 
   static const _teal = Color(0xFF00897B);
   static const _grey100 = Color(0xFFF5F5F5);
@@ -266,10 +267,10 @@ class _StatementPage extends StatelessWidget {
                   child: Text(labels.pageOf(pageIndex + 1, pageCount),
                       style: const TextStyle(color: _grey600, fontSize: 10)),
                 ),
-                const PositionedDirectional(
+                PositionedDirectional(
                   end: 40,
                   bottom: 22,
-                  child: PdfWatermark(),
+                  child: PdfWatermark(icon: watermarkIcon),
                 ),
               ],
             ),

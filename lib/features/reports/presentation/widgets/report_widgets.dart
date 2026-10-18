@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../dashboard/presentation/widgets/sales_chart.dart' show GridLineCallback;
 import '../../../dashboard/presentation/widgets/stat_card.dart';
 
 /// Shared building blocks for the four Reports tabs.
@@ -239,20 +240,60 @@ class BreakdownBars extends StatelessWidget {
 }
 
 /// Net sales per day (or month) as bars; returns can make a bucket negative.
-class NetSalesChart extends StatelessWidget {
+///
+/// Stateful only so the chart callbacks are stable tear-offs: fl_chart
+/// compares its data (callbacks included) to decide whether to animate, and
+/// closures built in `build` restarted the animation on every rebuild.
+class NetSalesChart extends StatefulWidget {
   const NetSalesChart({super.key, required this.series, required this.byMonth});
 
   final List<({DateTime bucket, double value})> series;
   final bool byMonth;
 
   @override
+  State<NetSalesChart> createState() => _NetSalesChartState();
+}
+
+class _NetSalesChartState extends State<NetSalesChart> {
+  static const _months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+
+  final _gridLine = GridLineCallback();
+
+  /// Read by [_bottomTitle]; set in [build].
+  Color _labelColor = Colors.transparent;
+  int _every = 1;
+
+  BarTooltipItem _tooltipItem(
+      BarChartGroupData g, int groupIndex, BarChartRodData rod, int rodIndex) {
+    final d = widget.series[g.x].bucket;
+    final label = widget.byMonth ? '${d.month}/${d.year}' : '${d.day}/${d.month}';
+    return BarTooltipItem('$label\n${CurrencyFormatter.format(rod.toY)}',
+        const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600));
+  }
+
+  Widget _bottomTitle(double v, TitleMeta meta) {
+    final series = widget.series;
+    final i = v.toInt();
+    if (i < 0 || i >= series.length || i % _every != 0) {
+      return const SizedBox.shrink();
+    }
+    final d = series[i].bucket;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(widget.byMonth ? _months[d.month - 1] : '${d.day}',
+          style: TextStyle(fontSize: 9, color: _labelColor)),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final series = widget.series;
     final maxV = series.fold<double>(0, (m, e) => e.value > m ? e.value : m);
     final minV = series.fold<double>(0, (m, e) => e.value < m ? e.value : m);
     final top = maxV == 0 ? 100.0 : maxV * 1.15;
-    final every = (series.length / 7).ceil().clamp(1, 1000);
-    const months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+    _every = (series.length / 7).ceil().clamp(1, 1000);
+    _labelColor = cs.onSurface.withValues(alpha: 0.5);
 
     return SizedBox(
       height: 170,
@@ -263,18 +304,13 @@ class NetSalesChart extends StatelessWidget {
           gridData: FlGridData(
             drawVerticalLine: false,
             horizontalInterval: top / 4,
-            getDrawingHorizontalLine: (_) =>
-                FlLine(color: cs.onSurface.withValues(alpha: 0.05), strokeWidth: 1),
+            getDrawingHorizontalLine:
+                _gridLine.forColor(cs.onSurface.withValues(alpha: 0.05)),
           ),
           borderData: FlBorderData(show: false),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipItem: (g, _, rod, __) {
-                final d = series[g.x].bucket;
-                final label = byMonth ? '${d.month}/${d.year}' : '${d.day}/${d.month}';
-                return BarTooltipItem('$label\n${CurrencyFormatter.format(rod.toY)}',
-                    const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600));
-              },
+              getTooltipItem: _tooltipItem,
             ),
           ),
           titlesData: FlTitlesData(
@@ -285,18 +321,7 @@ class NetSalesChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 22,
-                getTitlesWidget: (v, _) {
-                  final i = v.toInt();
-                  if (i < 0 || i >= series.length || i % every != 0) {
-                    return const SizedBox.shrink();
-                  }
-                  final d = series[i].bucket;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(byMonth ? months[d.month - 1] : '${d.day}',
-                        style: TextStyle(fontSize: 9, color: cs.onSurface.withValues(alpha: 0.5))),
-                  );
-                },
+                getTitlesWidget: _bottomTitle,
               ),
             ),
           ),

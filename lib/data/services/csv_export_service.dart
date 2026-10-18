@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/order.dart';
@@ -129,12 +131,22 @@ class CsvExportService {
 
   Future<void> _shareAsCsv(List<List<dynamic>> rows, String fileName,
       {bool bom = false}) async {
-    final text = csv.encode(rows);
+    // CSV + UTF-8 encoding of a big export would freeze the UI isolate. The
+    // rows hold only plain values (String / num), so they cross as they are.
+    final bytes = await compute(_encodeCsv, (rows, bom));
     final dir = await getTemporaryDirectory();
     final file = File(
       '${dir.path}/${fileName}_${DateTime.now().millisecondsSinceEpoch}.csv',
     );
-    await file.writeAsString(bom ? '\uFEFF$text' : text);
+    await file.writeAsBytes(bytes);
     await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: fileName));
   }
+}
+
+/// The exact bytes `File.writeAsString(bom ? '\uFEFF$text' : text)` wrote
+/// (UTF-8), for a worker isolate.
+Uint8List _encodeCsv((List<List<dynamic>>, bool) args) {
+  final (rows, bom) = args;
+  final text = csv.encode(rows);
+  return utf8.encode(bom ? '\uFEFF$text' : text);
 }

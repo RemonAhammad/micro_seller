@@ -173,7 +173,34 @@ const OrderSchema = CollectionSchema(
   deserialize: _orderDeserialize,
   deserializeProp: _orderDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'customerId': IndexSchema(
+      id: 1498639901530368639,
+      name: r'customerId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'customerId',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
+    r'createdAt': IndexSchema(
+      id: -3433535483987302584,
+      name: r'createdAt',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'createdAt',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
+  },
   links: {},
   embeddedSchemas: {r'OrderItem': OrderItemSchema},
 
@@ -494,6 +521,22 @@ extension OrderQueryWhereSort on QueryBuilder<Order, Order, QWhere> {
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
+
+  QueryBuilder<Order, Order, QAfterWhere> anyCustomerId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'customerId'),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhere> anyCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'createdAt'),
+      );
+    });
+  }
 }
 
 extension OrderQueryWhere on QueryBuilder<Order, Order, QWhereClause> {
@@ -559,6 +602,237 @@ extension OrderQueryWhere on QueryBuilder<Order, Order, QWhereClause> {
           lower: lowerId,
           includeLower: includeLower,
           upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> customerIdEqualTo(
+    int customerId,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'customerId', value: [customerId]),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> customerIdNotEqualTo(
+    int customerId,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'customerId',
+                lower: [],
+                upper: [customerId],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'customerId',
+                lower: [customerId],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'customerId',
+                lower: [customerId],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'customerId',
+                lower: [],
+                upper: [customerId],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> customerIdGreaterThan(
+    int customerId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'customerId',
+          lower: [customerId],
+          includeLower: include,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> customerIdLessThan(
+    int customerId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'customerId',
+          lower: [],
+          upper: [customerId],
+          includeUpper: include,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> customerIdBetween(
+    int lowerCustomerId,
+    int upperCustomerId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'customerId',
+          lower: [lowerCustomerId],
+          includeLower: includeLower,
+          upper: [upperCustomerId],
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> createdAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'createdAt', value: [null]),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> createdAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [null],
+          includeLower: false,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> createdAtEqualTo(
+    DateTime? createdAt,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'createdAt', value: [createdAt]),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> createdAtNotEqualTo(
+    DateTime? createdAt,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [],
+                upper: [createdAt],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [createdAt],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [createdAt],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'createdAt',
+                lower: [],
+                upper: [createdAt],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> createdAtGreaterThan(
+    DateTime? createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [createdAt],
+          includeLower: include,
+          upper: [],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> createdAtLessThan(
+    DateTime? createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [],
+          upper: [createdAt],
+          includeUpper: include,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Order, Order, QAfterWhereClause> createdAtBetween(
+    DateTime? lowerCreatedAt,
+    DateTime? upperCreatedAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'createdAt',
+          lower: [lowerCreatedAt],
+          includeLower: includeLower,
+          upper: [upperCreatedAt],
           includeUpper: includeUpper,
         ),
       );

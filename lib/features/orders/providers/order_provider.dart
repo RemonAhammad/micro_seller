@@ -7,7 +7,9 @@ import '../../../data/models/order_item.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
+import '../../../data/services/db_worker.dart';
 import '../../../data/services/dues_service.dart';
+import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
 
 part 'order_provider.g.dart';
@@ -15,10 +17,23 @@ part 'order_provider.g.dart';
 @riverpod
 Stream<List<Order>> orders(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  yield* isar.orders
-      .where()
-      .sortByCreatedAtDesc()
-      .watch(fireImmediately: true);
+  yield* reloadOn(
+      isar.orders.watchLazy(), () => runDbJob(isar, _allOrdersNewestFirst));
+}
+
+/// Every order newest first, read in createdAt-index order (no sort) on a
+/// worker isolate.
+List<Order> _allOrdersNewestFirst(Isar db) =>
+    db.orders.where(sort: Sort.desc).anyCreatedAt().findAllSync();
+
+/// Return orders only, newest first — the Returns screen's list, without
+/// loading every order to filter them.
+@riverpod
+Stream<List<Order>> returnOrders(Ref ref) async* {
+  final isar = await ref.watch(isarProvider.future);
+  final query =
+      isar.orders.filter().isReturnEqualTo(true).sortByCreatedAtDesc();
+  yield* reloadOn(isar.orders.watchLazy(), query.findAll);
 }
 
 /// One order, live — without reloading every order on each write.
@@ -76,8 +91,28 @@ class OrderNotifier extends _$OrderNotifier {
     String note = '',
     String groupId = '',
   }) async {
+    await isar.payments.put(_paymentRow(
+      order: order,
+      amount: amount,
+      method: method,
+      transactionId: transactionId,
+      note: note,
+      groupId: groupId,
+    ));
+  }
+
+  /// The payment-history row [_logPayment] writes, for callers that log
+  /// several in one `putAll`.
+  Payment _paymentRow({
+    required Order order,
+    required double amount,
+    PaymentMethod? method,
+    String transactionId = '',
+    String note = '',
+    String groupId = '',
+  }) {
     final now = DateTime.now();
-    await isar.payments.put(Payment(
+    return Payment(
       customerId: order.customerId,
       orderId: order.id,
       amount: amount,
@@ -87,7 +122,58 @@ class OrderNotifier extends _$OrderNotifier {
       groupId: groupId,
       paidAt: now,
       createdAt: now,
-    ));
+    );
+  }
+
+  /// Moves each item's qty in or out of stock — `sign` -1 deducts (sale),
+  /// +1 restores — on both the product's base `stockQty` and the item's
+  /// variant combination, with one [StockMovement] per item. Call inside the
+  /// caller's writeTxn.
+  ///
+  /// Batched: the products are read with one `getAll` and written with one
+  /// `putAll`, the movements with another `putAll` — instead of a get + put
+  /// + put per item, each a round trip to Isar's thread. Items are applied
+  /// in order to the in-memory product, so two items of one product (e.g.
+  /// two variants) compose exactly as the sequential get → put did. Items
+  /// whose product no longer exists are skipped, movement included.
+  Future<void> _moveStock(
+    Isar isar,
+    List<OrderItem> items, {
+    required int sign,
+    required StockMovementType type,
+    required String reason,
+  }) async {
+    if (items.isEmpty) return;
+    final ids = {for (final item in items) item.productId}.toList();
+    final products = <int, Product>{};
+    for (final p in await isar.products.getAll(ids)) {
+      if (p != null) products[p.id] = p;
+    }
+    final changed = <int>{};
+    final movements = <StockMovement>[];
+    for (final item in items) {
+      final product = products[item.productId];
+      if (product == null) continue;
+      final delta = sign * item.qty;
+      var updated = product.copyWith(
+        stockQty: product.stockQty + delta,
+        updatedAt: DateTime.now(),
+      );
+      updated = _adjustVariantStock(updated, item, delta);
+      products[item.productId] = updated;
+      changed.add(item.productId);
+      movements.add(StockMovement(
+        productId: item.productId,
+        productName: item.productName,
+        type: type,
+        qty: delta,
+        reason: reason,
+        createdAt: DateTime.now(),
+      ));
+    }
+    if (changed.isEmpty) return;
+    await isar.products.putAll([for (final id in changed) products[id]!]);
+    await isar.stockMovements.putAll(movements);
   }
 
   Future<String> generateOrderNumber() async {
@@ -112,25 +198,10 @@ class OrderNotifier extends _$OrderNotifier {
 
         // Deduct stock and create movements for confirmed orders
         if (order.orderStatus == OrderStatus.confirmed) {
-          for (final item in order.items) {
-            final product = await isar.products.get(item.productId);
-            if (product != null) {
-              var updated = product.copyWith(
-                stockQty: product.stockQty - item.qty,
-                updatedAt: DateTime.now(),
-              );
-              updated = _adjustVariantStock(updated, item, -item.qty);
-              await isar.products.put(updated);
-              await isar.stockMovements.put(StockMovement(
-                productId: item.productId,
-                productName: item.productName,
-                type: StockMovementType.sale,
-                qty: -item.qty,
-                reason: 'Order ${order.orderNumber}',
-                createdAt: DateTime.now(),
-              ));
-            }
-          }
+          await _moveStock(isar, order.items,
+              sign: -1,
+              type: StockMovementType.sale,
+              reason: 'Order ${order.orderNumber}');
         }
 
         // Update customer stats
@@ -180,48 +251,18 @@ class OrderNotifier extends _$OrderNotifier {
 
         // Restore stock when rolling back to pending/cancelled
         if (wasStockDeducted && !shouldDeductStock) {
-          for (final item in order.items) {
-            final product = await isar.products.get(item.productId);
-            if (product != null) {
-              var updated = product.copyWith(
-                stockQty: product.stockQty + item.qty,
-                updatedAt: DateTime.now(),
-              );
-              updated = _adjustVariantStock(updated, item, item.qty);
-              await isar.products.put(updated);
-              await isar.stockMovements.put(StockMovement(
-                productId: item.productId,
-                productName: item.productName,
-                type: StockMovementType.adjustment,
-                qty: item.qty,
-                reason: 'Rollback ${order.orderNumber} → ${status.name}',
-                createdAt: DateTime.now(),
-              ));
-            }
-          }
+          await _moveStock(isar, order.items,
+              sign: 1,
+              type: StockMovementType.adjustment,
+              reason: 'Rollback ${order.orderNumber} → ${status.name}');
         }
 
         // Deduct stock when moving from pending/cancelled to active status
         if (!wasStockDeducted && shouldDeductStock) {
-          for (final item in order.items) {
-            final product = await isar.products.get(item.productId);
-            if (product != null) {
-              var updated = product.copyWith(
-                stockQty: product.stockQty - item.qty,
-                updatedAt: DateTime.now(),
-              );
-              updated = _adjustVariantStock(updated, item, -item.qty);
-              await isar.products.put(updated);
-              await isar.stockMovements.put(StockMovement(
-                productId: item.productId,
-                productName: item.productName,
-                type: StockMovementType.sale,
-                qty: -item.qty,
-                reason: 'Order ${order.orderNumber}',
-                createdAt: DateTime.now(),
-              ));
-            }
-          }
+          await _moveStock(isar, order.items,
+              sign: -1,
+              type: StockMovementType.sale,
+              reason: 'Order ${order.orderNumber}');
         }
 
         // Cancel-into transition: reverse the customer ledger fully and zero
@@ -331,18 +372,27 @@ class OrderNotifier extends _$OrderNotifier {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
-        final orders =
-            await isar.orders.filter().customerIdEqualTo(customerId).findAll();
+        // Index lookups don't return equal keys in id order; sort so the
+        // dues are summed and allocated in the same order as the Due Book.
+        final orders = (await isar.orders
+            .where()
+            .customerIdEqualTo(customerId)
+            .findAll())
+          ..sort((a, b) => a.id.compareTo(b.id));
         final groupId = 'col-${DateTime.now().microsecondsSinceEpoch}';
         // Never collect more than the net due — credits on other orders
         // (over-valued exchange returns) reduce what's actually owed.
         var remaining = amount.clamp(0.0, computeNetDue(orders));
 
+        // Each due order is a distinct row, so the updates and their
+        // payment rows are collected and written with one putAll each.
+        final paidOrders = <Order>[];
+        final payments = <Payment>[];
         for (final d in computeOrderDues(orders)) {
           if (remaining <= kDueEpsilon) break;
           final part = remaining < d.due ? remaining : d.due;
           final newPaid = d.order.amountPaid + part;
-          await isar.orders.put(d.order.copyWith(
+          paidOrders.add(d.order.copyWith(
             amountPaid: newPaid,
             // Same rule as recordPayment/processRefund, so status and the
             // order's displayed balanceDue never disagree.
@@ -355,15 +405,19 @@ class OrderNotifier extends _$OrderNotifier {
                 : d.order.transactionId,
             updatedAt: DateTime.now(),
           ));
-          await _logPayment(isar,
+          payments.add(_paymentRow(
               order: d.order,
               amount: part,
               method: method,
               transactionId: transactionId,
               note: note,
-              groupId: groupId);
+              groupId: groupId));
           remaining -= part;
           applied += part;
+        }
+        if (paidOrders.isNotEmpty) {
+          await isar.orders.putAll(paidOrders);
+          await isar.payments.putAll(payments);
         }
         if (applied <= 0) return;
 
@@ -442,13 +496,16 @@ class OrderNotifier extends _$OrderNotifier {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
-        await isar.orders.put(returnOrder);
 
-        // Mark original order as having a return
-        await isar.orders.put(original.copyWith(
-          returnStatus: ReturnStatus.requested,
-          updatedAt: DateTime.now(),
-        ));
+        // Save the return and mark the original as having one — one putAll,
+        // in the same order the two puts ran.
+        await isar.orders.putAll([
+          returnOrder,
+          original.copyWith(
+            returnStatus: ReturnStatus.requested,
+            updatedAt: DateTime.now(),
+          ),
+        ]);
       });
     });
   }
@@ -469,25 +526,10 @@ class OrderNotifier extends _$OrderNotifier {
         ));
 
         // Restore stock for returned items
-        for (final item in returnOrder.items) {
-          final product = await isar.products.get(item.productId);
-          if (product != null) {
-            var updated = product.copyWith(
-              stockQty: product.stockQty + item.qty,
-              updatedAt: DateTime.now(),
-            );
-            updated = _adjustVariantStock(updated, item, item.qty);
-            await isar.products.put(updated);
-            await isar.stockMovements.put(StockMovement(
-              productId: item.productId,
-              productName: item.productName,
-              type: StockMovementType.restock,
-              qty: item.qty,
-              reason: 'Return ${returnOrder.orderNumber}',
-              createdAt: DateTime.now(),
-            ));
-          }
-        }
+        await _moveStock(isar, returnOrder.items,
+            sign: 1,
+            type: StockMovementType.restock,
+            reason: 'Return ${returnOrder.orderNumber}');
 
         // Update original order
         if (returnOrder.originalOrderId > 0) {
@@ -562,21 +604,23 @@ class OrderNotifier extends _$OrderNotifier {
         final actualRefund =
             returnOrder.refundAmount.clamp(0.0, maxRefundable);
 
-        // Mark return as refunded
-        await isar.orders.put(returnOrder.copyWith(
-          refundAmount: actualRefund,
-          amountPaid: actualRefund,
-          paymentStatus: PaymentStatus.paid,
-          paymentMethod: refundMethod ?? returnOrder.paymentMethod,
-          transactionId: refundTransactionId.isNotEmpty
-              ? refundTransactionId
-              : returnOrder.transactionId,
-          returnStatus: ReturnStatus.refunded,
-          orderStatus: OrderStatus.completed,
-          updatedAt: DateTime.now(),
-        ));
-
-        // Update original order — reduce amountPaid by refund
+        // Mark return as refunded, and update the original order — reduce
+        // amountPaid by refund. Both rows were read above and nothing reads
+        // between the two writes, so one putAll (same order) replaces them.
+        final updatedOrders = [
+          returnOrder.copyWith(
+            refundAmount: actualRefund,
+            amountPaid: actualRefund,
+            paymentStatus: PaymentStatus.paid,
+            paymentMethod: refundMethod ?? returnOrder.paymentMethod,
+            transactionId: refundTransactionId.isNotEmpty
+                ? refundTransactionId
+                : returnOrder.transactionId,
+            returnStatus: ReturnStatus.refunded,
+            orderStatus: OrderStatus.completed,
+            updatedAt: DateTime.now(),
+          ),
+        ];
         if (original != null) {
           final newAmountPaid =
               (original.amountPaid - actualRefund).clamp(0.0, double.infinity);
@@ -585,20 +629,22 @@ class OrderNotifier extends _$OrderNotifier {
               : newAmountPaid > 0
                   ? PaymentStatus.partial
                   : PaymentStatus.unpaid;
-          await isar.orders.put(original.copyWith(
+          updatedOrders.add(original.copyWith(
             amountPaid: newAmountPaid,
             paymentStatus: newPaymentStatus,
             returnStatus: ReturnStatus.refunded,
             updatedAt: DateTime.now(),
           ));
-          if (actualRefund > 0) {
-            await _logPayment(isar,
-                order: original,
-                amount: -actualRefund,
-                method: refundMethod,
-                transactionId: refundTransactionId,
-                note: 'refund ${returnOrder.orderNumber}');
-          }
+        }
+        await isar.orders.putAll(updatedOrders);
+
+        if (original != null && actualRefund > 0) {
+          await _logPayment(isar,
+              order: original,
+              amount: -actualRefund,
+              method: refundMethod,
+              transactionId: refundTransactionId,
+              note: 'refund ${returnOrder.orderNumber}');
         }
 
         // Update customer stats.
@@ -644,50 +690,76 @@ class OrderNotifier extends _$OrderNotifier {
         .orderStatusEqualTo(OrderStatus.cancelled)
         .findAll();
 
-    for (final order in recurringOrders) {
-      if (order.nextRecurringDate != null &&
-          order.nextRecurringDate!.isBefore(now)) {
-        await isar.writeTxn(() async {
-          // Generate new order number
-          final count = await isar.orders.count();
-          final num = (count + 1).toString().padLeft(3, '0');
+    final due = recurringOrders
+        .where((o) =>
+            o.nextRecurringDate != null && o.nextRecurringDate!.isBefore(now))
+        .toList();
+    if (due.isEmpty) return;
 
-          final newOrder = order.copyWith(
-            id: Isar.autoIncrement,
-            orderNumber: 'ORD-$num',
-            orderStatus: OrderStatus.pending,
-            paymentStatus: PaymentStatus.unpaid,
-            amountPaid: 0,
-            createdAt: now,
-            updatedAt: now,
-            nextRecurringDate:
-                now.add(Duration(days: order.recurringIntervalDays)),
-          );
-          await isar.orders.put(newOrder);
-
-          // Bill the customer exactly as createOrder would — this path used
-          // to skip it, so the outstandingBalance counter drifted.
-          if (newOrder.customerId > 0) {
-            final customer = await isar.customers.get(newOrder.customerId);
-            if (customer != null) {
-              await isar.customers.put(customer.copyWith(
-                totalOrders: customer.totalOrders + 1,
-                totalSpent: customer.totalSpent + newOrder.totalAmount,
-                outstandingBalance:
-                    customer.outstandingBalance + newOrder.totalAmount,
-              ));
-            }
-          }
-
-          // Update the original order's next date
-          await isar.orders.put(order.copyWith(
-            nextRecurringDate:
-                now.add(Duration(days: order.recurringIntervalDays)),
-            updatedAt: now,
-          ));
-        });
+    // One transaction for every due copy (it used to be one each), batched:
+    // the order count is read once and advanced locally — each copy adds
+    // exactly one order, so the numbers match what a fresh count per copy
+    // gave — and a customer with several due orders composes on one map
+    // entry, as the sequential get → put did.
+    await isar.writeTxn(() async {
+      var count = await isar.orders.count();
+      final customers = <int, Customer>{};
+      final customerIds = {
+        for (final o in due)
+          if (o.customerId > 0) o.customerId,
+      }.toList();
+      for (final c in await isar.customers.getAll(customerIds)) {
+        if (c != null) customers[c.id] = c;
       }
-    }
+      final billed = <int>{};
+      final writes = <Order>[];
+
+      for (final order in due) {
+        // Generate new order number
+        count++;
+        final num = count.toString().padLeft(3, '0');
+
+        final newOrder = order.copyWith(
+          id: Isar.autoIncrement,
+          orderNumber: 'ORD-$num',
+          orderStatus: OrderStatus.pending,
+          paymentStatus: PaymentStatus.unpaid,
+          amountPaid: 0,
+          createdAt: now,
+          updatedAt: now,
+          nextRecurringDate:
+              now.add(Duration(days: order.recurringIntervalDays)),
+        );
+        writes.add(newOrder);
+
+        // Bill the customer exactly as createOrder would — this path used
+        // to skip it, so the outstandingBalance counter drifted.
+        if (newOrder.customerId > 0) {
+          final customer = customers[newOrder.customerId];
+          if (customer != null) {
+            customers[newOrder.customerId] = customer.copyWith(
+              totalOrders: customer.totalOrders + 1,
+              totalSpent: customer.totalSpent + newOrder.totalAmount,
+              outstandingBalance:
+                  customer.outstandingBalance + newOrder.totalAmount,
+            );
+            billed.add(newOrder.customerId);
+          }
+        }
+
+        // Update the original order's next date
+        writes.add(order.copyWith(
+          nextRecurringDate:
+              now.add(Duration(days: order.recurringIntervalDays)),
+          updatedAt: now,
+        ));
+      }
+
+      await isar.orders.putAll(writes);
+      if (billed.isNotEmpty) {
+        await isar.customers.putAll([for (final id in billed) customers[id]!]);
+      }
+    });
   }
 
   Future<void> deleteOrder(int id) async {
@@ -702,25 +774,10 @@ class OrderNotifier extends _$OrderNotifier {
             order.orderStatus != OrderStatus.pending &&
             order.orderStatus != OrderStatus.cancelled;
         if (wasStockDeducted) {
-          for (final item in order.items) {
-            final product = await isar.products.get(item.productId);
-            if (product != null) {
-              var updated = product.copyWith(
-                stockQty: product.stockQty + item.qty,
-                updatedAt: DateTime.now(),
-              );
-              updated = _adjustVariantStock(updated, item, item.qty);
-              await isar.products.put(updated);
-              await isar.stockMovements.put(StockMovement(
-                productId: item.productId,
-                productName: item.productName,
-                type: StockMovementType.adjustment,
-                qty: item.qty,
-                reason: 'Deleted order ${order.orderNumber}',
-                createdAt: DateTime.now(),
-              ));
-            }
-          }
+          await _moveStock(isar, order.items,
+              sign: 1,
+              type: StockMovementType.adjustment,
+              reason: 'Deleted order ${order.orderNumber}');
         }
 
         // Restore customer stats

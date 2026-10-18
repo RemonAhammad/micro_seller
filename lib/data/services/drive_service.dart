@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -80,6 +80,10 @@ class DriveService {
   static const _scopes = [drive.DriveApi.driveAppdataScope];
   static const _maxBackups = 5;
   static const _backupPrefix = 'sellerbook_backup';
+
+  /// Resumable upload chunk (must be a multiple of 256 KB). Most backups fit
+  /// in one chunk; bigger ones are sent — and retried — 8 MB at a time.
+  static const _uploadChunkSize = 8 * 1024 * 1024;
 
   final LocalBackupService _localBackup = LocalBackupService();
 
@@ -258,16 +262,23 @@ class DriveService {
   /// silent sign-in fails (background workers must use `false`). It instead
   /// throws `DriveBackupException(notSignedIn)` so the caller can mark the
   /// auto-backup as paused and prompt the user from the UI.
+  ///
+  /// [encodeOnWorker] — read and encode the backup on a worker isolate
+  /// (default), so the UI isolate never freezes. The WorkManager auto-backup
+  /// passes false: it already runs on its own UI-less isolate.
   Future<void> backupToDrive(
     Isar isar, {
     Map<String, dynamic>? settings,
     bool interactive = true,
+    bool encodeOnWorker = true,
   }) async {
     final driveApi = await _getDriveApi(interactive: interactive);
 
-    final String jsonStr;
+    final Uint8List bytes;
     try {
-      jsonStr = await _localBackup.encodeAll(isar, settings: settings);
+      bytes = encodeOnWorker
+          ? await _localBackup.encodeAllBytes(isar, settings: settings)
+          : encodeBackupBytesSync(isar, settings: settings);
     } catch (e, st) {
       _logError('encodeAll', e, st);
       throw DriveBackupException(
@@ -280,7 +291,6 @@ class DriveService {
 
     final fileName =
         '${_backupPrefix}_${DateFormatter.formatForBackup(DateTime.now())}.json';
-    final bytes = utf8.encode(jsonStr);
 
     final file = drive.File()
       ..name = fileName
@@ -290,6 +300,12 @@ class DriveService {
       await driveApi.files.create(
         file,
         uploadMedia: drive.Media(Stream.value(bytes), bytes.length),
+        // Resumable rather than the default multipart upload: multipart
+        // base64-encodes the whole backup in one go on this isolate, while
+        // resumable sends the raw bytes in chunks. Same file on Drive (same
+        // metadata, bytes and content type).
+        uploadOptions:
+            drive.ResumableUploadOptions(chunkSize: _uploadChunkSize),
       );
     } catch (e, st) {
       _logError('upload', e, st);
@@ -371,18 +387,20 @@ class DriveService {
   }) async {
     final driveApi = await _getDriveApi();
 
-    String jsonStr;
+    final Uint8List bytes;
     try {
       final response = await driveApi.files.get(
         fileId,
         downloadOptions: drive.DownloadOptions.fullMedia,
       ) as drive.Media;
 
-      final chunks = <int>[];
+      // copy: false — keeps the received chunks instead of copying each one
+      // into a growing list, and joins them once.
+      final builder = BytesBuilder(copy: false);
       await for (final chunk in response.stream) {
-        chunks.addAll(chunk);
+        builder.add(chunk);
       }
-      jsonStr = utf8.decode(chunks);
+      bytes = builder.takeBytes();
     } catch (e, st) {
       _logError('download', e, st);
       throw DriveBackupException(
@@ -393,32 +411,34 @@ class DriveService {
       );
     }
 
-    // Sanity-check JSON before touching local DB.
-    Map<String, dynamic> data;
-    try {
-      data = jsonDecode(jsonStr) as Map<String, dynamic>;
-    } catch (e, st) {
-      _logError('parseJson', e, st);
-      throw DriveBackupException(
-        DriveErrorCode.invalidBackup,
-        'Backup file is corrupted or unreadable.',
-        cause: e,
-        stackTrace: st,
-      );
-    }
+    await restoreFromBytes(
+      isar,
+      bytes,
+      currentSettings: currentSettings,
+      onSettingsRestored: onSettingsRestored,
+    );
+  }
 
-    if (!data.containsKey('version') || !data.containsKey('timestamp')) {
-      throw DriveBackupException(
-        DriveErrorCode.invalidBackup,
-        'Backup file is missing required metadata.',
-      );
-    }
-
+  /// The part of [restoreFromDrive] after the download: snapshot, restore,
+  /// roll back on failure. Decoding, validation, the restore write and the
+  /// snapshot all run on worker isolates; only [onSettingsRestored] runs
+  /// here.
+  ///
+  /// Errors: [DriveErrorCode.invalidBackup] — not a backup, nothing touched;
+  /// [DriveErrorCode.rolledBack] — the restore failed and the previous data
+  /// is back; [DriveErrorCode.restoreFailed] — the rollback failed too.
+  @visibleForTesting
+  Future<void> restoreFromBytes(
+    Isar isar,
+    Uint8List bytes, {
+    Map<String, dynamic>? currentSettings,
+    Future<void> Function(Map<String, dynamic>)? onSettingsRestored,
+  }) async {
     // Snapshot current DB + settings so we can roll back if import fails.
-    String safetyBackup;
+    final Uint8List safetyBackup;
     try {
       safetyBackup =
-          await _localBackup.encodeAll(isar, settings: currentSettings);
+          await _localBackup.encodeAllBytes(isar, settings: currentSettings);
     } catch (e, st) {
       _logError('safetySnapshot', e, st);
       throw DriveBackupException(
@@ -429,31 +449,52 @@ class DriveService {
       );
     }
 
+    final Object restoreError;
+    final StackTrace restoreStack;
     try {
-      final restoredSettings = await _localBackup.decodeAll(isar, jsonStr);
+      // Validated (JSON, `version` + `timestamp`) before anything is written.
+      final restoredSettings = await _localBackup.restoreBytes(
+        isar,
+        bytes,
+        requireMetadata: true,
+      );
       if (restoredSettings != null && onSettingsRestored != null) {
         await onSettingsRestored(restoredSettings);
       }
+      return;
+    } on InvalidBackupException catch (e, st) {
+      _logError('parseJson', e, st);
+      throw DriveBackupException(
+        DriveErrorCode.invalidBackup,
+        e.message,
+        cause: e,
+        stackTrace: st,
+      );
     } catch (e, st) {
       _logError('restoreImport', e, st);
-      // Roll back to the safety snapshot.
-      try {
-        await _localBackup.decodeAll(isar, safetyBackup);
-        throw DriveBackupException(
-          DriveErrorCode.rolledBack,
-          'Restore failed. Your previous data has been preserved.',
-          cause: e,
-          stackTrace: st,
-        );
-      } catch (rollbackErr, rollbackSt) {
-        _logError('rollback', rollbackErr, rollbackSt);
-        throw DriveBackupException(
-          DriveErrorCode.restoreFailed,
-          'Restore failed and rollback also failed. Data may be inconsistent.',
-          cause: rollbackErr,
-          stackTrace: rollbackSt,
-        );
-      }
+      restoreError = e;
+      restoreStack = st;
     }
+
+    // Roll back to the safety snapshot. The outcome is thrown outside the
+    // rollback's try, so a successful rollback is reported as rolledBack
+    // (it used to be caught by its own catch and reported as restoreFailed).
+    try {
+      await _localBackup.restoreBytes(isar, safetyBackup);
+    } catch (rollbackErr, rollbackSt) {
+      _logError('rollback', rollbackErr, rollbackSt);
+      throw DriveBackupException(
+        DriveErrorCode.restoreFailed,
+        'Restore failed and rollback also failed. Data may be inconsistent.',
+        cause: rollbackErr,
+        stackTrace: rollbackSt,
+      );
+    }
+    throw DriveBackupException(
+      DriveErrorCode.rolledBack,
+      'Restore failed. Your previous data has been preserved.',
+      cause: restoreError,
+      stackTrace: restoreStack,
+    );
   }
 }

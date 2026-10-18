@@ -42,6 +42,12 @@ Future<Isar> isar(Ref ref) async {
     kIsarSchemas,
     directory: dir.path,
     name: 'sellerbook_db',
+    // Rewrites the file only when it is mostly free space (e.g. after a big
+    // restore or Clear All Data), so reads stay compact; a no-op otherwise.
+    compactOnLaunch: const CompactCondition(
+      minFileSize: 20 * 1024 * 1024,
+      minRatio: 2.0,
+    ),
   );
 
   // Run one-time migrations

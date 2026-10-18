@@ -96,7 +96,26 @@ const ProductSchema = CollectionSchema(
   deserialize: _productDeserialize,
   deserializeProp: _productDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'isActive_name': IndexSchema(
+      id: -7451075509258136372,
+      name: r'isActive_name',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'isActive',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+        IndexPropertySchema(
+          name: r'name',
+          type: IndexType.value,
+          caseSensitive: true,
+        ),
+      ],
+    ),
+  },
   links: {},
   embeddedSchemas: {
     r'ProductVariant': ProductVariantSchema,
@@ -347,6 +366,14 @@ extension ProductQueryWhereSort on QueryBuilder<Product, Product, QWhere> {
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
+
+  QueryBuilder<Product, Product, QAfterWhere> anyIsActiveName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'isActive_name'),
+      );
+    });
+  }
 }
 
 extension ProductQueryWhere on QueryBuilder<Product, Product, QWhereClause> {
@@ -415,6 +442,236 @@ extension ProductQueryWhere on QueryBuilder<Product, Product, QWhereClause> {
           includeUpper: includeUpper,
         ),
       );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> isActiveEqualToAnyName(
+    bool isActive,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(
+          indexName: r'isActive_name',
+          value: [isActive],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> isActiveNotEqualToAnyName(
+    bool isActive,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [],
+                upper: [isActive],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [isActive],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [isActive],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [],
+                upper: [isActive],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> isActiveNameEqualTo(
+    bool isActive,
+    String name,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(
+          indexName: r'isActive_name',
+          value: [isActive, name],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause>
+  isActiveEqualToNameNotEqualTo(bool isActive, String name) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [isActive],
+                upper: [isActive, name],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [isActive, name],
+                includeLower: false,
+                upper: [isActive],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [isActive, name],
+                includeLower: false,
+                upper: [isActive],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isActive_name',
+                lower: [isActive],
+                upper: [isActive, name],
+                includeUpper: false,
+              ),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause>
+  isActiveEqualToNameGreaterThan(
+    bool isActive,
+    String name, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'isActive_name',
+          lower: [isActive, name],
+          includeLower: include,
+          upper: [isActive],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> isActiveEqualToNameLessThan(
+    bool isActive,
+    String name, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'isActive_name',
+          lower: [isActive],
+          upper: [isActive, name],
+          includeUpper: include,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> isActiveEqualToNameBetween(
+    bool isActive,
+    String lowerName,
+    String upperName, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'isActive_name',
+          lower: [isActive, lowerName],
+          includeLower: includeLower,
+          upper: [isActive, upperName],
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause>
+  isActiveEqualToNameStartsWith(bool isActive, String NamePrefix) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'isActive_name',
+          lower: [isActive, NamePrefix],
+          upper: [isActive, '$NamePrefix\u{FFFFF}'],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> isActiveEqualToNameIsEmpty(
+    bool isActive,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(
+          indexName: r'isActive_name',
+          value: [isActive, ''],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause>
+  isActiveEqualToNameIsNotEmpty(bool isActive) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.lessThan(
+                indexName: r'isActive_name',
+                upper: [''],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.greaterThan(
+                indexName: r'isActive_name',
+                lower: [''],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.greaterThan(
+                indexName: r'isActive_name',
+                lower: [''],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.lessThan(
+                indexName: r'isActive_name',
+                upper: [''],
+              ),
+            );
+      }
     });
   }
 }

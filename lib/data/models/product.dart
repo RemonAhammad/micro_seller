@@ -43,6 +43,10 @@ class Product {
   String category;
   String qrCode;
   List<String> tags;
+  // Active products by name — the products list's where-clause.
+  // The name part must be a value index (strings default to hash, which
+  // has no order).
+  @Index(composite: [CompositeIndex('name', type: IndexType.value)])
   bool isActive;
 
   /// @deprecated — kept for migration from flat variants
