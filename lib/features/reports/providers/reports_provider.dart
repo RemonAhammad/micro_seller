@@ -23,8 +23,9 @@ part 'reports_provider.g.dart';
 
 // Returns are dated by when their goods came back (`updatedAt`), which can
 // fall in the period even if the return order was created earlier — so the
-// sales/inventory reports load returns separately rather than by createdAt.
-Future<List<Order>> _ordersAndReturns(
+// sales/inventory reports (and the Dashboard's profit) load returns
+// separately rather than by createdAt.
+Future<List<Order>> loadOrdersAndReturns(
     Isar isar, DateTime start, DateTime end) async {
   final sales = await isar.orders
       .filter()
@@ -37,7 +38,7 @@ Future<List<Order>> _ordersAndReturns(
 
 /// Ids of cancelled orders — returns against them are ignored (the cancel
 /// already removed the sale).
-Future<Set<int>> _cancelledIds(Isar isar) async => (await isar.orders
+Future<Set<int>> loadCancelledOrderIds(Isar isar) async => (await isar.orders
         .filter()
         .orderStatusEqualTo(OrderStatus.cancelled)
         .idProperty()
@@ -48,7 +49,7 @@ Future<Set<int>> _cancelledIds(Isar isar) async => (await isar.orders
 Future<SalesReport> salesReport(Ref ref, DateTime from, DateTime to) async {
   final isar = await ref.watch(isarProvider.future);
   final w = reportWindow(from, to);
-  final orders = await _ordersAndReturns(isar, w.start, w.end);
+  final orders = await loadOrdersAndReturns(isar, w.start, w.end);
   final products = await isar.products.where().findAll();
   final expenses = await isar.expenses
       .filter()
@@ -56,7 +57,7 @@ Future<SalesReport> salesReport(Ref ref, DateTime from, DateTime to) async {
       .findAll();
   return buildSalesReport(
     orders: orders,
-    cancelledOrderIds: await _cancelledIds(isar),
+    cancelledOrderIds: await loadCancelledOrderIds(isar),
     productsById: {for (final p in products) p.id: p},
     expenses: expenses,
     start: w.start,
@@ -119,12 +120,12 @@ Future<InventoryReport> inventoryReport(
       .filter()
       .createdAtBetween(w.start, w.end, includeUpper: false)
       .findAll();
-  final orders = await _ordersAndReturns(isar, w.start, w.end);
+  final orders = await loadOrdersAndReturns(isar, w.start, w.end);
   return buildInventoryReport(
     products: products,
     movements: movements,
     orders: orders,
-    cancelledOrderIds: await _cancelledIds(isar),
+    cancelledOrderIds: await loadCancelledOrderIds(isar),
     start: w.start,
     end: w.end,
   );

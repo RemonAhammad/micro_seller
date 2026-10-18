@@ -563,6 +563,10 @@ class _L10nStrings {
       _l10n.tr('paymentCollected').replaceAll('{amount}', amount);
   String amountExceedsDue(String amount) =>
       _l10n.tr('amountExceedsDue').replaceAll('{amount}', amount);
+  String refundRange(String amount) =>
+      _l10n.tr('refundRange').replaceAll('{amount}', amount);
+  String taxCollectedNote(String amount) =>
+      _l10n.tr('taxCollectedNote').replaceAll('{amount}', amount);
   String get customerStatement => _l10n.tr('customerStatement');
   String get statement => _l10n.tr('statement');
   String get paymentHistory => _l10n.tr('paymentHistory');

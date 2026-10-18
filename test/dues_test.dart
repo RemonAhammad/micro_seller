@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:micro_seller/data/models/order.dart';
+import 'package:micro_seller/data/models/order_item.dart';
 import 'package:micro_seller/data/models/payment.dart';
 import 'package:micro_seller/data/services/dues_service.dart';
 import 'package:micro_seller/data/services/statement_service.dart';
@@ -147,6 +148,69 @@ void main() {
       expect(computeNetDue(orders), 0);
       final rows = StatementService().buildRows(orders, const [], labels: _labels);
       expect(rows, isEmpty);
+    });
+  });
+
+  group('returns from a discounted order', () {
+    // Two ৳500 items with ৳100 off: billed ৳900.
+    OrderItem item() =>
+        OrderItem(productId: 1, qty: 1, unitPrice: 500, totalPrice: 500);
+    Order discounted({double paid = 0}) => Order(
+          id: 1,
+          orderNumber: 'ORD-1',
+          customerId: 1,
+          items: [item(), item()],
+          subtotal: 1000,
+          discountAmount: 100,
+          totalAmount: 900,
+          amountPaid: paid,
+          orderStatus: OrderStatus.completed,
+          createdAt: DateTime(2026, 1, 1),
+        );
+    // Valued the way createReturnOrder values it, then refunded.
+    Order refunded(Order original, List<OrderItem> items) {
+      final v = returnValueFor(original, items);
+      return Order(
+        id: 2,
+        orderNumber: 'RET-2',
+        customerId: 1,
+        isReturn: true,
+        originalOrderId: original.id,
+        returnStatus: ReturnStatus.refunded,
+        items: items,
+        subtotal: v.subtotal,
+        discountAmount: v.discount,
+        taxAmount: v.tax,
+        totalAmount: v.total,
+        createdAt: DateTime(2026, 1, 5),
+      );
+    }
+
+    test('full return, full refund: no credit against other dues', () {
+      // Paid 900, all returned, 900 refunded → amountPaid back to 0. At list
+      // price the return was worth 1000, and the extra 100 silently came
+      // off the customer's other order.
+      final original = discounted();
+      final orders = [
+        original,
+        refunded(original, original.items),
+        _order(3, 500, day: 2),
+      ];
+      expect(computeNetDue(orders), closeTo(500, 0.001));
+      final rows = StatementService().buildRows(orders, const [], labels: _labels);
+      expect(rows.last.balance, closeTo(500, 0.001));
+    });
+
+    test('partial return refunded at the suggested amount settles it', () {
+      // Paid 900; one item back; suggested refund 450 → amountPaid 450.
+      final original = discounted(paid: 450);
+      expect(computeNetDue([original, refunded(original, [item()])]), 0);
+    });
+
+    test('exchange on credit lowers the debt by what the item cost', () {
+      final original = discounted(); // unpaid
+      expect(computeNetDue([original, refunded(original, [item()])]),
+          closeTo(450, 0.001));
     });
   });
 

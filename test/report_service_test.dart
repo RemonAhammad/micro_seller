@@ -25,23 +25,54 @@ OrderItem _item(int productId, int qty, double price, {double cost = 0}) =>
       totalPrice: qty * price,
     );
 
+/// Totalled the way the order form does: goods − discount + tax + delivery,
+/// never below 0.
 Order _sale(int id, List<OrderItem> items,
-        {int day = 10,
-        double paid = 0,
-        OrderStatus status = OrderStatus.completed,
-        PaymentMethod method = PaymentMethod.cash}) =>
-    Order(
-      id: id,
-      orderNumber: 'ORD-$id',
-      customerId: 1,
-      customerName: 'Rahim',
-      items: items,
-      totalAmount: items.fold(0, (s, i) => s + i.totalPrice),
-      amountPaid: paid,
-      orderStatus: status,
-      paymentMethod: method,
-      createdAt: DateTime(2026, 9, day),
-    );
+    {int day = 10,
+    double paid = 0,
+    double discount = 0,
+    double tax = 0,
+    double delivery = 0,
+    OrderStatus status = OrderStatus.completed,
+    PaymentMethod method = PaymentMethod.cash}) {
+  final goods = items.fold<double>(0, (s, i) => s + i.totalPrice);
+  final total = goods - discount + tax + delivery;
+  return Order(
+    id: id,
+    orderNumber: 'ORD-$id',
+    customerId: 1,
+    customerName: 'Rahim',
+    items: items,
+    subtotal: goods,
+    discountAmount: discount,
+    taxAmount: tax,
+    deliveryFee: delivery,
+    totalAmount: total > 0 ? total : 0,
+    amountPaid: paid,
+    orderStatus: status,
+    paymentMethod: method,
+    createdAt: DateTime(2026, 9, day),
+  );
+}
+
+/// A return of [items] from [original], valued the way `createReturnOrder`
+/// values it.
+Order _return(int id, Order original, List<OrderItem> items,
+    {int day = 12, ReturnStatus status = ReturnStatus.refunded}) {
+  final v = returnValueFor(original, items);
+  return Order(
+    id: id,
+    isReturn: true,
+    originalOrderId: original.id,
+    returnStatus: status,
+    items: items,
+    subtotal: v.subtotal,
+    discountAmount: v.discount,
+    taxAmount: v.tax,
+    totalAmount: v.total,
+    updatedAt: DateTime(2026, 9, day),
+  );
+}
 
 void main() {
   final products = {
@@ -118,6 +149,163 @@ void main() {
         end: end,
       );
       expect(r.grossSales, 0);
+    });
+  });
+
+  group('profit after discounts, tax and delivery', () {
+    SalesReport sales(List<Order> orders, {List<Expense> expenses = const []}) =>
+        buildSalesReport(
+          orders: orders,
+          productsById: products,
+          expenses: expenses,
+          start: start,
+          end: end,
+        );
+
+    // The Play Store review: cost ৳700, price ৳1,000, ৳100 discount. The
+    // Dashboard used to show ৳300 profit (the discount ignored).
+    test('a discount comes off profit', () {
+      final r = sales([_sale(1, [_item(1, 1, 1000, cost: 700)], discount: 100)]);
+      expect(r.grossSales, 1000);
+      expect(r.discounts, 100);
+      expect(r.netSales, 900);
+      expect(r.cogs, 700);
+      expect(r.grossProfit, 200);
+      expect(r.netProfit, 200);
+      expect(r.topProducts, {'P1': 900});
+      expect(r.byCategory, {'Tea': 900});
+    });
+
+    test('tax is not profit; delivery counts in net profit, not gross', () {
+      final o = _sale(1, [_item(1, 1, 1000, cost: 700)],
+          discount: 100, tax: 45, delivery: 60);
+      final r = sales([o], expenses: [
+        Expense(
+            title: 'Courier',
+            amount: 60,
+            category: ExpenseCategory.logistics,
+            date: DateTime(2026, 9, 10)),
+      ]);
+      expect(o.totalAmount, 1005);
+      expect(r.netSales, 900);
+      expect(r.grossProfit, 200);
+      expect(r.taxCollected, 45);
+      expect(r.deliveryCharges, 60);
+      expect(r.netProfit, 200); // 200 + 60 delivery − 60 courier
+      expect(r.billedSales, 1005);
+      expect(r.avgOrderValue, 1005);
+      expect(r.byPaymentMethod.values.fold<double>(0, (s, v) => s + v),
+          r.billedSales);
+    });
+
+    test('the P&L adds back up to what customers were billed', () {
+      final r = sales([
+        _sale(1, [_item(1, 3, 333, cost: 200)],
+            discount: 50, tax: 71.18, delivery: 60),
+        _sale(2, [_item(2, 2, 250, cost: 100)], tax: 75, day: 11),
+        // Discount bigger than the goods: the excess comes off delivery.
+        _sale(3, [_item(1, 1, 100, cost: 60)], discount: 130, delivery: 60, day: 12),
+      ]);
+      expect(r.grossSales - r.discounts + r.deliveryCharges + r.taxCollected,
+          closeTo(r.billedSales, 1e-9));
+    });
+
+    test('full refund of a discounted, taxed order leaves profit at 0', () {
+      final o = _sale(1, [_item(1, 1, 1000, cost: 700)],
+          discount: 100, tax: 45, delivery: 60);
+      final r = sales([o, _return(2, o, o.items)]);
+      expect(r.returnsValue, 900);
+      expect(r.netSales, 0);
+      expect(r.cogs, 0);
+      expect(r.grossProfit, 0);
+      expect(r.taxCollected, 0);
+      expect(r.deliveryCharges, 60); // delivery isn't refunded
+      expect(r.marginPct, 0);
+    });
+
+    test('an exchange (no cash back) still takes the returned margin out', () {
+      final o = _sale(1, [_item(1, 2, 500, cost: 300)], discount: 100);
+      final r = sales([
+        o,
+        _return(2, o, [_item(1, 1, 500, cost: 300)],
+            status: ReturnStatus.received),
+      ]);
+      expect(r.returnsValue, 450);
+      expect(r.netSales, 450);
+      expect(r.cogs, 300);
+      expect(r.grossProfit, 150); // the kept item: 450 − 300
+    });
+
+    test('returns recorded before this fix keep their list-price value', () {
+      final o = _sale(1, [_item(1, 1, 1000, cost: 700)], discount: 100);
+      final legacy = Order(
+        id: 2,
+        isReturn: true,
+        originalOrderId: 1,
+        returnStatus: ReturnStatus.refunded,
+        items: [_item(1, 1, 1000, cost: 700)],
+        totalAmount: 1000,
+        updatedAt: DateTime(2026, 9, 12),
+      );
+      final r = sales([o, legacy]);
+      // As recorded: customer balances were settled against this value.
+      expect(r.returnsValue, 1000);
+      expect(r.grossProfit, -100);
+    });
+
+    test('profit per day sums to gross profit; returns land on their day', () {
+      final o = _sale(1, [_item(1, 2, 500, cost: 300)], discount: 100, day: 10);
+      final r = sales([o, _return(2, o, [_item(1, 1, 500, cost: 300)], day: 15)]);
+      final byDay = {for (final p in r.profitSeries) p.bucket: p.value};
+      expect(byDay[DateTime(2026, 9, 10)], 300); // 900 − 600
+      expect(byDay[DateTime(2026, 9, 15)], -150); // −(450 − 300)
+      expect(r.profitSeries.fold<double>(0, (s, p) => s + p.value),
+          closeTo(r.grossProfit, 1e-9));
+      expect(r.profitSeries.length, r.series.length);
+    });
+
+    test('margin is 0, not a flipped sign, when net sales are negative', () {
+      // The sale is from August; only its return falls in September.
+      final o = _sale(1, [_item(1, 1, 1000, cost: 700)])
+          .copyWith(createdAt: DateTime(2026, 8, 20));
+      final r = sales([o, _return(2, o, o.items)]);
+      expect(r.netSales, -1000);
+      expect(r.netProfit, -300);
+      expect(r.marginPct, 0);
+    });
+
+    test('items with no frozen cost use the product cost in profit', () {
+      final r = sales([_sale(1, [_item(2, 3, 50)], discount: 15)]); // cost 20
+      expect(r.cogs, 60);
+      expect(r.grossProfit, 150 - 15 - 60);
+    });
+
+    test('export rows carry the new lines; deductions are negative', () {
+      final o = _sale(1, [_item(1, 1, 1000, cost: 700)],
+          discount: 100, tax: 45, delivery: 60);
+      final rows = {
+        for (final row in sales([o]).toTables((k) => k).first.rows) row[0]: row[1]
+      };
+      expect(rows['grossSales'], 1000);
+      expect(rows['discounts'], -100);
+      expect(rows['netSales'], 900);
+      expect(rows['costOfGoods'], -700);
+      expect(rows['grossProfit'], 200);
+      expect(rows['deliveryCharges'], 60);
+      expect(rows['netProfit'], 260);
+      expect(rows['taxCollected'], 45);
+    });
+
+    test('Stock & Returns values a return the same way as the P&L', () {
+      final o = _sale(1, [_item(1, 1, 1000, cost: 700)], discount: 100, tax: 45);
+      final r = buildInventoryReport(
+        products: const [],
+        movements: const [],
+        orders: [o, _return(2, o, o.items)],
+        start: start,
+        end: end,
+      );
+      expect(r.returnedValue, 900);
     });
   });
 

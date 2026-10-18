@@ -63,15 +63,32 @@ class SalesReportTab extends ConsumerWidget {
             title: s.tr('profitAndLoss'),
             icon: AppIcons.reports,
             color: AppColors.primary,
-            child: PnlTable(rows: [
-              (label: s.tr('grossSales'), amount: r.grossSales, strong: false, deduct: false),
-              (label: s.tr('returnsLabel'), amount: r.returnsValue, strong: false, deduct: true),
-              (label: s.tr('netSales'), amount: r.netSales, strong: true, deduct: false),
-              (label: s.tr('costOfGoods'), amount: r.cogs, strong: false, deduct: true),
-              (label: s.tr('grossProfit'), amount: r.grossProfit, strong: true, deduct: false),
-              (label: s.tr('totalExpenses'), amount: r.expenses, strong: false, deduct: true),
-              (label: s.tr('netProfit'), amount: r.netProfit, strong: true, deduct: false),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PnlTable(rows: [
+                  (label: s.tr('grossSales'), amount: r.grossSales, strong: false, deduct: false),
+                  (label: s.tr('discounts'), amount: r.discounts, strong: false, deduct: true),
+                  (label: s.tr('returnsLabel'), amount: r.returnsValue, strong: false, deduct: true),
+                  (label: s.tr('netSales'), amount: r.netSales, strong: true, deduct: false),
+                  (label: s.tr('costOfGoods'), amount: r.cogs, strong: false, deduct: true),
+                  (label: s.tr('grossProfit'), amount: r.grossProfit, strong: true, deduct: false),
+                  (label: s.tr('deliveryCharges'), amount: r.deliveryCharges, strong: false, deduct: false),
+                  (label: s.tr('totalExpenses'), amount: r.expenses, strong: false, deduct: true),
+                  (label: s.tr('netProfit'), amount: r.netProfit, strong: true, deduct: false),
+                ]),
+                if (r.taxCollected.abs() >= 0.005)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      s.taxCollectedNote(_m(r.taxCollected)),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           ReportSectionCard(
             title: s.tr(r.seriesByMonth ? 'monthlyNetSales' : 'dailyNetSales'),

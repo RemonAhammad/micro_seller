@@ -400,8 +400,10 @@ class OrderNotifier extends _$OrderNotifier {
         final num = (count + 1).toString().padLeft(3, '0');
         final returnOrderNumber = 'RET-$num';
 
-        final returnTotal =
-            returnItems.fold<double>(0.0, (s, item) => s + item.totalPrice);
+        // Valued at what the customer paid for these goods — their share of
+        // the order discount off, their share of the tax on — not list
+        // price. A list-price value credited the customer the discount.
+        final value = returnValueFor(originalOrder, returnItems);
 
         final returnOrder = Order(
           orderNumber: returnOrderNumber,
@@ -409,8 +411,10 @@ class OrderNotifier extends _$OrderNotifier {
           customerName: originalOrder.customerName,
           customerPhone: originalOrder.customerPhone,
           items: returnItems,
-          subtotal: returnTotal,
-          totalAmount: returnTotal,
+          subtotal: value.subtotal,
+          discountAmount: value.discount,
+          taxAmount: value.tax,
+          totalAmount: value.total,
           refundAmount: refundAmount,
           amountPaid: 0,
           paymentStatus: PaymentStatus.unpaid,

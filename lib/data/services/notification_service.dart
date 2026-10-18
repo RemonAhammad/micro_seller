@@ -99,6 +99,10 @@ class NotificationService {
 
   /// Check and trigger notifications based on current data
   static Future<void> checkAndNotify(Isar isar) async {
+    // The Dashboard fires this without awaiting it: if init() never
+    // completed (unsupported platform, tests) showing would throw unhandled.
+    if (!_initialized) return;
+
     // Low stock check
     final products =
         await isar.products.filter().isActiveEqualTo(true).findAll();

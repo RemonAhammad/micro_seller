@@ -66,14 +66,19 @@ Map<K, double> _topN<K>(Map<K, double> m, int n) {
 class SalesReport {
   const SalesReport({
     required this.grossSales,
+    required this.discounts,
     required this.returnsValue,
     required this.cogs,
+    required this.deliveryCharges,
+    required this.taxCollected,
+    required this.billedSales,
     required this.expenses,
     required this.orderCount,
     required this.returnCount,
     required this.byStatus,
     required this.byPaymentMethod,
     required this.series,
+    required this.profitSeries,
     required this.seriesByMonth,
     required this.topProducts,
     required this.topProductsByQty,
@@ -81,11 +86,29 @@ class SalesReport {
     required this.topCustomers,
   });
 
+  /// Goods sold at list price, before order discounts.
   final double grossSales;
+
+  /// Order discounts given on those sales.
+  final double discounts;
+
+  /// Goods that came back, valued at what the customer paid for them
+  /// (after their share of the discount, without tax).
   final double returnsValue;
 
   /// Cost of goods sold, net of goods returned.
   final double cogs;
+
+  /// Delivery fees billed. Earned on top of the goods, so they count in net
+  /// profit (against courier costs logged as expenses), not gross profit.
+  final double deliveryCharges;
+
+  /// Tax billed, less tax on returns. Owed to the government — shown, but
+  /// never counted as sales or profit.
+  final double taxCollected;
+
+  /// What customers were billed in total (goods + delivery + tax).
+  final double billedSales;
   final double expenses;
   final int orderCount;
   final int returnCount;
@@ -94,6 +117,9 @@ class SalesReport {
 
   /// Net sales per bucket (day, or month when [seriesByMonth]), in order.
   final List<({DateTime bucket, double value})> series;
+
+  /// Gross profit per bucket, same buckets as [series].
+  final List<({DateTime bucket, double value})> profitSeries;
   final bool seriesByMonth;
   final Map<String, double> topProducts;
   final Map<String, double> topProductsByQty;
@@ -104,22 +130,28 @@ class SalesReport {
   /// Keys are customer names; the empty string means walk-in.
   final Map<String, double> topCustomers;
 
-  double get netSales => grossSales - returnsValue;
+  double get netSales => grossSales - discounts - returnsValue;
   double get grossProfit => netSales - cogs;
-  double get netProfit => grossProfit - expenses;
-  double get avgOrderValue => orderCount == 0 ? 0 : grossSales / orderCount;
-  double get marginPct => netSales == 0 ? 0 : netProfit / netSales * 100;
+  double get netProfit => grossProfit + deliveryCharges - expenses;
+  double get avgOrderValue => orderCount == 0 ? 0 : billedSales / orderCount;
+
+  /// 0 when there are no net sales — a ratio over a negative base would
+  /// flip the sign and show a loss as a positive margin.
+  double get marginPct => netSales <= 0 ? 0 : netProfit / netSales * 100;
 
   List<ReportTable> toTables(ReportTr tr) => [
         ReportTable(tr('profitAndLoss'), [tr('item'), tr('amount')], [
           [tr('grossSales'), grossSales],
+          [tr('discounts'), -discounts],
           [tr('returnsLabel'), -returnsValue],
           [tr('netSales'), netSales],
           [tr('costOfGoods'), -cogs],
           [tr('grossProfit'), grossProfit],
+          [tr('deliveryCharges'), deliveryCharges],
           [tr('totalExpenses'), -expenses],
           [tr('netProfit'), netProfit],
           [tr('netMargin'), '${marginPct.toStringAsFixed(1)}%'],
+          [tr('taxCollected'), taxCollected],
           [tr('totalOrders'), orderCount],
           [tr('avgOrderValue'), avgOrderValue],
         ]),
@@ -148,6 +180,9 @@ String paymentMethodKeyLabel(ReportTr tr, PaymentMethod m) => tr(m.name);
 
 /// [productsById] supplies the category and the cost fallback for old
 /// orders whose items have no frozen `costPrice`.
+///
+/// The Dashboard's profit card and chart come from this too, so the two
+/// screens can't disagree.
 SalesReport buildSalesReport({
   required List<Order> orders,
   Set<int> cancelledOrderIds = const {},
@@ -165,13 +200,22 @@ SalesReport buildSalesReport({
   DateTime bucketOf(DateTime d) =>
       byMonth ? DateTime(d.year, d.month) : DateTime(d.year, d.month, d.day);
   final buckets = <DateTime, double>{};
+  final profitBuckets = <DateTime, double>{};
   for (var d = bucketOf(start);
       d.isBefore(end);
       d = byMonth ? DateTime(d.year, d.month + 1) : DateTime(d.year, d.month, d.day + 1)) {
     buckets[d] = 0;
+    profitBuckets[d] = 0;
+  }
+  void addToBucket(DateTime date, double sales, double profit) {
+    final b = bucketOf(date);
+    if (!buckets.containsKey(b)) return;
+    buckets[b] = buckets[b]! + sales;
+    profitBuckets[b] = profitBuckets[b]! + profit;
   }
 
-  var gross = 0.0, returns = 0.0, cogs = 0.0;
+  var gross = 0.0, discounts = 0.0, returns = 0.0, cogs = 0.0;
+  var delivery = 0.0, tax = 0.0, billed = 0.0;
   var orderCount = 0, returnCount = 0;
   final byStatus = <OrderStatus, int>{};
   final byMethod = <PaymentMethod, double>{};
@@ -189,32 +233,42 @@ SalesReport buildSalesReport({
       // return too would count it twice.
       if (cancelledOrderIds.contains(o.originalOrderId)) continue;
       returnCount++;
-      returns += o.totalAmount;
-      for (final i in o.items) {
-        cogs -= costOf(i);
-      }
-      final b = bucketOf(returnDate(o)!);
-      if (buckets.containsKey(b)) buckets[b] = buckets[b]! - o.totalAmount;
+      final value = o.netGoods;
+      final cost = o.items.fold<double>(0, (s, i) => s + costOf(i));
+      returns += value;
+      cogs -= cost;
+      tax -= o.taxAmount;
+      addToBucket(returnDate(o)!, -value, -(value - cost));
       continue;
     }
     if (o.orderStatus == OrderStatus.cancelled) continue;
     if (!_inRange(o.createdAt, start, end)) continue;
 
     orderCount++;
-    gross += o.totalAmount;
+    final goods = o.goodsTotal;
+    final net = o.netGoods;
+    gross += goods;
+    discounts += goods - net;
+    delivery += o.deliveryIncome;
+    tax += o.taxAmount;
+    billed += o.totalAmount;
     byStatus[o.orderStatus] = (byStatus[o.orderStatus] ?? 0) + 1;
     byMethod[o.paymentMethod] = (byMethod[o.paymentMethod] ?? 0) + o.totalAmount;
     customers[o.customerName] = (customers[o.customerName] ?? 0) + o.totalAmount;
-    final b = bucketOf(o.createdAt!);
-    if (buckets.containsKey(b)) buckets[b] = buckets[b]! + o.totalAmount;
 
+    // Item revenue after the item's share of the order discount.
+    final factor = o.discountFactor;
+    var cost = 0.0;
     for (final i in o.items) {
-      cogs += costOf(i);
-      productRev[i.productName] = (productRev[i.productName] ?? 0) + i.totalPrice;
+      cost += costOf(i);
+      final value = i.totalPrice * factor;
+      productRev[i.productName] = (productRev[i.productName] ?? 0) + value;
       productQty[i.productName] = (productQty[i.productName] ?? 0) + i.qty;
       final cat = productsById[i.productId]?.category ?? '';
-      category[cat] = (category[cat] ?? 0) + i.totalPrice;
+      category[cat] = (category[cat] ?? 0) + value;
     }
+    cogs += cost;
+    addToBucket(o.createdAt!, net, net - cost);
   }
 
   final expenseTotal = expenses
@@ -223,14 +277,21 @@ SalesReport buildSalesReport({
 
   return SalesReport(
     grossSales: gross,
+    discounts: discounts,
     returnsValue: returns,
     cogs: cogs,
+    deliveryCharges: delivery,
+    taxCollected: tax,
+    billedSales: billed,
     expenses: expenseTotal,
     orderCount: orderCount,
     returnCount: returnCount,
     byStatus: byStatus,
     byPaymentMethod: _topN(byMethod, PaymentMethod.values.length),
     series: [for (final e in buckets.entries) (bucket: e.key, value: e.value)],
+    profitSeries: [
+      for (final e in profitBuckets.entries) (bucket: e.key, value: e.value)
+    ],
     seriesByMonth: byMonth,
     topProducts: _topN(productRev, 10),
     topProductsByQty: _topN(productQty, 10),
@@ -461,7 +522,7 @@ InventoryReport buildInventoryReport({
       if (!isCompletedReturn(o) || !_inRange(returnDate(o), start, end)) continue;
       if (cancelledOrderIds.contains(o.originalOrderId)) continue;
       returnCount++;
-      returnedValue += o.totalAmount;
+      returnedValue += o.netGoods; // same value as the P&L's Returns row
       if (o.returnStatus == ReturnStatus.refunded) refunded += o.refundAmount;
       reasons[o.returnReason] = (reasons[o.returnReason] ?? 0) + 1;
       continue;

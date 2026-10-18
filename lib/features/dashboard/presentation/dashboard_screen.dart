@@ -129,7 +129,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
                 // ── Body ──
                 SliverToBoxAdapter(
+                  // Keep showing the last numbers while stats recompute
+                  // after an order change, instead of flashing a skeleton.
                   child: statsAsync.when(
+                    skipLoadingOnReload: true,
                     data: (stats) {
                       // Compute order status counts
                       final statusCounts = <String, int>{};
@@ -186,6 +189,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 // ── Bottom sections ──
                 SliverToBoxAdapter(
                   child: statsAsync.whenOrNull(
+                        skipLoadingOnReload: true,
                         data: (stats) {
                           final hasDues = dues.isNotEmpty;
                           if (stats.lowStockProducts.isEmpty && !hasDues) {
@@ -360,6 +364,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
                   statsAsync.when(
+                    skipLoadingOnReload: true,
                     data: (stats) => Row(
                       children: [
                         Column(

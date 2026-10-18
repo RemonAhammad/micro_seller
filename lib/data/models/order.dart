@@ -117,6 +117,36 @@ class Order {
   @ignore
   bool get isRefunded => returnStatus == ReturnStatus.refunded;
 
+  /// Goods at list price (Σ item totals) — before discount, tax and delivery.
+  @ignore
+  double get goodsTotal => items.fold(0.0, (sum, item) => sum + item.totalPrice);
+
+  /// Goods after the order discount: what the seller actually earns on the
+  /// goods. Tax (owed to the government) and delivery are not part of it.
+  @ignore
+  double get netGoods {
+    final net = goodsTotal - discountAmount;
+    return net > 0 ? net : 0;
+  }
+
+  /// Share of each item's list price the customer pays once the order
+  /// discount is spread over the items pro rata (1 = no discount).
+  @ignore
+  double get discountFactor {
+    final goods = goodsTotal;
+    return goods > 0 ? netGoods / goods : 1;
+  }
+
+  /// What the customer was billed for delivery: normally [deliveryFee], less
+  /// when a discount bigger than the goods ate into it (the form clamps the
+  /// total, not the fee). `netGoods + deliveryIncome + taxAmount` is the total.
+  @ignore
+  double get deliveryIncome {
+    final rest = totalAmount - taxAmount - netGoods;
+    if (rest <= 0) return 0;
+    return rest < deliveryFee ? rest : deliveryFee;
+  }
+
   Order copyWith({
     Id? id,
     String? orderNumber,
@@ -188,4 +218,32 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);
   Map<String, dynamic> toJson() => _$OrderToJson(this);
+}
+
+/// Rounds a money amount to 2 decimals.
+double roundMoney(double v) => (v * 100).roundToDouble() / 100;
+
+/// What the customer actually paid for [items] — some of [original]'s items,
+/// at the quantities being returned — and so what returning them is worth:
+/// list price, less their pro-rata share of the order discount, plus their
+/// share of the tax. Delivery isn't refunded.
+///
+/// The return order stores this, so the refund suggestion, the Due Book
+/// credit and the reports all value the return the same way.
+({double subtotal, double discount, double tax, double total}) returnValueFor(
+    Order original, List<OrderItem> items) {
+  final subtotal =
+      roundMoney(items.fold(0.0, (sum, item) => sum + item.totalPrice));
+  final discount = roundMoney(subtotal * (1 - original.discountFactor));
+  final net = subtotal - discount;
+  final originalNet = original.netGoods;
+  final tax = originalNet > 0
+      ? roundMoney(original.taxAmount * net / originalNet)
+      : 0.0;
+  return (
+    subtotal: subtotal,
+    discount: discount,
+    tax: tax,
+    total: roundMoney(net + tax),
+  );
 }

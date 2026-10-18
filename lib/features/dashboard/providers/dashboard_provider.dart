@@ -5,6 +5,9 @@ import '../../../data/models/order.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/notification_service.dart';
+import '../../../data/services/report_service.dart';
+import '../../orders/providers/order_provider.dart';
+import '../../reports/providers/reports_provider.dart';
 
 part 'dashboard_provider.freezed.dart';
 part 'dashboard_provider.g.dart';
@@ -79,25 +82,43 @@ class DashboardDateRange extends _$DashboardDateRange {
   }
 }
 
-double _calcProfit(List<Order> orders) {
-  double profit = 0;
-  for (final order in orders) {
-    for (final item in order.items) {
-      profit += (item.unitPrice - item.costPrice) * item.qty;
-    }
-  }
-  return profit;
-}
-
 @riverpod
 Future<DashboardStats> dashboardStats(Ref ref) async {
+  // Recompute whenever an order changes — the cards used to stay stale
+  // until a pull-to-refresh.
+  ref.watch(ordersProvider);
   final isar = await ref.watch(isarProvider.future);
   final dateRange = ref.watch(dashboardDateRangeProvider);
   final startDate = dateRange.start;
   final endDate = dateRange.end;
 
   final todayStart = DateTime(endDate.year, endDate.month, endDate.day);
-  final weekStart = todayStart.subtract(const Duration(days: 6));
+  final weekStart =
+      DateTime(todayStart.year, todayStart.month, todayStart.day - 6);
+
+  // Profit is Reports → Gross profit for the same window (list price −
+  // discounts − returns − cost of goods), from the same builder, so the two
+  // screens can't disagree. Returns are loaded the way Reports loads them.
+  final products = await isar.products.where().findAll();
+  final productsById = {for (final p in products) p.id: p};
+  final cancelledIds = await loadCancelledOrderIds(isar);
+  Future<SalesReport> salesFor(DateTime from, DateTime to) async {
+    final w = reportWindow(from, to);
+    return buildSalesReport(
+      orders: await loadOrdersAndReturns(isar, w.start, w.end),
+      cancelledOrderIds: cancelledIds,
+      productsById: productsById,
+      expenses: const [], // gross profit only — expenses have their own card
+      start: w.start,
+      end: w.end,
+    );
+  }
+
+  final thisMonthProfit = (await salesFor(startDate, endDate)).grossProfit;
+  final weekProfit = {
+    for (final p in (await salesFor(weekStart, todayStart)).profitSeries)
+      p.bucket: p.value,
+  };
 
   // Use targeted Isar queries instead of loading ALL orders
   final totalOrders = await isar.orders.count();
@@ -122,7 +143,6 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
   final rangeRefunds = rangeOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
   final totalRefunded = rangeRefunds.fold(0.0, (s, o) => s + o.refundAmount);
   final thisMonthRevenue = rangeRegular.fold(0.0, (s, o) => s + o.totalAmount) - totalRefunded;
-  final thisMonthProfit = _calcProfit(rangeRegular) - totalRefunded;
 
   // Pending orders count
   final pendingOrders = await isar.orders
@@ -133,13 +153,9 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
       .count();
 
   // Low stock products
-  final products = await isar.products
-      .where()
-      .filter()
-      .isActiveEqualTo(true)
-      .findAll();
-  final lowStockProducts =
-      products.where((p) => p.isLowStock || p.isOutOfStock).toList();
+  final lowStockProducts = products
+      .where((p) => p.isActive && (p.isLowStock || p.isOutOfStock))
+      .toList();
 
   // Weekly sales — last 7 days from endDate, fetch once, bucket locally
   final weekOrders = await nonCancelledFilter
@@ -149,9 +165,9 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
 
   final weeklySales = <DailySales>[];
   for (int i = 6; i >= 0; i--) {
-    final day = endDate.subtract(Duration(days: i));
-    final dayStart = DateTime(day.year, day.month, day.day);
-    final dayEnd = dayStart.add(const Duration(days: 1));
+    final dayStart =
+        DateTime(todayStart.year, todayStart.month, todayStart.day - i);
+    final dayEnd = DateTime(dayStart.year, dayStart.month, dayStart.day + 1);
 
     final dayOrders = weekOrders.where((o) =>
         o.createdAt != null &&
@@ -162,13 +178,14 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
     final dayRefunded = dayOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
     final dayRefundTotal = dayRefunded.fold(0.0, (s, o) => s + o.refundAmount);
     final revenue = dayRegular.fold(0.0, (s, o) => s + o.totalAmount) - dayRefundTotal;
-    final profit = _calcProfit(dayRegular) - dayRefundTotal;
 
-    weeklySales.add(DailySales(date: dayStart, revenue: revenue, profit: profit));
+    weeklySales.add(DailySales(
+        date: dayStart, revenue: revenue, profit: weekProfit[dayStart] ?? 0));
   }
 
-  // Trigger notification check
-  NotificationService.checkAndNotify(isar);
+  // Low-stock / unpaid reminders on first load and pull-to-refresh only —
+  // not on every recompute, which now happens whenever an order is saved.
+  if (!ref.isReload) NotificationService.checkAndNotify(isar);
 
   return DashboardStats(
     todayRevenue: todayRevenue,

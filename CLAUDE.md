@@ -59,7 +59,7 @@ lib/
 │   │   ├── category.dart         # id, name, createdAt
 │   │   ├── customer.dart         # id, name, phone, address, tag(new/regular/vip), stats
 │   │   ├── expense.dart          # id, title, amount, category(logistics/packaging/marketing/supplies/other), date
-│   │   ├── order.dart            # id, orderNumber, customer info, items, totals, payment/order status, paymentMethod, delivery, recurring, return fields
+│   │   ├── order.dart            # id, orderNumber, customer info, items, totals, payment/order status, paymentMethod, delivery, recurring, return fields. Also `returnValueFor` (what returning items is worth) and `roundMoney`
 │   │   ├── order_item.dart       # @embedded: productId, name, sku, qty, unitPrice, costPrice, totalPrice, variantCombinationKey, variantDisplayLabel
 │   │   ├── product.dart          # id, name, sku, prices, stockQty, category, qrCode, isActive, variantAttributes, variantCombinations
 │   │   ├── product_variant.dart  # @embedded (deprecated): flat name/value/priceAdjustment/stockQty/sku
@@ -84,7 +84,7 @@ lib/
 │       ├── drive_service.dart       # Google Drive backup/restore — delegates JSON to LocalBackupService (all 10 backed-up collections); typed DriveBackupException + DriveErrorCode; max 5 backups; safe restore with rollback; full error/stack logging via dart:developer
 │       ├── isar_service.dart        # Riverpod provider (keepAlive), opens DB with `kIsarSchemas` (11 schemas). The auto-backup worker opens the same file from its own isolate with the **same constant** — a hand-kept copy there had silently fallen behind (missing TrashEntrySchema). Also runs one-time migrations (`migrateVariantsV2`, `migrateOutstandingBalancesV1`).
 │       ├── dues_service.dart        # `computeOrderDues` (effective due per order, oldest first — subtracts refunded returns), `recalculateOutstandingBalancesInTxn`, `migrateOutstandingBalancesV1`
-│       ├── report_service.dart      # Pure report builders (no Isar): buildSalesReport (P&L: gross → returns → net sales → COGS → gross profit → expenses → net profit), buildDuesReport, buildInventoryReport, buildPurchasesReport. Each report has toTables(tr) → List<ReportTable>, the single shape CSV and PDF export from.
+│       ├── report_service.dart      # Pure report builders (no Isar): buildSalesReport (P&L: gross sales at list price → discounts → returns → net sales → COGS → gross profit → + delivery → expenses → net profit; tax collected shown, never profit; also feeds the Dashboard's profit), buildDuesReport, buildInventoryReport, buildPurchasesReport. Each report has toTables(tr) → List<ReportTable>, the single shape CSV and PDF export from.
 │       ├── report_pdf_service.dart  # Paginated widget→PNG→PDF for a report's tables (repeats table headers across pages)
 │       ├── statement_service.dart   # Customer statement: `buildRows` (running ledger: orders debit; payments + refunded returns credit; unlogged legacy payments inferred per order) + paginated widget→PNG→PDF (26 rows/page, 794×1123)
 │       ├── catalog_service.dart     # Shareable product catalog. Same widget→PNG→PDF pipeline as pdf_service (Skia/HarfBuzz for Unicode). `generateCatalogImage` (single-page PNG for chat), `generateCatalogPdf` (paginated, 6 tiles/page in a fixed 794×1123 A4 canvas), `generateCatalogText` (plain price list). Product images are pre-read to `Uint8List` and rendered via `Image.memory` — `Image.file` loads async and the off-screen capture races it, producing blank tiles.
@@ -119,7 +119,7 @@ lib/
 │   │   │       ├── sales_chart.dart                # SalesChart (bar), OrderStatusChart (pie), RevenueExpenseChart (line)
 │   │   │       ├── low_stock_list.dart
 │   │   │       └── due_summary_card.dart           # Due Book on the dashboard: total receivable, aging bar (<30 / 30–60 / 60+ days, per customer by oldest due), top 3 to chase with WhatsApp remind + collect
-│   │   └── providers/dashboard_provider.dart       # DashboardDateRange notifier + stats provider (watches date range)
+│   │   └── providers/dashboard_provider.dart       # DashboardDateRange notifier + stats provider (watches date range and `ordersProvider`, so cards update without pull-to-refresh; profit = `buildSalesReport(...).grossProfit`, the Reports number)
 │   ├── expenses/
 │   │   ├── presentation/
 │   │   │   ├── expense_list_screen.dart            # Month summary banner + list + CSV export button
@@ -155,11 +155,11 @@ lib/
 │   │   ├── presentation/reports_screen.dart        # One date range (Today / This week / This month / Last month / This year / Custom) + 4 tabs; Export → current tab as PDF or CSV
 │   │   ├── presentation/widgets/report_tabs.dart   # SalesReportTab, DuesReportTab, InventoryReportTab, PurchasesReportTab
 │   │   ├── presentation/widgets/report_widgets.dart # ReportSectionCard, KpiGrid, PnlTable, BreakdownBars, NetSalesChart, ReportEmpty
-│   │   └── providers/reports_provider.dart         # salesReport / duesReport / inventoryReport / purchasesReport (from, to) — load Isar rows for `reportWindow` [start, end) and call report_service builders
+│   │   └── providers/reports_provider.dart         # salesReport / duesReport / inventoryReport / purchasesReport (from, to) — load Isar rows for `reportWindow` [start, end) and call report_service builders. `loadOrdersAndReturns` / `loadCancelledOrderIds` are shared with the Dashboard
 │   ├── splash/
 │   │   └── presentation/splash_screen.dart         # Animated 3s splash: pulsing rings, logo scale+rotate, title slide, tagline fade, loader
 │   ├── returns/
-│   │   └── presentation/create_return_screen.dart  # Item selector with qty controls, reason chips, refund amount (capped at amountPaid), variant display
+│   │   └── presentation/create_return_screen.dart  # Item selector with qty controls, reason chips, refund amount (pre-filled from `returnValueFor`, capped at amountPaid), variant display
 │   ├── suppliers/
 │   │   ├── presentation/
 │   │   │   ├── supplier_list_screen.dart           # List with due amounts; FABs for "New Purchase" + "Add Supplier"; appbar action for "All Purchases"
@@ -200,7 +200,7 @@ All models have: `Id id`, `DateTime? createdAt`, `copyWith()`, `toJson()`/`fromJ
 | **Product**            | name, sku, sellingPrice, costPrice, stockQty, lowStockThreshold, category, qrCode, isActive, **variantAttributes** (embedded list), **variantCombinations** (embedded list), **supplierId** (optional, 0 = none)                                                                                                                                                 | profitMargin, isLowStock, isOutOfStock, hasVariants, totalStock, findCombination(key) |
 | **VariantAttribute**   | @embedded: name, options[] — one dimension of variation (e.g. Size→[S,M,L])                                                                                                                                                                                                                                                                                      | —                                                                                     |
 | **VariantCombination** | @embedded: combinationKey (canonical sorted "Color:Red/Size:L"), displayLabel, priceAdjustment, stockQty, sku, isActive                                                                                                                                                                                                                                          | —                                                                                     |
-| **Order**              | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, **taxAmount**, totalAmount, amountPaid, paymentStatus, **paymentMethod**, orderStatus, **deliveryAddress**, **estimatedDeliveryDate**, **actualDeliveryDate**, **isReturn**, **originalOrderId**, **isRecurring**, **recurringIntervalDays**, **nextRecurringDate** | balanceDue, isFullyPaid, totalItems                                                   |
+| **Order**              | orderNumber, customerId/Name/Phone, items (embedded), subtotal, discountAmount, deliveryFee, **taxAmount**, totalAmount, amountPaid, paymentStatus, **paymentMethod**, orderStatus, **deliveryAddress**, **estimatedDeliveryDate**, **actualDeliveryDate**, **isReturn**, **originalOrderId**, **isRecurring**, **recurringIntervalDays**, **nextRecurringDate** | balanceDue, isFullyPaid, totalItems, goodsTotal (list price), netGoods (after discount), discountFactor, deliveryIncome |
 | **OrderItem**          | @embedded: productId, productName, productSku, qty, unitPrice, **costPrice**, totalPrice, **variantCombinationKey**, **variantDisplayLabel**                                                                                                                                                                                                                     | hasVariant, displayName                                                               |
 | **Customer**           | name, phone, address, notes, tag (new/regular/vip), totalOrders, totalSpent, outstandingBalance                                                                                                                                                                                                                                                                  | hasOutstanding                                                                        |
 | **Expense**            | title, amount, category (logistics/packaging/marketing/supplies/other), date, notes                                                                                                                                                                                                                                                                              | —                                                                                     |
@@ -311,10 +311,11 @@ The order creation/edit screen is designed for fast, frictionless use:
 2. Create return screen shows items with variant info via `displayName`, qty selector, reason chips
 3. **Refund amount capped at `amountPaid`** on original order (validation + auto-fill cap)
 4. Refund of 0 allowed (e.g. exchange)
-5. Creates a new order with `RET-XXX` numbering, `isReturn: true`, linked via `originalOrderId`
-6. Return detail screen shows only the 3-step return flow (Requested → Received → Refunded), **not** the regular order status stepper
-7. On approve: **restores stock** (base + variant) for all items via restock StockMovements
-8. **Updates customer stats** (decrements totalSpent)
+5. **Valued at what the customer paid:** `createReturnOrder` stores `returnValueFor(original, items)` as the return's subtotal / discountAmount / taxAmount / totalAmount: list price, minus the items' pro-rata share of the order discount, plus their share of the tax (delivery isn't refunded). The refund pre-fill uses the same function. At list price, a full return of a discounted order credited the customer the discount against their *other* dues. Returns created before this keep their list-price value (no migration — balances were settled against it).
+6. Creates a new order with `RET-XXX` numbering, `isReturn: true`, linked via `originalOrderId`
+7. Return detail screen shows only the 3-step return flow (Requested → Received → Refunded), **not** the regular order status stepper
+8. On approve: **restores stock** (base + variant) for all items via restock StockMovements
+9. **Updates customer stats** (decrements totalSpent)
 
 ### Recurring Orders
 
@@ -329,9 +330,15 @@ The order creation/edit screen is designed for fast, frictionless use:
 
 ### Profit Calculation
 
-- `profit = (unitPrice - costPrice) × qty` per order item
-- Uses `costPrice` stored on OrderItem (frozen at order time); falls back to product lookup for old orders without it
-- Dashboard shows: filtered profit, weekly profit chart, revenue vs expenses line chart
+One formula, `buildSalesReport`, feeds both Reports → Gross profit and the Dashboard's profit card and 7-day chart (`profitSeries`), so the two screens can't disagree. The Dashboard used to sum `(unitPrice − costPrice) × qty`, which ignored the order discount (a Play Store review) and took whole cash refunds off profit.
+
+- **Gross profit** = goods at list price − order discounts − returns − COGS. The discount is order-level (`discountAmount`); `Order.discountFactor` spreads it pro rata where per-item revenue is needed (top products, categories)
+- **Tax** is never sales or profit — the P&L shows it as "Tax collected"
+- **Delivery** (`deliveryIncome`, normally `deliveryFee`) is added below gross profit, so it lands in net profit against courier costs logged as Logistics expenses
+- COGS uses `costPrice` stored on OrderItem (frozen at order time); falls back to the product's current cost when 0
+- Returns reverse their goods value (`netGoods`) and their COGS on the day the goods came back
+- Dashboard shows: filtered profit, weekly profit chart, revenue vs expenses line chart. Its revenue card is unchanged: billed totals minus refunds
+- `test/profit_flow_test.dart` runs sale → return → refund on a real Isar database (the core library bundled in isar_community_flutter_libs, so it runs offline) and checks the Dashboard, Reports and Due Book agree
 
 ### Payment Recording (transactional)
 
@@ -457,7 +464,7 @@ All from the Due Book's providers (`duesProvider` → `dueSummaryProvider`, plus
 
 - **Low stock alerts:** triggered when products fall below threshold
 - **Payment reminders:** triggered for unpaid orders
-- Checked automatically on dashboard load
+- Checked when the dashboard first loads and on pull-to-refresh — not on the recompute every order change triggers (`!ref.isReload`), which would notify on each save. `checkAndNotify` does nothing if `init()` never completed
 
 ### Supplier Management
 
@@ -601,7 +608,7 @@ Initial route is `/splash` (animated splash screen), then navigates to `/` (dash
 - **Dashboard charts**: Weekly sales bar chart, order status pie chart, revenue vs expenses line chart
 - **Dashboard SliverAppBar**: `title:` ("Micro Seller") always shown; `expandedHeight: 160`; `flexibleSpace` holds greeting + date pill + today's revenue/total-orders stats with top padding `kToolbarHeight + 8` so content sits below the toolbar layer. Title remains visible when collapsed.
 - **Reports screen**: four tabs over one date range — **Profit & Sales** (P&L statement, net sales chart by day or month, sales by payment method, orders by status, top products / categories / customers), **Dues & Payments** (money received by method, dues collected, credit given, refunds; receivable + aging *as of today*; top debtors), **Stock & Returns** (stock value at cost / selling price, potential profit, movements by type, best sellers, not-sold-in-period, return reasons), **Purchases & Expenses** (purchased / paid / unpaid, owed to suppliers today, top suppliers, expenses by category, cash register cash in/out and over/short). Export shares the current tab as PDF (Unicode-safe) or CSV (UTF-8 BOM for Excel).
-- **Report accounting rules**: returns count when their goods are back (`returnStatus` received/refunded), dated `updatedAt ?? createdAt`, and are *subtracted* (the old single-page report added them to revenue). COGS uses `OrderItem.costPrice`, falling back to the product's current cost when 0, and returned items reverse their COGS. Stock value, receivable and supplier dues are point-in-time ("as of today"). Returns against a cancelled original are ignored (the cancel already removed the sale). Pending orders count as sales (same as the Due Book). "Owed to suppliers" = Σ `Supplier.totalDue` + unlinked purchases' `balanceDue` (direct supplier payments don't touch purchases). Cancel reversals (`Payment.note == kCancelledPaymentNote`) net out of money received; "Refunds paid" is return refunds only. Known trade-offs: a return is dated `updatedAt`, so refunding it later moves it to the refund date; legacy zero-cost items use today's product cost. `ReportTable` cells are String/int/double — money stays numeric in CSV (formula-like text is apostrophe-escaped), and `formatCell` formats it for the PDF.
+- **Report accounting rules**: returns count when their goods are back (`returnStatus` received/refunded), dated `updatedAt ?? createdAt`, and are *subtracted* (the old single-page report added them to revenue). Gross sales are goods at list price; order discounts are their own row; returns are valued at `netGoods` (after their discount share, without tax). Tax is shown as "Tax collected", never sales; delivery is added after gross profit. Sales by payment method, top customers and average order value stay on billed `totalAmount`. Net margin is 0 when net sales ≤ 0 (a ratio over a negative base flips sign). COGS uses `OrderItem.costPrice`, falling back to the product's current cost when 0, and returned items reverse their COGS. Stock value, receivable and supplier dues are point-in-time ("as of today"). Returns against a cancelled original are ignored (the cancel already removed the sale). Pending orders count as sales (same as the Due Book). "Owed to suppliers" = Σ `Supplier.totalDue` + unlinked purchases' `balanceDue` (direct supplier payments don't touch purchases). Cancel reversals (`Payment.note == kCancelledPaymentNote`) net out of money received; "Refunds paid" is return refunds only. Known trade-offs: a return is dated `updatedAt`, so refunding it later moves it to the refund date; legacy zero-cost items use today's product cost. `ReportTable` cells are String/int/double — money stays numeric in CSV (formula-like text is apostrophe-escaped), and `formatCell` formats it for the PDF.
 - **Reports header** (was SliverAppBar-only): `NestedScrollView` + pinned `SliverAppBar` (`expandedHeight: 150`, range chips + date line in `flexibleSpace`, scrollable `TabBar` in `bottom`). Previously: `title:` ("Reports") always shown; `expandedHeight: 120`; `flexibleSpace` holds the start/end date chips with same `kToolbarHeight + 8` top padding pattern.
 - **Customer detail chart**: 6-month purchase history bar chart
 - **FABs**: Icon-only `+` with tooltip, rounded-square shape (16px radius)

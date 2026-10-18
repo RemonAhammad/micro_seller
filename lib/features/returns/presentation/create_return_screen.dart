@@ -40,15 +40,20 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
     super.dispose();
   }
 
-  double get _returnTotal {
-    double total = 0;
-    for (int i = 0; i < widget.originalOrder.items.length; i++) {
-      if (_returnQtys[i] > 0) {
-        total += widget.originalOrder.items[i].unitPrice * _returnQtys[i];
-      }
-    }
-    return total;
-  }
+  List<OrderItem> get _returnItems => [
+        for (int i = 0; i < widget.originalOrder.items.length; i++)
+          if (_returnQtys[i] > 0)
+            widget.originalOrder.items[i].copyWith(
+              qty: _returnQtys[i],
+              totalPrice: widget.originalOrder.items[i].unitPrice * _returnQtys[i],
+            ),
+      ];
+
+  /// What the selected goods cost the customer (after their share of the
+  /// discount, with their share of the tax) — the same value the return
+  /// order stores, so the suggested refund matches the Due Book credit.
+  double get _returnTotal =>
+      returnValueFor(widget.originalOrder, _returnItems).total;
 
   double get _maxRefundable => widget.originalOrder.amountPaid;
 
@@ -67,21 +72,12 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
     final refund = double.tryParse(_refundCtrl.text) ?? 0;
     if (refund < 0 || refund > _maxRefundable) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-            'Refund must be between 0 and ${CurrencyFormatter.format(_maxRefundable)}'),
+        content: Text(AppStrings.of(context)
+            .refundRange(CurrencyFormatter.format(_maxRefundable))),
       ));
       return;
     }
-    final returnItems = <OrderItem>[];
-    for (int i = 0; i < widget.originalOrder.items.length; i++) {
-      if (_returnQtys[i] > 0) {
-        final orig = widget.originalOrder.items[i];
-        returnItems.add(orig.copyWith(
-          qty: _returnQtys[i],
-          totalPrice: orig.unitPrice * _returnQtys[i],
-        ));
-      }
-    }
+    final returnItems = _returnItems;
     setState(() => _isLoading = true);
     try {
       await ref.read(orderProvider.notifier).createReturnOrder(
