@@ -1,6 +1,6 @@
 {
-  "nodeCount": 4085,
-  "edgeCount": 574,
+  "nodeCount": 4094,
+  "edgeCount": 589,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 4085,
+  "totalCount": 4094,
   "readyCount": 0,
   "staleCount": 0,
-  "dirty": false,
+  "dirty": true,
   "syncing": false,
-  "syncedAt": "2026-10-18T08:37:16.118Z",
-  "lastFile": "CLAUDE.md"
+  "syncedAt": "2026-10-18T09:37:22.457Z",
+  "lastFile": "e2e_dust_test.dart"
 }

@@ -1076,8 +1076,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   final _searchCtrl = TextEditingController();
   String _query = '';
   final Set<int> _expandedProducts = {};
-  // Per-product attribute selections for stepped variant picker
-  final Map<int, Map<String, String>> _selections = {};
 
   @override
   void initState() {

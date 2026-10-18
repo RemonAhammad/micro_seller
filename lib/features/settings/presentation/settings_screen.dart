@@ -1177,7 +1177,6 @@ class _EditableTile extends StatelessWidget {
   final String label;
   final String value;
   final void Function(String) onEdit;
-  final int? maxLength;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
 
@@ -1186,7 +1185,6 @@ class _EditableTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onEdit,
-    this.maxLength,
     this.keyboardType,
     this.inputFormatters,
   });
@@ -1213,7 +1211,6 @@ class _EditableTile extends StatelessWidget {
             content: TextField(
               controller: ctrl,
               autofocus: true,
-              maxLength: maxLength,
               keyboardType: keyboardType,
               inputFormatters: inputFormatters,
               decoration: InputDecoration(labelText: label),

@@ -10,7 +10,6 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:open_file/open_file.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../../data/models/order.dart';
 import '../providers/order_provider.dart';
