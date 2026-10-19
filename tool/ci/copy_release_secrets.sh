@@ -13,7 +13,10 @@ if [ ! -f "$props" ]; then
   echo "No $props here. Run this on the Mac you build Play Store releases on."
   exit 1
 fi
-if ! grep -Eq '^GOOGLE_OAUTH_WEB_CLIENT_ID=.+' .env 2> /dev/null; then
+# Read the line the way flutter_dotenv does (export, spaces, quotes, comment).
+web_id=$( (sed -nE 's/^[[:space:]]*(export[[:space:]]+)?GOOGLE_OAUTH_WEB_CLIENT_ID[[:space:]]*=(.*)$/\2/p' .env 2> /dev/null || true) \
+  | tail -n 1 | sed -E 's/(^|[[:space:]])#.*$//' | tr -d " \t\r\"'")
+if [ -z "$web_id" ]; then
   echo "Your .env has no GOOGLE_OAUTH_WEB_CLIENT_ID value. Put your real .env in the"
   echo "project folder first (the ID is in Google Cloud Console → APIs & Services →"
   echo "Credentials → OAuth 2.0 Client IDs → Web client)."

@@ -111,11 +111,26 @@ jobs:
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          EXPECTED_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+          # The fingerprint isn't confidential: accept it as a variable or a secret.
+          EXPECTED_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 || secrets.ANDROID_SIGNING_CERT_SHA256 }}
+          # Names of values saved as variables by mistake (only names reach the shell).
+          SAVED_AS_VARIABLE: >-
+            ${{ vars.ANDROID_KEYSTORE_BASE64 && 'ANDROID_KEYSTORE_BASE64 ' || '' }}${{ vars.ANDROID_KEYSTORE_PASSWORD && 'ANDROID_KEYSTORE_PASSWORD ' || '' }}${{ vars.ANDROID_KEY_ALIAS && 'ANDROID_KEY_ALIAS ' || '' }}${{ vars.ANDROID_KEY_PASSWORD && 'ANDROID_KEY_PASSWORD ' || '' }}${{ vars.DOTENV && 'DOTENV' || '' }}
         run: |
-          for v in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD EXPECTED_SHA256; do
-            [ -n "${!v}" ] || { echo "::error::$v is empty. Set it in the 'release' environment."; exit 1; }
-          done
+          if [ -n "${SAVED_AS_VARIABLE// /}" ]; then
+            echo "::error::These were saved as environment VARIABLES, so anyone with access can read them: $SAVED_AS_VARIABLE. Delete them under 'Environment variables' and add them under 'Environment secrets'."
+          fi
+          missing=""
+          [ -n "$KEYSTORE_BASE64" ] || missing+=" ANDROID_KEYSTORE_BASE64"
+          [ -n "$STORE_PASSWORD" ] || missing+=" ANDROID_KEYSTORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ] || missing+=" ANDROID_KEY_ALIAS"
+          [ -n "$KEY_PASSWORD" ] || missing+=" ANDROID_KEY_PASSWORD"
+          [ -n "$EXPECTED_SHA256" ] || missing+=" ANDROID_SIGNING_CERT_SHA256"
+          if [ -n "$missing" ]; then
+            echo "::error::Not found in the 'release' environment:$missing. On the Mac with the keystore run 'bash tool/ci/copy_release_secrets.sh' and paste each value in Settings → Environments → release (names must match exactly)."
+            exit 1
+          fi
+          [ -z "${SAVED_AS_VARIABLE// /}" ] || exit 1
           umask 077
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           # The keystore must hold the expected certificate under this alias.
@@ -140,10 +155,20 @@ jobs:
         env:
           DOTENV: ${{ secrets.DOTENV }}
         run: |
-          [ -n "$DOTENV" ] || { echo "::error::DOTENV is empty. Set it in the 'release' environment."; exit 1; }
+          [ -n "$DOTENV" ] || { echo "::error::DOTENV not found in the 'release' environment's secrets (paste the whole .env as a secret named DOTENV)."; exit 1; }
           printf '%s\n' "$DOTENV" > .env
-          if ! grep -Eq '^GOOGLE_OAUTH_WEB_CLIENT_ID=.+' .env; then
-            echo "::error::DOTENV has no GOOGLE_OAUTH_WEB_CLIENT_ID; Drive backup sign-in needs it."
+          # Read the line the way flutter_dotenv does: optional "export",
+          # spaces around "=", quotes, trailing comment.
+          web_id=$(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?GOOGLE_OAUTH_WEB_CLIENT_ID[[:space:]]*=(.*)$/\2/p' .env \
+            | tail -n 1 | sed -E 's/(^|[[:space:]])#.*$//' | tr -d " \t\r\"'")
+          if [ -z "$web_id" ]; then
+            # Key names only — never values.
+            keys=$(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' .env | tr '\n' ' ')
+            if [ -z "$keys" ]; then
+              echo "::error::DOTENV doesn't look like a .env file (no KEY=value lines). In the project folder run 'pbcopy < .env' and paste it into the DOTENV secret again."
+            else
+              echo "::error::DOTENV has no value for GOOGLE_OAUTH_WEB_CLIENT_ID (Drive backup sign-in needs it). Keys found in DOTENV: $keys"
+            fi
             exit 1
           fi
 
