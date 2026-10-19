@@ -39,7 +39,6 @@ jobs:
       contents: read
     env:
       REQUIRE_RELEASE_SIGNING: 'true' # build.gradle.kts: no debug-key fallback
-      NDK_VERSION: 27.0.12077973
       BUILD_TOOLS: 36.0.0
     outputs:
       name: ${{ steps.version.outputs.name }}
@@ -50,6 +49,16 @@ jobs:
         with:
           fetch-depth: 0 # the tag check needs origin/main
           persist-credentials: false
+
+      - name: NDK version from build.gradle.kts
+        # One source of truth: the version Gradle builds with.
+        run: |
+          ndk=$(sed -nE 's/^[[:space:]]*ndkVersion[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' android/app/build.gradle.kts)
+          if [ -z "$ndk" ]; then
+            echo "::error::No ndkVersion in android/app/build.gradle.kts"
+            exit 1
+          fi
+          echo "NDK_VERSION=$ndk" >> "$GITHUB_ENV"
 
       - name: Version matches the tag
         id: version
