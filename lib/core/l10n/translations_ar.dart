@@ -87,6 +87,9 @@ const translationsAr = <String, String>{
   'stock': 'المخزون',
   'option': 'خيار',
   'attributeName': 'اسم الخاصية',
+  'created': 'تاريخ الإنشاء',
+  'lastUpdated': 'آخر تحديث',
+  'noVariantsHint': 'لا توجد متغيرات. أضف خصائص مثل المقاس واللون وغيرها.',
 
   // Orders
   'addOrder': 'طلب جديد',
@@ -127,6 +130,7 @@ const translationsAr = <String, String>{
   'noProductsFoundPicker': 'لم يتم العثور على منتجات',
   'tapToAddProducts': 'اضغط لإضافة منتجات',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'أي تعليمات خاصة...',
 
   // Order status
   'pending': 'معلق',
@@ -134,6 +138,8 @@ const translationsAr = <String, String>{
   'shipped': 'تم الشحن',
   'completed': 'مكتمل',
   'cancelled': 'ملغى',
+  'active': 'قيد التنفيذ',
+  'placed': 'تم الطلب',
 
   // Payment status
   'unpaid': 'غير مدفوع',
@@ -164,6 +170,9 @@ const translationsAr = <String, String>{
   'orderNotFound': 'الطلب غير موجود',
   'pdfSavedTo': 'تم حفظ PDF في',
   'markAsDelivered': 'تحديد كمُوصَّل',
+  'confirmOrder': 'تأكيد الطلب',
+  'markAsShipped': 'تحديد كمشحون',
+  'markAsCompleted': 'تحديد كمكتمل',
 
   // Customers
   'addCustomer': 'إضافة عميل',
@@ -179,6 +188,7 @@ const translationsAr = <String, String>{
   'deleteCustomer': 'حذف العميل',
   'failedToSaveCustomer': 'فشل في حفظ العميل. يرجى المحاولة مرة أخرى.',
   'outstanding': 'مستحق',
+  'memberSince': 'عميل منذ',
 
   // Inventory
   'stockAdjustment': 'تعديل المخزون',
@@ -203,6 +213,7 @@ const translationsAr = <String, String>{
   'supplierOptional': 'المورد (اختياري)',
   'totalStock': 'إجمالي المخزون',
   'inStockLabel': 'متوفر',
+  'allCategories': 'جميع الفئات',
 
   // Expenses
   'addExpense': 'إضافة مصروف',
@@ -283,6 +294,7 @@ const translationsAr = <String, String>{
   'supplierAdded': 'تمت إضافة المورد!',
   'noSuppliersFound': 'لم يتم العثور على موردين',
   'addSuppliersFromMenu': 'أضف موردين من قائمة الموردين',
+  'selectSupplier': 'اختر المورد',
 
   // Purchases
   'purchaseNotFound': 'الشراء غير موجود',
@@ -299,6 +311,8 @@ const translationsAr = <String, String>{
   'payment': 'الدفع',
   'unitCost': 'تكلفة الوحدة',
   'tapToSelectSupplier': 'اضغط لاختيار المورد',
+  'allProducts': 'جميع المنتجات',
+  'supplierProductsOnly': '{name} فقط',
 
   // Cash Register
   'registerOpen': 'الصندوق مفتوح',
@@ -348,6 +362,16 @@ const translationsAr = <String, String>{
   'approveAndReceiveItems': 'الموافقة واستلام العناصر',
   'processRefund': 'معالجة الاسترداد',
   'refundProcessed': 'تمت معالجة الاسترداد',
+  'requested': 'تم الطلب',
+  'approved': 'تمت الموافقة',
+  'received': 'تم الاستلام',
+  'itemsReceived': 'تم استلام العناصر',
+  'refunded': 'تم الاسترداد',
+  'rejected': 'مرفوض',
+  'none': 'لا يوجد',
+  'approve': 'موافقة',
+  'approveReturnConfirm': 'الموافقة على هذا الإرجاع وتحديد العناصر كمستلمة؟ سيتم استعادة المخزون.',
+  'returnRejected': 'تم رفض الإرجاع',
 
   // Categories
   'addCategory': 'إضافة فئة',
@@ -386,6 +410,8 @@ const translationsAr = <String, String>{
   'update': 'تحديث',
   'close': 'إغلاق',
   'open': 'فتح',
+  'back': 'رجوع',
+  'sort': 'ترتيب',
 
   // Delivery
   'delivery': 'التوصيل',
@@ -439,6 +465,16 @@ const translationsAr = <String, String>{
   'sidebarPosition': 'موضع الشريط الجانبي',
   'left': 'يسار',
   'right': 'يمين',
+
+  // Display size (Settings → Display)
+  'display': 'الشاشة',
+  'displaySize': 'حجم شاشة العرض',
+  'displaySizeDesc': 'تكبير كل شيء على الشاشة أو تصغيره',
+  'textSize': 'حجم الخط',
+  'textSizeDesc': 'تغيير حجم النص فقط',
+  'followPhoneTextSize': 'اتباع إعدادات الهاتف',
+  'phoneTextSize': 'الهاتف: {value}',
+  'preview': 'معاينة',
 
   // Auth gate
   'createPin': 'أنشئ رمز PIN من 4 أرقام',

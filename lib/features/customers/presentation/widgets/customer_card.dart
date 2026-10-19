@@ -99,32 +99,39 @@ class CustomerCard extends StatelessWidget {
                   ),
                   if (customer.phone.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(
-                      customer.phone,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    // A number: shrunk to fit a narrow card, never broken
+                    // over two lines.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        customer.phone,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
                       ),
                     ),
                   ],
                   const SizedBox(height: 8),
-                  Row(
+                  // The stats move onto a second line when they don't fit
+                  // side by side (big amounts, a narrow layout, large text).
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
                     children: [
                       _Stat(
                           label: '${customer.totalOrders} orders',
                           icon: tabler.Receipt.new),
-                      const SizedBox(width: 12),
                       _Stat(
                           label: CurrencyFormatter.format(customer.totalSpent),
                           icon: tabler.Cash.new),
-                      if (customer.outstandingBalance > 0) ...[
-                        const SizedBox(width: 12),
+                      if (customer.outstandingBalance > 0)
                         _Stat(
                           label: CurrencyFormatter.format(
                               customer.outstandingBalance),
                           icon: tabler.CashOff.new,
                           color: AppColors.paymentUnpaid,
                         ),
-                      ],
                     ],
                   ),
                 ],
@@ -155,12 +162,19 @@ class _Stat extends StatelessWidget {
             size: 12,
             color: color ?? theme.colorScheme.onSurface.withOpacity(0.4)),
         const SizedBox(width: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: color ?? theme.colorScheme.onSurface.withOpacity(0.6),
-            fontWeight: color != null ? FontWeight.w600 : FontWeight.normal,
+        // A count or an amount: shrunk to fit, never cut off mid-number.
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                fontWeight:
+                    color != null ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
           ),
         ),
       ],

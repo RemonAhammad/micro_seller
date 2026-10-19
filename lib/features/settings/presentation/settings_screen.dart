@@ -1,11 +1,15 @@
 import 'dart:developer' as developer;
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
+import '../providers/display_scale_provider.dart';
 import '../providers/settings_provider.dart';
+import 'widgets/display_size_sheets.dart';
 import '../../../data/services/auto_backup_runner.dart';
 import '../../../data/services/drive_service.dart';
 import '../../../data/services/local_backup_service.dart';
@@ -16,6 +20,7 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/auth_gate.dart';
+import '../../../shared/widgets/app_zoom.dart';
 import '../../../data/services/auth_gate_service.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -23,7 +28,12 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../data/services/review_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.driveService});
+
+  /// Replaces the Google Drive service, so a test can list backups without
+  /// signing in. The app passes none.
+  @visibleForTesting
+  final DriveService? driveService;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -31,7 +41,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen>
     with WidgetsBindingObserver {
-  final _driveService = DriveService();
+  late final _driveService = widget.driveService ?? DriveService();
   final _localBackupService = LocalBackupService();
   bool _isBackingUp = false;
   bool _isRestoring = false;
@@ -321,6 +331,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
+          // Display — Display size (whole-app zoom) and Text size. Per
+          // device, so never part of a backup (displayScaleProvider).
+          _SectionHeader(s.display),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const ThinIcon(tabler.ZoomIn.new, color: AppColors.primary, size: 20),
+                ),
+                title: Text(s.displaySize),
+                subtitle: const _DisplaySizeValue(),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => showDisplaySizeSheet(context),
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const ThinIcon(tabler.TextSize.new, color: AppColors.primary, size: 20),
+                ),
+                title: Text(s.textSize),
+                subtitle: const _TextSizeValue(),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => showTextSizeSheet(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           // Language
           _SectionHeader(s.language),
           _SettingsCard(
@@ -329,6 +381,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -367,6 +420,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -386,18 +440,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 builder: (_) {
                   final currentPos = ref.read(settingsProvider.notifier).sidebarPosition;
                   final isLeft = currentPos == Settings.sidebarPositionLeft;
-                  return ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
+                  return _EndControl(
+                    tile: ListTile(
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const ThinIcon(tabler.ArrowsExchange.new, color: AppColors.primary, size: 20),
                       ),
-                      child: const ThinIcon(tabler.ArrowsExchange.new, color: AppColors.primary, size: 20),
+                      title: Text(s.sidebarPosition),
                     ),
-                    title: Text(s.sidebarPosition),
-                    trailing: _SidebarPositionToggle(
+                    control: _SidebarPositionToggle(
                       isLeft: isLeft,
                       onChanged: (toLeft) async {
                         if (toLeft == isLeft) return;
@@ -442,6 +499,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -508,6 +566,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -549,6 +608,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.blueGrey.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
@@ -579,6 +639,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -615,6 +676,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -711,26 +773,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             ),
           _SettingsCard(
             children: [
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+              _EndControl(
+                tile: ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const ThinIcon(tabler.UserCircle.new, color: AppColors.primary, size: 20),
                   ),
-                  child: const ThinIcon(tabler.UserCircle.new, color: AppColors.primary),
-                ),
-                title: Text(s.googleAccount),
-                subtitle: Text(
-                  _googleAccountEmail ?? s.signIn,
-                  style: TextStyle(
-                    color: _googleAccountEmail != null
-                        ? AppColors.primary
-                        : theme.colorScheme.onSurface.withOpacity(0.5),
+                  title: Text(s.googleAccount),
+                  subtitle: Text(
+                    _googleAccountEmail ?? s.signIn,
+                    style: TextStyle(
+                      color: _googleAccountEmail != null
+                          ? AppColors.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
-                trailing: TextButton(
+                control: TextButton(
                   onPressed: () async {
                     if (_googleAccountEmail != null) {
                       await _driveService.signOut();
@@ -748,13 +813,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: _isBackingUp
                       ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                      : const ThinIcon(tabler.CloudUpload.new, color: Colors.blue),
+                      : const ThinIcon(tabler.CloudUpload.new, color: Colors.blue, size: 20),
                 ),
                 title: Text(s.backupToDrive),
                 subtitle: ref.read(settingsProvider.notifier).lastBackupTime != null
@@ -762,7 +828,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         '${s.lastBackup}: ${DateFormatter.format(ref.read(settingsProvider.notifier).lastBackupTime)}',
                       )
                     : null,
-                trailing: const ThinIcon(tabler.ChevronRight.new),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: _isBackingUp ? null : _backup,
               ),
               const Divider(height: 1),
@@ -770,16 +836,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: _isRestoring
                       ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                      : const ThinIcon(tabler.CloudDownload.new, color: Colors.green),
+                      : const ThinIcon(tabler.CloudDownload.new, color: Colors.green, size: 20),
                 ),
                 title: Text(s.restoreFromDrive),
-                trailing: const ThinIcon(tabler.ChevronRight.new),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: _isRestoring ? null : _restore,
               ),
               const Divider(height: 1),
@@ -790,12 +857,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 secondary: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.indigo.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const ThinIcon(tabler.Refresh.new,
-                      color: Colors.indigo),
+                      color: Colors.indigo, size: 20),
                 ),
                 title: Text(s.tr('autoBackup')),
                 subtitle: Text(
@@ -838,11 +906,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.amber.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: ThinIcon(tabler.Star.new, color: Colors.amber.shade700),
+                  child: ThinIcon(tabler.Star.new, color: Colors.amber.shade700, size: 20),
                 ),
                 title: Text(s.rateThisApp),
                 subtitle: Text(s.rateThisAppSubtitle(AppStrings.appName)),
@@ -854,19 +923,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 },
               ),
               const Divider(height: 1, indent: 56),
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+              _EndControl(
+                tile: ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const ThinIcon(tabler.InfoCircle.new, color: AppColors.primary, size: 20),
                   ),
-                  child: const ThinIcon(tabler.InfoCircle.new, color: AppColors.primary),
+                  title: Text(s.appVersion),
                 ),
-                title: Text(s.appVersion),
                 // Was a hardcoded '1.0.0' — read the real version + build.
-                trailing: FutureBuilder<PackageInfo>(
+                control: FutureBuilder<PackageInfo>(
                   future: PackageInfo.fromPlatform(),
                   builder: (context, snap) => Text(
                     snap.hasData
@@ -898,6 +970,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         secondary: Container(
                           width: 40,
                           height: 40,
+                          alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
@@ -907,6 +980,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             color: available
                                 ? AppColors.primary
                                 : theme.colorScheme.onSurface.withOpacity(0.4),
+                            size: 20,
                           ),
                         ),
                         title: Text(s.tr('securityFingerprint')),
@@ -937,12 +1011,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     secondary: Container(
                       width: 40,
                       height: 40,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const ThinIcon(tabler.Password.new,
-                          color: AppColors.primary),
+                          color: AppColors.primary, size: 20),
                     ),
                     title: Text(s.tr('securityPin')),
                     subtitle: Text(
@@ -971,15 +1046,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 leading: Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const ThinIcon(tabler.TrashX.new, color: Colors.red),
+                  child: const ThinIcon(tabler.TrashX.new, color: Colors.red, size: 20),
                 ),
                 title: Text(s.clearAllData, style: const TextStyle(color: Colors.red)),
                 onTap: _clearData,
-                trailing: const ThinIcon(tabler.ChevronRight.new, color: Colors.red),
+                trailing: const ThinIcon(tabler.ChevronRight.new, color: Colors.red, size: 20),
               ),
             ],
           ),
@@ -993,8 +1069,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 /// Compact two-icon segmented toggle for picking sidebar Left vs Right.
 /// Each side is a 36×32 rounded square; the active one fills with the
 /// primary colour, the other ghosts to onSurface-medium. Tapping the
-/// inactive side flips. Designed to fit in a `ListTile.trailing` without
-/// pushing the title onto a second line.
+/// inactive side flips. Designed to fit at the end of a Settings row
+/// ([_EndControl]) without pushing the title onto a second line.
 class _SidebarPositionToggle extends StatelessWidget {
   final bool isLeft;
   final ValueChanged<bool> onChanged;
@@ -1027,9 +1103,43 @@ class _SidebarPositionToggle extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 30,
-          child: ThinIcon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
+          // Centered: the box's tight size would stretch the icon to fill it.
+          child: Center(
+            child: ThinIcon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Settings → Display size's value: the size in effect, which a narrow
+/// window can hold below the saved one. A widget of its own because
+/// AppZoomScope also changes with the window's MediaQuery (on every keyboard
+/// frame), and only this text needs to rebuild then.
+class _DisplaySizeValue extends ConsumerWidget {
+  const _DisplaySizeValue();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(displayScaleProvider.select((s) => s.displayPercent));
+    final percent = AppZoomScope.maybeOf(context)?.displayPercent ?? saved;
+    return Text('$percent%', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600));
+  }
+}
+
+/// Settings → Text size's value: the custom size, or the phone's font size
+/// while following it. Its own widget for the same reason as
+/// [_DisplaySizeValue].
+class _TextSizeValue extends ConsumerWidget {
+  const _TextSizeValue();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final custom = ref.watch(displayScaleProvider.select((s) => s.textPercent));
+    return Text(
+      custom == null ? AppStrings.of(context).phoneTextSize('${phoneTextPercent(context)}%') : '$custom%',
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
     );
   }
 }
@@ -1145,9 +1255,188 @@ class _SettingsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)],
       ),
-      child: Column(children: children),
+      // The rows' own Material: a ListTile paints its ink (tap ripple,
+      // highlight) on the nearest Material, which was the screen's, under
+      // this card's colour. Transparent, and clipped to the card's corners.
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: children),
+      ),
     );
   }
+}
+
+/// A Settings row with a control at its end (a button, a toggle, a value),
+/// where `ListTile.trailing` would put it. ListTile gives its title only the
+/// width the icon box and the trailing leave, and breaks a longer word across
+/// lines: down to a letter a line beside a wide button, in a long
+/// translation, at a large text size or in a narrow layout. So when a word of
+/// the row's title or subtitle wouldn't fit beside [control], the control
+/// goes under them instead, in line with the title.
+///
+/// [tile] is the row's ListTile, without a trailing widget. Beside it, the
+/// control sits exactly where ListTile's trailing would.
+class _EndControl extends MultiChildRenderObjectWidget {
+  _EndControl({required Widget tile, required Widget control})
+      : super(children: [tile, control]);
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderEndControl(Directionality.of(context));
+
+  @override
+  void updateRenderObject(BuildContext context, RenderObject renderObject) {
+    (renderObject as _RenderEndControl).textDirection =
+        Directionality.of(context);
+  }
+}
+
+class _EndControlParentData extends ContainerBoxParentData<RenderBox> {}
+
+class _RenderEndControl extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _EndControlParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, _EndControlParentData> {
+  _RenderEndControl(this._textDirection);
+
+  /// The theme's ListTile end padding, which is also its title gap: between
+  /// the title and the control, and after the control.
+  static const double _end = 16;
+
+  /// Where the ListTile's texts start: its padding, the 40 dp icon box and
+  /// the title gap.
+  static const double _textStart = 72;
+
+  /// How far a control under the texts reaches into the ListTile's bottom
+  /// padding, and the space left under it.
+  static const double _tuck = 4;
+  static const double _below = 8;
+
+  TextDirection get textDirection => _textDirection;
+  TextDirection _textDirection;
+  set textDirection(TextDirection value) {
+    if (value == _textDirection) return;
+    _textDirection = value;
+    markNeedsLayout();
+  }
+
+  RenderBox get _tile => firstChild!;
+  RenderBox get _control => lastChild!;
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _EndControlParentData) {
+      child.parentData = _EndControlParentData();
+    }
+  }
+
+  /// Whether the control fits beside the texts in [width]. A ListTile's
+  /// minimum intrinsic width is its padding and icon box plus the longest
+  /// word of its title and subtitle.
+  bool _beside(double width) =>
+      _tile.getMinIntrinsicWidth(double.infinity) +
+          _end +
+          _control.getMaxIntrinsicWidth(double.infinity) <=
+      width;
+
+  /// Sizes the children with [layoutChild]: the row's size and where each
+  /// child goes.
+  ({Size size, Offset tile, Offset control}) _arrange(
+    BoxConstraints constraints,
+    ChildLayouter layoutChild,
+  ) {
+    final width = constraints.maxWidth;
+    final rtl = textDirection == TextDirection.rtl;
+    if (_beside(width)) {
+      // As ListTile lays out its trailing: centered across the row.
+      final control = layoutChild(_control, BoxConstraints(maxWidth: width));
+      final tile = layoutChild(
+        _tile,
+        BoxConstraints.tightFor(width: width - control.width - _end),
+      );
+      final size = constraints.constrain(
+        Size(width, math.max(tile.height, control.height)),
+      );
+      return (
+        size: size,
+        tile: Offset(
+          rtl ? control.width + _end : 0,
+          (size.height - tile.height) / 2,
+        ),
+        control: Offset(
+          rtl ? _end : width - _end - control.width,
+          (size.height - control.height) / 2,
+        ),
+      );
+    }
+    final tile = layoutChild(_tile, BoxConstraints.tightFor(width: width));
+    final control = layoutChild(
+      _control,
+      BoxConstraints(maxWidth: math.max(0, width - _textStart - _end)),
+    );
+    final top = math.max(0.0, tile.height - _tuck);
+    return (
+      size: constraints.constrain(
+        Size(width, top + control.height + _below),
+      ),
+      tile: Offset.zero,
+      control: Offset(rtl ? width - _textStart - control.width : _textStart, top),
+    );
+  }
+
+  @override
+  double computeMinIntrinsicWidth(double height) => math.max(
+    _tile.getMinIntrinsicWidth(height),
+    _textStart + _control.getMinIntrinsicWidth(height) + _end,
+  );
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      _tile.getMaxIntrinsicWidth(height) +
+      _end +
+      _control.getMaxIntrinsicWidth(height);
+
+  double _intrinsicHeight(double width) => width.isFinite
+      ? _arrange(
+          BoxConstraints(maxWidth: width),
+          ChildLayoutHelper.dryLayoutChild,
+        ).size.height
+      : math.max(
+          _tile.getMaxIntrinsicHeight(width),
+          _control.getMaxIntrinsicHeight(width),
+        );
+
+  @override
+  double computeMinIntrinsicHeight(double width) => _intrinsicHeight(width);
+
+  @override
+  double computeMaxIntrinsicHeight(double width) => _intrinsicHeight(width);
+
+  @override
+  double? computeDistanceToActualBaseline(TextBaseline baseline) =>
+      defaultComputeDistanceToFirstActualBaseline(baseline);
+
+  @override
+  Size computeDryLayout(covariant BoxConstraints constraints) =>
+      _arrange(constraints, ChildLayoutHelper.dryLayoutChild).size;
+
+  @override
+  void performLayout() {
+    final arranged = _arrange(constraints, ChildLayoutHelper.layoutChild);
+    size = arranged.size;
+    (_tile.parentData! as _EndControlParentData).offset = arranged.tile;
+    (_control.parentData! as _EndControlParentData).offset = arranged.control;
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      defaultHitTestChildren(result, position: position);
+
+  @override
+  void paint(PaintingContext context, Offset offset) =>
+      defaultPaint(context, offset);
 }
 
 class _EditableTile extends StatelessWidget {
@@ -1173,6 +1462,7 @@ class _EditableTile extends StatelessWidget {
       leading: Container(
         width: 40,
         height: 40,
+        alignment: Alignment.center,
         decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
         child: ThinIcon(icon, color: AppColors.primary, size: 20),
       ),
@@ -1306,18 +1596,22 @@ class _BackupPickerSheet extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
           ),
         ),
-        ListView.builder(
-          shrinkWrap: true,
-          itemCount: backups.length,
-          itemBuilder: (ctx, i) {
-            final backup = backups[i];
-            return ListTile(
-              leading: const ThinIcon(tabler.CloudDownload.new, color: Colors.green),
-              title: Text(backup.name),
-              subtitle: Text(DateFormatter.formatWithTime(backup.createdTime)),
-              onTap: () => Navigator.pop(ctx, backup),
-            );
-          },
+        // Flexible: more backups than the sheet's height holds scroll,
+        // instead of running off its bottom.
+        Flexible(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: backups.length,
+            itemBuilder: (ctx, i) {
+              final backup = backups[i];
+              return ListTile(
+                leading: const ThinIcon(tabler.CloudDownload.new, color: Colors.green),
+                title: Text(backup.name),
+                subtitle: Text(DateFormatter.formatWithTime(backup.createdTime)),
+                onTap: () => Navigator.pop(ctx, backup),
+              );
+            },
+          ),
         ),
         const SizedBox(height: 16),
       ],
@@ -1432,7 +1726,12 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: AppStrings.of(context).searchCurrency,
-                prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
+                // Centered: the field's 48 dp icon slot would stretch it.
+                prefixIcon: const Center(
+                  widthFactor: 1,
+                  heightFactor: 1,
+                  child: ThinIcon(tabler.Search.new, size: 20),
+                ),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
                         icon: const ThinIcon(tabler.X.new, size: 18),
@@ -1467,12 +1766,17 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: Text(
-                        c.symbol,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: isSelected ? cs.primary : cs.onSurface,
+                      // A long symbol (KSh) at a large text size shrinks to
+                      // the box instead of wrapping and being cut off.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          c.symbol,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: isSelected ? cs.primary : cs.onSurface,
+                          ),
                         ),
                       ),
                     ),

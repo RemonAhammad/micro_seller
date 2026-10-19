@@ -25,6 +25,9 @@ class RateAppDialog extends StatelessWidget {
     final s = AppStrings.of(context);
     final amber = Colors.amber.shade700;
     return AlertDialog(
+      // The message scrolls when the dialog can't fit it (a large text size
+      // on a short or zoomed-in screen), instead of being cut off.
+      scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [

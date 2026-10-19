@@ -87,6 +87,9 @@ const translationsTr = <String, String>{
   'stock': 'Stok',
   'option': 'Seçenek',
   'attributeName': 'Özellik Adı',
+  'created': 'Oluşturulma Tarihi',
+  'lastUpdated': 'Son Güncelleme',
+  'noVariantsHint': 'Varyant yok. Beden, Renk gibi özellikler ekleyin.',
 
   // Orders
   'addOrder': 'Yeni Sipariş',
@@ -127,6 +130,7 @@ const translationsTr = <String, String>{
   'noProductsFoundPicker': 'Ürün bulunamadı',
   'tapToAddProducts': 'Ürün eklemek için dokunun',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'Özel bir talimat var mı?',
 
   // Order status
   'pending': 'Beklemede',
@@ -134,6 +138,8 @@ const translationsTr = <String, String>{
   'shipped': 'Kargoya Verildi',
   'completed': 'Tamamlandı',
   'cancelled': 'İptal Edildi',
+  'active': 'Devam Eden',
+  'placed': 'Sipariş Alındı',
 
   // Payment status
   'unpaid': 'Ödenmedi',
@@ -164,6 +170,9 @@ const translationsTr = <String, String>{
   'orderNotFound': 'Sipariş bulunamadı',
   'pdfSavedTo': 'PDF kaydedildi',
   'markAsDelivered': 'Teslim edildi olarak işaretle',
+  'confirmOrder': 'Siparişi Onayla',
+  'markAsShipped': 'Kargoya verildi olarak işaretle',
+  'markAsCompleted': 'Tamamlandı olarak işaretle',
 
   // Customers
   'addCustomer': 'Müşteri Ekle',
@@ -179,6 +188,7 @@ const translationsTr = <String, String>{
   'deleteCustomer': 'Müşteriyi Sil',
   'failedToSaveCustomer': 'Müşteri kaydedilemedi. Lütfen tekrar deneyin.',
   'outstanding': 'Ödenmemiş',
+  'memberSince': 'Kayıt Tarihi',
 
   // Inventory
   'stockAdjustment': 'Stok Düzeltmesi',
@@ -203,6 +213,7 @@ const translationsTr = <String, String>{
   'supplierOptional': 'Tedarikçi (isteğe bağlı)',
   'totalStock': 'toplam stok',
   'inStockLabel': 'stokta',
+  'allCategories': 'Tüm Kategoriler',
 
   // Expenses
   'addExpense': 'Gider Ekle',
@@ -283,6 +294,7 @@ const translationsTr = <String, String>{
   'supplierAdded': 'Tedarikçi eklendi!',
   'noSuppliersFound': 'Tedarikçi bulunamadı',
   'addSuppliersFromMenu': 'Tedarikçiler menüsünden tedarikçi ekleyin',
+  'selectSupplier': 'Tedarikçi Seçin',
 
   // Purchases
   'purchaseNotFound': 'Satın alma bulunamadı',
@@ -299,6 +311,8 @@ const translationsTr = <String, String>{
   'payment': 'Ödeme',
   'unitCost': 'Birim Maliyet',
   'tapToSelectSupplier': 'Tedarikçi seçmek için dokunun',
+  'allProducts': 'Tüm ürünler',
+  'supplierProductsOnly': 'Yalnızca {name}',
 
   // Cash Register
   'registerOpen': 'Kasa Açık',
@@ -348,6 +362,16 @@ const translationsTr = <String, String>{
   'approveAndReceiveItems': 'Onayla ve Kalemleri Teslim Al',
   'processRefund': 'Geri Ödemeyi İşle',
   'refundProcessed': 'Geri ödeme işlendi',
+  'requested': 'Talep Edildi',
+  'approved': 'Onaylandı',
+  'received': 'Teslim Alındı',
+  'itemsReceived': 'Kalemler Teslim Alındı',
+  'refunded': 'Geri Ödendi',
+  'rejected': 'Reddedildi',
+  'none': 'Yok',
+  'approve': 'Onayla',
+  'approveReturnConfirm': 'Bu iade onaylanıp kalemler teslim alındı olarak işaretlensin mi? Stok geri yüklenecek.',
+  'returnRejected': 'İade Reddedildi',
 
   // Categories
   'addCategory': 'Kategori Ekle',
@@ -386,6 +410,8 @@ const translationsTr = <String, String>{
   'update': 'Güncelle',
   'close': 'Kapat',
   'open': 'Aç',
+  'back': 'Geri',
+  'sort': 'Sırala',
 
   // Delivery
   'delivery': 'Teslimat',
@@ -440,6 +466,16 @@ const translationsTr = <String, String>{
   'sidebarPosition': 'Kenar Çubuğu Konumu',
   'left': 'Sol',
   'right': 'Sağ',
+
+  // Display size (Settings → Display)
+  'display': 'Ekran',
+  'displaySize': 'Görüntü Boyutu',
+  'displaySizeDesc': 'Ekrandaki her şeyi daha küçük veya daha büyük yapın',
+  'textSize': 'Yazı Tipi Boyutu',
+  'textSizeDesc': 'Yalnızca metnin boyutunu değiştirin',
+  'followPhoneTextSize': 'Telefon ayarını kullan',
+  'phoneTextSize': 'Telefon: {value}',
+  'preview': 'Önizleme',
 
   // Auth gate
   'createPin': '4 haneli PIN oluştur',

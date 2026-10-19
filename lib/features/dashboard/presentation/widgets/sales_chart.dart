@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -5,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../providers/dashboard_provider.dart';
+import 'stat_card.dart' show measureTextWidth;
 
 // fl_chart charts are implicitly animated and compare their data with `==`,
 // callbacks included. A closure written inline in `build` is a new object
@@ -14,6 +17,14 @@ import '../../providers/dashboard_provider.dart';
 // so only a real data change animates.
 
 const _weekdayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+/// Height fl_chart reserves for the labels under a chart: its default 22,
+/// or more once a [fontSize] label below [padding] grows taller with the
+/// text size (fl_chart clips a label to this height). Allows 1.5 × the
+/// scaled font size a line: bodyMedium's 1.43 line height plus rounding.
+double axisTitleReserve(TextScaler textScaler,
+        {required double fontSize, required double padding}) =>
+    math.max(22, padding + textScaler.scale(fontSize) * 1.5);
 
 /// Hands out one grid-line callback per color. The line is painted, not
 /// built, and the chart only repaints when its data compares unequal — a
@@ -156,6 +167,10 @@ class _SalesChartState extends State<SalesChart> {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: axisTitleReserve(
+                          MediaQuery.textScalerOf(context),
+                          fontSize: 10,
+                          padding: 6),
                       getTitlesWidget: _bottomTitle,
                     ),
                   ),
@@ -261,92 +276,106 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
     }
 
     final total = entries.fold<int>(0, (s, e) => s + e.value);
+    final labelStyle =
+        TextStyle(fontSize: 11, color: cs.onSurface.withValues(alpha: 0.7));
+    const countStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+    final pctStyle =
+        TextStyle(fontSize: 10, color: cs.onSurface.withValues(alpha: 0.4));
+    String pctOf(int value) => '(${(value / total * 100).round()}%)';
 
-    return SizedBox(
-      height: 140,
-      child: Row(
-        children: [
-          // Pie chart
-          Expanded(
-            flex: 3,
-            child: RepaintBoundary(
-              child: PieChart(
-                PieChartData(
-                  pieTouchData: PieTouchData(touchCallback: _onTouch),
-                  sectionsSpace: 2,
-                  centerSpaceRadius: 28,
-                  sections: entries.asMap().entries.map((e) {
-                    final i = e.key;
-                    final entry = e.value;
-                    final color = _statusColors[entry.key] ?? cs.outline;
-                    final isTouched = i == _touchedIndex;
-                    return PieChartSectionData(
-                      value: entry.value.toDouble(),
-                      color: color,
-                      radius: isTouched ? 32 : 26,
-                      title: '',
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Legend
-          Expanded(
-            flex: 4,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: entries.map((e) {
-                final color = _statusColors[e.key] ?? cs.outline;
-                final pct = (e.value / total * 100).round();
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        e.key,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: cs.onSurface.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${e.value}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '($pct%)',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: cs.onSurface.withValues(alpha: 0.4),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
+    final pie = RepaintBoundary(
+      child: PieChart(
+        PieChartData(
+          pieTouchData: PieTouchData(touchCallback: _onTouch),
+          sectionsSpace: 2,
+          centerSpaceRadius: 28,
+          sections: entries.asMap().entries.map((e) {
+            final i = e.key;
+            final entry = e.value;
+            final color = _statusColors[entry.key] ?? cs.outline;
+            final isTouched = i == _touchedIndex;
+            return PieChartSectionData(
+              value: entry.value.toDouble(),
+              color: color,
+              radius: isTouched ? 32 : 26,
+              title: '',
+            );
+          }).toList(),
+        ),
       ),
+    );
+
+    Widget legend({required bool beside}) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: beside ? MainAxisSize.max : MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: entries.map((e) {
+            final color = _statusColors[e.key] ?? cs.outline;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      e.key,
+                      style: labelStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text('${e.value}', style: countStyle),
+                  const SizedBox(width: 4),
+                  Text(pctOf(e.value), style: pctStyle),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The legend sits beside the pie (4 parts of 7) while its widest row
+        // fits there; with big counts, a narrow screen or a large font it
+        // goes under the pie, full width, instead of overflowing.
+        final legendRow = entries.fold<double>(0, (widest, e) {
+          final row = 8 + 6 + 4 + 4 +
+              measureTextWidth(context, e.key, labelStyle) +
+              measureTextWidth(context, '${e.value}', countStyle) +
+              measureTextWidth(context, pctOf(e.value), pctStyle);
+          return math.max(widest, row);
+        });
+        if (legendRow > (constraints.maxWidth - 12) * 4 / 7) {
+          return Column(
+            children: [
+              SizedBox(height: 140, child: pie),
+              const SizedBox(height: 12),
+              legend(beside: false),
+            ],
+          );
+        }
+        final textScaler = MediaQuery.textScalerOf(context);
+        return SizedBox(
+          // 140, or as tall as the legend's rows once the text is larger.
+          height: math.max(
+              140, entries.length * (8 + textScaler.scale(12) * 1.43)),
+          child: Row(
+            children: [
+              Expanded(flex: 3, child: pie),
+              const SizedBox(width: 12),
+              Expanded(flex: 4, child: legend(beside: true)),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -479,6 +508,10 @@ class _RevenueExpenseChartState extends State<RevenueExpenseChart> {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: axisTitleReserve(
+                          MediaQuery.textScalerOf(context),
+                          fontSize: 10,
+                          padding: 6),
                       getTitlesWidget: _bottomTitle,
                     ),
                   ),

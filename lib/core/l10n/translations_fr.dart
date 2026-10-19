@@ -87,6 +87,9 @@ const translationsFr = <String, String>{
   'stock': 'Stock',
   'option': 'Option',
   'attributeName': 'Nom de l\'attribut',
+  'created': 'Date de création',
+  'lastUpdated': 'Dernière mise à jour',
+  'noVariantsHint': 'Aucune variante. Ajoutez des attributs comme Taille, Couleur, etc.',
 
   // Orders
   'addOrder': 'Nouvelle commande',
@@ -127,6 +130,7 @@ const translationsFr = <String, String>{
   'noProductsFoundPicker': 'Aucun produit trouvé',
   'tapToAddProducts': 'Appuyez pour ajouter des produits',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'Des instructions particulières ?',
 
   // Order status
   'pending': 'En attente',
@@ -134,6 +138,8 @@ const translationsFr = <String, String>{
   'shipped': 'Expédiée',
   'completed': 'Terminée',
   'cancelled': 'Annulée',
+  'active': 'En cours',
+  'placed': 'Commandée',
 
   // Payment status
   'unpaid': 'Impayé',
@@ -164,6 +170,9 @@ const translationsFr = <String, String>{
   'orderNotFound': 'Commande introuvable',
   'pdfSavedTo': 'PDF enregistré dans',
   'markAsDelivered': 'Marquer comme livré',
+  'confirmOrder': 'Confirmer la commande',
+  'markAsShipped': 'Marquer comme expédiée',
+  'markAsCompleted': 'Marquer comme terminée',
 
   // Customers
   'addCustomer': 'Ajouter un client',
@@ -179,6 +188,7 @@ const translationsFr = <String, String>{
   'deleteCustomer': 'Supprimer le client',
   'failedToSaveCustomer': 'Échec de l\'enregistrement du client. Veuillez réessayer.',
   'outstanding': 'Impayé',
+  'memberSince': 'Client depuis',
 
   // Inventory
   'stockAdjustment': 'Ajustement de stock',
@@ -203,6 +213,7 @@ const translationsFr = <String, String>{
   'supplierOptional': 'Fournisseur (optionnel)',
   'totalStock': 'stock total',
   'inStockLabel': 'en stock',
+  'allCategories': 'Toutes les catégories',
 
   // Expenses
   'addExpense': 'Ajouter une dépense',
@@ -283,6 +294,7 @@ const translationsFr = <String, String>{
   'supplierAdded': 'Fournisseur ajouté !',
   'noSuppliersFound': 'Aucun fournisseur trouvé',
   'addSuppliersFromMenu': 'Ajoutez des fournisseurs depuis le menu Fournisseurs',
+  'selectSupplier': 'Sélectionner le fournisseur',
 
   // Purchases
   'purchaseNotFound': 'Achat introuvable',
@@ -299,6 +311,8 @@ const translationsFr = <String, String>{
   'payment': 'Paiement',
   'unitCost': 'Coût unitaire',
   'tapToSelectSupplier': 'Appuyez pour sélectionner un fournisseur',
+  'allProducts': 'Tous les produits',
+  'supplierProductsOnly': '{name} uniquement',
 
   // Cash Register
   'registerOpen': 'Caisse ouverte',
@@ -348,6 +362,16 @@ const translationsFr = <String, String>{
   'approveAndReceiveItems': 'Approuver et recevoir les articles',
   'processRefund': 'Traiter le remboursement',
   'refundProcessed': 'Remboursement traité',
+  'requested': 'Demandé',
+  'approved': 'Approuvé',
+  'received': 'Reçu',
+  'itemsReceived': 'Articles reçus',
+  'refunded': 'Remboursé',
+  'rejected': 'Rejeté',
+  'none': 'Aucun',
+  'approve': 'Approuver',
+  'approveReturnConfirm': 'Approuver ce retour et marquer les articles comme reçus ? Le stock sera restauré.',
+  'returnRejected': 'Retour rejeté',
 
   // Categories
   'addCategory': 'Ajouter une catégorie',
@@ -386,6 +410,8 @@ const translationsFr = <String, String>{
   'update': 'Mettre à jour',
   'close': 'Fermer',
   'open': 'Ouvrir',
+  'back': 'Précédent',
+  'sort': 'Trier',
 
   // Delivery
   'delivery': 'Livraison',
@@ -440,6 +466,16 @@ const translationsFr = <String, String>{
   'sidebarPosition': 'Position de la barre latérale',
   'left': 'Gauche',
   'right': 'Droite',
+
+  // Display size (Settings → Display)
+  'display': 'Affichage',
+  'displaySize': 'Taille d\'affichage',
+  'displaySizeDesc': 'Réduire ou agrandir tout ce qui s\'affiche à l\'écran',
+  'textSize': 'Taille de la police',
+  'textSizeDesc': 'Modifier uniquement la taille du texte',
+  'followPhoneTextSize': 'Suivre les paramètres du téléphone',
+  'phoneTextSize': 'Téléphone : {value}',
+  'preview': 'Aperçu',
 
   // Auth gate
   'createPin': 'Créer un code PIN à 4 chiffres',

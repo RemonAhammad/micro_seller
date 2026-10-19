@@ -207,64 +207,79 @@ class _PinSheetState extends State<_PinSheet> {
           color: cs.surface,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: cs.onSurface.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Top row: cancel button + stage title
-            Row(
-              children: [
-                IconButton(
-                  icon: const ThinIcon(tabler.X.new),
-                  onPressed: () => Navigator.of(context).pop(false),
+        // Scrolls when the sheet can't fit it all (a large text size or a
+        // long reason on a short or zoomed-in screen).
+        child: SingleChildScrollView(
+          primary: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: cs.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                Expanded(
-                  child: Text(
-                    _stageTitle(_L10n(s)),
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                    textAlign: TextAlign.center,
+              ),
+              // Top row: cancel button + stage title
+              Row(
+                children: [
+                  IconButton(
+                    icon: const ThinIcon(tabler.X.new),
+                    onPressed: () => Navigator.of(context).pop(false),
                   ),
-                ),
-                const SizedBox(width: 48), // visual balance with the IconButton
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.title,
-              style: TextStyle(
-                fontSize: 13,
-                color: cs.onSurface.withValues(alpha: 0.6),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            _PinDots(filled: _input.length, total: _pinLength, color: cs.primary),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 18,
-              child: _error == null
-                  ? const SizedBox.shrink()
-                  : Text(
-                      _error!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  Expanded(
+                    child: Text(
+                      _stageTitle(_L10n(s)),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                      textAlign: TextAlign.center,
                     ),
-            ),
-            const SizedBox(height: 8),
-            _Numpad(onDigit: _onDigit, onBackspace: _onBackspace),
-          ],
+                  ),
+                  // Visual balance with the IconButton.
+                  const SizedBox(width: 48),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                widget.title,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: cs.onSurface.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              _PinDots(
+                  filled: _input.length, total: _pinLength, color: cs.primary),
+              const SizedBox(height: 8),
+              // Holds the error's line even without one, and grows when the
+              // error needs more (a large text size, two lines).
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 18),
+                child: _error == null
+                    ? const SizedBox.shrink()
+                    : Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 8),
+              // Full size, unless the sheet is narrower than the pad (the
+              // narrowest Display size layout): then shrunk to fit.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _Numpad(onDigit: _onDigit, onBackspace: _onBackspace),
+              ),
+            ],
+          ),
         ),
       ),
     );

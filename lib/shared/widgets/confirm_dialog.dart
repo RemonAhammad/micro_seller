@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_icons.dart';
+import '../../core/constants/app_strings.dart';
+import 'app_button.dart';
 
 class ConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
-  final String confirmText;
-  final String cancelText;
+
+  /// Defaults to the localized "Confirm".
+  final String? confirmText;
+
+  /// Defaults to the localized "Cancel".
+  final String? cancelText;
   final bool isDestructive;
   final ThinIconBuilder? icon;
 
@@ -13,8 +19,8 @@ class ConfirmDialog extends StatelessWidget {
     super.key,
     required this.title,
     required this.message,
-    this.confirmText = 'Confirm',
-    this.cancelText = 'Cancel',
+    this.confirmText,
+    this.cancelText,
     this.isDestructive = false,
     this.icon,
   });
@@ -23,8 +29,8 @@ class ConfirmDialog extends StatelessWidget {
     BuildContext context, {
     required String title,
     required String message,
-    String confirmText = 'Confirm',
-    String cancelText = 'Cancel',
+    String? confirmText,
+    String? cancelText,
     bool isDestructive = false,
     ThinIconBuilder? icon,
   }) {
@@ -45,7 +51,12 @@ class ConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final s = AppStrings.of(context);
     return AlertDialog(
+      // A long title or message scrolls above the buttons when the dialog
+      // can't fit it (a large text size on a short or zoomed-in screen),
+      // instead of being cut off.
+      scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -69,25 +80,19 @@ class ConfirmDialog extends StatelessWidget {
         textAlign: TextAlign.center,
       ),
       actions: [
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(cancelText),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: isDestructive
-                    ? FilledButton.styleFrom(backgroundColor: Colors.red)
-                    : null,
-                child: Text(confirmText),
-              ),
-            ),
-          ],
+        // Side by side, or stacked when a label wouldn't fit its half.
+        ButtonPair(
+          first: OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(cancelText ?? s.cancel),
+          ),
+          second: FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: isDestructive
+                ? FilledButton.styleFrom(backgroundColor: Colors.red)
+                : null,
+            child: Text(confirmText ?? s.confirm),
+          ),
         ),
       ],
     );

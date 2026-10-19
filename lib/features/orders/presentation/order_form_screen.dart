@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -542,16 +543,18 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       children: [
                         ThinIcon(tabler.Calendar.new, size: 18, color: cs.primary),
                         const SizedBox(width: 8),
-                        Text(
-                          _estimatedDeliveryDate != null
-                              ? '${s.estimatedDelivery}: ${DateFormatter.format(_estimatedDeliveryDate)}'
-                              : s.estimatedDelivery,
-                          style: TextStyle(
-                            color: _estimatedDeliveryDate != null ? cs.onSurface : cs.onSurface.withValues(alpha: 0.5),
+                        Expanded(
+                          child: Text(
+                            _estimatedDeliveryDate != null
+                                ? '${s.estimatedDelivery}: ${DateFormatter.format(_estimatedDeliveryDate)}'
+                                : s.estimatedDelivery,
+                            style: TextStyle(
+                              color: _estimatedDeliveryDate != null ? cs.onSurface : cs.onSurface.withValues(alpha: 0.5),
+                            ),
                           ),
                         ),
                         if (_estimatedDeliveryDate != null) ...[
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           GestureDetector(
                             onTap: () => setState(() => _estimatedDeliveryDate = null),
                             child: const ThinIcon(tabler.X.new, size: 18),
@@ -576,14 +579,19 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
-                        Text(s.repeatEvery),
+                        Flexible(child: Text(s.repeatEvery)),
                         const SizedBox(width: 8),
+                        // Room for three digits at any text size: the
+                        // theme's 16 px side padding left them 20 px.
                         SizedBox(
-                          width: 60,
+                          width: math.max(60.0, 60 * MediaQuery.textScalerOf(context).scale(16) / 16),
                           child: TextField(
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
-                            decoration: const InputDecoration(isDense: true),
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+                            ),
                             controller: _recurringDaysCtrl,
                           ),
                         ),
@@ -726,63 +734,116 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
+  /// What an item row puts beside the name, less the quantity's digits: the
+  /// quantity box (two 28 px buttons, 20 px around the number, its border)
+  /// and the 12 + 70 px total, 4 px and the 16 px remove icon.
+  static const double _itemControlsWidth = 2 + 28 + 20 + 28 + 12 + 70 + 4 + 16;
+
+  /// The narrowest the name gets beside them at 100% text.
+  static const double _minItemNameWidth = 48;
+
   Widget _buildItemTile(int index, ThemeData theme, ColorScheme cs) {
     final item = _items[index];
+    final unitPrice = CurrencyFormatter.format(item.unitPrice);
+    final unitPriceStyle = TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5));
+    const nameStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 13);
+    const qtyStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14);
+    // Product info
+    final info = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(item.displayName, style: nameStyle),
+        Text(unitPrice, style: unitPriceStyle),
+      ],
+    );
+
+    // Qty controls
+    final qty = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _qtyButton(tabler.Minus.new, () => _updateQty(index, -1), cs),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text('${item.qty}', style: qtyStyle),
+          ),
+          _qtyButton(tabler.Plus.new, () => _updateQty(index, 1), cs),
+        ],
+      ),
+    );
+
+    // Total: shrunk to fit rather than broken over two lines.
+    final total = Text(
+      CurrencyFormatter.format(item.totalPrice),
+      textAlign: TextAlign.right,
+      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: cs.primary),
+      maxLines: 1,
+    );
+
+    // Delete
+    final remove = GestureDetector(
+      onTap: () => _removeItem(index),
+      child: ThinIcon(tabler.X.new, size: 16, color: cs.error.withValues(alpha: 0.6)),
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          // Product info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      // One row while the name keeps some room (its longest word, and the
+      // unit price, each on a line); otherwise (narrow layout, large text, a
+      // long quantity) the quantity and total go under the name, which keeps
+      // the full width.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final nameRoom = constraints.maxWidth - _itemControlsWidth - _lineWidth(context, '${item.qty}', qtyStyle);
+          final needed = item.displayName.split(' ').fold(
+            math.max(
+              MediaQuery.textScalerOf(context).scale(_minItemNameWidth),
+              _lineWidth(context, unitPrice, unitPriceStyle),
+            ),
+            (widest, word) => math.max(widest, _lineWidth(context, word, nameStyle)),
+          );
+          if (nameRoom >= needed) {
+            return Row(
               children: [
-                Text(item.displayName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                Text(
-                  CurrencyFormatter.format(item.unitPrice),
-                  style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5)),
+                Expanded(child: info),
+                qty,
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 70,
+                  child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: total),
                 ),
+                const SizedBox(width: 4),
+                remove,
               ],
-            ),
-          ),
-
-          // Qty controls
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _qtyButton(tabler.Minus.new, () => _updateQty(index, -1), cs),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text('${item.qty}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                ),
-                _qtyButton(tabler.Plus.new, () => _updateQty(index, 1), cs),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Total
-          SizedBox(
-            width: 70,
-            child: Text(
-              CurrencyFormatter.format(item.totalPrice),
-              textAlign: TextAlign.right,
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: cs.primary),
-            ),
-          ),
-
-          // Delete
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: () => _removeItem(index),
-            child: ThinIcon(tabler.X.new, size: 16, color: cs.error.withValues(alpha: 0.6)),
-          ),
-        ],
+            );
+          }
+          return Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: info),
+                  const SizedBox(width: 8),
+                  remove,
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  qty,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: total),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -857,7 +918,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
-        Row(
+        Wrap(
           children: statuses.map((s) {
             final selected = _orderStatus == s;
             final label = s.name[0].toUpperCase() + s.name.substring(1);
@@ -1029,10 +1090,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(s.total, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-                      Text(
+                      const SizedBox(width: 8),
+                      Flexible(child: _fitAmount(Text(
                         CurrencyFormatter.format(t.total),
                         style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: cs.primary),
-                      ),
+                        maxLines: 1,
+                      ))),
                     ],
                   ),
                   if (t.total > 0 && t.paid > 0)
@@ -1066,14 +1129,21 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: theme.textTheme.bodySmall),
-          Text(
+          const SizedBox(width: 8),
+          Flexible(child: _fitAmount(Text(
             value,
             style: theme.textTheme.bodySmall?.copyWith(color: valueColor, fontWeight: FontWeight.w500),
-          ),
+            maxLines: 1,
+          ))),
         ],
       ),
     );
   }
+
+  /// [amount] at the end of its row, shrunk when it doesn't fit beside its
+  /// label (narrow layout, large text) — never cut off.
+  Widget _fitAmount(Widget amount) =>
+      FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: amount);
 }
 
 /// One read of the order form's money: items subtotal, the parsed discount /
@@ -1251,25 +1321,33 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Text(
-                  AppStrings.of(context).addItems,
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                if (totalItems > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: cs.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '$totalItems item${totalItems == 1 ? '' : 's'}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
-                    ),
+                // The count wraps under the title when both don't fit
+                // beside Done.
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        AppStrings.of(context).addItems,
+                        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      if (totalItems > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$totalItems item${totalItems == 1 ? '' : 's'}',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-                const Spacer(),
+                ),
                 TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.of(context).done)),
               ],
             ),
@@ -1384,109 +1462,112 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                       color: cs.primary.withValues(alpha: 0.03),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                c.displayLabel,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 13,
-                                                  color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
-                                                ),
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    CurrencyFormatter.format(comboPrice),
-                                                    style: TextStyle(fontSize: 12, color: cs.primary),
-                                                  ),
-                                                  Text(
-                                                    '  ·  ${c.stockQty} in stock',
-                                                    style: TextStyle(
-                                                      fontSize: 11,
-                                                      color: outOfStock
-                                                          ? cs.error
-                                                          : cs.onSurface.withValues(alpha: 0.5),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (qty > 0)
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
+                                    child: LayoutBuilder(
+                                      builder: (context, row) => Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                _sheetQtyBtn(
-                                                  tabler.Minus.new,
-                                                  () => _setQty(
-                                                    p,
-                                                    qty - 1,
-                                                    combinationKey: c.combinationKey,
-                                                    displayLabel: c.displayLabel,
-                                                    priceOverride: comboPrice,
-                                                    skuOverride: comboSku,
-                                                    availableStock: c.stockQty,
-                                                  ),
-                                                  cs,
-                                                ),
-                                                Padding(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                                  child: Text(
-                                                    '$qty',
-                                                    style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+                                                Text(
+                                                  c.displayLabel,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13,
+                                                    color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
                                                   ),
                                                 ),
-                                                _sheetQtyBtn(
-                                                  tabler.Plus.new,
-                                                  qty >= c.stockQty
-                                                      ? null
-                                                      : () => _setQty(
-                                                          p,
-                                                          qty + 1,
-                                                          combinationKey: c.combinationKey,
-                                                          displayLabel: c.displayLabel,
-                                                          priceOverride: comboPrice,
-                                                          skuOverride: comboSku,
-                                                          availableStock: c.stockQty,
-                                                        ),
-                                                  cs,
+                                                // Stock wraps under the price when
+                                                // both don't fit; the price shrinks
+                                                // rather than being cut off.
+                                                Wrap(
+                                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                                  children: [
+                                                    FittedBox(
+                                                      fit: BoxFit.scaleDown,
+                                                      child: Text(
+                                                        CurrencyFormatter.format(comboPrice),
+                                                        style: TextStyle(fontSize: 12, color: cs.primary),
+                                                        maxLines: 1,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '  ·  ${c.stockQty} in stock',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: outOfStock
+                                                            ? cs.error
+                                                            : cs.onSurface.withValues(alpha: 0.5),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ],
                                             ),
-                                          )
-                                        else
-                                          SizedBox(
-                                            height: 34,
-                                            child: FilledButton.tonal(
-                                              onPressed: outOfStock
-                                                  ? null
-                                                  : () => _setQty(
+                                          ),
+                                          if (qty > 0)
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  _sheetQtyBtn(
+                                                    tabler.Minus.new,
+                                                    () => _setQty(
                                                       p,
-                                                      1,
+                                                      qty - 1,
                                                       combinationKey: c.combinationKey,
                                                       displayLabel: c.displayLabel,
                                                       priceOverride: comboPrice,
                                                       skuOverride: comboSku,
                                                       availableStock: c.stockQty,
                                                     ),
-                                              style: FilledButton.styleFrom(
-                                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                                    cs,
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                    child: Text(
+                                                      '$qty',
+                                                      style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+                                                    ),
+                                                  ),
+                                                  _sheetQtyBtn(
+                                                    tabler.Plus.new,
+                                                    qty >= c.stockQty
+                                                        ? null
+                                                        : () => _setQty(
+                                                            p,
+                                                            qty + 1,
+                                                            combinationKey: c.combinationKey,
+                                                            displayLabel: c.displayLabel,
+                                                            priceOverride: comboPrice,
+                                                            skuOverride: comboSku,
+                                                            availableStock: c.stockQty,
+                                                          ),
+                                                    cs,
+                                                  ),
+                                                ],
                                               ),
-                                              child: Text(outOfStock ? 'Out of stock' : 'Add'),
+                                            )
+                                          else
+                                            _addButton(
+                                              row.maxWidth,
+                                              outOfStock: outOfStock,
+                                              onAdd: () => _setQty(
+                                                p,
+                                                1,
+                                                combinationKey: c.combinationKey,
+                                                displayLabel: c.displayLabel,
+                                                priceOverride: comboPrice,
+                                                skuOverride: comboSku,
+                                                availableStock: c.stockQty,
+                                              ),
                                             ),
-                                          ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 );
@@ -1501,83 +1582,106 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    p.name,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                      color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        CurrencyFormatter.format(p.sellingPrice),
-                                        style: TextStyle(fontSize: 12, color: cs.primary),
-                                      ),
-                                      Text(
-                                        '  ·  ${p.stockQty} in stock',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: outOfStock ? cs.error : cs.onSurface.withValues(alpha: 0.5),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (qty > 0)
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                        child: LayoutBuilder(
+                          builder: (context, row) => Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _sheetQtyBtn(
-                                      tabler.Minus.new,
-                                      () => _setQty(p, qty - 1, availableStock: p.stockQty),
-                                      cs,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      child: Text(
-                                        '$qty',
-                                        style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+                                    Text(
+                                      p.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
                                       ),
                                     ),
-                                    _sheetQtyBtn(
-                                      tabler.Plus.new,
-                                      qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty),
-                                      cs,
+                                    // As for a combination above.
+                                    Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            CurrencyFormatter.format(p.sellingPrice),
+                                            style: TextStyle(fontSize: 12, color: cs.primary),
+                                            maxLines: 1,
+                                          ),
+                                        ),
+                                        Text(
+                                          '  ·  ${p.stockQty} in stock',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: outOfStock ? cs.error : cs.onSurface.withValues(alpha: 0.5),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              )
-                            else
-                              SizedBox(
-                                height: 34,
-                                child: FilledButton.tonal(
-                                  onPressed: outOfStock ? null : () => _setQty(p, 1, availableStock: p.stockQty),
-                                  style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
-                                  child: Text(outOfStock ? 'Out of stock' : 'Add'),
-                                ),
                               ),
-                          ],
+                              if (qty > 0)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _sheetQtyBtn(
+                                        tabler.Minus.new,
+                                        () => _setQty(p, qty - 1, availableStock: p.stockQty),
+                                        cs,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                                        child: Text(
+                                          '$qty',
+                                          style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+                                        ),
+                                      ),
+                                      _sheetQtyBtn(
+                                        tabler.Plus.new,
+                                        qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty),
+                                        cs,
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                _addButton(
+                                  row.maxWidth,
+                                  outOfStock: outOfStock,
+                                  onAdd: () => _setQty(p, 1, availableStock: p.stockQty),
+                                ),
+                            ],
+                          ),
                         ),
                       );
                     },
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Add (or a disabled Out of stock). It takes at most a bit over half the
+  /// [rowWidth]: with large text its label shrinks rather than squeezing
+  /// the name beside it down to a few letters a line.
+  Widget _addButton(double rowWidth, {required bool outOfStock, required VoidCallback onAdd}) {
+    final s = AppStrings.of(context);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: rowWidth * 0.55),
+      child: SizedBox(
+        height: 34,
+        child: FilledButton.tonal(
+          onPressed: outOfStock ? null : onAdd,
+          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
+          child: FittedBox(fit: BoxFit.scaleDown, child: Text(outOfStock ? s.outOfStock : s.add)),
+        ),
       ),
     );
   }
@@ -1725,9 +1829,11 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                       child: ThinIcon(tabler.ArrowLeft.new, size: 20, color: cs.onSurface),
                     ),
                   ),
-                Text(
-                  _showForm ? s.createNewCustomer : s.selectCustomer,
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                Flexible(
+                  child: Text(
+                    _showForm ? s.createNewCustomer : s.selectCustomer,
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
@@ -1834,11 +1940,12 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     children: [
                       ThinIcon(tabler.UserPlus.new, size: 20, color: cs.primary),
                       const SizedBox(width: 10),
-                      Text(
-                        s.createNewCustomer,
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: cs.primary),
+                      Expanded(
+                        child: Text(
+                          s.createNewCustomer,
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: cs.primary),
+                        ),
                       ),
-                      const Spacer(),
                       ThinIcon(tabler.ChevronRight.new, size: 14, color: cs.primary.withValues(alpha: 0.6)),
                     ],
                   ),
@@ -1912,26 +2019,57 @@ class _InvoiceActionTile extends StatelessWidget {
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ThinIcon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(label, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-              ),
-              ThinIcon(tabler.ChevronRight.new, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-            ],
+          // The chevron gives way when the label's longest word wouldn't fit
+          // beside it (narrow layout, large text): a word broken in two reads
+          // worse than a missing arrow.
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final style = theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600);
+              final longestWord = label
+                  .split(' ')
+                  .fold(0.0, (widest, word) => math.max(widest, _lineWidth(context, word, style)));
+              final chevronWidth = IconTheme.of(context).size ?? 24;
+              final showChevron = constraints.maxWidth - 40 - 14 - chevronWidth >= longestWord;
+              return Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ThinIcon(icon, color: color, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(child: Text(label, style: style)),
+                  if (showChevron)
+                    ThinIcon(tabler.ChevronRight.new, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
+}
+
+/// The width [text] takes on one line in [style] as a [Text] draws it here:
+/// over the ambient text style, at the ambient text size, bold if the phone
+/// asks for it (the Bold text setting).
+double _lineWidth(BuildContext context, String text, TextStyle? style) {
+  var effective = DefaultTextStyle.of(context).style.merge(style);
+  if (MediaQuery.boldTextOf(context)) {
+    effective = effective.merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: effective),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  final width = painter.width;
+  painter.dispose();
+  return width;
 }

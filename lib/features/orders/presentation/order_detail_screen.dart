@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -103,7 +104,13 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(order.orderNumber),
+            // The order number, the screen's only mention of it, is drawn
+            // smaller rather than cut short when the bar is too narrow.
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(order.orderNumber),
+            ),
             actions: [
               IconButton(
                 icon: const ThinIcon(tabler.Pencil.new),
@@ -177,40 +184,47 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status row + forward/backward controls
-                Row(
+                // Status row + forward/backward controls. The date sits at
+                // the end of the badges' row, or under them when the row is
+                // too narrow for both.
+                OverflowBar(
+                  overflowSpacing: 8,
+                  alignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    OrderStatusBadge(status: order.orderStatus),
-                    const SizedBox(width: 8),
-                    PaymentStatusBadge(status: order.paymentStatus),
-                    if (order.isReturn) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const ThinIcon(tabler.ArrowBackUp.new,
-                                size: 14, color: Colors.orange),
-                            const SizedBox(width: 4),
-                            Text(
-                              s.returns,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.orange,
-                              ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        OrderStatusBadge(status: order.orderStatus),
+                        PaymentStatusBadge(status: order.paymentStatus),
+                        if (order.isReturn)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const Spacer(),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const ThinIcon(tabler.ArrowBackUp.new,
+                                    size: 14, color: Colors.orange),
+                                const SizedBox(width: 4),
+                                Text(
+                                  s.returns,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                     Text(
                       DateFormatter.formatWithTime(order.createdAt),
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -237,8 +251,11 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                     if (order.customerPhone.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        // Number and call button under the label when the
+                        // two don't fit side by side, as in _InfoRow.
+                        child: OverflowBar(
+                          overflowSpacing: 2,
+                          alignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               s.phone,
@@ -249,10 +266,12 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  order.customerPhone,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
+                                Flexible(
+                                  child: Text(
+                                    order.customerPhone,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -691,8 +710,12 @@ class _InfoRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      // Label at the start, value at the end; the value goes under the label
+      // when the two don't fit side by side (a long name, a large amount at
+      // a large text size).
+      child: OverflowBar(
+        overflowSpacing: 2,
+        alignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -757,10 +780,12 @@ class _DeliveryTrackingCard extends StatelessWidget {
             children: [
               ThinIcon(tabler.TruckDelivery.new, size: 18, color: cs.primary),
               const SizedBox(width: 8),
-              Text(
-                s.delivery,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                child: Text(
+                  s.delivery,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -798,10 +823,12 @@ class _DeliveryTrackingCard extends StatelessWidget {
                 children: [
                   ThinIcon(tabler.Clock.new, size: 16, color: cs.onSurface.withOpacity(0.5)),
                   const SizedBox(width: 8),
-                  Text(
-                    '${s.estimatedDelivery}: ${DateFormatter.format(order.estimatedDeliveryDate)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withOpacity(0.7),
+                  Flexible(
+                    child: Text(
+                      '${s.estimatedDelivery}: ${DateFormatter.format(order.estimatedDeliveryDate)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                   ),
                 ],
@@ -815,11 +842,13 @@ class _DeliveryTrackingCard extends StatelessWidget {
                 children: [
                   const ThinIcon(tabler.CircleCheck.new, size: 16, color: AppColors.statusCompleted),
                   const SizedBox(width: 8),
-                  Text(
-                    '${s.delivered}: ${DateFormatter.format(order.actualDeliveryDate)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.statusCompleted,
-                      fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Text(
+                      '${s.delivered}: ${DateFormatter.format(order.actualDeliveryDate)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.statusCompleted,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -853,66 +882,85 @@ class _DeliveryTrackingCard extends StatelessWidget {
     final steps = [s.tr('placed'), s.confirmed, s.shipped, s.delivered];
     final current = _stepIndex;
 
-    return Row(
-      children: List.generate(steps.length * 2 - 1, (i) {
-        if (i.isOdd) {
-          // Connector line
-          final stepBefore = i ~/ 2;
-          final isActive = stepBefore < current;
-          return Expanded(
-            child: Container(
-              height: 2,
-              color: isActive ? cs.primary : cs.outline.withOpacity(0.2),
-            ),
-          );
-        }
-
-        final stepIdx = i ~/ 2;
-        final isCompleted = stepIdx < current;
-        final isCurrent = stepIdx == current;
-        final isActive = isCompleted || isCurrent;
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isCompleted
-                    ? cs.primary
-                    : isCurrent
-                        ? cs.primary.withOpacity(0.15)
-                        : cs.outline.withOpacity(0.1),
-                border: isCurrent ? Border.all(color: cs.primary, width: 2) : null,
+    // Each label gets at most an equal share of the row, less a short
+    // connector, and is drawn smaller rather than pushing the row past the
+    // card (narrow layout, large text).
+    return LayoutBuilder(builder: (context, constraints) {
+      final labelMax = math.max(
+          0.0, (constraints.maxWidth - 8 * (steps.length - 1)) / steps.length);
+      return Row(
+        children: List.generate(steps.length * 2 - 1, (i) {
+          if (i.isOdd) {
+            // Connector line
+            final stepBefore = i ~/ 2;
+            final isActive = stepBefore < current;
+            return Expanded(
+              child: Container(
+                height: 2,
+                color: isActive ? cs.primary : cs.outline.withValues(alpha: 0.2),
               ),
-              child: isCompleted
-                  ? const ThinIcon(tabler.Check.new, size: 14, color: Colors.white)
-                  : Center(
-                      child: Text(
-                        '${stepIdx + 1}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: isActive ? cs.primary : cs.onSurface.withOpacity(0.3),
+            );
+          }
+
+          final stepIdx = i ~/ 2;
+          final isCompleted = stepIdx < current;
+          final isCurrent = stepIdx == current;
+          final isActive = isCompleted || isCurrent;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCompleted
+                      ? cs.primary
+                      : isCurrent
+                          ? cs.primary.withValues(alpha: 0.15)
+                          : cs.outline.withValues(alpha: 0.1),
+                  border: isCurrent ? Border.all(color: cs.primary, width: 2) : null,
+                ),
+                child: isCompleted
+                    ? const ThinIcon(tabler.Check.new, size: 14, color: Colors.white)
+                    : Center(
+                        // Shrinks with a large text size instead of being
+                        // cut off by the circle.
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '${stepIdx + 1}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: isActive ? cs.primary : cs.onSurface.withValues(alpha: 0.3),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              steps[stepIdx],
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? cs.primary : cs.onSurface.withOpacity(0.4),
               ),
-            ),
-          ],
-        );
-      }),
-    );
+              const SizedBox(height: 4),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: labelMax),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    steps[stepIdx],
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      color: isActive ? cs.primary : cs.onSurface.withValues(alpha: 0.4),
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      );
+    });
   }
 }
 
@@ -1001,11 +1049,16 @@ class _StatusStepperBar extends StatelessWidget {
                                 size: isCurrent ? 12 : 10,
                                 color: Colors.white,
                               )
-                            : Text(
-                                '${i + 1}',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: cs.onSurface.withValues(alpha: 0.4),
+                            // Shrinks with a large text size instead of
+                            // being cut off by the circle.
+                            : FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '${i + 1}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: cs.onSurface.withValues(alpha: 0.4),
+                                  ),
                                 ),
                               ),
                       ),
@@ -1020,51 +1073,60 @@ class _StatusStepperBar extends StatelessWidget {
           Row(
             children: _flow.map((status) {
               final isActive = _flow.indexOf(status) <= _currentIndex;
+              // A label wider than its quarter (large text) is drawn
+              // smaller instead of breaking mid-word.
               return Expanded(
-                child: Text(
-                  labels[status] ?? status.name,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                    color: isActive
-                        ? AppColors.primary
-                        : cs.onSurface.withValues(alpha: 0.4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    labels[status] ?? status.name,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                      color: isActive
+                          ? AppColors.primary
+                          : cs.onSurface.withValues(alpha: 0.4),
+                    ),
+                    maxLines: 1,
                   ),
                 ),
               );
             }).toList(),
           ),
           const SizedBox(height: 10),
-          // Forward / Backward buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _canGoBack
-                      ? () => _changeStatus(context, _flow[_currentIndex - 1])
-                      : null,
-                  icon: const ThinIcon(tabler.ArrowLeft.new, size: 16),
-                  label: Text(
-                    _canGoBack ? labels[_flow[_currentIndex - 1]]! : s.tr('back'),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
+          // Forward / Backward buttons. Half the 24 px side padding the
+          // theme gives a full-width button, so a status name fits a half.
+          _ButtonPair(
+            first: OutlinedButton.icon(
+              onPressed: _canGoBack
+                  ? () => _changeStatus(context, _flow[_currentIndex - 1])
+                  : null,
+              style: OutlinedButton.styleFrom(padding: _halfButtonPadding),
+              icon: const ThinIcon(tabler.ArrowLeft.new, size: 16),
+              label: Text(
+                _canGoBack ? labels[_flow[_currentIndex - 1]]! : s.tr('back'),
+                style: const TextStyle(fontSize: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _canGoForward
-                      ? () => _changeStatus(context, _flow[_currentIndex + 1])
-                      : null,
-                  icon: Text(
-                    _canGoForward ? labels[_flow[_currentIndex + 1]]! : s.done,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  label: const ThinIcon(tabler.ArrowRight.new, size: 16),
-                ),
+            ),
+            second: FilledButton.icon(
+              onPressed: _canGoForward
+                  ? () => _changeStatus(context, _flow[_currentIndex + 1])
+                  : null,
+              style: FilledButton.styleFrom(padding: _halfButtonPadding),
+              // The arrow after the label, and the label (not the arrow)
+              // the part that gives way when space runs out.
+              iconAlignment: IconAlignment.end,
+              icon: const ThinIcon(tabler.ArrowRight.new, size: 16),
+              label: Text(
+                _canGoForward ? labels[_flow[_currentIndex + 1]]! : s.done,
+                style: const TextStyle(fontSize: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1195,20 +1257,29 @@ class _ReturnFlowCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Return info + status
-          Row(
+          // Header: Return info + status. The status goes under the title
+          // when the two don't fit side by side.
+          OverflowBar(
+            overflowSpacing: 6,
+            alignment: MainAxisAlignment.spaceBetween,
             children: [
-              ThinIcon(tabler.ArrowBackUp.new, size: 18, color: color),
-              const SizedBox(width: 8),
-              Text(
-                '${s.returns} #${order.originalOrderId}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: color,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ThinIcon(tabler.ArrowBackUp.new, size: 18, color: color),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '${s.returns} #${order.originalOrderId}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const Spacer(),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1267,55 +1338,49 @@ class _ReturnFlowCard extends StatelessWidget {
           // Action buttons based on current status
           if (status == ReturnStatus.requested) ...[
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final ok = await ConfirmDialog.show(
-                        context,
-                        title: s.rejectReturn,
-                        message: s.tr('rejectReturnConfirm'),
-                        confirmText: s.tr('reject'),
-                        isDestructive: true,
-                        icon: tabler.X.new,
-                      );
-                      if (ok == true) {
-                        await ref
-                            .read(orderProvider.notifier)
-                            .rejectReturn(order.id);
-                      }
-                    },
-                    icon: const ThinIcon(tabler.X.new, size: 16),
-                    label: Text(s.tr('reject'), style: const TextStyle(fontSize: 12)),
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      final ok = await ConfirmDialog.show(
-                        context,
-                        title: s.tr('approveAndReceiveItems'),
-                        message: s.tr('approveReturnConfirm'),
-                        confirmText: s.tr('approve'),
-                        icon: tabler.Check.new,
-                      );
-                      if (ok == true) {
-                        await ref
-                            .read(orderProvider.notifier)
-                            .approveReturn(order.id);
-                      }
-                    },
-                    icon: const ThinIcon(tabler.Check.new, size: 16),
-                    label: Text(s.approveAndReceive,
-                        style: const TextStyle(fontSize: 12)),
-                    style: FilledButton.styleFrom(
-                        backgroundColor: Colors.blue),
-                  ),
-                ),
-              ],
+            _ButtonPair(
+              first: OutlinedButton.icon(
+                onPressed: () async {
+                  final ok = await ConfirmDialog.show(
+                    context,
+                    title: s.rejectReturn,
+                    message: s.tr('rejectReturnConfirm'),
+                    confirmText: s.tr('reject'),
+                    isDestructive: true,
+                    icon: tabler.X.new,
+                  );
+                  if (ok == true) {
+                    await ref
+                        .read(orderProvider.notifier)
+                        .rejectReturn(order.id);
+                  }
+                },
+                icon: const ThinIcon(tabler.X.new, size: 16),
+                label: Text(s.tr('reject'), style: const TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red, padding: _halfButtonPadding),
+              ),
+              second: FilledButton.icon(
+                onPressed: () async {
+                  final ok = await ConfirmDialog.show(
+                    context,
+                    title: s.tr('approveAndReceiveItems'),
+                    message: s.tr('approveReturnConfirm'),
+                    confirmText: s.tr('approve'),
+                    icon: tabler.Check.new,
+                  );
+                  if (ok == true) {
+                    await ref
+                        .read(orderProvider.notifier)
+                        .approveReturn(order.id);
+                  }
+                },
+                icon: const ThinIcon(tabler.Check.new, size: 16),
+                label: Text(s.approveAndReceive,
+                    style: const TextStyle(fontSize: 12)),
+                style: FilledButton.styleFrom(
+                    backgroundColor: Colors.blue, padding: _halfButtonPadding),
+              ),
             ),
           ],
 
@@ -1369,12 +1434,14 @@ class _ReturnFlowCard extends StatelessWidget {
                   const ThinIcon(tabler.CircleCheck.new,
                       color: Colors.green, size: 16),
                   const SizedBox(width: 6),
-                  Text(
-                    '${s.tr("refunded")} ${CurrencyFormatter.format(order.refundAmount)}',
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                  Flexible(
+                    child: Text(
+                      '${s.tr("refunded")} ${CurrencyFormatter.format(order.refundAmount)}',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
@@ -1397,12 +1464,14 @@ class _ReturnFlowCard extends StatelessWidget {
                 children: [
                   const ThinIcon(tabler.CircleX.new, color: Colors.red, size: 16),
                   const SizedBox(width: 6),
-                  Text(
-                    s.tr('returnRejected'),
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                  Flexible(
+                    child: Text(
+                      s.tr('returnRejected'),
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
@@ -1438,56 +1507,108 @@ class _ReturnStepIndicator extends StatelessWidget {
     if (_activeIndex < 0) return const SizedBox.shrink();
     final steps = _steps(context);
 
-    return Row(
-      children: List.generate(steps.length, (i) {
-        final isActive = i <= _activeIndex;
-        return Expanded(
-          child: Row(
-            children: [
-              if (i > 0)
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: isActive
-                        ? AppColors.primary
-                        : Colors.grey.withValues(alpha: 0.2),
-                  ),
-                ),
-              Column(
-                children: [
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive ? AppColors.primary : Colors.grey.withValues(alpha: 0.15),
-                    ),
-                    child: Center(
-                      child: isActive
-                          ? const ThinIcon(tabler.Check.new, size: 12, color: Colors.white)
-                          : Text('${i + 1}',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey.withValues(alpha: 0.5))),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    steps[i],
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+    // A label wider than its step's third of the row (large text) is drawn
+    // smaller instead of overflowing it.
+    return LayoutBuilder(builder: (context, constraints) {
+      final labelMax = constraints.maxWidth / steps.length;
+      return Row(
+        children: List.generate(steps.length, (i) {
+          final isActive = i <= _activeIndex;
+          return Expanded(
+            child: Row(
+              children: [
+                if (i > 0)
+                  Expanded(
+                    child: Container(
+                      height: 2,
                       color: isActive
                           ? AppColors.primary
-                          : Colors.grey.withValues(alpha: 0.5),
+                          : Colors.grey.withValues(alpha: 0.2),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                Column(
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isActive ? AppColors.primary : Colors.grey.withValues(alpha: 0.15),
+                      ),
+                      child: Center(
+                        child: isActive
+                            ? const ThinIcon(tabler.Check.new, size: 12, color: Colors.white)
+                            : FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('${i + 1}',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey.withValues(alpha: 0.5))),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: labelMax),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          steps[i],
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                            color: isActive
+                                ? AppColors.primary
+                                : Colors.grey.withValues(alpha: 0.5),
+                          ),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      );
+    });
+  }
+}
+
+/// Padding for a button half a row wide: the theme's 24 px sides are
+/// meant for a full-width one.
+const _halfButtonPadding = EdgeInsets.symmetric(vertical: 14, horizontal: 12);
+
+/// Two buttons side by side in equal halves, or stacked full width (first
+/// on top) when the row is too narrow for that at the current text size.
+class _ButtonPair extends StatelessWidget {
+  final Widget first;
+  final Widget second;
+
+  const _ButtonPair({required this.first, required this.second});
+
+  /// The narrowest row the halves are kept side by side in at 100% text:
+  /// each then fits an icon and a status name.
+  static const double _minRowWidth = 230;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final scaled = MediaQuery.textScalerOf(context).scale(_minRowWidth);
+      if (constraints.maxWidth >= math.max(_minRowWidth, scaled)) {
+        return Row(
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 10),
+            Expanded(child: second),
+          ],
         );
-      }),
-    );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [first, const SizedBox(height: 8), second],
+      );
+    });
   }
 }

@@ -72,23 +72,33 @@ class ExpenseListScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(s.thisMonth,
-                            style: TextStyle(
-                                color: Colors.white70, fontSize: 12)),
-                        Text(
-                          CurrencyFormatter.format(monthTotal),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.thisMonth,
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 12)),
+                          // A total too wide for the card (narrow layout,
+                          // large text) shrinks instead of pushing the
+                          // entry count off it.
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              CurrencyFormatter.format(monthTotal),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              maxLines: 1,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [

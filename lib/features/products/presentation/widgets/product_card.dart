@@ -76,19 +76,34 @@ class ProductCard extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-              child: Row(
-                children: [
-                  Text(
-                    CurrencyFormatter.format(product.sellingPrice),
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+              // Price at the start, badge at the end, as a row at least as
+              // wide as the tile. When the two don't fit side by side
+              // (narrow tile, large text) the row shrinks as a whole,
+              // instead of pushing the badge out of the tile.
+              child: LayoutBuilder(
+                builder: (context, constraints) => FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(minWidth: constraints.maxWidth),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          CurrencyFormatter.format(product.sellingPrice),
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                        ),
+                        StockBadge(product: product),
+                      ],
                     ),
                   ),
-                  const Spacer(),
-                  StockBadge(product: product),
-                ],
+                ),
               ),
             ),
           ],
@@ -115,24 +130,38 @@ class _ProductImagePlaceholder extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       color: theme.colorScheme.primary.withOpacity(0.06),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ThinIcon(
-              tabler.Package.new,
-              size: 36,
-              color: theme.colorScheme.primary.withOpacity(0.3),
-            ),
-            if (product.category.isNotEmpty)
-              Text(
-                product.category,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: theme.colorScheme.primary.withOpacity(0.4),
-                ),
+      // Large text on a narrow tile leaves the photo area less height than
+      // the icon and category need: shrink them together instead of
+      // overflowing. Laid out at the tile's width, so the category still
+      // wraps where it did.
+      child: LayoutBuilder(
+        builder: (context, constraints) => Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ThinIcon(
+                    tabler.Package.new,
+                    size: 36,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  ),
+                  if (product.category.isNotEmpty)
+                    Text(
+                      product.category,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
-          ],
+            ),
+          ),
         ),
       ),
     );

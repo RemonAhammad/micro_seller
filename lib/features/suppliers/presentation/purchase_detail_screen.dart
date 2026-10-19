@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -61,6 +63,7 @@ class _BodyState extends ConsumerState<_Body> {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final badge = MediaQuery.textScalerOf(context).scale(36);
 
     return StreamBuilder<Purchase?>(
       stream: _purchaseStream,
@@ -150,6 +153,15 @@ class _BodyState extends ConsumerState<_Body> {
                     children: p.items.asMap().entries.map((entry) {
                       final i = entry.key;
                       final item = entry.value;
+                      final nameStyle = theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600);
+                      final unit =
+                          '${CurrencyFormatter.format(item.unitCost)} × ${item.qty}';
+                      final unitStyle = theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.5));
+                      final total = CurrencyFormatter.format(item.totalCost);
+                      final totalStyle = theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w700);
                       return Column(
                         children: [
                           if (i > 0)
@@ -160,45 +172,71 @@ class _BodyState extends ConsumerState<_Body> {
                                 color: cs.outline.withValues(alpha: 0.1)),
                           Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: cs.primary.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Center(
-                                    child: Text('${item.qty}',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            color: cs.primary,
-                                            fontSize: 14)),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.productName,
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(fontWeight: FontWeight.w600)),
-                                      Text(
-                                        '${CurrencyFormatter.format(item.unitCost)} × ${item.qty}',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                            color: cs.onSurface
-                                                .withValues(alpha: 0.5)),
+                            child: LayoutBuilder(builder: (context, box) {
+                              // The line total sits at the end of the row,
+                              // unless that would leave the name or the unit
+                              // price too narrow for one of its words (large
+                              // text, narrow layout): then it goes under them.
+                              final totalBelow = box.maxWidth - badge - 12 -
+                                      _textWidth(context, total, totalStyle) <
+                                  math.max(
+                                    _textWidth(context, item.productName,
+                                        nameStyle,
+                                        widestWord: true),
+                                    _textWidth(context, unit, unitStyle,
+                                        widestWord: true),
+                                  );
+                              return Row(
+                                children: [
+                                  Container(
+                                    // 36 square at the default text size,
+                                    // growing with the text; a quantity too
+                                    // long for it shrinks instead of wrapping.
+                                    width: badge,
+                                    height: badge,
+                                    decoration: BoxDecoration(
+                                      color: cs.primary.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 3),
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text('${item.qty}',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  color: cs.primary,
+                                                  fontSize: 14)),
+                                        ),
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                                Text(CurrencyFormatter.format(item.totalCost),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.w700)),
-                              ],
-                            ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.productName, style: nameStyle),
+                                        Text(unit, style: unitStyle),
+                                        if (totalBelow)
+                                          Align(
+                                            alignment:
+                                                AlignmentDirectional.centerEnd,
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(total,
+                                                  style: totalStyle),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (!totalBelow) Text(total, style: totalStyle),
+                                ],
+                              );
+                            }),
                           ),
                         ],
                       );
@@ -222,12 +260,13 @@ class _BodyState extends ConsumerState<_Body> {
                     children: [
                       _row(theme, s.total,
                           CurrencyFormatter.format(p.totalAmount),
-                          isBold: true, valueColor: cs.primary),
-                      _row(theme, s.paid, CurrencyFormatter.format(p.amountPaid)),
+                          isBold: true, valueColor: cs.primary, keepWhole: true),
+                      _row(theme, s.paid, CurrencyFormatter.format(p.amountPaid),
+                          keepWhole: true),
                       if (p.balanceDue > 0)
                         _row(theme, s.balanceDue,
                             CurrencyFormatter.format(p.balanceDue),
-                            isBold: true, valueColor: Colors.red),
+                            isBold: true, valueColor: Colors.red, keepWhole: true),
                     ],
                   ),
                 ),
@@ -274,24 +313,58 @@ class _BodyState extends ConsumerState<_Body> {
     );
   }
 
+  /// [label] at the start of a line and [value] at its end. A long label
+  /// wraps within half the line (or its longest word, when that's wider)
+  /// and a long value wraps under itself, or goes under the label when a
+  /// word of it wouldn't fit beside it. With [keepWhole] (an amount) the
+  /// value shrinks to fit instead, so it is never split.
   Widget _row(ThemeData theme, String label, String value,
-      {bool isBold = false, Color? valueColor}) {
+      {bool isBold = false, Color? valueColor, bool keepWhole = false}) {
+    final labelStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+    );
+    final valueStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+      color: valueColor,
+    );
+    final valueText = Text(value, textAlign: TextAlign.end, style: valueStyle);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              )),
-          Text(value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-                color: valueColor,
-              )),
-        ],
-      ),
+      child: LayoutBuilder(builder: (context, box) {
+        final labelMax = math.max(
+          box.maxWidth / 2,
+          math.min(_textWidth(context, label, labelStyle, widestWord: true),
+              box.maxWidth * 0.7),
+        );
+        if (!keepWhole &&
+            box.maxWidth -
+                    math.min(_textWidth(context, label, labelStyle), labelMax) -
+                    12 <
+                _textWidth(context, value, valueStyle, widestWord: true)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [Text(label, style: labelStyle), valueText],
+          );
+        }
+        return Row(
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: labelMax),
+              child: Text(label, style: labelStyle),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: keepWhole
+                  ? FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: valueText,
+                    )
+                  : valueText,
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -337,4 +410,23 @@ class _BodyState extends ConsumerState<_Body> {
       ),
     );
   }
+}
+
+/// How wide [text] in [style] is where [context] lays it out: on one line,
+/// or with [widestWord], its widest word (the narrowest it wraps to without
+/// breaking a word).
+double _textWidth(BuildContext context, String text, TextStyle? style,
+    {bool widestWord = false}) {
+  var effective = DefaultTextStyle.of(context).style.merge(style);
+  if (MediaQuery.boldTextOf(context)) {
+    effective = effective.merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: effective),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout();
+  final width = widestWord ? painter.minIntrinsicWidth : painter.width;
+  painter.dispose();
+  return width;
 }

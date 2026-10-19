@@ -19,6 +19,27 @@ import '../../../core/constants/app_icons.dart';
 
 enum _Range { today, thisWeek, thisMonth, lastMonth, thisYear, custom }
 
+// The header under the toolbar, top to bottom: 4 px, the range chips, 6 px,
+// the date line, 4 px, then the TabBar. Both text rows grow with the text
+// size, and the header with them, so nothing clips or slides under the tabs.
+
+/// Height of the range-chip row: 36 at the default text size. The chips are
+/// 8 px of padding around a 12 px label (bodyMedium's 1.43 line height).
+@visibleForTesting
+double reportsChipRowHeight(TextScaler textScaler) =>
+    36 + (textScaler.scale(12) - 12) * 1.43;
+
+/// The header's expanded height for a TabBar [tabBarHeight] tall.
+@visibleForTesting
+double reportsHeaderHeight(TextScaler textScaler, double tabBarHeight) =>
+    kToolbarHeight +
+    4 +
+    reportsChipRowHeight(textScaler) +
+    6 +
+    textScaler.scale(12) * 1.43 +
+    4 +
+    tabBarHeight;
+
 /// Business reports: one date range, four tabs (Profit & Sales, Dues &
 /// Payments, Stock & Returns, Purchases & Expenses), each exportable as PDF
 /// or CSV. All numbers come from `report_service.dart`.
@@ -196,6 +217,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
+    final textScaler = MediaQuery.textScalerOf(context);
+    final tabBar = TabBar(
+      controller: _tabs,
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      labelColor: Colors.white,
+      unselectedLabelColor: Colors.white70,
+      indicatorColor: Colors.white,
+      tabs: [for (final k in _tabKeys) Tab(text: s.tr(k))],
+    );
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -203,7 +234,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         headerSliverBuilder: (context, _) => [
           SliverAppBar(
             pinned: true,
-            expandedHeight: 150,
+            expandedHeight:
+                reportsHeaderHeight(textScaler, tabBar.preferredSize.height),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             centerTitle: false,
@@ -242,7 +274,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          height: 36,
+                          height: reportsChipRowHeight(textScaler),
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -263,9 +295,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-                          child: Text(
-                            '${DateFormatter.format(_from)}  ${s.tr('dateRangeTo')}  ${DateFormatter.format(_to)}',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          // One line, shrunk rather than wrapped: the header
+                          // has room for exactly one above the tabs.
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              '${DateFormatter.format(_from)}  ${s.tr('dateRangeTo')}  ${DateFormatter.format(_to)}',
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              maxLines: 1,
+                            ),
                           ),
                         ),
                       ],
@@ -274,15 +313,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ),
               ),
             ),
-            bottom: TabBar(
-              controller: _tabs,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
-              indicatorColor: Colors.white,
-              tabs: [for (final k in _tabKeys) Tab(text: s.tr(k))],
-            ),
+            bottom: tabBar,
           ),
         ],
         body: TabBarView(

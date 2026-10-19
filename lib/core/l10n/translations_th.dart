@@ -87,6 +87,9 @@ const translationsTh = <String, String>{
   'stock': 'สต็อก',
   'option': 'ตัวเลือก',
   'attributeName': 'ชื่อคุณสมบัติ',
+  'created': 'สร้างเมื่อ',
+  'lastUpdated': 'อัปเดตล่าสุด',
+  'noVariantsHint': 'ไม่มีตัวเลือก เพิ่มคุณสมบัติ เช่น ขนาด สี เป็นต้น',
 
   // Orders
   'addOrder': 'คำสั่งซื้อใหม่',
@@ -127,6 +130,7 @@ const translationsTh = <String, String>{
   'noProductsFoundPicker': 'ไม่พบสินค้า',
   'tapToAddProducts': 'แตะเพื่อเพิ่มสินค้า',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'คำแนะนำพิเศษ (ถ้ามี)...',
 
   // Order status
   'pending': 'รอดำเนินการ',
@@ -134,6 +138,8 @@ const translationsTh = <String, String>{
   'shipped': 'จัดส่งแล้ว',
   'completed': 'เสร็จสิ้น',
   'cancelled': 'ยกเลิก',
+  'active': 'กำลังดำเนินการ',
+  'placed': 'สั่งซื้อแล้ว',
 
   // Payment status
   'unpaid': 'ยังไม่ชำระ',
@@ -164,6 +170,9 @@ const translationsTh = <String, String>{
   'orderNotFound': 'ไม่พบคำสั่งซื้อ',
   'pdfSavedTo': 'PDF บันทึกที่',
   'markAsDelivered': 'ทำเครื่องหมายว่าจัดส่งแล้ว',
+  'confirmOrder': 'ยืนยันคำสั่งซื้อ',
+  'markAsShipped': 'ทำเครื่องหมายว่าส่งสินค้าแล้ว',
+  'markAsCompleted': 'ทำเครื่องหมายว่าเสร็จสิ้น',
 
   // Customers
   'addCustomer': 'เพิ่มลูกค้า',
@@ -179,6 +188,7 @@ const translationsTh = <String, String>{
   'deleteCustomer': 'ลบลูกค้า',
   'failedToSaveCustomer': 'บันทึกลูกค้าไม่สำเร็จ กรุณาลองอีกครั้ง',
   'outstanding': 'ค้างชำระ',
+  'memberSince': 'เป็นลูกค้าตั้งแต่',
 
   // Inventory
   'stockAdjustment': 'ปรับปรุงสต็อก',
@@ -203,6 +213,7 @@ const translationsTh = <String, String>{
   'supplierOptional': 'ผู้จัดจำหน่าย (ไม่บังคับ)',
   'totalStock': 'สต็อกทั้งหมด',
   'inStockLabel': 'มีสินค้า',
+  'allCategories': 'ทุกหมวดหมู่',
 
   // Expenses
   'addExpense': 'เพิ่มค่าใช้จ่าย',
@@ -283,6 +294,7 @@ const translationsTh = <String, String>{
   'supplierAdded': 'เพิ่มผู้จัดจำหน่ายแล้ว!',
   'noSuppliersFound': 'ไม่พบผู้จัดจำหน่าย',
   'addSuppliersFromMenu': 'เพิ่มผู้จัดจำหน่ายจากเมนูผู้จัดจำหน่าย',
+  'selectSupplier': 'เลือกผู้จัดจำหน่าย',
 
   // Purchases
   'purchaseNotFound': 'ไม่พบการสั่งซื้อ',
@@ -299,6 +311,8 @@ const translationsTh = <String, String>{
   'payment': 'การชำระเงิน',
   'unitCost': 'ต้นทุนต่อหน่วย',
   'tapToSelectSupplier': 'แตะเพื่อเลือกผู้จัดจำหน่าย',
+  'allProducts': 'สินค้าทั้งหมด',
+  'supplierProductsOnly': 'เฉพาะ {name}',
 
   // Cash Register
   'registerOpen': 'ลิ้นชักเปิดอยู่',
@@ -348,6 +362,16 @@ const translationsTh = <String, String>{
   'approveAndReceiveItems': 'อนุมัติและรับสินค้า',
   'processRefund': 'ดำเนินการคืนเงิน',
   'refundProcessed': 'ดำเนินการคืนเงินแล้ว',
+  'requested': 'ส่งคำขอแล้ว',
+  'approved': 'อนุมัติแล้ว',
+  'received': 'ได้รับแล้ว',
+  'itemsReceived': 'ได้รับสินค้าแล้ว',
+  'refunded': 'คืนเงินแล้ว',
+  'rejected': 'ถูกปฏิเสธ',
+  'none': 'ไม่มี',
+  'approve': 'อนุมัติ',
+  'approveReturnConfirm': 'อนุมัติการคืนสินค้านี้และทำเครื่องหมายว่าได้รับสินค้าแล้ว? สินค้าจะถูกคืนเข้าสต็อก',
+  'returnRejected': 'การคืนสินค้าถูกปฏิเสธ',
 
   // Categories
   'addCategory': 'เพิ่มหมวดหมู่',
@@ -386,6 +410,8 @@ const translationsTh = <String, String>{
   'update': 'อัปเดต',
   'close': 'ปิด',
   'open': 'เปิด',
+  'back': 'ย้อนกลับ',
+  'sort': 'เรียงลำดับ',
 
   // Delivery
   'delivery': 'การจัดส่ง',
@@ -440,6 +466,16 @@ const translationsTh = <String, String>{
   'sidebarPosition': 'ตำแหน่งแถบด้านข้าง',
   'left': 'ซ้าย',
   'right': 'ขวา',
+
+  // Display size (Settings → Display)
+  'display': 'การแสดงผล',
+  'displaySize': 'ขนาดการแสดงผล',
+  'displaySizeDesc': 'ทำให้ทุกอย่างบนหน้าจอเล็กลงหรือใหญ่ขึ้น',
+  'textSize': 'ขนาดแบบอักษร',
+  'textSizeDesc': 'เปลี่ยนเฉพาะขนาดข้อความ',
+  'followPhoneTextSize': 'ตามการตั้งค่าโทรศัพท์',
+  'phoneTextSize': 'โทรศัพท์: {value}',
+  'preview': 'ตัวอย่าง',
 
   // Auth gate
   'createPin': 'สร้าง PIN 4 หลัก',

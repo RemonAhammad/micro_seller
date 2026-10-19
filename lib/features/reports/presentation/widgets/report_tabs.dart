@@ -197,9 +197,15 @@ class DuesReportTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_full(r.summary.total),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800, color: AppColors.paymentUnpaid)),
+                // Shrinks rather than breaking the number over two lines.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(_full(r.summary.total),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800, color: AppColors.paymentUnpaid),
+                      maxLines: 1),
+                ),
                 Text(s.customersOwing(r.summary.customerCount),
                     style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 12),

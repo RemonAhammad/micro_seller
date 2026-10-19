@@ -274,43 +274,52 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           ),
 
                           // ═══ Title ═══
+                          // A long shop name (or a large font) wraps: its
+                          // lines stay centered, clear of the screen edges,
+                          // and stop at three.
                           Transform.translate(
                             offset: Offset(0, titleSlide * 25),
-                            child: Opacity(
-                              opacity: titleOp,
-                              child: ShaderMask(
-                                shaderCallback: (b) {
-                                  final x = -1 + _shimmer.value * 3;
-                                  return LinearGradient(
-                                    begin: Alignment(x, 0),
-                                    end: Alignment(x + 1.5, 0),
-                                    colors: const [
-                                      Colors.white,
-                                      Color(0xFFB2DFDB),
-                                      Colors.white,
-                                    ],
-                                  ).createShader(b);
-                                },
-                                child: Consumer(
-                                  builder: (context, ref, _) {
-                                    // Watch settings so the title updates
-                                    // live if the user changes shop name.
-                                    ref.watch(settingsProvider);
-                                    final name = ref
-                                            .read(settingsProvider.notifier)
-                                            .shopName;
-                                    return Text(
-                                      name.isNotEmpty
-                                          ? name
-                                          : AppStrings.appName,
-                                      style: TextStyle(
-                                        fontSize: titleSize,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        letterSpacing: 3,
-                                      ),
-                                    );
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: w * 0.06),
+                              child: Opacity(
+                                opacity: titleOp,
+                                child: ShaderMask(
+                                  shaderCallback: (b) {
+                                    final x = -1 + _shimmer.value * 3;
+                                    return LinearGradient(
+                                      begin: Alignment(x, 0),
+                                      end: Alignment(x + 1.5, 0),
+                                      colors: const [
+                                        Colors.white,
+                                        Color(0xFFB2DFDB),
+                                        Colors.white,
+                                      ],
+                                    ).createShader(b);
                                   },
+                                  child: Consumer(
+                                    builder: (context, ref, _) {
+                                      // Watch settings so the title updates
+                                      // live if the user changes shop name.
+                                      ref.watch(settingsProvider);
+                                      final name = ref
+                                              .read(settingsProvider.notifier)
+                                              .shopName;
+                                      return Text(
+                                        name.isNotEmpty
+                                            ? name
+                                            : AppStrings.appName,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: titleSize,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          letterSpacing: 3,
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                             ),
@@ -319,16 +328,25 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           const SizedBox(height: 6),
 
                           // ═══ Subtitle ═══
+                          // One line, shrunk to the width when a large font
+                          // would wrap it.
                           Opacity(
                             opacity: subOp,
                             child: Transform.translate(
                               offset: Offset(0, (1 - subOp) * 12),
-                              child: Text(
-                                'INVENTORY  ·  ORDERS  ·  REPORTS',
-                                style: TextStyle(
-                                  fontSize: subSize,
-                                  color: Colors.white54,
-                                  letterSpacing: 3.5,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'INVENTORY  ·  ORDERS  ·  REPORTS',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      fontSize: subSize,
+                                      color: Colors.white54,
+                                      letterSpacing: 3.5,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

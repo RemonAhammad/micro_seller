@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderPositionedBox;
 import 'package:flutter_svg/flutter_svg.dart' show SvgStringLoader;
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
@@ -82,6 +83,10 @@ Future<void> warmThinIcons(
 /// [size] default to the ambient `IconTheme`, exactly like `Icon` (so icons
 /// inside `IconButton`, `AppBar`, `ListTile`… inherit correctly). Tabler's own
 /// fallback color is black, which is why the color is always resolved here.
+///
+/// Like `Icon`, it is drawn at [size], centered in whatever box its parent
+/// forces on it (see `_CenteredIcon`), so no call site needs a `Center` or an
+/// alignment to keep a 20 dp icon at 20.
 class ThinIcon extends StatelessWidget {
   const ThinIcon(
     this.builder, {
@@ -101,9 +106,36 @@ class ThinIcon extends StatelessWidget {
     final theme = IconTheme.of(context);
     final s = size ?? theme.size ?? 24;
     final c = color ?? theme.color ?? Theme.of(context).colorScheme.onSurface;
-    return SizedBox.square(
-      dimension: s,
-      child: builder(color: c, width: s, height: s, strokeWidth: strokeWidth),
+    return _CenteredIcon(
+      child: SizedBox.square(
+        dimension: s,
+        child: builder(color: c, width: s, height: s, strokeWidth: strokeWidth),
+      ),
     );
   }
+}
+
+/// Lays the icon out at its own size and centers it in the box its parent
+/// forces, as `Icon` centers its glyph. The SVG fills whatever box it gets,
+/// so a tight or minimum constraint bigger than the icon used to draw it
+/// that big: an InputDecoration prefix icon's 48 dp slot drew a 20 dp icon at
+/// 48, a 40 × 40 Container without an alignment at 40. Under loose
+/// constraints the box is the icon's size, as before; under forced ones it
+/// is the forced size, as before. Only the drawing changed.
+///
+/// The whole box still takes hits, as the stretched icon did, so a
+/// GestureDetector around an icon in a bigger box keeps its tap area.
+class _CenteredIcon extends SingleChildRenderObjectWidget {
+  const _CenteredIcon({required super.child});
+
+  @override
+  RenderPositionedBox createRenderObject(BuildContext context) =>
+      _RenderCenteredIcon();
+}
+
+class _RenderCenteredIcon extends RenderPositionedBox {
+  _RenderCenteredIcon() : super(widthFactor: 1, heightFactor: 1);
+
+  @override
+  bool hitTestSelf(Offset position) => true;
 }

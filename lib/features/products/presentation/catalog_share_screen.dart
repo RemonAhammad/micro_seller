@@ -109,11 +109,16 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text(
-                        CurrencyFormatter.format(p.sellingPrice),
-                        style: TextStyle(
-                          color: context.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                      // An amount is shrunk to fit, never wrapped.
+                      subtitle: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          CurrencyFormatter.format(p.sellingPrice),
+                          style: TextStyle(
+                            color: context.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     );
@@ -191,28 +196,43 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
               const LinearProgressIndicator(),
               const SizedBox(height: 10),
             ],
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _busy || count == 0
-                        ? null
-                        : () => _shareImage(all),
-                    icon: const ThinIcon(tabler.Photo.new, size: 18),
-                    label: Text(s.shareAsImage),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed:
-                        _busy || count == 0 ? null : () => _sharePdf(all),
-                    icon: const ThinIcon(tabler.FileTypePdf.new, size: 18),
-                    label: Text(s.shareAsPdf),
-                  ),
-                ),
-              ],
-            ),
+            // Side by side while each label can wrap between its words;
+            // one above the other once large text on a narrow layout would
+            // split a word across lines.
+            LayoutBuilder(builder: (context, constraints) {
+              final image = FilledButton.icon(
+                onPressed: _busy || count == 0
+                    ? null
+                    : () => _shareImage(all),
+                icon: const ThinIcon(tabler.Photo.new, size: 18),
+                label: Text(s.shareAsImage),
+              );
+              final pdf = OutlinedButton.icon(
+                onPressed:
+                    _busy || count == 0 ? null : () => _sharePdf(all),
+                icon: const ThinIcon(tabler.FileTypePdf.new, size: 18),
+                label: Text(s.shareAsPdf),
+              );
+              final theme = Theme.of(context);
+              final half = (constraints.maxWidth - 8) / 2;
+              final sideBySide = _wordsFit(context,
+                      theme.filledButtonTheme.style, s.shareAsImage, half) &&
+                  _wordsFit(context,
+                      theme.outlinedButtonTheme.style, s.shareAsPdf, half);
+              if (!sideBySide) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [image, const SizedBox(height: 8), pdf],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: image),
+                  const SizedBox(width: 8),
+                  Expanded(child: pdf),
+                ],
+              );
+            }),
             const SizedBox(height: 6),
             TextButton.icon(
               onPressed: _busy || count == 0 ? null : () => _copyText(all),
@@ -307,4 +327,27 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
       if (mounted) setState(() => _busy = false);
     }
   }
+}
+
+/// Whether every word of [label] fits on one line of an icon button [width]
+/// wide in [style] (its padding, the 18 px icon and the gap taken off), at
+/// the current text size and bold-text setting. A label may wrap between its
+/// words; a word split across lines is what reads as broken.
+bool _wordsFit(
+    BuildContext context, ButtonStyle? style, String label, double width) {
+  final padding = style?.padding?.resolve(const {})?.horizontal ?? 48;
+  var textStyle = style?.textStyle?.resolve(const {}) ??
+      Theme.of(context).textTheme.labelLarge;
+  if (MediaQuery.boldTextOf(context)) {
+    textStyle = (textStyle ?? const TextStyle())
+        .merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: label, style: textStyle),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout();
+  final longestWord = painter.minIntrinsicWidth;
+  painter.dispose();
+  return longestWord <= width - padding - 18 - 8;
 }

@@ -64,6 +64,8 @@ class PaymentStatusBadge extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

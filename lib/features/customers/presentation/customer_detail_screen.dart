@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -119,14 +121,18 @@ class CustomerDetailScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
+                            // Centred under the avatar when a long name
+                            // wraps, too.
                             Text(
                               customer.name,
+                              textAlign: TextAlign.center,
                               style: theme.textTheme.headlineSmall
                                   ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                             if (customer.phone.isNotEmpty)
                               Text(
                                 customer.phone,
+                                textAlign: TextAlign.center,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onSurface
                                       .withOpacity(0.6),
@@ -429,15 +435,20 @@ class _StatChip extends StatelessWidget {
         children: [
           ThinIcon(icon, color: color, size: 20),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
-              color: color,
+          // Three chips share a narrow row: the number shrinks to fit rather
+          // than breaking mid-number.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: color,
+              ),
             ),
           ),
-          Text(
+          _WordSafeLabel(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.5),
@@ -446,6 +457,44 @@ class _StatChip extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// A label that wraps between words as a [Text] does, except that a single
+/// word wider than the room (a narrow chip, large text) shrinks the label to
+/// fit on one line instead of breaking mid-word.
+class _WordSafeLabel extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+
+  const _WordSafeLabel(this.text, {this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      // The style a Text resolves (ambient style, bold text if asked for).
+      var effective = style;
+      if (style == null || style!.inherit) {
+        effective = DefaultTextStyle.of(context).style.merge(style);
+      }
+      if (MediaQuery.boldTextOf(context)) {
+        effective =
+            effective!.merge(const TextStyle(fontWeight: FontWeight.bold));
+      }
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: effective),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout();
+      // A paragraph's minimum width is its longest word.
+      final longestWord = painter.minIntrinsicWidth;
+      painter.dispose();
+      if (longestWord <= constraints.maxWidth) return Text(text, style: style);
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, style: style, maxLines: 1),
+      );
+    });
   }
 }
 
@@ -479,24 +528,34 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final labelText = Text(label,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        ));
+    final valueText = Text(value,
+        style:
+            theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                )),
-          ),
-          Expanded(
-            child: Text(value,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-          ),
-        ],
+      // The label in a 110 px column beside the value; above it when that
+      // leaves the value too narrow a column (about 15 characters), as on
+      // a narrow layout or with large text, where an address would run
+      // down the card a word-fragment at a time.
+      child: LayoutBuilder(
+        builder: (context, constraints) =>
+            constraints.maxWidth - 110 <
+                    MediaQuery.textScalerOf(context).scale(120)
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [labelText, valueText],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 110, child: labelText),
+                      Expanded(child: valueText),
+                    ],
+                  ),
       ),
     );
   }
@@ -519,6 +578,15 @@ class _PurchaseHistoryChart extends StatelessWidget {
     final maxY = entries.fold<double>(
         0, (prev, e) => e.value > prev ? e.value : prev);
     final effectiveMaxY = maxY == 0 ? 100.0 : maxY * 1.2;
+    // The axis labels' slots grow with the text size (the coded sizes at
+    // 100%), so a larger font doesn't cut the month names off or wrap the
+    // amounts mid-number. A month name is an 11 px line (in the ambient line
+    // height, which lays out to a whole pixel) under 6 px of padding;
+    // fl_chart's default slot is 22 px.
+    final textScaler = MediaQuery.textScalerOf(context);
+    final lineHeight = DefaultTextStyle.of(context).style.height ?? 1.2;
+    final monthTitleHeight = math.max(
+        22.0, 6 + (textScaler.scale(11) * lineHeight).ceilToDouble());
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -540,10 +608,12 @@ class _PurchaseHistoryChart extends StatelessWidget {
               const ThinIcon(tabler.ChartBar.new,
                   size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
-              Text(
-                'Purchase History (6 months)',
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+              Expanded(
+                child: Text(
+                  'Purchase History (6 months)',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -590,17 +660,22 @@ class _PurchaseHistoryChart extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 46,
+                        reservedSize: textScaler.scale(46),
                         getTitlesWidget: (value, meta) {
                           if (value == 0) return const SizedBox.shrink();
                           return Padding(
                             padding: const EdgeInsets.only(right: 6),
-                            child: Text(
-                              CurrencyFormatter.formatCompact(value),
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.4),
+                            // Shrunk to fit its slot, never wrapped.
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                CurrencyFormatter.formatCompact(value),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.4),
+                                ),
                               ),
                             ),
                           );
@@ -610,6 +685,7 @@ class _PurchaseHistoryChart extends StatelessWidget {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
+                        reservedSize: monthTitleHeight,
                         getTitlesWidget: (value, meta) {
                           final idx = value.toInt();
                           if (idx < 0 || idx >= entries.length) {

@@ -87,6 +87,9 @@ const translationsUr = <String, String>{
   'stock': 'اسٹاک',
   'option': 'آپشن',
   'attributeName': 'خصوصیت کا نام',
+  'created': 'بنانے کی تاریخ',
+  'lastUpdated': 'آخری اپ ڈیٹ',
+  'noVariantsHint': 'کوئی ویریئنٹ نہیں۔ سائز، رنگ وغیرہ جیسی خصوصیات شامل کریں۔',
 
   // Orders
   'addOrder': 'نیا آرڈر',
@@ -127,6 +130,7 @@ const translationsUr = <String, String>{
   'noProductsFoundPicker': 'کوئی مصنوع نہیں ملی',
   'tapToAddProducts': 'مصنوعات شامل کرنے کے لیے تھپتھپائیں',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'کوئی خاص ہدایات...',
 
   // Order status
   'pending': 'زیر التوا',
@@ -134,6 +138,8 @@ const translationsUr = <String, String>{
   'shipped': 'بھیج دیا گیا',
   'completed': 'مکمل',
   'cancelled': 'منسوخ',
+  'active': 'جاری',
+  'placed': 'آرڈر دیا گیا',
 
   // Payment status
   'unpaid': 'غیر ادا شدہ',
@@ -164,6 +170,9 @@ const translationsUr = <String, String>{
   'orderNotFound': 'آرڈر نہیں ملا',
   'pdfSavedTo': 'PDF محفوظ ہو گئی',
   'markAsDelivered': 'ترسیل شدہ نشان زد کریں',
+  'confirmOrder': 'آرڈر کی تصدیق کریں',
+  'markAsShipped': 'روانہ شدہ نشان زد کریں',
+  'markAsCompleted': 'مکمل شدہ نشان زد کریں',
 
   // Customers
   'addCustomer': 'گاہک شامل کریں',
@@ -179,6 +188,7 @@ const translationsUr = <String, String>{
   'deleteCustomer': 'گاہک حذف کریں',
   'failedToSaveCustomer': 'گاہک محفوظ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
   'outstanding': 'واجب الادا',
+  'memberSince': 'گاہک بننے کی تاریخ',
 
   // Inventory
   'stockAdjustment': 'اسٹاک ایڈجسٹمنٹ',
@@ -203,6 +213,7 @@ const translationsUr = <String, String>{
   'supplierOptional': 'سپلائر (اختیاری)',
   'totalStock': 'کل اسٹاک',
   'inStockLabel': 'دستیاب',
+  'allCategories': 'تمام زمرے',
 
   // Expenses
   'addExpense': 'خرچ شامل کریں',
@@ -283,6 +294,7 @@ const translationsUr = <String, String>{
   'supplierAdded': 'سپلائر شامل ہو گیا!',
   'noSuppliersFound': 'کوئی سپلائر نہیں ملا',
   'addSuppliersFromMenu': 'سپلائرز مینو سے سپلائر شامل کریں',
+  'selectSupplier': 'سپلائر منتخب کریں',
 
   // Purchases
   'purchaseNotFound': 'خریداری نہیں ملی',
@@ -299,6 +311,8 @@ const translationsUr = <String, String>{
   'payment': 'ادائیگی',
   'unitCost': 'فی یونٹ لاگت',
   'tapToSelectSupplier': 'سپلائر منتخب کرنے کے لیے تھپتھپائیں',
+  'allProducts': 'تمام مصنوعات',
+  'supplierProductsOnly': 'صرف {name}',
 
   // Cash Register
   'registerOpen': 'رجسٹر کھلا',
@@ -348,6 +362,16 @@ const translationsUr = <String, String>{
   'approveAndReceiveItems': 'منظور کریں اور اشیاء وصول کریں',
   'processRefund': 'رقم واپسی کی کارروائی',
   'refundProcessed': 'رقم واپسی مکمل',
+  'requested': 'درخواست کی گئی',
+  'approved': 'منظور شدہ',
+  'received': 'وصول شدہ',
+  'itemsReceived': 'اشیاء وصول شدہ',
+  'refunded': 'رقم واپس کر دی گئی',
+  'rejected': 'مسترد شدہ',
+  'none': 'کوئی نہیں',
+  'approve': 'منظور کریں',
+  'approveReturnConfirm': 'یہ واپسی منظور کر کے اشیاء کو وصول شدہ نشان زد کریں؟ اسٹاک بحال ہو جائے گا۔',
+  'returnRejected': 'واپسی مسترد کر دی گئی',
 
   // Categories
   'addCategory': 'زمرہ شامل کریں',
@@ -386,6 +410,8 @@ const translationsUr = <String, String>{
   'update': 'اپ ڈیٹ',
   'close': 'بند',
   'open': 'کھولیں',
+  'back': 'پیچھے',
+  'sort': 'ترتیب دیں',
 
   // Delivery
   'delivery': 'ترسیل',
@@ -440,6 +466,16 @@ const translationsUr = <String, String>{
   'sidebarPosition': 'سائڈبار کی پوزیشن',
   'left': 'بائیں',
   'right': 'دائیں',
+
+  // Display size (Settings → Display)
+  'display': 'ڈسپلے',
+  'displaySize': 'ڈسپلے کا سائز',
+  'displaySizeDesc': 'اسکرین پر موجود ہر چیز کو چھوٹا یا بڑا کریں',
+  'textSize': 'فونٹ سائز',
+  'textSizeDesc': 'صرف ٹیکسٹ کا سائز تبدیل کریں',
+  'followPhoneTextSize': 'فون کی ترتیبات کے مطابق',
+  'phoneTextSize': 'فون: {value}',
+  'preview': 'پیش منظر',
 
   // Auth gate
   'createPin': '4 ہندسوں کا PIN بنائیں',

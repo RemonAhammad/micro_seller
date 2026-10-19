@@ -8,6 +8,7 @@ import '../../features/settings/presentation/sidebar_order_screen.dart';
 import '../../features/settings/presentation/recycle_bin_screen.dart';
 import '../constants/app_icons.dart';
 import '../constants/sidebar_items.dart';
+import '../../shared/widgets/app_zoom.dart';
 import '../../features/categories/presentation/category_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
@@ -370,6 +371,13 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
     if (done || !mounted) return;
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
+    // showcaseview's tooltip uses an unanchored localToGlobal: off when zoomed.
+    final zoom = context.getInheritedWidgetOfExactType<AppZoomScope>()?.scale;
+    if ((zoom ?? 1.0) != 1.0) {
+      // Not a first run (it was resized), and the rating prompt waits for this.
+      await TutorialService.setTourCompleted();
+      return;
+    }
 
     final keys = <GlobalKey>[
       _categoriesKey,

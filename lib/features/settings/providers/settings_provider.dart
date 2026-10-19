@@ -278,7 +278,9 @@ class Settings extends _$Settings {
   /// Serialise every persisted setting into a JSON-friendly map. Used by
   /// LocalBackupService / DriveService when building a backup. Excludes
   /// `lastBackupTime` (per-device, not portable) and the live in-memory
-  /// only snapshot — only stable user preferences are exported.
+  /// only snapshot — only stable user preferences are exported. Display size
+  /// and text size are per-device too: they live in `displayScaleProvider`
+  /// and are not exported.
   Map<String, dynamic> exportSettings() {
     return {
       'shopName': shopName,

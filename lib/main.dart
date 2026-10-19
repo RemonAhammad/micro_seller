@@ -15,6 +15,7 @@ import 'core/utils/currency_formatter.dart';
 import 'data/services/auto_backup_runner.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/tutorial_service.dart';
+import 'features/settings/providers/display_scale_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,8 @@ void main() async {
 
   // Before runApp: the router's initialLocation reads it synchronously.
   TutorialService.primeFrom(prefs);
+  // Before runApp too: the first frame is already at the saved display size.
+  DisplayScale.primeFrom(prefs);
 
   // iOS asks for notification permission during init; keep that prompt
   // before the first frame as it always was.

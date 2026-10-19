@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -113,129 +115,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                     padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                     child: Row(
                       children: [
-                        // Category filter
-                        PopupMenuButton<String?>(
-                          initialValue: _categoryFilter,
-                          onSelected: (v) =>
-                              setState(() => _categoryFilter = v),
-                          tooltip: s.filter,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _categoryFilter != null
-                                  ? cs.primary.withValues(alpha: 0.08)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _categoryFilter != null
-                                    ? cs.primary.withValues(alpha: 0.3)
-                                    : cs.outline.withValues(alpha: 0.2),
+                        // Category filter and count, in the space the sort
+                        // button leaves: a long category name ellipsizes.
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: _categoryFilterButton(categoryNames, cs),
                               ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ThinIcon(tabler.Filter.new,
-                                    size: 15,
-                                    color: _categoryFilter != null
-                                        ? cs.primary
-                                        : cs.onSurface
-                                            .withValues(alpha: 0.6)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _categoryFilter ?? s.all,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: _categoryFilter != null
-                                        ? cs.primary
-                                        : cs.onSurface
-                                            .withValues(alpha: 0.6),
-                                  ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${filtered.length}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurface.withValues(alpha: 0.4),
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                ThinIcon(tabler.CaretDown.new,
-                                    size: 16,
-                                    color: _categoryFilter != null
-                                        ? cs.primary
-                                        : cs.onSurface
-                                            .withValues(alpha: 0.5)),
-                              ],
-                            ),
-                          ),
-                          itemBuilder: (_) => [
-                            PopupMenuItem<String?>(
-                              value: null,
-                              child: Row(
-                                children: [
-                                  ThinIcon(tabler.ClearAll.new,
-                                      size: 18,
-                                      color: _categoryFilter == null
-                                          ? cs.primary
-                                          : cs.onSurface
-                                              .withValues(alpha: 0.6)),
-                                  const SizedBox(width: 10),
-                                  Text(s.tr('allCategories'),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: _categoryFilter == null
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                        color: _categoryFilter == null
-                                            ? cs.primary
-                                            : null,
-                                      )),
-                                  if (_categoryFilter == null) ...[
-                                    const Spacer(),
-                                    ThinIcon(tabler.Check.new,
-                                        size: 16, color: cs.primary),
-                                  ],
-                                ],
                               ),
-                            ),
-                            ...categoryNames.map((name) => PopupMenuItem<String?>(
-                                  value: name,
-                                  child: Row(
-                                    children: [
-                                      ThinIcon(tabler.Tag.new,
-                                          size: 18,
-                                          color: _categoryFilter == name
-                                              ? cs.primary
-                                              : cs.onSurface
-                                                  .withValues(alpha: 0.6)),
-                                      const SizedBox(width: 10),
-                                      Text(name,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight:
-                                                _categoryFilter == name
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w400,
-                                            color: _categoryFilter == name
-                                                ? cs.primary
-                                                : null,
-                                          )),
-                                      if (_categoryFilter == name) ...[
-                                        const Spacer(),
-                                        ThinIcon(tabler.Check.new,
-                                            size: 16, color: cs.primary),
-                                      ],
-                                    ],
-                                  ),
-                                )),
-                          ],
-                        ),
-
-                        const SizedBox(width: 6),
-                        Text(
-                          '${filtered.length}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.4),
-                            fontWeight: FontWeight.w600,
+                            ],
                           ),
                         ),
-
-                        const Spacer(),
 
                         // Sort
                         PopupMenuButton<_StockSort>(
@@ -301,6 +199,116 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     );
   }
 
+  /// The category filter: the selected category (or All) and its menu.
+  Widget _categoryFilterButton(List<String> categoryNames, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    return PopupMenuButton<String?>(
+      initialValue: _categoryFilter,
+      onSelected: (v) => setState(() => _categoryFilter = v),
+      tooltip: s.filter,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: _categoryFilter != null
+              ? cs.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _categoryFilter != null
+                ? cs.primary.withValues(alpha: 0.3)
+                : cs.outline.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ThinIcon(tabler.Filter.new,
+                size: 15,
+                color: _categoryFilter != null
+                    ? cs.primary
+                    : cs.onSurface.withValues(alpha: 0.6)),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                _categoryFilter ?? s.all,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _categoryFilter != null
+                      ? cs.primary
+                      : cs.onSurface.withValues(alpha: 0.6),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            ThinIcon(tabler.CaretDown.new,
+                size: 16,
+                color: _categoryFilter != null
+                    ? cs.primary
+                    : cs.onSurface.withValues(alpha: 0.5)),
+          ],
+        ),
+      ),
+      itemBuilder: (_) => [
+        PopupMenuItem<String?>(
+          value: null,
+          child: Row(
+            children: [
+              ThinIcon(tabler.ClearAll.new,
+                  size: 18,
+                  color: _categoryFilter == null
+                      ? cs.primary
+                      : cs.onSurface.withValues(alpha: 0.6)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(s.tr('allCategories'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: _categoryFilter == null
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: _categoryFilter == null ? cs.primary : null,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              if (_categoryFilter == null)
+                ThinIcon(tabler.Check.new, size: 16, color: cs.primary),
+            ],
+          ),
+        ),
+        ...categoryNames.map((name) => PopupMenuItem<String?>(
+              value: name,
+              child: Row(
+                children: [
+                  ThinIcon(tabler.Tag.new,
+                      size: 18,
+                      color: _categoryFilter == name
+                          ? cs.primary
+                          : cs.onSurface.withValues(alpha: 0.6)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: _categoryFilter == name
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: _categoryFilter == name ? cs.primary : null,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                  if (_categoryFilter == name)
+                    ThinIcon(tabler.Check.new, size: 16, color: cs.primary),
+                ],
+              ),
+            )),
+      ],
+    );
+  }
+
   String _sortLabel(_StockSort sort) {
     final s = AppStrings.of(context);
     return switch (sort) {
@@ -323,16 +331,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
           const SizedBox(width: 10),
-          Text(label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                color: selected ? Theme.of(context).colorScheme.primary : null,
-              )),
-          if (selected) ...[
-            const Spacer(),
+          Expanded(
+            child: Text(label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected ? Theme.of(context).colorScheme.primary : null,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis),
+          ),
+          if (selected)
             ThinIcon(tabler.Check.new, size: 16, color: Theme.of(context).colorScheme.primary),
-          ],
         ],
       ),
     );
@@ -408,6 +418,28 @@ class _MovementsTabState extends ConsumerState<_MovementsTab> {
   }
 }
 
+/// What [text] needs drawn by a [Text] here with [style]: the width of its
+/// longest word, and of the whole text on one line (rounded up).
+({double word, double line}) _textWidths(
+    BuildContext context, String text, TextStyle? style) {
+  var effective = DefaultTextStyle.of(context).style.merge(style);
+  if (MediaQuery.boldTextOf(context)) {
+    effective = effective.merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: effective),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    locale: Localizations.maybeLocaleOf(context),
+  )..layout();
+  final widths = (
+    word: painter.minIntrinsicWidth.ceilToDouble(),
+    line: painter.maxIntrinsicWidth.ceilToDouble(),
+  );
+  painter.dispose();
+  return widths;
+}
+
 class _StockTile extends StatelessWidget {
   final Product product;
   final ThemeData theme;
@@ -440,53 +472,99 @@ class _StockTile extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(product.name,
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.w600)),
-                    Text(product.sku,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.5),
-                        )),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${product.totalStock}',
-                    style: TextStyle(
+          LayoutBuilder(
+            builder: (context, row) => Row(
+              children: [
+                Expanded(
+                  child: LayoutBuilder(builder: (context, beside) {
+                    final stock = '${product.totalStock}';
+                    final caption = 'of ${product.lowStockThreshold} threshold';
+                    final nameStyle = theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600);
+                    final skuStyle = theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    );
+                    final stockStyle = TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
                       color: color,
-                    ),
-                  ),
-                  Text(
-                    'of ${product.lowStockThreshold} threshold',
-                    style: TextStyle(
+                    );
+                    final captionStyle = TextStyle(
                       fontSize: 10,
                       color: cs.onSurface.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const ThinIcon(tabler.AdjustmentsHorizontal.new),
-                onPressed: () =>
-                    context.push('/inventory/adjust/${product.id}'),
-                style: IconButton.styleFrom(
-                  backgroundColor: cs.primary.withValues(alpha: 0.1),
-                  foregroundColor: cs.primary,
+                    );
+                    // The stock column keeps its own width while the name
+                    // column beside it keeps its longest word and 30% of the
+                    // tile, as it always did on a phone at 100%. Past that (a
+                    // huge number, a narrow layout, large text) it takes at
+                    // most 40% of the tile, so the name keeps room: the
+                    // number shrinks and the caption wraps.
+                    final fits = math.max(
+                              _textWidths(context, stock, stockStyle).line,
+                              _textWidths(context, caption, captionStyle).line,
+                            ) +
+                            [
+                              row.maxWidth * 0.3,
+                              _textWidths(context, product.name, nameStyle)
+                                  .word,
+                              _textWidths(context, product.sku, skuStyle).word,
+                            ].reduce(math.max) <=
+                        beside.maxWidth;
+
+                    Widget stockText = Text(stock, style: stockStyle);
+                    if (!fits) {
+                      stockText = FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: stockText,
+                      );
+                    }
+                    Widget stockColumn = Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        stockText,
+                        Text(
+                          caption,
+                          style: captionStyle,
+                          textAlign: fits ? null : TextAlign.end,
+                        ),
+                      ],
+                    );
+                    if (!fits) {
+                      stockColumn = ConstrainedBox(
+                        constraints:
+                            BoxConstraints(maxWidth: row.maxWidth * 0.4),
+                        child: stockColumn,
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(product.name, style: nameStyle),
+                              Text(product.sku, style: skuStyle),
+                            ],
+                          ),
+                        ),
+                        stockColumn,
+                      ],
+                    );
+                  }),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const ThinIcon(tabler.AdjustmentsHorizontal.new),
+                  onPressed: () =>
+                      context.push('/inventory/adjust/${product.id}'),
+                  style: IconButton.styleFrom(
+                    backgroundColor: cs.primary.withValues(alpha: 0.1),
+                    foregroundColor: cs.primary,
+                  ),
+                ),
+              ],
+            ),
           ),
           if (product.hasVariants) ...[
             const SizedBox(height: 8),

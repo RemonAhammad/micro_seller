@@ -104,6 +104,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
 // ─── Dashboard Content ──────────────────────────────────────────────────────
 
+/// The header's expanded height: 160 at the default text size.
+///
+/// Under the toolbar it holds three lines of text: the date pill (10 px of
+/// padding make it taller than the greeting beside it), then today's revenue
+/// label and amount. The header grows with them, so a larger font never
+/// clips the stats.
+@visibleForTesting
+double dashboardHeaderHeight(TextScaler textScaler) {
+  // Line heights are bodyMedium's 1.43, inherited from the app bar.
+  double lines(TextScaler s) => (2 * s.scale(11) + s.scale(24)) * 1.43;
+  return 160 + lines(textScaler) - lines(TextScaler.noScaling);
+}
+
 class _DashboardContent extends ConsumerWidget {
   final bool isWide;
 
@@ -302,7 +315,7 @@ class _DashboardContent extends ConsumerWidget {
       BuildContext context, AsyncValue<DashboardStats> statsAsync) {
     final s = AppStrings.of(context);
     return SliverAppBar(
-      expandedHeight: 160,
+      expandedHeight: dashboardHeaderHeight(MediaQuery.textScalerOf(context)),
       pinned: true,
       stretch: true,
       backgroundColor: AppColors.primary,
@@ -337,11 +350,16 @@ class _DashboardContent extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        _getGreeting(context),
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 12),
+                      Flexible(
+                        child: Text(
+                          _getGreeting(context),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
@@ -364,24 +382,35 @@ class _DashboardContent extends ConsumerWidget {
                     skipLoadingOnReload: true,
                     data: (stats) => Row(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(s.todayRevenue,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 11)),
-                            Text(
-                              CurrencyFormatter.format(stats.todayRevenue),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
+                        // Takes what the order count leaves; a revenue too
+                        // wide for it (narrow screen, large text) shrinks.
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(s.todayRevenue,
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 11),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  CurrencyFormatter.format(stats.todayRevenue),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                  ),
+                                  maxLines: 1,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -604,6 +633,7 @@ class _DashboardBody extends StatelessWidget {
         const spacing = 10.0;
         final cardWidth =
             (availableWidth - spacing * (cols - 1)) / cols;
+        final cardHeight = statCardHeight(MediaQuery.textScalerOf(context));
 
         return Wrap(
           spacing: spacing,
@@ -614,7 +644,7 @@ class _DashboardBody extends StatelessWidget {
               index: i,
               child: SizedBox(
                 width: cardWidth,
-                height: 110,
+                height: cardHeight,
                 child: StatCard(
                   label: item.label,
                   value: item.value,
@@ -644,6 +674,11 @@ class _OverdueBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     const color = AppColors.paymentPartial;
+    const style =
+        TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFE65100));
+    final amount = CurrencyFormatter.format(summary.over60);
+    final message = s.overdue60Banner(summary.over60Count, amount);
+    final at = message.indexOf(amount);
     return Material(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(12),
@@ -658,12 +693,33 @@ class _OverdueBanner extends StatelessWidget {
               const ThinIcon(AppIcons.alert, color: color, size: 22),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  s.overdue60Banner(summary.over60Count,
-                      CurrencyFormatter.format(summary.over60)),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, color: Color(0xFFE65100)),
-                ),
+                // The amount is one unbreakable piece of the sentence: on a
+                // line too short for it (narrow screen, large text) it
+                // shrinks instead of being split across two lines.
+                child: at < 0
+                    ? Text(message, style: style)
+                    : Text.rich(
+                        TextSpan(children: [
+                          TextSpan(text: message.substring(0, at)),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.baseline,
+                            baseline: TextBaseline.alphabetic,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                amount,
+                                style: style,
+                                maxLines: 1,
+                                // The span already scales it with the text.
+                                textScaler: TextScaler.noScaling,
+                              ),
+                            ),
+                          ),
+                          TextSpan(
+                              text: message.substring(at + amount.length)),
+                        ]),
+                        style: style,
+                      ),
               ),
               TextButton(
                 onPressed: () => context.go('/dues?age=60'),
@@ -776,27 +832,37 @@ class _DateRangeBar extends ConsumerWidget {
       children: [
         Row(
           children: [
-            _buildChip(
-              context,
-              label: s.today,
-              isActive: activePreset == DateRangePreset.today,
-              onTap: () => notifier.setToday(),
+            // The chips scroll sideways when they don't fit (narrow screen,
+            // large text); the custom-range button stays at the end.
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildChip(
+                      context,
+                      label: s.today,
+                      isActive: activePreset == DateRangePreset.today,
+                      onTap: () => notifier.setToday(),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildChip(
+                      context,
+                      label: s.thisWeek,
+                      isActive: activePreset == DateRangePreset.thisWeek,
+                      onTap: () => notifier.setThisWeek(),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildChip(
+                      context,
+                      label: s.thisMonth,
+                      isActive: activePreset == DateRangePreset.thisMonth,
+                      onTap: () => notifier.setThisMonth(),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
-            _buildChip(
-              context,
-              label: s.thisWeek,
-              isActive: activePreset == DateRangePreset.thisWeek,
-              onTap: () => notifier.setThisWeek(),
-            ),
-            const SizedBox(width: 8),
-            _buildChip(
-              context,
-              label: s.thisMonth,
-              isActive: activePreset == DateRangePreset.thisMonth,
-              onTap: () => notifier.setThisMonth(),
-            ),
-            const Spacer(),
             IconButton(
               icon: ThinIcon(
                 tabler.CalendarEvent.new,
@@ -905,6 +971,7 @@ class _DashboardSkeleton extends StatelessWidget {
           const spacing = 10.0;
           final cardWidth =
               (constraints.maxWidth - spacing * (cols - 1)) / cols;
+          final cardHeight = statCardHeight(MediaQuery.textScalerOf(context));
 
           return Wrap(
             spacing: spacing,
@@ -913,7 +980,7 @@ class _DashboardSkeleton extends StatelessWidget {
               6,
               (_) => SizedBox(
                 width: cardWidth,
-                height: 110,
+                height: cardHeight,
                 child: const LoadingShimmer(
                     height: double.infinity, borderRadius: 14),
               ),

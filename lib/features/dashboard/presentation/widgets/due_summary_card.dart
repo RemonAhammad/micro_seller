@@ -8,6 +8,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/aging_bar.dart';
 import '../../../customers/presentation/widgets/due_actions.dart';
 import '../../../customers/providers/dues_provider.dart';
+import 'stat_card.dart' show measureTextWidth;
 
 /// Dashboard view of the Due Book: total receivable, an aging bar, and the
 /// three customers most worth chasing (oldest debt first), each with one-tap
@@ -38,11 +39,17 @@ class DueSummaryCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          CurrencyFormatter.format(summary.total),
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: AppColors.paymentUnpaid,
+        // Shrinks rather than breaking the number over two lines.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            CurrencyFormatter.format(summary.total),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.paymentUnpaid,
+            ),
+            maxLines: 1,
           ),
         ),
         Text(s.customersOwing(summary.customerCount),
@@ -78,54 +85,72 @@ class _ChaseRow extends ConsumerWidget {
             ? AppColors.paymentPartial
             : theme.colorScheme.onSurface.withValues(alpha: 0.5);
 
+    const amountStyle = TextStyle(fontWeight: FontWeight.w800);
+    final amountText = CurrencyFormatter.format(due.totalDue);
+    final amount = Text(amountText, style: amountStyle, maxLines: 1);
+
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () => context.push('/customers/${due.customer.id}'),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    due.customer.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // The amount sits beside the name while it takes under 45% of
+            // the row. A bigger one (narrow screen, large text) goes under
+            // the name, so the name keeps its room, and shrinks if even
+            // that line is too short.
+            final beside =
+                measureTextWidth(context, amountText, amountStyle) <=
+                    constraints.maxWidth * 0.45;
+            return Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        due.customer.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      if (!beside)
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: amount,
+                        ),
+                      Text(
+                        s.daysOutstanding(days),
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: ageColor),
+                      ),
+                    ],
                   ),
-                  Text(
-                    s.daysOutstanding(days),
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: ageColor),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              CurrencyFormatter.format(due.totalDue),
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            IconButton(
-              tooltip: s.remind,
-              visualDensity: VisualDensity.compact,
-              onPressed: () => sendDueReminder(
-                  context, ref, due.customer, due.orderDues, due.totalDue),
-              icon: const ThinIcon(AppIcons.whatsapp,
-                  color: Color(0xFF25D366), size: 22),
-            ),
-            IconButton(
-              tooltip: s.collect,
-              visualDensity: VisualDensity.compact,
-              onPressed: () => showCollectPaymentSheet(
-                  context, due.customer, due.orderDues, due.totalDue),
-              icon: const ThinIcon(AppIcons.collected,
-                  color: AppColors.primary, size: 22),
-            ),
-          ],
+                ),
+                if (beside) amount,
+                IconButton(
+                  tooltip: s.remind,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => sendDueReminder(
+                      context, ref, due.customer, due.orderDues, due.totalDue),
+                  icon: const ThinIcon(AppIcons.whatsapp,
+                      color: Color(0xFF25D366), size: 22),
+                ),
+                IconButton(
+                  tooltip: s.collect,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => showCollectPaymentSheet(
+                      context, due.customer, due.orderDues, due.totalDue),
+                  icon: const ThinIcon(AppIcons.collected,
+                      color: AppColors.primary, size: 22),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

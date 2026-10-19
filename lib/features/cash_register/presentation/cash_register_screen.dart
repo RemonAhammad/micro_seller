@@ -154,16 +154,45 @@ class CashRegisterScreen extends ConsumerWidget {
       {bool isBold = false, Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
+      child: _AmountRow(
+        label: Text(label,
+            style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+        value: Text(value,
+            style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+                color: valueColor),
+            maxLines: 1),
+      ),
+    );
+  }
+}
+
+/// A label at the start of the row and an amount at its end, laid out as a
+/// plain row while the two fit side by side. When they don't (narrow layout,
+/// large text), the label wraps and the amount shrinks into at most half the
+/// row: never cut off, never pushed out of the card.
+class _AmountRow extends StatelessWidget {
+  final Widget label;
+  final Widget value;
+
+  const _AmountRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
-          Text(value,
-              style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-                  color: valueColor)),
+          Flexible(child: label),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: constraints.maxWidth / 2),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerEnd,
+              child: value,
+            ),
+          ),
         ],
       ),
     );
@@ -201,13 +230,23 @@ class _OpenRegisterCard extends StatelessWidget {
             children: [
               ThinIcon(tabler.CashRegister.new, color: cs.primary, size: 24),
               const SizedBox(width: 10),
-              Text(s.registerOpen,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700, color: cs.primary)),
-              const Spacer(),
-              Text(DateFormatter.formatWithTime(register.openedAt),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.5))),
+              // Title at the start and opening time at the end; the time
+              // moves under the title when the two don't fit on one line.
+              Expanded(
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  children: [
+                    Text(s.registerOpen,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700, color: cs.primary)),
+                    Text(DateFormatter.formatWithTime(register.openedAt),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.5))),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -260,17 +299,15 @@ class _OpenRegisterCard extends StatelessWidget {
       {bool isBold = false, Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.6))),
-          Text(value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-                  color: valueColor)),
-        ],
+      child: _AmountRow(
+        label: Text(label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.6))),
+        value: Text(value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+                color: valueColor),
+            maxLines: 1),
       ),
     );
   }

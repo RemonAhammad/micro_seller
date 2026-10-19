@@ -168,44 +168,62 @@ class _StockAdjustmentScreenState
                         color: cs.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: cs.primary.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
+                      // The stock column keeps its size while it fits in
+                      // 40% of the card; past that (narrow layout, large
+                      // text) the number shrinks and its caption wraps, so
+                      // the name keeps room.
+                      child: LayoutBuilder(
+                        builder: (context, constraints) => Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: cs.primary.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ThinIcon(tabler.Package.new,
+                                  color: cs.primary),
                             ),
-                            child: ThinIcon(tabler.Package.new,
-                                color: cs.primary),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(product.name,
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w700)),
-                                Text('${AppStrings.of(context).sku}: ${product.sku}',
-                                    style: theme.textTheme.bodySmall),
-                              ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(product.name,
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.w700)),
+                                  Text(
+                                      '${AppStrings.of(context).sku}: ${product.sku}',
+                                      style: theme.textTheme.bodySmall),
+                                ],
+                              ),
                             ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text('${product.totalStock}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 20,
-                                  )),
-                              Text(s.tr('totalStock'),
-                                  style: const TextStyle(fontSize: 11)),
-                            ],
-                          ),
-                        ],
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                  maxWidth: constraints.maxWidth * 0.4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: AlignmentDirectional.centerEnd,
+                                    child: Text('${product.totalStock}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 20,
+                                        ),
+                                        maxLines: 1),
+                                  ),
+                                  Text(s.tr('totalStock'),
+                                      style: const TextStyle(fontSize: 11),
+                                      textAlign: TextAlign.end),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -245,8 +263,19 @@ class _StockAdjustmentScreenState
                             final selected =
                                 _selectedCombinationKey == c.combinationKey;
                             return ChoiceChip(
-                              label: Text(
-                                  '${c.displayLabel} (${c.stockQty})'),
+                              // A label too long for the chip ellipsizes
+                              // before its stock count, which stays visible.
+                              label: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(c.displayLabel,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                  Text(' (${c.stockQty})'),
+                                ],
+                              ),
                               selected: selected,
                               onSelected: (_) => setState(() =>
                                   _selectedCombinationKey = c.combinationKey),

@@ -241,102 +241,138 @@ class _ResultPanel extends StatelessWidget {
         ? Colors.green
         : Colors.orange;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12)],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ThinIcon(
-                    searching
-                        ? tabler.Search.new
-                        : found
-                        ? tabler.CircleCheck.new
-                        : tabler.HelpCircle.new,
-                    color: accent,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
+    // At most two thirds of the window, so the camera keeps some room: a long code, or large text on a short
+    // layout, scrolls inside the panel instead of pushing it past the bottom of the screen.
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 2 / 3),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12)],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Short of room (a long code, large text on a short layout), the result scrolls and the buttons
+              // stay in view.
+              Flexible(
+                child: SingleChildScrollView(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        searching
-                            ? '...'
-                            : found
-                            ? s.productMatched
-                            : s.noProductMatched,
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: accent),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ThinIcon(
+                              searching
+                                  ? tabler.Search.new
+                                  : found
+                                  ? tabler.CircleCheck.new
+                                  : tabler.HelpCircle.new,
+                              color: accent,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  searching
+                                      ? '...'
+                                      : found
+                                      ? s.productMatched
+                                      : s.noProductMatched,
+                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: accent),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${s.scannedCode}: $code',
+                                  style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${s.scannedCode}: $code',
-                        style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
-                      ),
+                      if (found) ...[const SizedBox(height: 14), _ProductPreview(product: product!)],
                     ],
                   ),
                 ),
-              ],
-            ),
-            if (found) ...[const SizedBox(height: 14), _ProductPreview(product: product!)],
-            const SizedBox(height: 14),
-            // IntrinsicHeight + stretch keeps both buttons the same height
-            // even when one wraps to multiple lines (e.g. "Add as new
-            // product" wraps to 3 lines on narrow phones while "Scan again"
-            // fits in one). Without this they'd render at their own
-            // intrinsic heights and look mismatched.
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onScanAgain,
-                      icon: const ThinIcon(tabler.Refresh.new, size: 18),
-                      label: Text(s.scanAgain, textAlign: TextAlign.center),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: searching
-                        ? const Center(
-                            child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
-                          )
-                        : found
-                        ? FilledButton.icon(
-                            onPressed: onView,
-                            icon: const ThinIcon(tabler.Eye.new, size: 18),
-                            label: Text(s.viewProduct, textAlign: TextAlign.center),
-                          )
-                        : FilledButton.icon(
-                            onPressed: onAdd,
-                            icon: const ThinIcon(tabler.Plus.new, size: 18),
-                            label: Text(s.addAsNewProduct, textAlign: TextAlign.center),
-                            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-                          ),
-                  ),
-                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+              // Side by side while each label can wrap between its words; one
+              // above the other once large text on a narrow layout would split
+              // a word across lines.
+              LayoutBuilder(builder: (context, constraints) {
+                final scanAgain = OutlinedButton.icon(
+                  onPressed: onScanAgain,
+                  icon: const ThinIcon(tabler.Refresh.new, size: 18),
+                  label: Text(s.scanAgain, textAlign: TextAlign.center),
+                );
+                final action = searching
+                    ? const Center(
+                        child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+                      )
+                    : found
+                    ? FilledButton.icon(
+                        onPressed: onView,
+                        icon: const ThinIcon(tabler.Eye.new, size: 18),
+                        label: Text(s.viewProduct, textAlign: TextAlign.center),
+                      )
+                    : FilledButton.icon(
+                        onPressed: onAdd,
+                        icon: const ThinIcon(tabler.Plus.new, size: 18),
+                        label: Text(s.addAsNewProduct, textAlign: TextAlign.center),
+                        style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                      );
+                final half = (constraints.maxWidth - 10) / 2;
+                final sideBySide =
+                    _wordsFit(context, theme.outlinedButtonTheme.style, s.scanAgain, half) &&
+                    (searching ||
+                        _wordsFit(
+                          context,
+                          theme.filledButtonTheme.style,
+                          found ? s.viewProduct : s.addAsNewProduct,
+                          half,
+                        ));
+                if (!sideBySide) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [scanAgain, const SizedBox(height: 10), action],
+                  );
+                }
+                // IntrinsicHeight + stretch keeps both buttons the same height
+                // even when one wraps to multiple lines (e.g. "Add as new
+                // product" wraps to 3 lines on narrow phones while "Scan again"
+                // fits in one). Without this they'd render at their own
+                // intrinsic heights and look mismatched.
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: scanAgain),
+                      const SizedBox(width: 10),
+                      Expanded(child: action),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -403,6 +439,25 @@ class _ProductPreview extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Whether every word of [label] fits on one line of an icon button [width] wide in [style] (its padding, the 18 px
+/// icon and the gap taken off), at the current text size and bold-text setting. A label may wrap between its words; a
+/// word split across lines is what reads as broken.
+bool _wordsFit(BuildContext context, ButtonStyle? style, String label, double width) {
+  final padding = style?.padding?.resolve(const {})?.horizontal ?? 48;
+  var textStyle = style?.textStyle?.resolve(const {}) ?? Theme.of(context).textTheme.labelLarge;
+  if (MediaQuery.boldTextOf(context)) {
+    textStyle = (textStyle ?? const TextStyle()).merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: label, style: textStyle),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout();
+  final longestWord = painter.minIntrinsicWidth;
+  painter.dispose();
+  return longestWord <= width - padding - 18 - 8;
 }
 
 /// Public payload type the router uses to forward pre-fill data to the

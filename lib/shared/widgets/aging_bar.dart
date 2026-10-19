@@ -71,9 +71,14 @@ class AgingBar extends StatelessWidget {
                         BoxDecoration(color: color, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 5),
-                  Text(
-                    '$label  ${CurrencyFormatter.formatCompact(amount)}',
-                    style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                  // Wraps when one entry is wider than the card (a long
+                  // translation, a large text size) instead of overflowing.
+                  Flexible(
+                    child: Text(
+                      '$label  ${CurrencyFormatter.formatCompact(amount)}',
+                      style:
+                          theme.textTheme.labelSmall?.copyWith(color: muted),
+                    ),
                   ),
                 ],
               ),

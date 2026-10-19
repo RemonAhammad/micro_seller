@@ -87,6 +87,9 @@ const translationsEn = <String, String>{
   'stock': 'Stock',
   'option': 'Option',
   'attributeName': 'Attribute Name',
+  'created': 'Created',
+  'lastUpdated': 'Last Updated',
+  'noVariantsHint': 'No variants. Add attributes like Size, Color, etc.',
 
   // Orders
   'addOrder': 'New Order',
@@ -127,6 +130,7 @@ const translationsEn = <String, String>{
   'noProductsFoundPicker': 'No products found',
   'tapToAddProducts': 'Tap to add products',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'Any special instructions...',
 
   // Order status
   'pending': 'Pending',
@@ -134,6 +138,8 @@ const translationsEn = <String, String>{
   'shipped': 'Shipped',
   'completed': 'Completed',
   'cancelled': 'Cancelled',
+  'active': 'Active',
+  'placed': 'Placed',
 
   // Payment status
   'unpaid': 'Unpaid',
@@ -164,6 +170,9 @@ const translationsEn = <String, String>{
   'orderNotFound': 'Order not found',
   'pdfSavedTo': 'PDF saved to',
   'markAsDelivered': 'Mark as Delivered',
+  'confirmOrder': 'Confirm Order',
+  'markAsShipped': 'Mark as Shipped',
+  'markAsCompleted': 'Mark as Completed',
 
   // Customers
   'addCustomer': 'Add Customer',
@@ -179,6 +188,7 @@ const translationsEn = <String, String>{
   'deleteCustomer': 'Delete Customer',
   'failedToSaveCustomer': 'Failed to save customer. Please try again.',
   'outstanding': 'Outstanding',
+  'memberSince': 'Member since',
 
   // Inventory
   'stockAdjustment': 'Stock Adjustment',
@@ -203,6 +213,7 @@ const translationsEn = <String, String>{
   'supplierOptional': 'Supplier (optional)',
   'totalStock': 'total stock',
   'inStockLabel': 'in stock',
+  'allCategories': 'All Categories',
 
   // Expenses
   'addExpense': 'Add Expense',
@@ -283,6 +294,7 @@ const translationsEn = <String, String>{
   'supplierAdded': 'Supplier added!',
   'noSuppliersFound': 'No suppliers found',
   'addSuppliersFromMenu': 'Add suppliers from the Suppliers menu',
+  'selectSupplier': 'Select Supplier',
 
   // Purchases
   'purchaseNotFound': 'Purchase not found',
@@ -299,6 +311,8 @@ const translationsEn = <String, String>{
   'payment': 'Payment',
   'unitCost': 'Unit Cost',
   'tapToSelectSupplier': 'Tap to select supplier',
+  'allProducts': 'All products',
+  'supplierProductsOnly': '{name} only',
 
   // Cash Register
   'registerOpen': 'Register Open',
@@ -348,6 +362,16 @@ const translationsEn = <String, String>{
   'approveAndReceiveItems': 'Approve & Receive Items',
   'processRefund': 'Process Refund',
   'refundProcessed': 'Refund processed',
+  'requested': 'Requested',
+  'approved': 'Approved',
+  'received': 'Received',
+  'itemsReceived': 'Items Received',
+  'refunded': 'Refunded',
+  'rejected': 'Rejected',
+  'none': 'None',
+  'approve': 'Approve',
+  'approveReturnConfirm': 'Approve this return and mark items as received? Stock will be restored.',
+  'returnRejected': 'Return Rejected',
 
   // Categories
   'addCategory': 'Add Category',
@@ -386,6 +410,8 @@ const translationsEn = <String, String>{
   'update': 'Update',
   'close': 'Close',
   'open': 'Open',
+  'back': 'Back',
+  'sort': 'Sort',
 
   // Delivery
   'delivery': 'Delivery',
@@ -440,6 +466,16 @@ const translationsEn = <String, String>{
   'sidebarPosition': 'Sidebar Position',
   'left': 'Left',
   'right': 'Right',
+
+  // Display size (Settings → Display)
+  'display': 'Display',
+  'displaySize': 'Display Size',
+  'displaySizeDesc': 'Make everything on screen smaller or larger',
+  'textSize': 'Text Size',
+  'textSizeDesc': 'Change only the size of text',
+  'followPhoneTextSize': 'Follow phone setting',
+  'phoneTextSize': 'Phone: {value}',
+  'preview': 'Preview',
 
   // Auth gate (biometric / PIN before destructive actions)
   'createPin': 'Create a 4-digit PIN',

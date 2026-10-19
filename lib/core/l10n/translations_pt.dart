@@ -87,6 +87,9 @@ const translationsPt = <String, String>{
   'stock': 'Estoque',
   'option': 'Opção',
   'attributeName': 'Nome do atributo',
+  'created': 'Criado em',
+  'lastUpdated': 'Última atualização',
+  'noVariantsHint': 'Sem variantes. Adicione atributos como Tamanho, Cor etc.',
 
   // Orders
   'addOrder': 'Novo pedido',
@@ -127,6 +130,7 @@ const translationsPt = <String, String>{
   'noProductsFoundPicker': 'Nenhum produto encontrado',
   'tapToAddProducts': 'Toque para adicionar produtos',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'Alguma instrução especial?',
 
   // Order status
   'pending': 'Pendente',
@@ -134,6 +138,8 @@ const translationsPt = <String, String>{
   'shipped': 'Enviado',
   'completed': 'Concluído',
   'cancelled': 'Cancelado',
+  'active': 'Em andamento',
+  'placed': 'Realizado',
 
   // Payment status
   'unpaid': 'Não pago',
@@ -164,6 +170,9 @@ const translationsPt = <String, String>{
   'orderNotFound': 'Pedido não encontrado',
   'pdfSavedTo': 'PDF salvo em',
   'markAsDelivered': 'Marcar como entregue',
+  'confirmOrder': 'Confirmar pedido',
+  'markAsShipped': 'Marcar como enviado',
+  'markAsCompleted': 'Marcar como concluído',
 
   // Customers
   'addCustomer': 'Adicionar cliente',
@@ -179,6 +188,7 @@ const translationsPt = <String, String>{
   'deleteCustomer': 'Excluir cliente',
   'failedToSaveCustomer': 'Falha ao salvar o cliente. Por favor, tente novamente.',
   'outstanding': 'Pendente',
+  'memberSince': 'Cliente desde',
 
   // Inventory
   'stockAdjustment': 'Ajuste de estoque',
@@ -203,6 +213,7 @@ const translationsPt = <String, String>{
   'supplierOptional': 'Fornecedor (opcional)',
   'totalStock': 'estoque total',
   'inStockLabel': 'em estoque',
+  'allCategories': 'Todas as categorias',
 
   // Expenses
   'addExpense': 'Adicionar despesa',
@@ -283,6 +294,7 @@ const translationsPt = <String, String>{
   'supplierAdded': 'Fornecedor adicionado!',
   'noSuppliersFound': 'Nenhum fornecedor encontrado',
   'addSuppliersFromMenu': 'Adicione fornecedores pelo menu Fornecedores',
+  'selectSupplier': 'Selecionar fornecedor',
 
   // Purchases
   'purchaseNotFound': 'Compra não encontrada',
@@ -299,6 +311,8 @@ const translationsPt = <String, String>{
   'payment': 'Pagamento',
   'unitCost': 'Custo unitário',
   'tapToSelectSupplier': 'Toque para selecionar fornecedor',
+  'allProducts': 'Todos os produtos',
+  'supplierProductsOnly': 'Apenas {name}',
 
   // Cash Register
   'registerOpen': 'Caixa aberta',
@@ -348,6 +362,16 @@ const translationsPt = <String, String>{
   'approveAndReceiveItems': 'Aprovar e receber itens',
   'processRefund': 'Processar reembolso',
   'refundProcessed': 'Reembolso processado',
+  'requested': 'Solicitado',
+  'approved': 'Aprovado',
+  'received': 'Recebido',
+  'itemsReceived': 'Itens recebidos',
+  'refunded': 'Reembolsado',
+  'rejected': 'Rejeitado',
+  'none': 'Nenhum',
+  'approve': 'Aprovar',
+  'approveReturnConfirm': 'Aprovar esta devolução e marcar os itens como recebidos? O estoque será restaurado.',
+  'returnRejected': 'Devolução rejeitada',
 
   // Categories
   'addCategory': 'Adicionar categoria',
@@ -386,6 +410,8 @@ const translationsPt = <String, String>{
   'update': 'Atualizar',
   'close': 'Fechar',
   'open': 'Abrir',
+  'back': 'Voltar',
+  'sort': 'Ordenar',
 
   // Delivery
   'delivery': 'Entrega',
@@ -440,6 +466,16 @@ const translationsPt = <String, String>{
   'sidebarPosition': 'Posição da barra lateral',
   'left': 'Esquerda',
   'right': 'Direita',
+
+  // Display size (Settings → Display)
+  'display': 'Tela',
+  'displaySize': 'Tamanho da exibição',
+  'displaySizeDesc': 'Deixe tudo na tela menor ou maior',
+  'textSize': 'Tamanho da fonte',
+  'textSizeDesc': 'Altere apenas o tamanho do texto',
+  'followPhoneTextSize': 'Seguir a configuração do telefone',
+  'phoneTextSize': 'Telefone: {value}',
+  'preview': 'Pré-visualização',
 
   // Auth gate
   'createPin': 'Crie um PIN de 4 dígitos',

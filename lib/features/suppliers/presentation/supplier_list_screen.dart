@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -81,52 +83,75 @@ class SupplierListScreen extends ConsumerWidget {
                 child: InkWell(
                   onTap: () => context.push('/suppliers/${s.id}'),
                   borderRadius: BorderRadius.circular(12),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: cs.primary.withValues(alpha: 0.1),
-                        child: Text(
-                          s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: cs.primary,
-                            fontSize: 16,
+                  child: LayoutBuilder(builder: (context, box) {
+                    final nameStyle = theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600);
+                    final lineStyle = theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    );
+                    final dueStyle = TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red.shade400,
+                    );
+                    final due = s.hasOutstanding
+                        ? '${AppStrings.of(context).due}: ${CurrencyFormatter.format(suppliers[i].totalDue)}'
+                        : null;
+                    // The due sits at the end of the row, unless that would
+                    // leave the name, company or phone too narrow for one of
+                    // its words (large text, narrow layout): then it goes
+                    // under them, shrunk rather than split if it must be.
+                    final dueBelow = due != null &&
+                        box.maxWidth - _avatarSpace -
+                                _textWidth(context, due, dueStyle) <
+                            [
+                              _textWidth(context, s.name, nameStyle,
+                                  widestWord: true),
+                              if (s.company.isNotEmpty)
+                                _textWidth(context, s.company, lineStyle,
+                                    widestWord: true),
+                              if (s.phone.isNotEmpty)
+                                _textWidth(context, s.phone, lineStyle,
+                                    widestWord: true),
+                            ].reduce(math.max);
+                    return Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: cs.primary.withValues(alpha: 0.1),
+                          child: Text(
+                            s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: cs.primary,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(s.name,
-                                style: theme.textTheme.bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.w600)),
-                            if (s.company.isNotEmpty)
-                              Text(s.company,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.5),
-                                  )),
-                            if (s.phone.isNotEmpty)
-                              Text(s.phone,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.5),
-                                  )),
-                          ],
-                        ),
-                      ),
-                      if (s.hasOutstanding)
-                        Text(
-                          '${AppStrings.of(context).due}: ${CurrencyFormatter.format(suppliers[i].totalDue)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.red.shade400,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(s.name, style: nameStyle),
+                              if (s.company.isNotEmpty)
+                                Text(s.company, style: lineStyle),
+                              if (s.phone.isNotEmpty)
+                                Text(s.phone, style: lineStyle),
+                              if (due != null && dueBelow)
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(due, style: dueStyle),
+                                ),
+                            ],
                           ),
                         ),
-                    ],
-                  ),
+                        if (due != null && !dueBelow)
+                          Text(due, style: dueStyle),
+                      ],
+                    );
+                  }),
                 ),
               ),
               );
@@ -138,4 +163,26 @@ class SupplierListScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// The avatar and the gap after it, at the start of a supplier's row.
+const _avatarSpace = 22.0 * 2 + 12;
+
+/// How wide [text] in [style] is where [context] lays it out: on one line,
+/// or with [widestWord], its widest word (the narrowest it wraps to without
+/// breaking a word).
+double _textWidth(BuildContext context, String text, TextStyle? style,
+    {bool widestWord = false}) {
+  var effective = DefaultTextStyle.of(context).style.merge(style);
+  if (MediaQuery.boldTextOf(context)) {
+    effective = effective.merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: effective),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout();
+  final width = widestWord ? painter.minIntrinsicWidth : painter.width;
+  painter.dispose();
+  return width;
 }

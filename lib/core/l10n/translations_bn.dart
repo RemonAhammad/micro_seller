@@ -87,6 +87,9 @@ const translationsBn = <String, String>{
   'stock': 'স্টক',
   'option': 'অপশন',
   'attributeName': 'অ্যাট্রিবিউটের নাম',
+  'created': 'তৈরির তারিখ',
+  'lastUpdated': 'সর্বশেষ আপডেট',
+  'noVariantsHint': 'কোনো ভ্যারিয়েন্ট নেই। সাইজ, রং ইত্যাদির মতো অ্যাট্রিবিউট যোগ করুন।',
 
   // Orders
   'addOrder': 'নতুন অর্ডার',
@@ -127,6 +130,7 @@ const translationsBn = <String, String>{
   'noProductsFoundPicker': 'কোনো পণ্য পাওয়া যায়নি',
   'tapToAddProducts': 'পণ্য যোগ করতে ট্যাপ করুন',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'কোনো বিশেষ নির্দেশনা থাকলে লিখুন...',
 
   // Order status
   'pending': 'পেন্ডিং',
@@ -134,6 +138,8 @@ const translationsBn = <String, String>{
   'shipped': 'শিপড',
   'completed': 'সম্পন্ন',
   'cancelled': 'বাতিল',
+  'active': 'চলমান',
+  'placed': 'অর্ডার হয়েছে',
 
   // Payment status
   'unpaid': 'অপরিশোধিত',
@@ -164,6 +170,9 @@ const translationsBn = <String, String>{
   'orderNotFound': 'অর্ডার পাওয়া যায়নি',
   'pdfSavedTo': 'PDF সেভ হয়েছে',
   'markAsDelivered': 'ডেলিভারি সম্পন্ন হিসেবে চিহ্নিত করুন',
+  'confirmOrder': 'অর্ডার কনফার্ম করুন',
+  'markAsShipped': 'শিপড হিসেবে চিহ্নিত করুন',
+  'markAsCompleted': 'সম্পন্ন হিসেবে চিহ্নিত করুন',
 
   // Customers
   'addCustomer': 'গ্রাহক যোগ করুন',
@@ -179,6 +188,7 @@ const translationsBn = <String, String>{
   'deleteCustomer': 'গ্রাহক মুছুন',
   'failedToSaveCustomer': 'গ্রাহক সেভ করতে ব্যর্থ। অনুগ্রহ করে আবার চেষ্টা করুন।',
   'outstanding': 'বকেয়া',
+  'memberSince': 'গ্রাহক হওয়ার তারিখ',
 
   // Inventory
   'stockAdjustment': 'স্টক সমন্বয়',
@@ -203,6 +213,7 @@ const translationsBn = <String, String>{
   'supplierOptional': 'সরবরাহকারী (ঐচ্ছিক)',
   'totalStock': 'মোট স্টক',
   'inStockLabel': 'স্টকে আছে',
+  'allCategories': 'সব ক্যাটাগরি',
 
   // Expenses
   'addExpense': 'খরচ যোগ করুন',
@@ -283,6 +294,7 @@ const translationsBn = <String, String>{
   'supplierAdded': 'সরবরাহকারী যোগ হয়েছে!',
   'noSuppliersFound': 'কোনো সরবরাহকারী পাওয়া যায়নি',
   'addSuppliersFromMenu': 'সরবরাহকারী মেনু থেকে সরবরাহকারী যোগ করুন',
+  'selectSupplier': 'সরবরাহকারী নির্বাচন করুন',
 
   // Purchases
   'purchaseNotFound': 'ক্রয় পাওয়া যায়নি',
@@ -299,6 +311,8 @@ const translationsBn = <String, String>{
   'payment': 'পেমেন্ট',
   'unitCost': 'একক মূল্য',
   'tapToSelectSupplier': 'সরবরাহকারী নির্বাচন করতে ট্যাপ করুন',
+  'allProducts': 'সব পণ্য',
+  'supplierProductsOnly': 'শুধু {name}',
 
   // Cash Register
   'registerOpen': 'রেজিস্টার খোলা',
@@ -348,6 +362,16 @@ const translationsBn = <String, String>{
   'approveAndReceiveItems': 'অনুমোদন ও আইটেম গ্রহণ',
   'processRefund': 'রিফান্ড প্রক্রিয়া',
   'refundProcessed': 'রিফান্ড প্রক্রিয়া সম্পন্ন',
+  'requested': 'অনুরোধ করা হয়েছে',
+  'approved': 'অনুমোদিত',
+  'received': 'গৃহীত',
+  'itemsReceived': 'আইটেম গৃহীত',
+  'refunded': 'রিফান্ড হয়েছে',
+  'rejected': 'প্রত্যাখ্যাত',
+  'none': 'নেই',
+  'approve': 'অনুমোদন',
+  'approveReturnConfirm': 'এই রিটার্ন অনুমোদন করে আইটেমগুলো গৃহীত হিসেবে চিহ্নিত করবেন? স্টক পুনরুদ্ধার করা হবে।',
+  'returnRejected': 'রিটার্ন প্রত্যাখ্যাত',
 
   // Categories
   'addCategory': 'ক্যাটাগরি যোগ করুন',
@@ -386,6 +410,8 @@ const translationsBn = <String, String>{
   'update': 'আপডেট',
   'close': 'বন্ধ',
   'open': 'খুলুন',
+  'back': 'পিছনে',
+  'sort': 'সাজান',
 
   // Delivery
   'delivery': 'ডেলিভারি',
@@ -440,6 +466,16 @@ const translationsBn = <String, String>{
   'sidebarPosition': 'সাইডবারের অবস্থান',
   'left': 'বামে',
   'right': 'ডানে',
+
+  // Display size (Settings → Display)
+  'display': 'ডিসপ্লে',
+  'displaySize': 'ডিসপ্লে সাইজ',
+  'displaySizeDesc': 'স্ক্রিনের সবকিছু ছোট বা বড় করুন',
+  'textSize': 'ফন্ট সাইজ',
+  'textSizeDesc': 'শুধু লেখার সাইজ পরিবর্তন করুন',
+  'followPhoneTextSize': 'ফোনের সেটিং অনুসরণ করুন',
+  'phoneTextSize': 'ফোন: {value}',
+  'preview': 'প্রিভিউ',
 
   // Auth gate
   'createPin': '৪ অঙ্কের পিন তৈরি করুন',

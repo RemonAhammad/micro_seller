@@ -87,6 +87,9 @@ const translationsId = <String, String>{
   'stock': 'Stok',
   'option': 'Opsi',
   'attributeName': 'Nama Atribut',
+  'created': 'Dibuat',
+  'lastUpdated': 'Terakhir Diperbarui',
+  'noVariantsHint': 'Tidak ada varian. Tambahkan atribut seperti Ukuran, Warna, dll.',
 
   // Orders
   'addOrder': 'Pesanan Baru',
@@ -127,6 +130,7 @@ const translationsId = <String, String>{
   'noProductsFoundPicker': 'Produk tidak ditemukan',
   'tapToAddProducts': 'Ketuk untuk menambah produk',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'Ada instruksi khusus?',
 
   // Order status
   'pending': 'Tertunda',
@@ -134,6 +138,8 @@ const translationsId = <String, String>{
   'shipped': 'Dikirim',
   'completed': 'Selesai',
   'cancelled': 'Dibatalkan',
+  'active': 'Aktif',
+  'placed': 'Dipesan',
 
   // Payment status
   'unpaid': 'Belum Dibayar',
@@ -164,6 +170,9 @@ const translationsId = <String, String>{
   'orderNotFound': 'Pesanan tidak ditemukan',
   'pdfSavedTo': 'PDF disimpan ke',
   'markAsDelivered': 'Tandai Terkirim',
+  'confirmOrder': 'Konfirmasi Pesanan',
+  'markAsShipped': 'Tandai Dikirim',
+  'markAsCompleted': 'Tandai Selesai',
 
   // Customers
   'addCustomer': 'Tambah Pelanggan',
@@ -179,6 +188,7 @@ const translationsId = <String, String>{
   'deleteCustomer': 'Hapus Pelanggan',
   'failedToSaveCustomer': 'Gagal menyimpan pelanggan. Silakan coba lagi.',
   'outstanding': 'Tertunggak',
+  'memberSince': 'Pelanggan Sejak',
 
   // Inventory
   'stockAdjustment': 'Penyesuaian Stok',
@@ -203,6 +213,7 @@ const translationsId = <String, String>{
   'supplierOptional': 'Pemasok (opsional)',
   'totalStock': 'total stok',
   'inStockLabel': 'tersedia',
+  'allCategories': 'Semua Kategori',
 
   // Expenses
   'addExpense': 'Tambah Pengeluaran',
@@ -283,6 +294,7 @@ const translationsId = <String, String>{
   'supplierAdded': 'Pemasok ditambahkan!',
   'noSuppliersFound': 'Pemasok tidak ditemukan',
   'addSuppliersFromMenu': 'Tambahkan pemasok dari menu Pemasok',
+  'selectSupplier': 'Pilih Pemasok',
 
   // Purchases
   'purchaseNotFound': 'Pembelian tidak ditemukan',
@@ -299,6 +311,8 @@ const translationsId = <String, String>{
   'payment': 'Pembayaran',
   'unitCost': 'Biaya Satuan',
   'tapToSelectSupplier': 'Ketuk untuk memilih pemasok',
+  'allProducts': 'Semua produk',
+  'supplierProductsOnly': 'Hanya {name}',
 
   // Cash Register
   'registerOpen': 'Kasir Terbuka',
@@ -348,6 +362,16 @@ const translationsId = <String, String>{
   'approveAndReceiveItems': 'Setujui & Terima Item',
   'processRefund': 'Proses Pengembalian Dana',
   'refundProcessed': 'Pengembalian dana diproses',
+  'requested': 'Diajukan',
+  'approved': 'Disetujui',
+  'received': 'Diterima',
+  'itemsReceived': 'Item Diterima',
+  'refunded': 'Dana Dikembalikan',
+  'rejected': 'Ditolak',
+  'none': 'Tidak Ada',
+  'approve': 'Setujui',
+  'approveReturnConfirm': 'Setujui pengembalian ini dan tandai item sebagai diterima? Stok akan dipulihkan.',
+  'returnRejected': 'Pengembalian Ditolak',
 
   // Categories
   'addCategory': 'Tambah Kategori',
@@ -386,6 +410,8 @@ const translationsId = <String, String>{
   'update': 'Perbarui',
   'close': 'Tutup',
   'open': 'Buka',
+  'back': 'Kembali',
+  'sort': 'Urutkan',
 
   // Delivery
   'delivery': 'Pengiriman',
@@ -440,6 +466,16 @@ const translationsId = <String, String>{
   'sidebarPosition': 'Posisi Sidebar',
   'left': 'Kiri',
   'right': 'Kanan',
+
+  // Display size (Settings → Display)
+  'display': 'Layar',
+  'displaySize': 'Ukuran Tampilan',
+  'displaySizeDesc': 'Perkecil atau perbesar semua yang ada di layar',
+  'textSize': 'Ukuran Font',
+  'textSizeDesc': 'Ubah ukuran teks saja',
+  'followPhoneTextSize': 'Ikuti pengaturan ponsel',
+  'phoneTextSize': 'Ponsel: {value}',
+  'preview': 'Pratinjau',
 
   // Auth gate
   'createPin': 'Buat PIN 4 digit',

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -197,6 +199,27 @@ class _ReturnList extends StatelessWidget {
 
 // ─── Return card ─────────────────────────────────────────────────────────────
 
+/// The width [text] takes on one line as a [Text] with [style] draws it here:
+/// in the ambient text style and text size, bold if the phone asks for it.
+double _textWidth(BuildContext context, String text, TextStyle? style) {
+  var effective = style;
+  if (style == null || style.inherit) {
+    effective = DefaultTextStyle.of(context).style.merge(style);
+  }
+  if (MediaQuery.boldTextOf(context)) {
+    effective = effective!.merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: effective),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  final width = painter.width;
+  painter.dispose();
+  return width;
+}
+
 class _ReturnCard extends StatelessWidget {
   final Order order;
   const _ReturnCard({required this.order});
@@ -206,6 +229,43 @@ class _ReturnCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final muted = cs.onSurface.withValues(alpha: 0.5);
+
+    final numberStyle =
+        theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800);
+    final orderNumber = Text(
+      order.orderNumber,
+      style: numberStyle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    final original = 'ORD-${order.originalOrderId.toString().padLeft(3, '0')}';
+    final originalStyle = theme.textTheme.bodySmall?.copyWith(color: muted);
+    final link = [
+      const SizedBox(width: 8),
+      ThinIcon(tabler.Link.new, size: 13, color: muted),
+      const SizedBox(width: 3),
+    ];
+    final date = DateFormatter.format(order.createdAt);
+    final dateStyle = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurface.withValues(alpha: 0.4),
+      fontSize: 11,
+    );
+    final nameStyle = theme.textTheme.bodySmall
+        ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6));
+    final customer = [
+      ThinIcon(tabler.User.new, size: 13, color: muted),
+      const SizedBox(width: 3),
+      Flexible(
+        child: Text(
+          order.customerName,
+          style: nameStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ];
+    final (reason, reasonColor) = _reasonLabel(context, order.returnReason);
+    final (status, statusColor) = _statusLabel(context, order.returnStatus);
 
     return GestureDetector(
       onTap: () => context.push('/orders/${order.id}'),
@@ -222,143 +282,204 @@ class _ReturnCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Row 1: order numbers + date
-            Row(
+        // Each row keeps to one line, its text truncated only for want of
+        // room, with the date and the status at the far end. Where a row's
+        // fixed parts don't fit side by side (a narrow layout, large text,
+        // long numbers), it breaks onto two lines instead of overflowing.
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            // Everything in row 1 whole, the date at least 8 px away.
+            final linkWidth = order.originalOrderId > 0
+                ? 24 + _textWidth(context, original, originalStyle)
+                : 0.0;
+            final row1Fits =
+                _textWidth(context, order.orderNumber, numberStyle) +
+                        linkWidth +
+                        8 +
+                        _textWidth(context, date, dateStyle) <=
+                    width;
+            // Both pills whole, and room for at least the first few letters
+            // of the customer.
+            final nameWidth = order.customerName.isEmpty
+                ? 0.0
+                : 24 +
+                    math.min(
+                      _textWidth(context, order.customerName, nameStyle),
+                      MediaQuery.textScalerOf(context).scale(48),
+                    );
+            final row2Fits = nameWidth +
+                    _Pill.widthOf(context, reason) +
+                    8 +
+                    _Pill.widthOf(context, status) <=
+                width;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(
-                  child: Text(
-                    order.orderNumber,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                // Row 1: order numbers + date
+                if (row1Fits)
+                  Row(
+                    children: [
+                      orderNumber,
+                      if (order.originalOrderId > 0) ...[
+                        ...link,
+                        Text(original, style: originalStyle),
+                      ],
+                      const Spacer(),
+                      Text(date, style: dateStyle),
+                    ],
+                  )
+                else ...[
+                  // The numbers shrink to fit rather than ending in an
+                  // ellipsis, which would hide the digits that tell them
+                  // apart.
+                  Row(
+                    children: [
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(order.orderNumber, style: numberStyle),
+                        ),
+                      ),
+                      if (order.originalOrderId > 0) ...[
+                        ...link,
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(original, style: originalStyle),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ),
-                if (order.originalOrderId > 0) ...[
-                  const SizedBox(width: 8),
-                  ThinIcon(tabler.Link.new, size: 13, color: muted),
-                  const SizedBox(width: 3),
-                  Text(
-                    'ORD-${order.originalOrderId.toString().padLeft(3, '0')}',
-                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                  const SizedBox(height: 2),
+                  Text(date, style: dateStyle),
+                ],
+                const SizedBox(height: 8),
+                // Row 2: customer + reason chip + status badge
+                if (row2Fits)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (order.customerName.isNotEmpty) ...[
+                              ...customer,
+                              const SizedBox(width: 8),
+                            ],
+                            _Pill(label: reason, color: reasonColor),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _Pill(label: status, color: statusColor, vertical: 3),
+                    ],
+                  )
+                else ...[
+                  if (order.customerName.isNotEmpty) ...[
+                    Row(children: customer),
+                    const SizedBox(height: 4),
+                  ],
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      _Pill(label: reason, color: reasonColor),
+                      _Pill(label: status, color: statusColor, vertical: 3),
+                    ],
                   ),
                 ],
-                const Spacer(),
-                Text(
-                  DateFormatter.format(order.createdAt),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.4),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Row 2: customer + reason chip + status badge
-            Row(
-              children: [
-                if (order.customerName.isNotEmpty) ...[
-                  ThinIcon(tabler.User.new, size: 13, color: muted),
-                  const SizedBox(width: 3),
-                  Flexible(
-                    child: Text(
-                      order.customerName,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 8),
+                // Row 3: items count + refund amount, which shrinks to fit
+                // rather than overflowing.
+                Row(
+                  children: [
+                    Text(
+                      '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                _ReasonChip(reason: order.returnReason),
-                const Spacer(),
-                _ReturnStatusBadge(status: order.returnStatus),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Row 3: items count + refund amount
-            Row(
-              children: [
-                Text(
-                  '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
-                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                ),
-                const Spacer(),
-                Text(
-                  CurrencyFormatter.format(order.refundAmount),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: cs.primary,
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            CurrencyFormatter.format(order.refundAmount),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: cs.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
   }
 }
 
-// ─── Reason chip ─────────────────────────────────────────────────────────────
+// ─── Reason chip and status badge ────────────────────────────────────────────
 
-class _ReasonChip extends StatelessWidget {
-  final ReturnReason reason;
-  const _ReasonChip({required this.reason});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppStrings.of(context);
-    final (label, color) = switch (reason) {
-      ReturnReason.defective => (s.defective, Colors.red),
-      ReturnReason.wrongItem => (s.wrongItem, Colors.orange),
-      ReturnReason.damaged => (s.tr('damaged'), Colors.red),
-      ReturnReason.changedMind => (s.changedMind, Colors.blue),
-      ReturnReason.other => (s.other, Colors.grey),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
-      ),
-    );
-  }
+(String, Color) _reasonLabel(BuildContext context, ReturnReason reason) {
+  final s = AppStrings.of(context);
+  return switch (reason) {
+    ReturnReason.defective => (s.defective, Colors.red),
+    ReturnReason.wrongItem => (s.wrongItem, Colors.orange),
+    ReturnReason.damaged => (s.tr('damaged'), Colors.red),
+    ReturnReason.changedMind => (s.changedMind, Colors.blue),
+    ReturnReason.other => (s.other, Colors.grey),
+  };
 }
 
-// ─── Return status badge ─────────────────────────────────────────────────────
+(String, Color) _statusLabel(BuildContext context, ReturnStatus status) {
+  final s = AppStrings.of(context);
+  return switch (status) {
+    ReturnStatus.none => (s.tr('none'), Colors.grey),
+    ReturnStatus.requested => (s.tr('requested'), Colors.orange),
+    ReturnStatus.approved ||
+    ReturnStatus.received =>
+      (s.tr('received'), Colors.blue),
+    ReturnStatus.refunded => (s.tr('refunded'), Colors.green),
+    ReturnStatus.rejected => (s.tr('rejected'), Colors.red),
+  };
+}
 
-class _ReturnStatusBadge extends StatelessWidget {
-  final ReturnStatus status;
-  const _ReturnStatusBadge({required this.status});
+/// A coloured label pill: the reason chip, or the status badge (with 3 px of
+/// vertical padding rather than 2).
+class _Pill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final double vertical;
+  const _Pill({required this.label, required this.color, this.vertical = 2});
+
+  static const _style = TextStyle(fontSize: 11, fontWeight: FontWeight.w600);
+
+  /// The width the pill takes on one line.
+  static double widthOf(BuildContext context, String label) =>
+      _textWidth(context, label, _style) + 16;
 
   @override
   Widget build(BuildContext context) {
-    final s = AppStrings.of(context);
-    final (label, color) = switch (status) {
-      ReturnStatus.none => (s.tr('none'), Colors.grey),
-      ReturnStatus.requested => (s.tr('requested'), Colors.orange),
-      ReturnStatus.approved || ReturnStatus.received => (s.tr('received'), Colors.blue),
-      ReturnStatus.refunded => (s.tr('refunded'), Colors.green),
-      ReturnStatus.rejected => (s.tr('rejected'), Colors.red),
-    };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: vertical),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
+      // Stays one line when the card is too narrow for it.
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+        style: _style.copyWith(color: color),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

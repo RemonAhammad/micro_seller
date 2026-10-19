@@ -219,9 +219,32 @@ class _ProductListTile extends ConsumerWidget {
 
   const _ProductListTile({required this.product});
 
+  /// Narrowest row (inside the tile's padding) that keeps the price and stock
+  /// beside the name, at 100% text; it grows with the text size. A 360 dp
+  /// phone's row (248) keeps them there. Narrower, or with larger text, a big
+  /// price would squeeze the name to a sliver, so they move below it.
+  static const _minWidthBeside = 228.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final price = Text(
+      CurrencyFormatter.format(product.sellingPrice),
+      style: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: theme.colorScheme.primary,
+      ),
+    );
+    final stock = Text(
+      '${product.stockQty} ${AppStrings.of(context).tr('inStockLabel')}',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: product.isLowStock
+            ? Colors.orange
+            : product.isOutOfStock
+                ? Colors.red
+                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+      ),
+    );
     return GestureDetector(
       onTap: () => context.push('/products/${product.id}'),
       child: Container(
@@ -237,64 +260,61 @@ class _ProductListTile extends ConsumerWidget {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final beside = constraints.maxWidth >=
+              MediaQuery.textScalerOf(context).scale(_minWidthBeside);
+          return Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ThinIcon(
+                  tabler.Package.new,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  size: 24,
+                ),
               ),
-              child: ThinIcon(
-                tabler.Package.new,
-                color: theme.colorScheme.primary.withOpacity(0.5),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    product.sku,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
-                  ),
-                ],
+                    Text(
+                      product.sku,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    if (!beside)
+                      Wrap(
+                        spacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          // An amount is shrunk to fit, never cut.
+                          FittedBox(fit: BoxFit.scaleDown, child: price),
+                          stock,
+                        ],
+                      ),
+                  ],
+                ),
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  CurrencyFormatter.format(product.sellingPrice),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
-                  ),
+              if (beside)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [price, stock],
                 ),
-                Text(
-                  '${product.stockQty} ${AppStrings.of(context).tr('inStockLabel')}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: product.isLowStock
-                        ? Colors.orange
-                        : product.isOutOfStock
-                            ? Colors.red
-                            : theme.colorScheme.onSurface.withOpacity(0.5),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }

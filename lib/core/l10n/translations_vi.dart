@@ -87,6 +87,9 @@ const translationsVi = <String, String>{
   'stock': 'Kho',
   'option': 'Tùy chọn',
   'attributeName': 'Tên thuộc tính',
+  'created': 'Ngày tạo',
+  'lastUpdated': 'Cập nhật lần cuối',
+  'noVariantsHint': 'Chưa có biến thể. Thêm thuộc tính như Kích cỡ, Màu sắc, v.v.',
 
   // Orders
   'addOrder': 'Đơn hàng mới',
@@ -127,6 +130,7 @@ const translationsVi = <String, String>{
   'noProductsFoundPicker': 'Không tìm thấy sản phẩm',
   'tapToAddProducts': 'Nhấn để thêm sản phẩm',
   'onlyXInStock': 'Only \$stock in stock for \$name',
+  'anySpecialInstructions': 'Hướng dẫn đặc biệt (nếu có)...',
 
   // Order status
   'pending': 'Chờ xử lý',
@@ -134,6 +138,8 @@ const translationsVi = <String, String>{
   'shipped': 'Đã gửi hàng',
   'completed': 'Hoàn thành',
   'cancelled': 'Đã hủy',
+  'active': 'Đang xử lý',
+  'placed': 'Đã đặt',
 
   // Payment status
   'unpaid': 'Chưa thanh toán',
@@ -164,6 +170,9 @@ const translationsVi = <String, String>{
   'orderNotFound': 'Không tìm thấy đơn hàng',
   'pdfSavedTo': 'PDF đã lưu tại',
   'markAsDelivered': 'Đánh dấu đã giao',
+  'confirmOrder': 'Xác nhận đơn hàng',
+  'markAsShipped': 'Đánh dấu đã gửi hàng',
+  'markAsCompleted': 'Đánh dấu hoàn thành',
 
   // Customers
   'addCustomer': 'Thêm khách hàng',
@@ -179,6 +188,7 @@ const translationsVi = <String, String>{
   'deleteCustomer': 'Xóa khách hàng',
   'failedToSaveCustomer': 'Lưu khách hàng thất bại. Vui lòng thử lại.',
   'outstanding': 'Còn nợ',
+  'memberSince': 'Khách hàng từ',
 
   // Inventory
   'stockAdjustment': 'Điều chỉnh kho',
@@ -203,6 +213,7 @@ const translationsVi = <String, String>{
   'supplierOptional': 'Nhà cung cấp (tùy chọn)',
   'totalStock': 'tổng kho',
   'inStockLabel': 'còn hàng',
+  'allCategories': 'Tất cả danh mục',
 
   // Expenses
   'addExpense': 'Thêm chi phí',
@@ -283,6 +294,7 @@ const translationsVi = <String, String>{
   'supplierAdded': 'Đã thêm nhà cung cấp!',
   'noSuppliersFound': 'Không tìm thấy nhà cung cấp',
   'addSuppliersFromMenu': 'Thêm nhà cung cấp từ menu Nhà cung cấp',
+  'selectSupplier': 'Chọn nhà cung cấp',
 
   // Purchases
   'purchaseNotFound': 'Không tìm thấy đơn mua',
@@ -299,6 +311,8 @@ const translationsVi = <String, String>{
   'payment': 'Thanh toán',
   'unitCost': 'Giá đơn vị',
   'tapToSelectSupplier': 'Nhấn để chọn nhà cung cấp',
+  'allProducts': 'Tất cả sản phẩm',
+  'supplierProductsOnly': 'Chỉ {name}',
 
   // Cash Register
   'registerOpen': 'Quầy đang mở',
@@ -348,6 +362,16 @@ const translationsVi = <String, String>{
   'approveAndReceiveItems': 'Duyệt và nhận hàng',
   'processRefund': 'Xử lý hoàn tiền',
   'refundProcessed': 'Đã xử lý hoàn tiền',
+  'requested': 'Đã yêu cầu',
+  'approved': 'Đã duyệt',
+  'received': 'Đã nhận',
+  'itemsReceived': 'Đã nhận hàng',
+  'refunded': 'Đã hoàn tiền',
+  'rejected': 'Đã từ chối',
+  'none': 'Không có',
+  'approve': 'Duyệt',
+  'approveReturnConfirm': 'Duyệt yêu cầu trả hàng này và đánh dấu đã nhận hàng? Kho sẽ được khôi phục.',
+  'returnRejected': 'Trả hàng bị từ chối',
 
   // Categories
   'addCategory': 'Thêm danh mục',
@@ -386,6 +410,8 @@ const translationsVi = <String, String>{
   'update': 'Cập nhật',
   'close': 'Đóng',
   'open': 'Mở',
+  'back': 'Quay lại',
+  'sort': 'Sắp xếp',
 
   // Delivery
   'delivery': 'Giao hàng',
@@ -440,6 +466,16 @@ const translationsVi = <String, String>{
   'sidebarPosition': 'Vị trí thanh bên',
   'left': 'Trái',
   'right': 'Phải',
+
+  // Display size (Settings → Display)
+  'display': 'Hiển thị',
+  'displaySize': 'Kích thước hiển thị',
+  'displaySizeDesc': 'Thu nhỏ hoặc phóng to mọi thứ trên màn hình',
+  'textSize': 'Cỡ chữ',
+  'textSizeDesc': 'Chỉ thay đổi cỡ chữ',
+  'followPhoneTextSize': 'Theo cài đặt của điện thoại',
+  'phoneTextSize': 'Điện thoại: {value}',
+  'preview': 'Xem trước',
 
   // Auth gate
   'createPin': 'Tạo mã PIN 4 chữ số',

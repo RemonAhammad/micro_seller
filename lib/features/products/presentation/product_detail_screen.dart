@@ -106,30 +106,41 @@ class ProductDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'SKU: ${product.sku}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      // The stock badge sits beside the name, or under it
+                      // once large text on a narrow layout would leave the
+                      // name too little room for its words.
+                      LayoutBuilder(builder: (context, constraints) {
+                        final beside = constraints.maxWidth >=
+                            MediaQuery.textScalerOf(context).scale(224);
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    product.name,
+                                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'SKU: ${product.sku}',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  if (!beside) ...[
+                                    const SizedBox(height: 8),
+                                    StockBadge(product: product),
+                                  ],
+                                ],
+                              ),
                             ),
-                          ),
-                          StockBadge(product: product),
-                        ],
-                      ),
+                            if (beside) StockBadge(product: product),
+                          ],
+                        );
+                      }),
                       if (product.category.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Container(
@@ -210,27 +221,39 @@ class ProductDetailScreen extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            c.displayLabel,
-                                            style: theme.textTheme.bodyMedium?.copyWith(
-                                              fontWeight: FontWeight.w600,
+                                    // A long SKU wraps in up to 40% of the
+                                    // row instead of pushing the label out.
+                                    LayoutBuilder(
+                                      builder: (context, constraints) => Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              c.displayLabel,
+                                              style: theme.textTheme.bodyMedium?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        if (c.sku.isNotEmpty)
-                                          Text(
-                                            c.sku,
-                                            style: theme.textTheme.bodySmall?.copyWith(
-                                              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                          if (c.sku.isNotEmpty)
+                                            ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                  maxWidth: constraints.maxWidth * 0.4),
+                                              child: Text(
+                                                c.sku,
+                                                style: theme.textTheme.bodySmall?.copyWith(
+                                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                                ),
+                                                textAlign: TextAlign.end,
+                                              ),
                                             ),
-                                          ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
-                                    Row(
+                                    // The price adjustment moves to its own
+                                    // line when the two don't fit side by side.
+                                    Wrap(
+                                      spacing: 16,
                                       children: [
                                         Text(
                                           '${s.stock}: ${c.stockQty}',
@@ -241,7 +264,6 @@ class ProductDetailScreen extends ConsumerWidget {
                                           ),
                                         ),
                                         if (c.priceAdjustment != 0) ...[
-                                          const SizedBox(width: 16),
                                           Text(
                                             'Price: ${c.priceAdjustment > 0 ? '+' : ''}${CurrencyFormatter.format(c.priceAdjustment)}',
                                             style: theme.textTheme.bodySmall?.copyWith(
@@ -265,7 +287,8 @@ class ProductDetailScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         _InfoCard(
                           children: [
-                            _InfoRow(s.qrBarcode, product.qrCode),
+                            _InfoRow(s.qrBarcode, product.qrCode,
+                                wrapValue: true),
                           ],
                         ),
                       ],
@@ -343,30 +366,53 @@ class _InfoRow extends StatelessWidget {
   final Color? valueColor;
   final bool isBold;
 
-  const _InfoRow(this.label, this.value, {this.valueColor, this.isBold = false});
+  /// Free text such as a scanned code: wraps instead of shrinking to fit.
+  final bool wrapValue;
+
+  const _InfoRow(this.label, this.value,
+      {this.valueColor, this.isBold = false, this.wrapValue = false});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final valueText = Text(
+      value,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+        color: valueColor,
+      ),
+      textAlign: TextAlign.end,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+      // The value keeps its own width up to 60% of the row (an amount past
+      // that is shrunk to fit, never cut; free text wraps in half the row);
+      // the label wraps in the rest.
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
             ),
-          ),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-              color: valueColor,
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                  maxWidth: constraints.maxWidth * (wrapValue ? 0.5 : 0.6)),
+              child: wrapValue
+                  ? valueText
+                  : FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: valueText,
+                    ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

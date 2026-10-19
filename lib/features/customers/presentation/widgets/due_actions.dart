@@ -271,6 +271,8 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
             errorText: tooMuch
                 ? s.amountExceedsDue(CurrencyFormatter.format(_totalDue))
                 : null,
+            // Wraps rather than cutting off the amount it names.
+            errorMaxLines: 3,
             suffixIcon: TextButton(
               onPressed: () => setState(() =>
                   _amountCtrl.text = _totalDue.toStringAsFixed(2)),
@@ -344,16 +346,38 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
               color: settled ? AppColors.paymentPaid : AppColors.paymentPartial,
             ),
             const SizedBox(width: 8),
-            Expanded(child: Text(d.order.orderNumber)),
-            Text(CurrencyFormatter.format(part),
-                style: const TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(width: 8),
-            Text(
-              settled
-                  ? s.paidInFull
-                  : s.amountLeft(CurrencyFormatter.format(left)),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            // The order number at the start and the amounts at the end, as
+            // a Row with a spacer; the amounts wrap under the order number
+            // (and "left" under the amount) when they don't fit beside it.
+            Expanded(
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                children: [
+                  Text(d.order.orderNumber),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(CurrencyFormatter.format(part),
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                      Text(
+                        settled
+                            ? s.paidInFull
+                            : s.amountLeft(CurrencyFormatter.format(left)),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -384,24 +408,39 @@ class PaymentHistoryTile extends StatelessWidget {
       if (payment.transactionId.isNotEmpty) payment.transactionId,
     ].join(' · ');
 
-    return ListTile(
-      onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: color.withValues(alpha: 0.12),
-        child: ThinIcon(
-          payment.isRefund ? tabler.ArrowBackUp.new : tabler.Cash.new,
-          color: color,
-          size: 20,
+    // ListTile gives the trailing amount all the width it asks for and the
+    // title what's left: a big amount at a large text size squeezed the
+    // title into a sliver that broke "Payment" mid-word. The amount gets at
+    // most 40% of the row and shrinks beyond that; the title ends in an
+    // ellipsis rather than breaking.
+    return LayoutBuilder(
+      builder: (context, constraints) => ListTile(
+        onTap: onTap,
+        contentPadding: EdgeInsets.zero,
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.12),
+          child: ThinIcon(
+            payment.isRefund ? tabler.ArrowBackUp.new : tabler.Cash.new,
+            color: color,
+            size: 20,
+          ),
         ),
-      ),
-      title: Text(payment.isRefund ? s.refund : s.payment,
-          style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
-      trailing: Text(
-        '${payment.isRefund ? '−' : '+'}'
-        '${CurrencyFormatter.format(payment.amount.abs())}',
-        style: TextStyle(fontWeight: FontWeight.w800, color: color),
+        title: Text(payment.isRefund ? s.refund : s.payment,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
+        trailing: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.4),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${payment.isRefund ? '−' : '+'}'
+              '${CurrencyFormatter.format(payment.amount.abs())}',
+              style: TextStyle(fontWeight: FontWeight.w800, color: color),
+            ),
+          ),
+        ),
       ),
     );
   }

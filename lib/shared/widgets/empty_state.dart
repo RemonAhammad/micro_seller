@@ -22,7 +22,10 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Center(
-      child: Padding(
+      // Scrolls when it doesn't fit (a large text size, or the keyboard up
+      // under a search field) instead of overflowing.
+      child: SingleChildScrollView(
+        primary: false,
         padding: const EdgeInsets.all(48),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -64,7 +67,12 @@ class EmptyState extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onAction,
                 icon: const ThinIcon(tabler.Plus.new),
-                label: Text(actionLabel!),
+                // Kept on one line, shrunk if it's wider than the screen
+                // allows, rather than broken in the middle of a word.
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(actionLabel!),
+                ),
               ),
             ],
           ],

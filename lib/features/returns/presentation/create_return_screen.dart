@@ -293,14 +293,21 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
         setState(() => _returnQtys[idx] = value - 1);
         _updateRefundAmount();
       }),
+      // A 4-digit quantity or a large text size shrinks to fit the slot
+      // rather than wrapping mid-number.
       SizedBox(
         width: 32,
-        child: Text('$value',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: value > 0 ? cs.onSurface : cs.onSurfaceVariant,
-            )),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text('$value',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: value > 0 ? cs.onSurface : cs.onSurfaceVariant,
+                )),
+          ),
+        ),
       ),
       btn(tabler.Plus.new, value < max, () {
         setState(() => _returnQtys[idx] = value + 1);

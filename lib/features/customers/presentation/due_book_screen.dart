@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +15,7 @@ import '../../../data/models/customer.dart';
 import '../../../data/services/dues_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -412,9 +415,14 @@ class _SortButton extends StatelessWidget {
           children: [
             ThinIcon(_sortIcon(value), size: 18, color: cs.primary),
             const SizedBox(width: 6),
-            Text(
-              '${s.sortBy}: ${_sortLabel(context, value)}',
-              style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600),
+            // A long sort name, a narrow layout or large text wraps the
+            // label (the pill grows taller) instead of overflowing.
+            Flexible(
+              child: Text(
+                '${s.sortBy}: ${_sortLabel(context, value)}',
+                style:
+                    TextStyle(color: cs.primary, fontWeight: FontWeight.w600),
+              ),
             ),
             ThinIcon(tabler.CaretDown.new, color: cs.primary),
           ],
@@ -573,25 +581,20 @@ class _FilterSheetState extends State<_FilterSheet> {
           onChanged: (v) => _set(_f.copyWith(phoneOnly: v)),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  _minCtrl.clear();
-                  _set(const _DueFilters());
-                },
-                child: Text(s.clearFilters),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(s.done),
-              ),
-            ),
-          ],
+        // Side by side at equal widths; stacked when a label's word wouldn't
+        // fit its half (a narrow layout, large text).
+        ButtonPair(
+          first: OutlinedButton(
+            onPressed: () {
+              _minCtrl.clear();
+              _set(const _DueFilters());
+            },
+            child: Text(s.clearFilters),
+          ),
+          second: FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(s.done),
+          ),
         ),
       ],
     );
@@ -624,56 +627,102 @@ class _SummaryCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(s.totalReceivable,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                const SizedBox(height: 4),
-                Text(
-                  CurrencyFormatter.format(total),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(s.customersOwing(dues.length),
-                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
-              ],
-            ),
-          ),
-          if (overdue > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
+          children: [
+            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(s.overdue30Days,
+                  Text(s.totalReceivable,
                       style:
-                          const TextStyle(color: Colors.white70, fontSize: 11)),
-                  Text(
-                    CurrencyFormatter.formatCompact(overdue),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
+                          const TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  // Shrinks to fit rather than wrapping mid-number.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      CurrencyFormatter.format(total),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(s.customersOwing(dues.length),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12)),
                 ],
               ),
             ),
-        ],
+            if (overdue > 0)
+              // At most 45% of the card, so the total keeps the room it
+              // needs; its label wraps and its amount shrinks instead.
+              ConstrainedBox(
+                constraints:
+                    BoxConstraints(maxWidth: constraints.maxWidth * 0.45),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(s.overdue30Days,
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 11)),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          CurrencyFormatter.formatCompact(overdue),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// The least a due card's Collect / Remind pair is scaled to stay on one
+/// line; needing more, Remind wraps under Collect instead.
+const _kActionsMinScale = 0.97;
+
+/// What [text] needs drawn by a [Text] here with [style]: the width of its
+/// longest word, and of the whole text on one line (rounded up).
+({double word, double line}) _textWidths(
+    BuildContext context, String text, TextStyle? style) {
+  var effective = DefaultTextStyle.of(context).style.merge(style);
+  if (MediaQuery.boldTextOf(context)) {
+    effective = effective.merge(const TextStyle(fontWeight: FontWeight.bold));
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: effective),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    locale: Localizations.maybeLocaleOf(context),
+  )..layout();
+  final widths = (
+    word: painter.minIntrinsicWidth.ceilToDouble(),
+    line: painter.maxIntrinsicWidth.ceilToDouble(),
+  );
+  painter.dispose();
+  return widths;
 }
 
 class _DueCard extends ConsumerWidget {
@@ -704,84 +753,137 @@ class _DueCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(customer.name,
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700)),
-                        if (customer.phone.isNotEmpty)
-                          Text(customer.phone,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.6))),
-                        if (due.lastPaymentAt != null)
-                          Text(
-                            s.lastPaid(DateFormatter.timeAgo(due.lastPaymentAt!)),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.5)),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          CurrencyFormatter.format(due.totalDue),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: AppColors.paymentUnpaid,
-                          ),
+              LayoutBuilder(builder: (context, constraints) {
+                final amount = CurrencyFormatter.format(due.totalDue);
+                final age = s.daysOutstanding(days);
+                final lastPaid = due.lastPaymentAt == null
+                    ? null
+                    : s.lastPaid(DateFormatter.timeAgo(due.lastPaymentAt!));
+                final nameStyle = theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700);
+                final phoneStyle = theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6));
+                final paidStyle = theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5));
+                const amountStyle = TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: AppColors.paymentUnpaid,
+                );
+                final ageStyle = TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: ageColor,
+                );
+                // The amount column keeps its own width while the name
+                // column beside it still fits its longest word, as it always
+                // did. Past that (a huge amount, a narrow layout, large text)
+                // it takes at most 45% of the row, so the name keeps room: its
+                // amount shrinks and its age label wraps.
+                final amountWidth = math.max(
+                        _textWidths(context, amount, amountStyle).line,
+                        _textWidths(context, age, ageStyle).line + 16) +
+                    8;
+                final nameWidth = [
+                  _textWidths(context, customer.name, nameStyle).word,
+                  if (customer.phone.isNotEmpty)
+                    _textWidths(context, customer.phone, phoneStyle).word,
+                  if (lastPaid != null)
+                    _textWidths(context, lastPaid, paidStyle).word,
+                ].reduce(math.max);
+                final fits = amountWidth + nameWidth <= constraints.maxWidth;
+
+                Widget amountText = Text(amount, style: amountStyle);
+                if (!fits) {
+                  amountText =
+                      FittedBox(fit: BoxFit.scaleDown, child: amountText);
+                }
+                Widget amountColumn = Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      amountText,
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: ageColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: ageColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            s.daysOutstanding(days),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: ageColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                        child: Text(age, style: ageStyle),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+                if (!fits) {
+                  amountColumn = ConstrainedBox(
+                    constraints:
+                        BoxConstraints(maxWidth: constraints.maxWidth * 0.45),
+                    child: amountColumn,
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(customer.name, style: nameStyle),
+                          if (customer.phone.isNotEmpty)
+                            Text(customer.phone, style: phoneStyle),
+                          if (lastPaid != null) Text(lastPaid, style: paidStyle),
+                        ],
+                      ),
+                    ),
+                    amountColumn,
+                  ],
+                );
+              }),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  TextButton.icon(
-                    onPressed: () =>
-                        showCollectPaymentSheet(
-                  context, customer, due.orderDues, due.totalDue),
-                    icon: const ThinIcon(tabler.Cash.new, size: 18),
-                    label: Text(s.collect),
+                  // Collect and Remind side by side at their own widths, as
+                  // always. A few pixels short (360 dp at 100% text is under
+                  // 1 px short), the pair scales down a hair; short of more
+                  // (a narrow layout, large text), Remind moves under
+                  // Collect.
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                              maxWidth:
+                                  constraints.maxWidth / _kActionsMinScale),
+                          child: Wrap(
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => showCollectPaymentSheet(
+                                    context,
+                                    customer,
+                                    due.orderDues,
+                                    due.totalDue),
+                                icon:
+                                    const ThinIcon(tabler.Cash.new, size: 18),
+                                label: Text(s.collect),
+                              ),
+                              TextButton.icon(
+                                onPressed: () => sendDueReminder(context, ref,
+                                    customer, due.orderDues, due.totalDue),
+                                icon: const ThinIcon(tabler.MessageCircle.new,
+                                    size: 18),
+                                label: Text(s.remind),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  TextButton.icon(
-                    onPressed: () =>
-                        sendDueReminder(
-                  context, ref, customer, due.orderDues, due.totalDue),
-                    icon: const ThinIcon(tabler.MessageCircle.new, size: 18),
-                    label: Text(s.remind),
-                  ),
-                  const Spacer(),
                   if (customer.phone.isNotEmpty)
                     IconButton(
                       tooltip: s.callCustomer,

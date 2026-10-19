@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../dashboard/presentation/widgets/sales_chart.dart' show GridLineCallback;
+import '../../../dashboard/presentation/widgets/sales_chart.dart'
+    show GridLineCallback, axisTitleReserve;
 import '../../../dashboard/presentation/widgets/stat_card.dart';
 
 /// Shared building blocks for the four Reports tabs.
@@ -30,6 +31,9 @@ class ReportSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final badgeStyle = theme.textTheme.labelSmall?.copyWith(
+        color: cs.onSurface.withValues(alpha: 0.5),
+        fontStyle: FontStyle.italic);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -46,34 +50,50 @@ class ReportSectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(7),
+          LayoutBuilder(builder: (context, constraints) {
+            // The badge ends the title row while it leaves the title a
+            // third of it (the icon's 36 px aside). A longer one (narrow
+            // screen, large text) goes under the title instead of
+            // squeezing it to a letter a line or overflowing.
+            final badgeText =
+                badge == null ? null : Text(badge!, style: badgeStyle);
+            final beside = badge == null ||
+                measureTextWidth(context, badge!, badgeStyle) <=
+                    (constraints.maxWidth - 36) * 2 / 3;
+            final header = Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Center(child: ThinIcon(icon, color: color, size: 16)),
                 ),
-                child: Center(child: ThinIcon(icon, color: color, size: 16)),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700, fontSize: 13),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
                 ),
-              ),
-              if (badge != null)
-                Text(
-                  badge!,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.5),
-                      fontStyle: FontStyle.italic),
+                if (beside && badgeText != null) badgeText,
+              ],
+            );
+            if (beside) return header;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                header,
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 36, top: 2),
+                  child: badgeText,
                 ),
-            ],
-          ),
+              ],
+            );
+          }),
           const SizedBox(height: 12),
           child,
         ],
@@ -95,6 +115,7 @@ class KpiGrid extends StatelessWidget {
       final cols = (c.maxWidth / 170).floor().clamp(2, 4);
       const spacing = 10.0;
       final w = (c.maxWidth - spacing * (cols - 1)) / cols;
+      final h = statCardHeight(MediaQuery.textScalerOf(context));
       return Wrap(
         spacing: spacing,
         runSpacing: spacing,
@@ -102,7 +123,7 @@ class KpiGrid extends StatelessWidget {
           for (final i in items)
             SizedBox(
               width: w,
-              height: 110,
+              height: h,
               child: StatCard(
                 label: i.label,
                 value: i.value,
@@ -127,41 +148,47 @@ class PnlTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Column(
-      children: [
-        for (final r in rows) ...[
-          if (r.strong) Divider(height: 12, color: cs.onSurface.withValues(alpha: 0.1)),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    r.label,
-                    style: TextStyle(
-                      fontWeight: r.strong ? FontWeight.w700 : FontWeight.w400,
-                      color: r.strong ? cs.onSurface : cs.onSurface.withValues(alpha: 0.75),
+    return LayoutBuilder(
+      builder: (context, constraints) => Column(
+        children: [
+          for (final r in rows) ...[
+            if (r.strong) Divider(height: 12, color: cs.onSurface.withValues(alpha: 0.1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      r.label,
+                      style: TextStyle(
+                        fontWeight: r.strong ? FontWeight.w700 : FontWeight.w400,
+                        color: r.strong ? cs.onSurface : cs.onSurface.withValues(alpha: 0.75),
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  '${r.deduct ? '− ' : ''}${CurrencyFormatter.format(r.amount.abs())}',
-                  style: TextStyle(
-                    fontWeight: r.strong ? FontWeight.w800 : FontWeight.w600,
-                    color: r.deduct
-                        ? AppColors.paymentUnpaid
-                        : r.strong && r.amount < 0
+                  _Amount(
+                    maxWidth: constraints.maxWidth * 0.6,
+                    child: Text(
+                      '${r.deduct ? '− ' : ''}${CurrencyFormatter.format(r.amount.abs())}',
+                      style: TextStyle(
+                        fontWeight: r.strong ? FontWeight.w800 : FontWeight.w600,
+                        color: r.deduct
                             ? AppColors.paymentUnpaid
-                            : r.strong
-                                ? AppColors.paymentPaid
-                                : cs.onSurface,
+                            : r.strong && r.amount < 0
+                                ? AppColors.paymentUnpaid
+                                : r.strong
+                                    ? AppColors.paymentPaid
+                                    : cs.onSurface,
+                      ),
+                      maxLines: 1,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -188,55 +215,81 @@ class BreakdownBars extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final items = entries.entries.toList();
     final max = items.fold<double>(0, (m, e) => e.value.abs() > m ? e.value.abs() : m);
-    return Column(
-      children: [
-        for (var i = 0; i < items.length; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                if (ranked)
-                  SizedBox(
-                    width: 22,
-                    child: Text(
-                      '${i + 1}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: i < 3 ? color : cs.onSurface.withValues(alpha: 0.4),
-                      ),
-                    ),
-                  ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(items[i].key,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 3),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
-                        child: LinearProgressIndicator(
-                          value: max > 0 ? items[i].value.abs() / max : 0,
-                          minHeight: 4,
-                          backgroundColor: cs.onSurface.withValues(alpha: 0.06),
-                          valueColor: AlwaysStoppedAnimation(color.withValues(alpha: 0.7)),
+    return LayoutBuilder(
+      builder: (context, constraints) => Column(
+        children: [
+          for (var i = 0; i < items.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  if (ranked)
+                    SizedBox(
+                      width: 22,
+                      child: Text(
+                        '${i + 1}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: i < 3 ? color : cs.onSurface.withValues(alpha: 0.4),
                         ),
                       ),
-                    ],
+                    ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(items[i].key,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 3),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: max > 0 ? items[i].value.abs() / max : 0,
+                            minHeight: 4,
+                            backgroundColor: cs.onSurface.withValues(alpha: 0.06),
+                            valueColor: AlwaysStoppedAnimation(color.withValues(alpha: 0.7)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(format(items[i].value),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-              ],
+                  const SizedBox(width: 10),
+                  _Amount(
+                    maxWidth: constraints.maxWidth * 0.45,
+                    child: Text(format(items[i].value),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                        maxLines: 1),
+                  ),
+                ],
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
+}
+
+/// An amount at the end of a row: its own width while that's under
+/// [maxWidth], shrunk to fit beyond it (narrow screen, large text), so the
+/// label keeps room and the number is never cut off or ellipsized.
+class _Amount extends StatelessWidget {
+  const _Amount({required this.maxWidth, required this.child});
+
+  final double maxWidth;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerEnd,
+          child: child,
+        ),
+      );
 }
 
 /// Net sales per day (or month) as bars; returns can make a bucket negative.
@@ -320,7 +373,10 @@ class _NetSalesChartState extends State<NetSalesChart> {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 22,
+                reservedSize: axisTitleReserve(
+                    MediaQuery.textScalerOf(context),
+                    fontSize: 9,
+                    padding: 4),
                 getTitlesWidget: _bottomTitle,
               ),
             ),

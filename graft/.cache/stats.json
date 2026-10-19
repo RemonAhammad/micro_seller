@@ -1,6 +1,6 @@
 {
-  "nodeCount": 4556,
-  "edgeCount": 843,
+  "nodeCount": 5104,
+  "edgeCount": 1212,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 4556,
+  "totalCount": 5104,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-10-18T15:01:24.185Z",
-  "lastFile": "CLAUDE.md"
+  "syncedAt": "2026-10-19T10:00:37.724Z",
+  "lastFile": "sidebar_order_screen.dart"
 }

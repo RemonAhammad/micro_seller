@@ -130,6 +130,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       } catch (_) {}
     }
 
+    // The supplier lookup above is async: the form may have closed since.
+    if (!mounted) return;
     setState(() {
       _imagePath = product.imagePath.isNotEmpty ? product.imagePath : null;
 
@@ -715,36 +717,33 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // ── Pricing ────────────────────────────────────────────────────
                     const _SectionLabel('Pricing'),
                     const SizedBox(height: 12),
-                    Row(
+                    _FieldRow(
+                      chrome: _kAppFieldChrome,
+                      spacing: 12,
                       children: [
-                        Expanded(
-                          child: AppTextField(
-                            label: s.sellingPrice,
-                            controller: _sellingPriceCtrl,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                            ],
-                            validator: (v) =>
-                                Validators.positiveNumber(v, 'Selling price'),
-                            textInputAction: TextInputAction.next,
-                          ),
+                        AppTextField(
+                          label: s.sellingPrice,
+                          controller: _sellingPriceCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                          ],
+                          validator: (v) =>
+                              Validators.positiveNumber(v, 'Selling price'),
+                          textInputAction: TextInputAction.next,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AppTextField(
-                            label: s.costPrice,
-                            controller: _costPriceCtrl,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                            ],
-                            validator: (v) => Validators.costPriceNotExceedingSelling(
-                                v, _sellingPriceCtrl.text),
-                            textInputAction: TextInputAction.next,
-                          ),
+                        AppTextField(
+                          label: s.costPrice,
+                          controller: _costPriceCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                          ],
+                          validator: (v) => Validators.costPriceNotExceedingSelling(
+                              v, _sellingPriceCtrl.text),
+                          textInputAction: TextInputAction.next,
                         ),
                       ],
                     ),
@@ -753,49 +752,52 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // ── Inventory ──────────────────────────────────────────────────
                     const _SectionLabel('Inventory'),
                     const SizedBox(height: 12),
-                    Row(
+                    _FieldRow(
+                      chrome: _kAppFieldChrome,
+                      spacing: 12,
                       children: [
-                        Expanded(
-                          child: AppTextField(
-                            label: s.stockQuantity,
-                            controller: _stockCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
-                            ],
-                            validator: (v) =>
-                                Validators.nonNegativeInt(v, 'Stock quantity'),
-                            textInputAction: TextInputAction.next,
-                          ),
+                        AppTextField(
+                          label: s.stockQuantity,
+                          controller: _stockCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          validator: (v) =>
+                              Validators.nonNegativeInt(v, 'Stock quantity'),
+                          textInputAction: TextInputAction.next,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AppTextField(
-                            label: s.lowStockThreshold,
-                            controller: _thresholdCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
-                            ],
-                            textInputAction: TextInputAction.done,
-                          ),
+                        AppTextField(
+                          label: s.lowStockThreshold,
+                          controller: _thresholdCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          textInputAction: TextInputAction.done,
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
 
                     // ── Variant Attributes ─────────────────────────────────────────
-                    Row(
-                      children: [
-                        _SectionLabel(s.variantAttributes),
-                        const Spacer(),
-                        if (_attributes.length < 3)
-                          TextButton.icon(
-                            onPressed: _addAttribute,
-                            icon: const ThinIcon(tabler.Plus.new, size: 16),
-                            label: Text(s.add, style: const TextStyle(fontSize: 12)),
-                          ),
-                      ],
+                    // The button moves under the label when the two don't fit
+                    // on one line (large text, a narrow layout).
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _SectionLabel(s.variantAttributes),
+                          if (_attributes.length < 3)
+                            TextButton.icon(
+                              onPressed: _addAttribute,
+                              icon: const ThinIcon(tabler.Plus.new, size: 16),
+                              label: Text(s.add, style: const TextStyle(fontSize: 12)),
+                            ),
+                        ],
+                      ),
                     ),
                     if (_attributes.isEmpty)
                       Padding(
@@ -860,7 +862,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     final oi = optEntry.key;
                                     return SizedBox(
                                       width: 100,
-                                      height: 36,
                                       child: TextField(
                                         controller: attr.optionCtrls[oi],
                                         decoration: InputDecoration(
@@ -868,6 +869,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                           isDense: true,
                                           contentPadding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 8),
+                                          // 36 tall at the default text size
+                                          // and taller with larger text,
+                                          // instead of clipping it.
+                                          constraints:
+                                              const BoxConstraints(minHeight: 36),
                                           suffixIcon: GestureDetector(
                                             onTap: () => _removeOption(i, oi),
                                             child: ThinIcon(tabler.X.new,
@@ -912,17 +918,21 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     // ── Combinations ───────────────────────────────────────────────
                     if (combinations.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          _SectionLabel(
-                              '${s.combinations} (${combinations.length})'),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: _regenerateCombinations,
-                            child: Text(s.regenerate,
-                                style: const TextStyle(fontSize: 11)),
-                          ),
-                        ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            _SectionLabel(
+                                '${s.combinations} (${combinations.length})'),
+                            TextButton(
+                              onPressed: _regenerateCombinations,
+                              child: Text(s.regenerate,
+                                  style: const TextStyle(fontSize: 11)),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 4),
                       // Bulk actions
@@ -1071,46 +1081,40 @@ class _CombinationRowState extends State<_CombinationRow> {
             ),
             if (combo.isActive) ...[
               const SizedBox(height: 6),
-              Row(
+              _FieldRow(
+                chrome: _kDenseFieldChrome,
+                spacing: 8,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: s.stock,
-                        isDense: true,
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      controller: combo.stockCtrl,
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: s.stock,
+                      isDense: true,
                     ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    controller: combo.stockCtrl,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: s.priceAdjustment,
-                        isDense: true,
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true, signed: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^-?\d*\.?\d*')),
-                      ],
-                      controller: combo.priceCtrl,
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: s.priceAdjustment,
+                      isDense: true,
                     ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true, signed: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'^-?\d*\.?\d*')),
+                    ],
+                    controller: combo.priceCtrl,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: s.sku,
-                        isDense: true,
-                      ),
-                      controller: combo.skuCtrl,
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: s.sku,
+                      isDense: true,
                     ),
+                    controller: combo.skuCtrl,
                   ),
                 ],
               ),
@@ -1168,6 +1172,65 @@ class _CategoryChips extends ConsumerWidget {
 }
 
 // ─── Helper Widgets ──────────────────────────────────────────────────────────
+
+/// What an [AppTextField] takes from its width before its label: its start
+/// padding (16), the paste button (48) and the label's gap in the
+/// outline (2 × 4).
+const _kAppFieldChrome = 72.0;
+
+/// The same for a plain dense field: its padding (2 × 16) and the gap.
+const _kDenseFieldChrome = 40.0;
+
+/// Form fields side by side, as before, while each keeps room for about
+/// three letters of its label (3 em of a field's 16 px text, at the current
+/// text size) beside its [chrome]. Fewer fit on a narrow layout or with
+/// large text: the rest wrap onto further rows, instead of every label
+/// shrinking to a letter and an ellipsis.
+class _FieldRow extends StatelessWidget {
+  final List<Widget> children;
+
+  /// What a field takes from its width before its label: padding, suffix
+  /// buttons and the label's gap in the outline.
+  final double chrome;
+  final double spacing;
+
+  const _FieldRow({
+    required this.children,
+    required this.chrome,
+    required this.spacing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final minWidth = chrome + MediaQuery.textScalerOf(context).scale(48);
+    return LayoutBuilder(builder: (context, constraints) {
+      double widthFor(int perRow) =>
+          (constraints.maxWidth - spacing * (perRow - 1)) / perRow;
+      var perRow = children.length;
+      while (perRow > 1 && widthFor(perRow) < minWidth) {
+        perRow--;
+      }
+      if (perRow == children.length) {
+        return Row(
+          children: [
+            for (var i = 0; i < children.length; i++) ...[
+              if (i > 0) SizedBox(width: spacing),
+              Expanded(child: children[i]),
+            ],
+          ],
+        );
+      }
+      return Wrap(
+        spacing: spacing,
+        runSpacing: spacing,
+        children: [
+          for (final child in children)
+            SizedBox(width: widthFor(perRow), child: child),
+        ],
+      );
+    });
+  }
+}
 
 class _SectionLabel extends StatelessWidget {
   final String text;

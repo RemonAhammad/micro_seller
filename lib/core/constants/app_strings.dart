@@ -433,6 +433,9 @@ class _L10nStrings {
   String get payment => _l10n.tr('payment');
   String get unitCost => _l10n.tr('unitCost');
   String get tapToSelectSupplier => _l10n.tr('tapToSelectSupplier');
+  String get allProducts => _l10n.tr('allProducts');
+  String supplierProductsOnly(String name) =>
+      _l10n.tr('supplierProductsOnly').replaceAll('{name}', name);
   String get registerOpen => _l10n.tr('registerOpen');
   String get noRegisterOpen => _l10n.tr('noRegisterOpen');
   String get openRegisterDesc => _l10n.tr('openRegisterDesc');
@@ -498,6 +501,17 @@ class _L10nStrings {
   String get sidebarPosition => _l10n.tr('sidebarPosition');
   String get left => _l10n.tr('left');
   String get right => _l10n.tr('right');
+
+  // Display size
+  String get display => _l10n.tr('display');
+  String get displaySize => _l10n.tr('displaySize');
+  String get displaySizeDesc => _l10n.tr('displaySizeDesc');
+  String get textSize => _l10n.tr('textSize');
+  String get textSizeDesc => _l10n.tr('textSizeDesc');
+  String get followPhoneTextSize => _l10n.tr('followPhoneTextSize');
+  String phoneTextSize(String value) =>
+      _l10n.tr('phoneTextSize').replaceAll('{value}', value);
+  String get preview => _l10n.tr('preview');
   String get expense => _l10n.tr('expense');
   String get product => _l10n.tr('product');
   String get order => _l10n.tr('order');
