@@ -179,7 +179,8 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
    ```
 
    - **`ANDROID_SIGNING_CERT_SHA256`:** the upload key's certificate fingerprint, from Play Console → App integrity → App signing → **Upload key certificate**, or `keytool -list -v … -alias <alias>`. Colons and case don't matter. CI refuses to build with, or ship anything signed by, any other key.
-   - **`DOTENV`:** must contain `GOOGLE_OAUTH_WEB_CLIENT_ID`, or the release fails (Drive sign-in needs it). Like a local build's `.env`, it ends up as plain text inside the APK.
+   - **`DOTENV`:** should contain your full `.env` content. CI also accepts `vars.DOTENV` as a fallback.
+   - If you prefer, set only **`GOOGLE_OAUTH_WEB_CLIENT_ID`** (secret or variable) and CI will generate a minimal `.env` with that key.
    - **Passwords:** they go into `key.properties` exactly as stored, so avoid a backslash in them (a Java-properties escape).
 4. **Settings → Rules → Rulesets → New tag ruleset**: target `v*`; restrict creations, updates and deletions; block force pushes; bypass list: Repository admin.
 5. Optional: **Settings → General → Releases**, turn on release immutability.
