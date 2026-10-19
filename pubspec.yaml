@@ -51,6 +51,11 @@ dependencies:
 
   # Persistence
   shared_preferences: ^2.3.2
+  # Pinned below 2.5.0: 2.5.0 switched to JNI and crashes release (R8) builds
+  # at startup with NoSuchMethodError ...ApiRegistrar.getAll — R8 renames the
+  # kotlin.* classes its bindings look up by name (flutter/flutter#194649).
+  # Lift once a fixed release ships (flutter/packages#13311).
+  shared_preferences_android: '>=2.4.28 <2.5.0'
 
   # CSV & file
   csv: ^8.0.0

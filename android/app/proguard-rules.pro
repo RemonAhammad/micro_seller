@@ -2,6 +2,17 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+# JNI-based plugins (package:jni — path_provider_android, and
+# shared_preferences_android >= 2.5.0) look these Kotlin classes up by name
+# from Dart; renamed by R8 they fail at runtime with NoSuchMethodError
+# (flutter/flutter#194649, dart-lang/native#3732).
+-keep class kotlin.Unit { *; }
+-keep class kotlin.Result { *; }
+-keep class kotlin.Result$Failure { *; }
+-keep class kotlin.coroutines.Continuation { *; }
+-keep class kotlin.coroutines.intrinsics.CoroutineSingletons { *; }
+-keep class kotlin.coroutines.intrinsics.IntrinsicsKt { *; }
+
 # Isar
 -keep class dev.isar.** { *; }
 

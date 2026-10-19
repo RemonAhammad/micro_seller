@@ -9,7 +9,7 @@
 - ✅ **R8/ProGuard** enabled with minification + shrink resources
 - ✅ **Subprojects compileSdk fix** for isar_flutter_libs (matches Fuel Cost pattern)
 - ✅ **Core library desugaring** enabled (for flutter_local_notifications)
-- ✅ **NDK version** pinned: `27.0.12077973`
+- ✅ **NDK version** pinned: `28.2.13676358`
 - ✅ **enableOnBackInvokedCallback** for predictive back gesture
 - ✅ **Kotlin package:** `com.blackshadowsoftware.micro_seller`
 - ✅ **Release build verified:** APK (86.9 MB) + AAB (62.3 MB) both build and sign correctly

@@ -18,7 +18,7 @@ Only run this when the user asks for it. It changes `pubspec.yaml` and builds fo
    Output: `build/app/outputs/bundle/release/app-release.aab`. Keep `build/debug-info` because it's needed to decode obfuscated crash stack traces for this version.
 4. **Verify the AAB** with the same script CI's release job runs. It checks that exactly one certificate signed it and that it's the expected upload key (not the debug fallback), and that every LOAD segment of every 64-bit `.so` is aligned to 16 KB:
    ```bash
-   NDK_VERSION=27.0.12077973 tool/ci/verify_android_artifacts.sh \
+   NDK_VERSION=28.2.13676358 tool/ci/verify_android_artifacts.sh \
      "<upload cert SHA-256>" <version-name> <build-number> build/app/outputs/bundle/release/app-release.aab
    ```
    The fingerprint is in Play Console → App integrity → Upload key certificate, or `keytool -list -v -keystore … -alias <alias>`. If a library is misaligned, **fail the release** and name the plugin that ships it. Play Store rejects these for Android 15+.

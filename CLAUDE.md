@@ -721,10 +721,10 @@ Also: `dashboard_range_test`, `dues_test`, `order_money_test`, `report_service_t
 - **Kotlin source path:** `android/app/src/main/kotlin/com/blackshadowsoftware/micro_seller/MainActivity.kt` — must match the `package` declaration. (A previous package rename left the file at `…/blackshadowsoftwareltd/…`; the release Kotlin compiler refuses that mismatch with "Unresolved reference 'embedding'".)
 - **Keystore:** Shared upload keystore at `/Users/remon/Documents/upload-keystore.jks` (same as Fuel Cost app)
 - **Signing:** `android/key.properties` → read by `build.gradle.kts` → `signingConfigs.release`
-- **R8/ProGuard:** enabled (`isMinifyEnabled = true`, `isShrinkResources = true`) with rules in `android/app/proguard-rules.pro`
+- **R8/ProGuard:** enabled (`isMinifyEnabled = true`, `isShrinkResources = true`) with rules in `android/app/proguard-rules.pro` The rules also keep six `kotlin.*` classes (Unit, Result, Continuation, coroutine intrinsics) that JNI-based plugins look up by name — R8 renaming them crashed release builds at startup (flutter/flutter#194649). `shared_preferences_android` is pinned `<2.5.0` in pubspec.yaml for the same bug; lift the pin when a fixed release ships.
 - **Core library desugaring:** enabled for `flutter_local_notifications`
-- **NDK version:** `27.0.12077973`
-- **16 KB page size compliance:** Every `.so` in the AAB must use ELF program-header alignment ≥ `0x4000` (16 KB) so it can be `mmap`'d on Android 15 devices that run with 16 KB pages. Verified at build time with `llvm-readelf -lW` looking at the first `LOAD` segment's alignment. The legacy `isar_flutter_libs` 3.1.0+1 shipped a 4 KB-aligned `libisar.so` and was the sole blocker; switching to `isar_community_flutter_libs` resolved it. Together with NDK 27 + `useLegacyPackaging = false`, all 7 arm64 libs in the AAB are now ≥ 16 KB aligned.
+- **NDK version:** `28.2.13676358`
+- **16 KB page size compliance:** Every `.so` in the AAB must use ELF program-header alignment ≥ `0x4000` (16 KB) so it can be `mmap`'d on Android 15 devices that run with 16 KB pages. Verified at build time with `llvm-readelf -lW` looking at the first `LOAD` segment's alignment. The legacy `isar_flutter_libs` 3.1.0+1 shipped a 4 KB-aligned `libisar.so` and was the sole blocker; switching to `isar_community_flutter_libs` resolved it. Together with NDK 28 (16 KB-aligned linking by default; bumped from 27 because package:jni requires 28.2) + `useLegacyPackaging = false`, every arm64 lib in the AAB must be ≥ 16 KB aligned — re-run the check below after dependency changes.
 - **Subprojects fixes** (in root `android/build.gradle.kts`, applied via `afterEvaluate` for any `com.android.library` plugin):
   1. Forces `compileSdk = 35` on plugins that hardcode older versions (resolves `android:attr/lStar not found`).
   2. Injects `namespace` from each plugin's `AndroidManifest.xml` `package` attribute when missing — required by AGP 8+. (Originally added to fix `isar_flutter_libs` 3.1.0+1; still useful for any other plugin relying on the deprecated manifest `package` attribute.)
@@ -771,9 +771,9 @@ flutter build appbundle --release --obfuscate \
 
 # Verify signer, version and 16 KB alignment (every LOAD segment, arm64 + x86_64)
 # of APKs/AABs — the same checks as CI's release job:
-#   NDK_VERSION=27.0.12077973 tool/ci/verify_android_artifacts.sh <cert-sha256> <name> <code> <files>
+#   NDK_VERSION=28.2.13676358 tool/ci/verify_android_artifacts.sh <cert-sha256> <name> <code> <files>
 # Quick manual look at the first LOAD segment of the arm64 libs:
-LREAD=$ANDROID_HOME/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-readelf
+LREAD=$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-readelf
 cd build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/arm64-v8a
 for f in *.so; do
   align=$("$LREAD" -lW "$f" | awk '/^  LOAD/ {print $NF; exit}')

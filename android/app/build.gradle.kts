@@ -24,7 +24,9 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.blackshadowsoftware.micro_seller"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    // 28.2: required by package:jni (path_provider_android); NDK 28 also
+    // links 16 KB-aligned by default, which Play requires on Android 15+.
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
