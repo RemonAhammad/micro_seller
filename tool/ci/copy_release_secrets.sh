@@ -32,8 +32,11 @@ done
 [[ $store_file == /* ]] || store_file="android/app/$store_file"
 [ -f "$store_file" ] || { echo "Keystore not found: $store_file (storeFile in $props)."; exit 1; }
 
-fingerprint=$(KS_PASS=$store_pass keytool -list -v -keystore "$store_file" -storepass:env KS_PASS \
-  -alias "$key_alias" 2> /dev/null | sed -nE 's/^[[:space:]]*SHA256:[[:space:]]*(.*)$/\1/p') || fingerprint=""
+certs=$(KS_PASS=$store_pass keytool -list -v -keystore "$store_file" -storepass:env KS_PASS \
+  -alias "$key_alias" 2> /dev/null) || certs=""
+fingerprint=$(printf '%s\n' "$certs" | sed -nE 's/^[[:space:]]*SHA256:[[:space:]]*(.*)$/\1/p')
+sha1=$(printf '%s\n' "$certs" | sed -nE 's/^[[:space:]]*SHA1:[[:space:]]*(.*)$/\1/p')
+package=$(sed -nE 's/^[[:space:]]*applicationId[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' android/app/build.gradle.kts)
 if [ -z "$fingerprint" ]; then
   echo "Couldn't open the key. Check storeFile, storePassword and keyAlias in $props."
   exit 1
@@ -63,3 +66,8 @@ echo
 echo "Done: the release page should list 5 secrets and 1 variable."
 echo "Your key's SHA-256: $fingerprint"
 echo "(Optional check: Play Console → App integrity → Upload key certificate shows the same.)"
+echo
+echo "For Drive backup in these APKs, Google Cloud Console → APIs & Services → Credentials"
+echo "needs an OAuth client of type Android with:"
+echo "  Package name: $package"
+echo "  SHA-1:        $sha1"
