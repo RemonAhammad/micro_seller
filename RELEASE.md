@@ -166,7 +166,7 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
 2. **Settings → Environments → New environment `release`**:
    - Required reviewers: yourself.
    - Deployment branches and tags: "Selected branches and tags", then add branch `main` and tag `v*`.
-3. **Environment secrets and variable**, from the Mac that has the keystore (`brew install gh`, then `gh auth login`). Check the key alias first with `keytool -list -keystore /Users/remon/Documents/upload-keystore.jks`.
+3. **Environment secrets and variables**, from the Mac that has the keystore (`brew install gh`, then `gh auth login`). Check the key alias first with `keytool -list -keystore /Users/remon/Documents/upload-keystore.jks`.
 
    ```bash
    R=RemonAhammad/micro_seller
@@ -174,12 +174,15 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
    gh secret set ANDROID_KEYSTORE_PASSWORD --env release -R $R   # prompts for the value
    gh secret set ANDROID_KEY_PASSWORD --env release -R $R
    gh secret set ANDROID_KEY_ALIAS --env release -R $R --body "<alias>"
-   gh secret set DOTENV --env release -R $R < .env               # the real .env
+   gh secret set DOTENV --env release -R $R < .env               # preferred: full .env
+   # fallback options if you don't store full DOTENV:
+   gh variable set DOTENV --env release -R $R < .env
+   gh variable set GOOGLE_OAUTH_WEB_CLIENT_ID --env release -R $R --body "<web-client-id>"
    gh variable set ANDROID_SIGNING_CERT_SHA256 --env release -R $R --body "<SHA-256>"
    ```
 
    - **`ANDROID_SIGNING_CERT_SHA256`:** the upload key's certificate fingerprint, from Play Console → App integrity → App signing → **Upload key certificate**, or `keytool -list -v … -alias <alias>`. Colons and case don't matter. CI refuses to build with, or ship anything signed by, any other key.
-   - **`DOTENV`:** must contain `GOOGLE_OAUTH_WEB_CLIENT_ID`, or the release fails (Drive sign-in needs it). Like a local build's `.env`, it ends up as plain text inside the APK.
+   - **`.env source`:** the workflow accepts release `DOTENV` from either a secret or variable. If both are empty, it falls back to `GOOGLE_OAUTH_WEB_CLIENT_ID` (secret or variable) and generates a minimal `.env`. The resulting `.env` must contain `GOOGLE_OAUTH_WEB_CLIENT_ID` (Drive sign-in needs it), and like a local build's `.env` it ends up as plain text inside the APK.
    - **Passwords:** they go into `key.properties` exactly as stored, so avoid a backslash in them (a Java-properties escape).
 4. **Settings → Rules → Rulesets → New tag ruleset**: target `v*`; restrict creations, updates and deletions; block force pushes; bypass list: Repository admin.
 5. Optional: **Settings → General → Releases**, turn on release immutability.

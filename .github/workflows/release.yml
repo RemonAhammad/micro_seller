@@ -138,9 +138,17 @@ jobs:
         # A Flutter asset (plain text inside the APK, so not confidential),
         # but the release one must carry the real OAuth client ids.
         env:
-          DOTENV: ${{ secrets.DOTENV }}
+          DOTENV_SECRET: ${{ secrets.DOTENV }}
+          DOTENV_VAR: ${{ vars.DOTENV }}
+          GOOGLE_OAUTH_WEB_CLIENT_ID_SECRET: ${{ secrets.GOOGLE_OAUTH_WEB_CLIENT_ID }}
+          GOOGLE_OAUTH_WEB_CLIENT_ID_VAR: ${{ vars.GOOGLE_OAUTH_WEB_CLIENT_ID }}
         run: |
-          [ -n "$DOTENV" ] || { echo "::error::DOTENV is empty. Set it in the 'release' environment."; exit 1; }
+          DOTENV=${DOTENV_SECRET:-$DOTENV_VAR}
+          if [ -z "$DOTENV" ]; then
+            web_client_id=${GOOGLE_OAUTH_WEB_CLIENT_ID_SECRET:-$GOOGLE_OAUTH_WEB_CLIENT_ID_VAR}
+            [ -n "$web_client_id" ] && DOTENV="GOOGLE_OAUTH_WEB_CLIENT_ID=$web_client_id"
+          fi
+          [ -n "$DOTENV" ] || { echo "::error::No .env source found. Set release secret/variable DOTENV, or GOOGLE_OAUTH_WEB_CLIENT_ID."; exit 1; }
           printf '%s\n' "$DOTENV" > .env
           if ! grep -Eq '^GOOGLE_OAUTH_WEB_CLIENT_ID=.+' .env; then
             echo "::error::DOTENV has no GOOGLE_OAUTH_WEB_CLIENT_ID; Drive backup sign-in needs it."
