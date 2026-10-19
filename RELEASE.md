@@ -178,6 +178,8 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
    gh variable set ANDROID_SIGNING_CERT_SHA256 --env release -R $R --body "<SHA-256>"
    ```
 
+   The workflow also accepts older names (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`, `SIGNING_CERT_SHA256`) for compatibility, but prefer the `ANDROID_*` names above.
+
    - **`ANDROID_SIGNING_CERT_SHA256`:** the upload key's certificate fingerprint, from Play Console → App integrity → App signing → **Upload key certificate**, or `keytool -list -v … -alias <alias>`. Colons and case don't matter. CI refuses to build with, or ship anything signed by, any other key.
    - **`DOTENV`:** must contain `GOOGLE_OAUTH_WEB_CLIENT_ID`, or the release fails (Drive sign-in needs it). Like a local build's `.env`, it ends up as plain text inside the APK.
    - **Passwords:** they go into `key.properties` exactly as stored, so avoid a backslash in them (a Java-properties escape).
@@ -216,6 +218,7 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
 | `pub get --enforce-lockfile` fails | `pubspec.lock` doesn't match `pubspec.yaml`. Run `flutter pub get` with Flutter 3.44.9 and commit both files. |
 | `N test(s) skipped` | The real-Isar tests couldn't load the Isar core library, and they must run in CI. |
 | `Tag vX doesn't match pubspec.yaml` | Delete the tag (`git push --delete origin vX`, which needs the ruleset bypass), fix the version, and tag again. |
+| `Missing release secret: ANDROID_* ... (legacy: ...)` | Add the secret(s) in **Settings → Environments → release**. |
 | `Alias … holds certificate …, expected …` | Wrong keystore or alias secret, or a wrong `ANDROID_SIGNING_CERT_SHA256`. |
 | `REQUIRE_RELEASE_SIGNING=true but android/key.properties is missing` | The signing step didn't run; check the environment secrets. |
 | `vX is already published` | Releases are final: bump the version and push a new tag. |

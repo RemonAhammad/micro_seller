@@ -107,15 +107,17 @@ jobs:
       - name: Signing key
         id: key
         env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          EXPECTED_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 || secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.KEY_PASSWORD }}
+          EXPECTED_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 || vars.SIGNING_CERT_SHA256 }}
         run: |
-          for v in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD EXPECTED_SHA256; do
-            [ -n "${!v}" ] || { echo "::error::$v is empty. Set it in the 'release' environment."; exit 1; }
-          done
+          [ -n "$KEYSTORE_BASE64" ] || { echo "::error::Missing release secret: ANDROID_KEYSTORE_BASE64 (legacy: KEYSTORE_BASE64)."; exit 1; }
+          [ -n "$STORE_PASSWORD" ] || { echo "::error::Missing release secret: ANDROID_KEYSTORE_PASSWORD (legacy: KEYSTORE_PASSWORD)."; exit 1; }
+          [ -n "$KEY_ALIAS" ] || { echo "::error::Missing release secret: ANDROID_KEY_ALIAS (legacy: KEY_ALIAS)."; exit 1; }
+          [ -n "$KEY_PASSWORD" ] || { echo "::error::Missing release secret: ANDROID_KEY_PASSWORD (legacy: KEY_PASSWORD)."; exit 1; }
+          [ -n "$EXPECTED_SHA256" ] || { echo "::error::Missing release variable: ANDROID_SIGNING_CERT_SHA256 (legacy: SIGNING_CERT_SHA256)."; exit 1; }
           umask 077
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           # The keystore must hold the expected certificate under this alias.
