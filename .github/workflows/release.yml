@@ -299,4 +299,25 @@ jobs:
               gh release create "$TAG" ./* "${args[@]}"
               ;;
           esac
-          echo "Draft release $TAG is ready: review it on the Releases page, then Publish." >> "$GITHUB_STEP_SUMMARY"
+
+          # Every file must be attached to the draft before anyone publishes it
+          # (v1.0.5 ended up published with no APKs and nothing noticed).
+          attached() {
+            gh api "repos/$GH_REPO/releases?per_page=100" \
+              --jq '[.[] | select(.tag_name == env.TAG)][0].assets // [] | .[] | select(.state == "uploaded" and .size > 0) | .name'
+          }
+          missing() { comm -23 <(printf '%s\n' ./* | sed 's|^\./||' | sort) <(attached | sort); }
+          if [ -n "$(missing)" ]; then
+            echo "::warning::Not attached yet: $(missing | tr '\n' ' ')- uploading again."
+            gh release upload "$TAG" ./* --clobber
+          fi
+          if [ -n "$(missing)" ]; then
+            echo "::error::Still missing from release $TAG: $(missing | tr '\n' ' ')"
+            exit 1
+          fi
+          {
+            echo "### Draft release $TAG is ready, with $(attached | wc -l | tr -d ' ') files:"
+            attached | sed 's/^/- /'
+            echo
+            echo "On the Releases page, check that **Assets** lists these files, then click **Publish release**."
+          } >> "$GITHUB_STEP_SUMMARY"

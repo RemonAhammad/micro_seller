@@ -11,8 +11,8 @@
   "totalCount": 5104,
   "readyCount": 0,
   "staleCount": 0,
-  "dirty": false,
+  "dirty": true,
   "syncing": false,
-  "syncedAt": "2026-10-19T10:00:37.724Z",
-  "lastFile": "sidebar_order_screen.dart"
+  "syncedAt": "2026-10-25T05:55:54.398Z",
+  "lastFile": "v2_run.sh"
 }

@@ -19,17 +19,26 @@ runs:
         java-version: '17'
 
     # The one place the Flutter version is pinned (CLAUDE.md → Toolchain).
-    - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+    # ./release.sh sets it to the Flutter of the Mac that makes the release
+    # and makes pubspec.lock with that Flutter, because each Flutter pins
+    # packages such as meta: a lock only fits the Flutter that made it.
+    - id: flutter
+      uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
       with:
         channel: stable
         flutter-version: 3.44.9
         cache: true
 
     - shell: bash
+      env:
+        FLUTTER_VERSION: ${{ steps.flutter.outputs.VERSION }}
       run: |
         flutter --version
-        # Fails if pubspec.lock is missing or out of date with pubspec.yaml:
-        # a fresh resolve can pick an Isar version the generated code
-        # doesn't match.
-        flutter pub get --enforce-lockfile
+        # Fails if pubspec.lock is missing, out of date with pubspec.yaml, or
+        # made by another Flutter. A fresh resolve can pick an Isar version
+        # the generated code doesn't match.
+        if ! flutter pub get --enforce-lockfile; then
+          echo "::error::pubspec.lock doesn't fit Flutter $FLUTTER_VERSION: it was made with another Flutter version, or pubspec.yaml changed without it. Run ./release.sh on your Mac (it pins CI to your Flutter and re-makes the lock), or run 'flutter pub get' with Flutter $FLUTTER_VERSION and commit pubspec.lock."
+          exit 1
+        fi
         cp .env.example .env

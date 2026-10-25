@@ -155,7 +155,7 @@ GitHub Actions checks every change and publishes signed APKs as GitHub Releases,
 | Tag `vX.Y.Z` | `.github/workflows/release.yml` | The checks, then a signed AAB and APKs (universal, arm64-v8a, armeabi-v7a, x86_64) with `SHA256SUMS.txt`, verified, then a **draft** release that you publish by hand |
 | Actions → Release → Run workflow (on `main`) | `.github/workflows/release.yml` | The same signed build as artifacts only, kept 3 days; no release |
 
-CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`, and the committed `pubspec.lock`. If you move to another Flutter version, change it there too.
+CI uses the Flutter version pinned in `.github/actions/setup-flutter/action.yml`, and the committed `pubspec.lock`. `./release.sh` keeps the two in step with the Mac that releases: it pins that Mac's Flutter and makes the lock with it.
 
 ### One-time setup
 
@@ -186,7 +186,47 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
 
 ### Cutting a release
 
-1. **Bump the version.** Change `version:` in `pubspec.yaml` (the `release` skill does it), e.g. `1.0.4+9` → `1.0.5+10`; the build number must always grow. Commit, push, and wait for CI to pass.
+Run one command on your Mac, in the project folder:
+
+```bash
+./release.sh
+```
+
+It makes the whole release and asks you once:
+
+1. **Syncs with GitHub.** It brings in new commits and keeps your uncommitted changes.
+2. **Matches Flutter.** It pins GitHub's builds to this Mac's Flutter version (`flutter --version`) and makes `pubspec.lock` with it. Each Flutter version pins packages such as `meta`, so a lock only passes CI's `pub get --enforce-lockfile` on the Flutter that made it.
+3. **Picks the version.** It uses `pubspec.yaml`'s version if it isn't tagged yet, otherwise the next patch version. The build number is always higher than any committed or tagged before, as Play requires.
+4. **Asks once.** It shows the version, the Flutter version and the files it will commit. Answer `y`.
+5. **Runs the CI checks here:** packages, generated code, translations, `flutter analyze`, `flutter test`. If one fails, nothing is committed: fix it and run the script again, and it keeps the same version.
+6. **Commits, tags and pushes.** It commits everything as `chore: release vX.Y.Z+N`, then pushes `main` and the tag `vX.Y.Z` together.
+7. **Follows the build.** When the signing job waits for approval, it opens the run in your browser: approve the `release` environment there.
+8. **Opens the draft.** When the build is done, it opens the Releases page. Check that **Assets** lists the four APKs and `SHA256SUMS.txt`, then click **Publish release**. The script never publishes.
+
+Then collect the artifacts from the run's **Artifacts**:
+
+- **`play-bundle`:** the AAB, signed with the upload key. Upload it to Play Console as usual.
+- **`symbols`:** each build's `--split-debug-info` output and R8 `mapping.txt`. You need them to decode obfuscated crash stack traces (`flutter symbolize`). Artifacts expire after 90 days, so **download and archive** them.
+
+| Command | What it does |
+| --- | --- |
+| `./release.sh 1.1.0` | Releases that version. `patch`, `minor` or `major` bump the newest release. |
+| `./release.sh --dry-run` | Shows what it would do, and changes nothing |
+| `./release.sh --skip-checks` | Skips translations, analyze and tests here; GitHub still runs them |
+| `./release.sh --no-watch` | Pushes, then exits |
+| `./release.sh --watch [vX.Y.Z]` | Follows a build again, e.g. after Ctrl-C or after **Re-run failed jobs** on GitHub |
+| `./release.sh --yes` | Doesn't ask |
+
+**If the GitHub build fails,** the script prints the failed step and its error:
+
+- **A GitHub setting** (a secret, the environment): fix it, click **Re-run failed jobs** on the run page, then run `./release.sh --watch`.
+- **The code:** fix it and run `./release.sh` again. It releases the next version, because a pushed tag is used up.
+
+**Requirements:** git, Flutter, curl and jq (`brew install jq` on older macOS). Following the build needs no GitHub sign-in. With `gh` signed in, or `GH_TOKEN` set, it checks more often.
+
+#### By hand
+
+1. **Bump the version.** Change `version:` in `pubspec.yaml`, e.g. `1.0.4+9` → `1.0.5+10`; the build number must always grow. Commit, push, and wait for CI to pass.
 2. **Tag and push.** Tag the commit on `main` and push the tag, one tag at a time:
 
    ```bash
@@ -197,9 +237,7 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
    The tag must equal `v` plus the version name in `pubspec.yaml` (the part before `+`). A name with a `-`, like `1.0.5-rc.1+10` tagged `v1.0.5-rc.1`, becomes a pre-release.
 3. **Approve.** Open the run under **Actions** and approve the `release` environment when asked.
 4. **Publish.** When the run finishes, a **draft** release waits on the Releases page with the four APKs and `SHA256SUMS.txt`. Review it, then click **Publish release**. Re-running the workflow refreshes a draft; a published release never changes.
-5. **Collect the artifacts.** From the run's **Artifacts**:
-   - **`play-bundle`:** the AAB, signed with the upload key. Upload it to Play Console as usual.
-   - **`symbols`:** each build's `--split-debug-info` output and R8 `mapping.txt`. You need them to decode obfuscated crash stack traces (`flutter symbolize`). Artifacts expire after 90 days, so **download and archive** them.
+5. **Collect the artifacts** as above.
 
 ### Installing a GitHub APK
 
@@ -213,11 +251,13 @@ CI uses Flutter **3.44.9**, pinned in `.github/actions/setup-flutter/action.yml`
 | Failure | Fix |
 | --- | --- |
 | `Generated files are out of date` | Run `dart run build_runner build --delete-conflicting-outputs` and commit the result. |
-| `pub get --enforce-lockfile` fails | `pubspec.lock` doesn't match `pubspec.yaml`. Run `flutter pub get` with Flutter 3.44.9 and commit both files. |
+| `pubspec.lock doesn't fit Flutter X` (`pub get --enforce-lockfile`, exit code 65) | The lock was made with another Flutter version, or `pubspec.yaml` changed without it. Run `./release.sh`, which pins CI to your Flutter and re-makes the lock. Or run `flutter pub get` with the pinned Flutter and commit `pubspec.lock`. |
+| `./release.sh`: the push fails with "without `workflow` scope" | Your git sign-in can't change files in `.github/workflows`. Sign in again with that permission, e.g. `brew install gh && gh auth login`, then run the script again. It undid the commit and tag, so nothing is lost. |
 | `N test(s) skipped` | The real-Isar tests couldn't load the Isar core library, and they must run in CI. |
 | `Tag vX doesn't match pubspec.yaml` | Delete the tag (`git push --delete origin vX`, which needs the ruleset bypass), fix the version, and tag again. |
 | `Alias … holds certificate …, expected …` | Wrong keystore or alias secret, or a wrong `ANDROID_SIGNING_CERT_SHA256`. |
 | `REQUIRE_RELEASE_SIGNING=true but android/key.properties is missing` | The signing step didn't run; check the environment secrets. |
 | `vX is already published` | Releases are final: bump the version and push a new tag. |
+| `Still missing from release vX` (after the warning `Not attached yet … uploading again`) | A file didn't reach the draft, even on a second upload. Click **Re-run failed jobs**: the draft is refreshed, so nothing is published half-empty. |
 
 To check a local build with the same checks as CI (signer, version, 16 KB alignment), run `tool/ci/verify_android_artifacts.sh <cert-sha256> <version-name> <build-number> <apk-or-aab>...`.

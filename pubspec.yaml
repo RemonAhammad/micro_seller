@@ -1,56 +1,57 @@
 name: micro_seller
 description: Inventory and order manager for micro sellers
 publish_to: 'none'
-version: 1.0.8+16
+version: 1.0.9+17
 
 environment:
-  sdk: '>=3.8.0 <4.0.0'
+  sdk: '>=3.12.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
   # State management
-  flutter_riverpod: ^3.0.0
-  riverpod_annotation: ^4.0.2
+  flutter_riverpod: ^3.3.1
+  # Moves in lockstep with riverpod_generator (see dev_dependencies).
+  riverpod_annotation: 4.0.2
 
   # Database
   # Migrated from abandoned `isar` 3.1.0+1 to community fork.
   # 3.2.0+ ships 16 KB page-aligned native binaries (required for Play Store
   # on Android 15+).
-  isar_community: ^3.3.2
-  isar_community_flutter_libs: ^3.3.2
-  path_provider: ^2.1.4
+  isar_community: ^3.4.1
+  isar_community_flutter_libs: ^3.4.1
+  path_provider: ^2.1.6
 
   # Code generation helpers
   freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  json_annotation: ^4.11.0
 
   # Google auth & Drive
   google_sign_in: ^7.2.0
   googleapis: ^17.0.0
-  googleapis_auth: ^2.3.4
+  googleapis_auth: ^2.3.5
 
   # Navigation
-  go_router: ^18.0.2
+  go_router: ^18.1.1
 
   # PDF
-  pdf: ^3.11.1
-  printing: ^5.13.1
+  pdf: ^3.13.1
+  printing: ^5.15.1
 
   # Image & scanning
-  image_picker: ^1.1.2
-  flutter_image_compress: ^2.3.0
+  image_picker: ^1.2.4
+  flutter_image_compress: ^2.5.1
   mobile_scanner: ^7.4.2
 
   # UI & charts
-  fl_chart: ^1.2.0
+  fl_chart: ^1.3.0
 
   # HTTP
-  http: ^1.2.0
+  http: ^1.6.0
 
   # Persistence
-  shared_preferences: ^2.3.2
+  shared_preferences: ^2.5.6
   # Pinned below 2.5.0: 2.5.0 switched to JNI and crashes release (R8) builds
   # at startup with NoSuchMethodError ...ApiRegistrar.getAll — R8 renames the
   # kotlin.* classes its bindings look up by name (flutter/flutter#194649).
@@ -59,20 +60,20 @@ dependencies:
 
   # CSV & file
   csv: ^8.0.0
-  file_picker: ^13.1.0
+  file_picker: ^13.2.0
 
   # Notifications
-  flutter_local_notifications: ^22.3.1
+  flutter_local_notifications: ^22.3.3
 
   # Localization
   flutter_localizations:
     sdk: flutter
 
   # Utilities
-  intl: ^0.20.2
-  uuid: ^4.5.1
-  share_plus: ^13.3.0
-  url_launcher: ^6.3.0
+  intl: ^0.20.2 # pinned to 0.20.2 by flutter_localizations (Flutter 3.44.9)
+  uuid: ^4.6.0
+  share_plus: ^13.3.1
+  url_launcher: ^6.3.3
   open_file: ^4.0.0
   # Renders a Flutter widget tree off-screen to a PNG. Used by pdf_service to
   # capture the invoice via Skia (full Unicode shaping for Bengali / Arabic /
@@ -81,9 +82,9 @@ dependencies:
   screenshot: ^3.0.0
 
   # Showcase & Updates
-  showcaseview: ^5.0.1
+  showcaseview: ^5.1.0
   in_app_update: ^5.0.0
-  package_info_plus: ^10.2.1
+  package_info_plus: ^10.2.2
 
   # Env
   flutter_dotenv: ^6.0.1
@@ -91,7 +92,7 @@ dependencies:
   # Security gate for destructive actions (Clear All Data, etc.). Falls back
   # to a 4-digit PIN stored as a SHA-256 hash when biometrics aren't set up.
   local_auth: ^3.0.2
-  crypto: ^3.0.3
+  crypto: ^3.0.7
 
   # Background periodic Drive backup (Android WorkManager wrapper). Schedules
   # a daily worker when "Auto Backup" is on; the worker survives app close
@@ -100,7 +101,7 @@ dependencies:
   workmanager: ^0.10.10
   tabler_icons_next: ^3.48.0
   # Direct only to size the SVG picture cache (tabler_icons_next renders via it).
-  flutter_svg: ^2.0.10+1
+  flutter_svg: ^2.3.0
   in_app_review: ^2.0.12
 dev_dependencies:
   flutter_test:
@@ -108,14 +109,20 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
   # Code generation
-  build_runner: ^2.4.12
-  riverpod_generator: ^4.0.3
-  freezed: ^3.2.5
-  isar_community_generator: ^3.3.2
-  json_serializable: ^6.7.1
+  # build_runner 2.17+ needs build 5; riverpod_generator needs build <5.
+  build_runner: ^2.15.1
+  # Code generators are pinned as one set: newer riverpod_generator /
+  # json_serializable need analyzer 12+, which only freezed 4 (Dart 3.13,
+  # newer than Flutter 3.44.9) or a freezed 3.2.6 pre-release supports.
+  riverpod_generator: 4.0.3
+  # freezed 4 needs Dart 3.13; Flutter 3.44.9 (on one of the Macs that make
+  # releases) ships Dart 3.12.
+  freezed: 3.2.5
+  isar_community_generator: ^3.4.1
+  json_serializable: ^6.13.0
 
   # Launcher icon generation
-  flutter_launcher_icons: ^0.14.1
+  flutter_launcher_icons: ^0.14.4
 
 flutter_launcher_icons:
   android: "launcher_icon"

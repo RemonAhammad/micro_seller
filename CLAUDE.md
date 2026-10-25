@@ -4,11 +4,11 @@ A Flutter inventory & order management app for micro/small sellers. Local-first 
 
 ## Tech Stack
 
-- **Flutter** (SDK >=3.8.0 <4.0.0; built with **Flutter 3.44.9**, see Build & Release → Toolchain)
-- **State Management:** Riverpod 3 (`flutter_riverpod ^3.0` + `riverpod_annotation ^4.0` + `riverpod_generator ^4.0`). Notes: (1) Riverpod 3 uses plain `Ref` everywhere (no per-provider `XxxRef` typedefs), and `@riverpod class XxxNotifier` generates `xxxProvider` (no `Notifier` infix). `AsyncValue.value` is now nullable; `valueOrNull` is gone. (2) **All CRUD notifiers must be `@Riverpod(keepAlive: true)`** — Riverpod 3 auto-disposes by default, and a `ref.read(xxxProvider.notifier).method()` call from a screen disposes the provider during the await. Post-await `state = ...` then throws `UnmountedRefException`. This applies to product / order / customer / supplier / expense / category / cash_register notifiers.
-- **Database:** Isar 3.3 via the community fork — `isar_community` + `isar_community_flutter_libs` + `isar_community_generator` ^3.3.2. The original `isar` package was abandoned in 2023 and shipped 4 KB-aligned native binaries that Play Store rejects on Android 15+. The community fork is API-identical; storage format is byte-compatible (no on-device migration).
+- **Flutter** (SDK >=3.12.0 <4.0.0; CI builds with the Flutter pinned in `.github/actions/setup-flutter/action.yml`, which `./release.sh` sets to the releasing Mac's version, see Build & Release → Toolchain)
+- **State Management:** Riverpod 3 (`flutter_riverpod ^3.3` + `riverpod_annotation` 4.0.2 + `riverpod_generator` 4.0.3, the last two pinned together, see Toolchain). Notes: (1) Riverpod 3 uses plain `Ref` everywhere (no per-provider `XxxRef` typedefs), and `@riverpod class XxxNotifier` generates `xxxProvider` (no `Notifier` infix). `AsyncValue.value` is now nullable; `valueOrNull` is gone. (2) **All CRUD notifiers must be `@Riverpod(keepAlive: true)`** — Riverpod 3 auto-disposes by default, and a `ref.read(xxxProvider.notifier).method()` call from a screen disposes the provider during the await. Post-await `state = ...` then throws `UnmountedRefException`. This applies to product / order / customer / supplier / expense / category / cash_register notifiers.
+- **Database:** Isar 3.4 via the community fork — `isar_community` + `isar_community_flutter_libs` + `isar_community_generator` ^3.4.1. The original `isar` package was abandoned in 2023 and shipped 4 KB-aligned native binaries that Play Store rejects on Android 15+. The community fork is API-identical; storage format is byte-compatible (no on-device migration).
 - **Navigation:** GoRouter with `StatefulShellRoute` (14-branch sidebar navigation)
-- **Code Generation:** Freezed 3 (`freezed ^3.2.5` + `freezed_annotation ^3.1`). Note: freezed 3 requires `abstract class Foo with _$Foo` (the `abstract` keyword is mandatory). JSON serializable + isar_community schema generator.
+- **Code Generation:** Freezed 3 (`freezed` 3.2.5, pinned, see Build & Release → Toolchain, + `freezed_annotation ^3.1`). Note: freezed 3 requires `abstract class Foo with _$Foo` (the `abstract` keyword is mandatory). JSON serializable + isar_community schema generator.
 - **Security:** `local_auth` (biometric) + `crypto` (SHA-256 PIN hashing). `AuthGateService` + `runAuthGate(context, reason: ..., fingerprintEnabled: ..., pinEnabled: ...)` helper protect destructive actions. PIN is stored in SharedPreferences as `sha256(salt + pin)` with a per-install salt. Android: `MainActivity` extends `FlutterFragmentActivity` (required by local_auth's BiometricPrompt) and the manifest declares `USE_BIOMETRIC`. Two-layer gate: (1) **`.env` build-time visibility** — `ENABLE_FINGERPRINT_GATE` / `ENABLE_PIN_GATE` (default `true`) control whether each toggle is shown in Settings → Security at all, and `runAuthGate` ignores any path whose `.env` flag is false; (2) **user setting** — `securityFingerprintEnabled` / `securityPinEnabled` in SharedPreferences (default `true`) control whether the user has each path active. Each toggle in Settings is verified independently — flipping fingerprint requires verifying *current fingerprint only* (never PIN), flipping PIN requires verifying *current PIN only*. Enabling PIN runs `runPinSetup` (fresh setup); disabling clears the stored PIN. `runAuthGate` chooses biometric if (env+user+device-available), else PIN if (env+user+stored), else passthrough.
 - **PDF:** `pdf` + `printing` + `flutter_image_compress`. A Flutter widget is captured to PNG by `widget_capture.dart` (guaranteed Unicode shaping) and `pdf_assembly.dart` builds the A4 `pw.Document` on a background isolate. `widget_capture.dart` is a trimmed copy of the `screenshot` package's capture. `screenshot` is still listed in `pubspec.yaml`, but nothing in `lib/` imports it.
 - **File open:** `open_file` package. The post-download bottom sheet uses it to hand a saved invoice PDF to the system PDF viewer. The sheet replaced an earlier SnackBar flow because Material's SnackBar duration was unreliable on MIUI / Xiaomi devices (the timer paused indefinitely). `lib/shared/widgets/pdf_saved_sheet.dart` is a modal sheet with an Open action that runs its own `Timer(Duration(seconds: 15))` for a guaranteed auto-dismiss.
@@ -782,16 +782,25 @@ Also: `dashboard_range_test`, `dues_test`, `order_money_test`, `report_service_t
 
 ### Toolchain
 
-- Builds are done with **Flutter 3.44.9** (stable framework); `pubspec.lock` requires Flutter ≥ 3.44.0
+- **CI builds with the Flutter pinned in `.github/actions/setup-flutter/action.yml`** (`flutter-version` + `channel`). `./release.sh` sets it to the Flutter of the Mac that releases (`flutter --version --machine`, looked up in Flutter's `releases_linux.json` for the channel) and makes `pubspec.lock` with that Flutter. Each Flutter pins packages such as `meta` and `vector_math`, so a lock made by another Flutter fails CI's `pub get --enforce-lockfile` (exit code 65). The owner's two Macs run Flutter 3.44.9 and 3.47.x, so the pin follows whichever released last.
+- **Code generators are pinned as one set** (`riverpod_generator` 4.0.3 with `riverpod_annotation` 4.0.2, `freezed` 3.2.5): newer ones need analyzer 12+ or Dart 3.13, and Flutter 3.44.9 ships Dart 3.12. The comments in `pubspec.yaml` explain each pin.
 - **`pubspec.lock` is committed** (`!pubspec.lock` overrides the `*.lock` ignore): Isar's generated schemas assert `Isar.version == version`, so a fresh resolve to a newer `isar_community` breaks the build at compile time. `.gitattributes` keeps LF line endings, because riverpod_generator hashes provider sources into `.g.dart`.
 
 ### CI/CD (GitHub Actions)
 
 Setup, secrets and the release steps are in [RELEASE.md](RELEASE.md) → GitHub Releases (CI/CD).
 
-- `.github/actions/setup-flutter` is the one place the CI Flutter version (3.44.9) is pinned; it runs `flutter pub get --enforce-lockfile`.
+- **`./release.sh`** (repo root) cuts a release in one command:
+  - Syncs `main` with GitHub: stash, fast-forward, unstash. A conflict only in `pubspec.lock` keeps the local copy, because the lock is re-made anyway.
+  - Pins CI to this Mac's Flutter.
+  - Picks the version: pubspec's if it isn't tagged yet, else the next patch. The build number is higher than every one ever committed or tagged.
+  - Asks once, then runs the `ci.yml` checks locally.
+  - Commits everything as `chore: release vX.Y.Z+N` and pushes `main` and the annotated tag in one `--atomic` push. A failed push undoes the commit and the tag.
+  - Follows the run through GitHub's public API, polling every 60 s (unauthenticated calls are limited to 60 an hour; 20 s with a token), then opens the draft.
+  - It runs on macOS's bash 3.2. The owner runs it; Claude never does, because it commits and pushes.
+- `.github/actions/setup-flutter` is the one place the CI Flutter version is pinned (see Toolchain). It runs `flutter pub get --enforce-lockfile`, and when that fails it explains that the lock doesn't fit the pinned Flutter.
 - `ci.yml` (PRs, pushes to `main`, and called by `release.yml`): generated code must be committed and current, l10n parity, `flutter analyze --no-fatal-infos` (errors and warnings fail), `flutter test` — and **no skipped tests**, since the real-Isar tests skip themselves when the Isar core library isn't found.
-- `release.yml` (tag `vX.Y.Z` = `v` + pubspec version name, or a manual run on `main`): signed AAB + universal and split APKs in the `release` environment (required reviewer; signing secrets live only there), checked by `tool/ci/verify_android_artifacts.sh`, then a **draft** GitHub Release that is published by hand. The AAB and the obfuscation symbols are run artifacts (they expire: archive them).
+- `release.yml` (tag `vX.Y.Z` = `v` + pubspec version name, or a manual run on `main`): signed AAB + universal and split APKs in the `release` environment (required reviewer; signing secrets live only there), checked by `tool/ci/verify_android_artifacts.sh`, then a **draft** GitHub Release that is published by hand. The publish job uploads again, then fails, if any file isn't fully attached to the draft. The AAB and the obfuscation symbols are run artifacts (they expire: archive them).
 - `REQUIRE_RELEASE_SIGNING=true` makes `android/app/build.gradle.kts` fail instead of falling back to the debug key when `key.properties` is missing.
 - Actions are pinned to commit SHAs; Dependabot (`.github/dependabot.yml`) keeps them current.
 
@@ -838,7 +847,7 @@ Android, iOS (min 16.0), Web, macOS (min 13.0), Linux, Windows. Web has no worke
 | Skill | `new-collection` | Adding an Isar model — `kIsarSchemas`, backup encode/decode (`buildBackupMap` + `restoreBackupSync`) + `kBackupVersion` bump, clear in `clearAllCollectionsInTxnSync` (restore *and* Clear All Data), trash decision |
 | Skill | `new-screen` | Screen / route / notifier conventions (keepAlive, writeTxn, sub-route before `:id`, shared widgets) |
 | Skill | `verify` | After any change: build_runner (if needed) → `flutter analyze` → l10n parity |
-| Skill | `release` | `/release` only — version bump, obfuscated AAB, `tool/ci/verify_android_artifacts.sh`; pushing the `vX.Y.Z` tag lets CI build the GitHub Release |
+| Skill | `release` | `/release` only — version bump, obfuscated AAB, `tool/ci/verify_android_artifacts.sh`. GitHub Releases are cut by the owner with `./release.sh` |
 | Skill | `sync-docs` | Keep this file matching the code after a feature |
 | Agent | `invariant-reviewer` | Read-only review of a diff against the money/stock/backup invariants above |
 | Agent | `translator` | Fill the 11 non-English locale files for new keys |
