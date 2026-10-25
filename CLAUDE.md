@@ -285,7 +285,7 @@ The order creation/edit screen is designed for fast, frictionless use:
   - Tax auto-calculated: `(subtotal - discount) * taxRate / 100`, shown as helper text. Tax and total come from `orderTotals` and are rounded to 2 decimals, so "Pay Full" (which types the 2-decimal total) really pays in full
   - Amount paid field with "Pay Full" quick button (fills total)
 
-- **Payment method:** ChoiceChips (Cash / Card / bKash / Nagad / Bank / Other)
+- **Payment method:** ChoiceChips (Cash / Card / MFS / Bank / Other; MFS is mobile money, whose transaction-ID hint names bKash / Nagad)
 
 - **Order status:** ChoiceChips (Pending / Confirmed) — not a dropdown
 
@@ -518,7 +518,7 @@ All from the Due Book's providers (`duesProvider` → `dueSummaryProvider`, plus
 2. **Optional supplier picker** at top of form (can be skipped for one-off buys)
 3. **Product picker** with real-time stock and current cost price; tap to add, +/- to adjust qty. When a supplier is selected, a filter chip lets you toggle between "{Supplier} only" and "All products" to quickly find that supplier's items
 4. **Per-item unit cost** field — defaults to product's existing costPrice
-5. **Payment:** amount paid (with "Pay Full" quick button), payment method chips (Cash/Card/bKash/Nagad/Bank/Other), reference number, notes
+5. **Payment:** amount paid (with "Pay Full" quick button), payment method chips (Cash / Card / MFS / Bank / Other), reference number, notes
 6. **On save:**
    - Stock auto-restocks for each item
    - Product `costPrice` is updated to the new unit cost (so future profit margins are accurate)
