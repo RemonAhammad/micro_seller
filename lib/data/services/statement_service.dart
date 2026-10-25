@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/customer.dart';
 import '../models/order.dart';
 import '../models/payment.dart';
+import '../../core/theme/document_brand.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
 import 'dues_service.dart';
@@ -168,7 +169,7 @@ class StatementService {
     final pages = <Uint8List>[];
     for (var i = 0; i < chunks.length; i++) {
       pages.add(await captureWidgetPng(
-        _StatementPage(
+        statementPage(
           customer: customer,
           rows: chunks[i],
           labels: labels,
@@ -193,6 +194,37 @@ class StatementService {
       height: (_pageHeight * kPdfCapturePixelRatio).round(),
     ));
   }
+
+  /// One page as [generateStatementPdf] captures it ([rows] are the page's
+  /// rows, [closing] the whole statement's closing balance, shown on the
+  /// last page). Public so a test can pump it and check what it draws.
+  @visibleForTesting
+  static Widget statementPage({
+    required Customer customer,
+    required List<StatementRow> rows,
+    required StatementLabels labels,
+    required String shopName,
+    required String shopPhone,
+    required String sym,
+    required double closing,
+    required int pageIndex,
+    required int pageCount,
+    required TextDirection textDirection,
+    ui.Image? watermarkIcon,
+  }) =>
+      _StatementPage(
+        customer: customer,
+        rows: rows,
+        labels: labels,
+        shopName: shopName,
+        shopPhone: shopPhone,
+        sym: sym,
+        closing: closing,
+        pageIndex: pageIndex,
+        pageCount: pageCount,
+        textDirection: textDirection,
+        watermarkIcon: watermarkIcon,
+      );
 }
 
 class _StatementPage extends StatelessWidget {
@@ -222,7 +254,15 @@ class _StatementPage extends StatelessWidget {
   final TextDirection textDirection;
   final ui.Image? watermarkIcon;
 
-  static const _teal = Color(0xFF00897B);
+  /// The shop name, table header, credits and a settled balance, and the
+  /// text on the table header, from the app's color theme. Read when the page
+  /// is built, so the next statement follows a theme change. Text on the
+  /// white page (the shop name, credits, a settled balance) is [_brandText],
+  /// a shade that reads there (a light theme color would be all but
+  /// invisible).
+  static Color get _brand => DocumentBrand.color;
+  static Color get _onBrand => DocumentBrand.onColor;
+  static Color get _brandText => DocumentBrand.textColor;
   static const _grey100 = Color(0xFFF5F5F5);
   static const _grey300 = Color(0xFFE0E0E0);
   static const _grey600 = Color(0xFF757575);
@@ -289,8 +329,8 @@ class _StatementPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(shopName,
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w800, color: _teal)),
+                  style: TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.w800, color: _brandText)),
               if (shopPhone.isNotEmpty)
                 Text(shopPhone,
                     style: const TextStyle(color: _grey600, fontSize: 12)),
@@ -320,7 +360,7 @@ class _StatementPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: (closing > kDueEpsilon ? _red : _teal)
+                color: (closing > kDueEpsilon ? _red : _brand)
                     .withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -333,7 +373,7 @@ class _StatementPage extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: closing > kDueEpsilon ? _red : _teal)),
+                          color: closing > kDueEpsilon ? _red : _brandText)),
                 ],
               ),
             ),
@@ -377,9 +417,9 @@ class _StatementPage extends StatelessWidget {
           labels.credit,
           labels.balance,
         ],
-        background: _teal,
-        style: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+        background: _brand,
+        style: TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w700, color: _onBrand),
       );
 
   Widget _row(StatementRow r, int i) => Container(
@@ -394,7 +434,7 @@ class _StatementPage extends StatelessWidget {
             CurrencyFormatter.format(r.balance, symbol: sym),
           ],
           background: i.isOdd ? _grey100 : null,
-          colors: [null, null, null, _teal, null],
+          colors: [null, null, null, _brandText, null],
         ),
       );
 

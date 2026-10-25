@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/theme/brand_colors.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/isar_service.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -337,7 +337,7 @@ class _ResultPanel extends StatelessWidget {
                         onPressed: onAdd,
                         icon: const ThinIcon(tabler.Plus.new, size: 18),
                         label: Text(s.addAsNewProduct, textAlign: TextAlign.center),
-                        style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                        style: FilledButton.styleFrom(backgroundColor: context.brand.primary),
                       );
                 final half = (constraints.maxWidth - 10) / 2;
                 final sideBySide =

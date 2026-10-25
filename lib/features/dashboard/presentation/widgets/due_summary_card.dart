@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/brand_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/aging_bar.dart';
 import '../../../customers/presentation/widgets/due_actions.dart';
@@ -145,8 +146,8 @@ class _ChaseRow extends ConsumerWidget {
                   visualDensity: VisualDensity.compact,
                   onPressed: () => showCollectPaymentSheet(
                       context, due.customer, due.orderDues, due.totalDue),
-                  icon: const ThinIcon(AppIcons.collected,
-                      color: AppColors.primary, size: 22),
+                  icon: ThinIcon(AppIcons.collected,
+                      color: context.brand.primary, size: 22),
                 ),
               ],
             );

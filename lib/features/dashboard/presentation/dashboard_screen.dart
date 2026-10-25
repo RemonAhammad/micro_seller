@@ -15,6 +15,7 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../../shared/widgets/rate_app_dialog.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/theme/brand_colors.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -314,12 +315,16 @@ class _DashboardContent extends ConsumerWidget {
   SliverAppBar _buildHeader(
       BuildContext context, AsyncValue<DashboardStats> statsAsync) {
     final s = AppStrings.of(context);
+    // The theme's main color and its text color (white and white70 on Teal).
+    final brand = context.brand;
+    final onBrand = brand.onPrimary;
+    final onBrandSoft = onBrand.withAlpha(0xB3);
     return SliverAppBar(
       expandedHeight: dashboardHeaderHeight(MediaQuery.textScalerOf(context)),
       pinned: true,
       stretch: true,
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
+      backgroundColor: brand.primary,
+      foregroundColor: onBrand,
       centerTitle: false,
       title: Consumer(
         builder: (context, ref, _) {
@@ -328,8 +333,8 @@ class _DashboardContent extends ConsumerWidget {
           final shopName = ref.read(settingsProvider.notifier).shopName;
           return Text(
             shopName.isNotEmpty ? shopName : AppStrings.appName,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: onBrand,
               fontSize: 20,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
@@ -340,7 +345,7 @@ class _DashboardContent extends ConsumerWidget {
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground],
         background: Container(
-          decoration: const BoxDecoration(gradient: AppColors.dashboardGradient),
+          decoration: BoxDecoration(gradient: brand.gradient),
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 8, 20, 0),
@@ -353,8 +358,7 @@ class _DashboardContent extends ConsumerWidget {
                       Flexible(
                         child: Text(
                           _getGreeting(context),
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 12),
+                          style: TextStyle(color: onBrandSoft, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -364,13 +368,13 @@ class _DashboardContent extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: onBrand.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
                           DateFormatter.format(DateTime.now()),
-                          style: const TextStyle(
-                              color: Colors.white,
+                          style: TextStyle(
+                              color: onBrand,
                               fontSize: 11,
                               fontWeight: FontWeight.w500),
                         ),
@@ -389,8 +393,8 @@ class _DashboardContent extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(s.todayRevenue,
-                                  style: const TextStyle(
-                                      color: Colors.white70, fontSize: 11),
+                                  style: TextStyle(
+                                      color: onBrandSoft, fontSize: 11),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis),
                               FittedBox(
@@ -398,8 +402,8 @@ class _DashboardContent extends ConsumerWidget {
                                 alignment: AlignmentDirectional.centerStart,
                                 child: Text(
                                   CurrencyFormatter.format(stats.todayRevenue),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: onBrand,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -0.5,
@@ -415,12 +419,12 @@ class _DashboardContent extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(s.totalOrders,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 11)),
+                                style: TextStyle(
+                                    color: onBrandSoft, fontSize: 11)),
                             Text(
                               '${stats.totalOrders}',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: onBrand,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -433,7 +437,7 @@ class _DashboardContent extends ConsumerWidget {
                       width: 100,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: onBrand.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                     ),
@@ -481,6 +485,7 @@ class _DashboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    final brand = context.brand;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
@@ -500,7 +505,7 @@ class _DashboardBody extends StatelessWidget {
                     child: _SectionCard(
                       title: s.weeklySales,
                       icon: tabler.ChartBar.new,
-                      iconColor: AppColors.primary,
+                      iconColor: brand.primary,
                       child: SalesChart(weeklySales: stats.weeklySales),
                     ),
                   ),
@@ -525,7 +530,7 @@ class _DashboardBody extends StatelessWidget {
               _SectionCard(
                 title: s.weeklySales,
                 icon: tabler.ChartBar.new,
-                iconColor: AppColors.primary,
+                iconColor: brand.primary,
                 child: SalesChart(weeklySales: stats.weeklySales),
               ),
             if (stats.weeklySales.isNotEmpty) const SizedBox(height: 14),
@@ -578,7 +583,7 @@ class _DashboardBody extends StatelessWidget {
         label: s.monthRevenue,
         value: CurrencyFormatter.formatCompact(stats.thisMonthRevenue),
         icon: AppIcons.revenue,
-        color: AppColors.primary,
+        color: context.brand.primary,
         route: null,
       ),
       (
@@ -820,6 +825,7 @@ class _DateRangeBar extends ConsumerWidget {
     final range = ref.watch(dashboardDateRangeProvider);
     final notifier = ref.read(dashboardDateRangeProvider.notifier);
     final theme = Theme.of(context);
+    final brand = context.brand;
     final activePreset = range.preset;
     // The dates the stats use: a preset picked yesterday means today now.
     final dateRange = resolveDashboardRange(range, DateTime.now());
@@ -868,7 +874,7 @@ class _DateRangeBar extends ConsumerWidget {
                 tabler.CalendarEvent.new,
                 size: 20,
                 color: activePreset == DateRangePreset.custom
-                    ? AppColors.primary
+                    ? brand.primary
                     : theme.colorScheme.onSurfaceVariant,
               ),
               tooltip: s.customRange,
@@ -883,10 +889,14 @@ class _DateRangeBar extends ConsumerWidget {
                     end: dateRange.end,
                   ),
                   builder: (context, child) {
+                    // The scheme's own pair, except that Teal's dark mode
+                    // keeps its brand teal here (its scheme's #4DB6AC is
+                    // for buttons); every other theme's brand primary is
+                    // the scheme's.
                     return Theme(
                       data: theme.copyWith(
                         colorScheme: theme.colorScheme.copyWith(
-                          primary: AppColors.primary,
+                          primary: brand.primary,
                         ),
                       ),
                       child: child!,
@@ -920,9 +930,10 @@ class _DateRangeBar extends ConsumerWidget {
     required bool isActive,
     required VoidCallback onTap,
   }) {
+    final primary = context.brand.primary;
     return Material(
       color: isActive
-          ? AppColors.primary.withValues(alpha: 0.12)
+          ? primary.withValues(alpha: 0.12)
           : Colors.transparent,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
@@ -934,7 +945,7 @@ class _DateRangeBar extends ConsumerWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isActive
-                  ? AppColors.primary
+                  ? primary
                   : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
               width: isActive ? 1.5 : 1,
             ),
@@ -945,7 +956,7 @@ class _DateRangeBar extends ConsumerWidget {
               fontSize: 12,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
               color: isActive
-                  ? AppColors.primary
+                  ? primary
                   : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),

@@ -6,6 +6,7 @@ import '../../data/services/tutorial_service.dart';
 import '../../features/settings/providers/settings_provider.dart';
 import '../../features/settings/presentation/sidebar_order_screen.dart';
 import '../../features/settings/presentation/recycle_bin_screen.dart';
+import '../../features/settings/presentation/color_theme_screen.dart';
 import '../constants/app_icons.dart';
 import '../constants/sidebar_items.dart';
 import '../../shared/widgets/app_zoom.dart';
@@ -296,6 +297,11 @@ final appRouter = GoRouter(
                 path: 'recycle-bin',
                 pageBuilder: (_, s) =>
                     _fadePage(const RecycleBinScreen(), s),
+              ),
+              GoRoute(
+                path: 'color-theme',
+                pageBuilder: (_, s) =>
+                    _fadePage(const ColorThemeScreen(), s),
               ),
             ],
           ),

@@ -250,7 +250,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                         label,
                         style: TextStyle(
                           color: isSelected
-                              ? Colors.white
+                              ? theme.colorScheme.onPrimary
                               : theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,

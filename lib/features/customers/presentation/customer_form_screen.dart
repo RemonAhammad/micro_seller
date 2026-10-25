@@ -217,7 +217,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                                 label,
                                 style: TextStyle(
                                   color: isSelected
-                                      ? Colors.white
+                                      ? theme.colorScheme.onPrimary
                                       : theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,

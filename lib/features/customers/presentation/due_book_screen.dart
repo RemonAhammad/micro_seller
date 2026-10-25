@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/debouncer.dart';
@@ -616,12 +617,16 @@ class _SummaryCard extends StatelessWidget {
             od.order.createdAt != null &&
             DateTime.now().difference(od.order.createdAt!).inDays > 30)
         .fold<double>(0, (sum, od) => sum + od.due);
+    // The theme's main color and its text color (white and white70 on Teal).
+    final brand = context.brand;
+    final onBrand = brand.onPrimary;
+    final onBrandSoft = onBrand.withAlpha(0xB3);
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF00695C)],
+        gradient: LinearGradient(
+          colors: [brand.primary, brand.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -635,8 +640,7 @@ class _SummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(s.totalReceivable,
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 12)),
+                      style: TextStyle(color: onBrandSoft, fontSize: 12)),
                   const SizedBox(height: 4),
                   // Shrinks to fit rather than wrapping mid-number.
                   FittedBox(
@@ -644,8 +648,8 @@ class _SummaryCard extends StatelessWidget {
                     alignment: AlignmentDirectional.centerStart,
                     child: Text(
                       CurrencyFormatter.format(total),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: onBrand,
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                       ),
@@ -653,8 +657,7 @@ class _SummaryCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(s.customersOwing(dues.length),
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 12)),
+                      style: TextStyle(color: onBrandSoft, fontSize: 12)),
                 ],
               ),
             ),
@@ -668,7 +671,7 @@ class _SummaryCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: onBrand.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
@@ -676,14 +679,13 @@ class _SummaryCard extends StatelessWidget {
                     children: [
                       Text(s.overdue30Days,
                           textAlign: TextAlign.end,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 11)),
+                          style: TextStyle(color: onBrandSoft, fontSize: 11)),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           CurrencyFormatter.formatCompact(overdue),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: onBrand,
                             fontWeight: FontWeight.w800,
                           ),
                         ),

@@ -28,15 +28,23 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A loading button is disabled, so every variant, filled and destructive
+    // too, draws its spinner in the disabled button's own text color, as its
+    // label would be. A white one was all but invisible: a disabled filled
+    // button has Material's pale grey fill, not its main color, and an
+    // outlined or text button has none.
+    final spinner = Builder(
+      builder: (context) => SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: DefaultTextStyle.of(context).style.color,
+        ),
+      ),
+    );
     final child = isLoading
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          )
+        ? spinner
         : icon != null
             ? Row(
                 mainAxisSize: MainAxisSize.min,
@@ -88,14 +96,7 @@ class AppButton extends StatelessWidget {
                 height != null ? Size.fromHeight(height!) : null,
           ),
           child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
+              ? spinner
               : Text(label, textAlign: TextAlign.center),
         );
         break;

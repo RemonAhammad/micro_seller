@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/brand_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/aging_bar.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
@@ -50,13 +51,14 @@ class SalesReportTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
+    final primary = context.brand.primary;
     return _async(context, ref.watch(salesReportProvider(from, to)), (r) {
       final empty = s.tr('noDataForPeriod');
       return ListView(
         padding: const EdgeInsets.all(16),
         children: _gap([
           KpiGrid(items: [
-            (label: s.tr('netSales'), value: _m(r.netSales), icon: AppIcons.revenue, color: AppColors.primary),
+            (label: s.tr('netSales'), value: _m(r.netSales), icon: AppIcons.revenue, color: primary),
             (label: s.tr('grossProfit'), value: _m(r.grossProfit), icon: AppIcons.profit, color: const Color(0xFF42A5F5)),
             (label: s.tr('netProfit'), value: _m(r.netProfit), icon: AppIcons.collected,
               color: r.netProfit < 0 ? AppColors.paymentUnpaid : AppColors.paymentPaid),
@@ -65,7 +67,7 @@ class SalesReportTab extends ConsumerWidget {
           ReportSectionCard(
             title: s.tr('profitAndLoss'),
             icon: AppIcons.reports,
-            color: AppColors.primary,
+            color: primary,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -96,7 +98,7 @@ class SalesReportTab extends ConsumerWidget {
           ReportSectionCard(
             title: s.tr(r.seriesByMonth ? 'monthlyNetSales' : 'dailyNetSales'),
             icon: AppIcons.revenue,
-            color: AppColors.primary,
+            color: primary,
             badge: '${s.tr('avgOrderValue')}: ${_m(r.avgOrderValue)}',
             child: NetSalesChart(series: r.series, byMonth: r.seriesByMonth),
           ),
@@ -127,7 +129,7 @@ class SalesReportTab extends ConsumerWidget {
           ReportSectionCard(
             title: s.topProducts,
             icon: AppIcons.products,
-            color: AppColors.primary,
+            color: primary,
             child: r.topProducts.isEmpty
                 ? ReportEmpty(message: empty)
                 : BreakdownBars(entries: r.topProducts, format: _m, ranked: true),
@@ -178,6 +180,7 @@ class DuesReportTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
+    final primary = context.brand.primary;
     return _async(context, ref.watch(duesReportProvider(from, to)), (r) {
       final empty = s.tr('noDataForPeriod');
       return ListView(
@@ -185,7 +188,7 @@ class DuesReportTab extends ConsumerWidget {
         children: _gap([
           KpiGrid(items: [
             (label: s.tr('moneyReceived'), value: _m(r.totalCollected), icon: AppIcons.collected, color: AppColors.paymentPaid),
-            (label: s.tr('duesCollected'), value: _m(r.duesCollected), icon: AppIcons.dueBook, color: AppColors.primary),
+            (label: s.tr('duesCollected'), value: _m(r.duesCollected), icon: AppIcons.dueBook, color: primary),
             (label: s.tr('creditGiven'), value: _m(r.creditGiven), icon: AppIcons.pending, color: AppColors.paymentPartial),
             (label: s.tr('refundsPaid'), value: _m(r.refundsPaid), icon: AppIcons.returns, color: AppColors.paymentUnpaid),
           ]),
@@ -272,7 +275,7 @@ class InventoryReportTab extends ConsumerWidget {
           ReportSectionCard(
             title: s.tr('stockValuePrice'),
             icon: AppIcons.products,
-            color: AppColors.primary,
+            color: context.brand.primary,
             badge: s.tr('asOfToday'),
             child: PnlTable(rows: [
               (label: s.tr('stockValuePrice'), amount: r.stockValueAtPrice, strong: false, deduct: false),

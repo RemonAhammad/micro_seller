@@ -20,6 +20,8 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/theme/brand_colors.dart';
+import '../../../core/theme/document_brand.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/payment_method_chips.dart';
@@ -61,7 +63,8 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
   /// The last receipt PDF rendered on this screen, so Share then Print (or
   /// Download) reuses it instead of rendering again. Keyed on everything the
   /// receipt shows: the order (id + last edit — every order write bumps
-  /// `updatedAt`) and the shop settings it prints. Dropped with the screen.
+  /// `updatedAt`), the shop settings it prints and the color theme's
+  /// document colors it's drawn in. Dropped with the screen.
   Object? _receiptKey;
   Uint8List? _receiptPdf;
 
@@ -72,7 +75,15 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
     required String currencySymbol,
     required double taxRate,
   }) async {
-    final key = (order.id, order.updatedAt, shopName, currencySymbol, taxRate);
+    final key = (
+      order.id,
+      order.updatedAt,
+      shopName,
+      currencySymbol,
+      taxRate,
+      DocumentBrand.color,
+      DocumentBrand.onColor,
+    );
     final cached = _receiptPdf;
     if (cached != null && _receiptKey == key) return cached;
     final bytes = await runWithProgress(
@@ -923,7 +934,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
                   border: isCurrent ? Border.all(color: cs.primary, width: 2) : null,
                 ),
                 child: isCompleted
-                    ? const ThinIcon(tabler.Check.new, size: 14, color: Colors.white)
+                    ? ThinIcon(tabler.Check.new, size: 14, color: cs.onPrimary)
                     : Center(
                         // Shrinks with a large text size instead of being
                         // cut off by the circle.
@@ -1003,6 +1014,7 @@ class _StatusStepperBar extends StatelessWidget {
     final labels = _labels(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final brand = context.brand;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1026,7 +1038,7 @@ class _StatusStepperBar extends StatelessWidget {
                         child: Container(
                           height: 2,
                           color: isActive
-                              ? AppColors.primary
+                              ? brand.primary
                               : cs.onSurface.withValues(alpha: 0.15),
                         ),
                       ),
@@ -1036,10 +1048,10 @@ class _StatusStepperBar extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isActive
-                            ? AppColors.primary
+                            ? brand.primary
                             : cs.onSurface.withValues(alpha: 0.1),
                         border: isCurrent
-                            ? Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 3)
+                            ? Border.all(color: brand.primary.withValues(alpha: 0.3), width: 3)
                             : null,
                       ),
                       child: Center(
@@ -1047,7 +1059,7 @@ class _StatusStepperBar extends StatelessWidget {
                             ? ThinIcon(
                                 i < _currentIndex ? tabler.Check.new : tabler.Circle.new,
                                 size: isCurrent ? 12 : 10,
-                                color: Colors.white,
+                                color: brand.onPrimary,
                               )
                             // Shrinks with a large text size instead of
                             // being cut off by the circle.
@@ -1085,7 +1097,7 @@ class _StatusStepperBar extends StatelessWidget {
                       fontSize: 9,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                       color: isActive
-                          ? AppColors.primary
+                          ? brand.primary
                           : cs.onSurface.withValues(alpha: 0.4),
                     ),
                     maxLines: 1,
@@ -1506,6 +1518,7 @@ class _ReturnStepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     if (_activeIndex < 0) return const SizedBox.shrink();
     final steps = _steps(context);
+    final brand = context.brand;
 
     // A label wider than its step's third of the row (large text) is drawn
     // smaller instead of overflowing it.
@@ -1522,7 +1535,7 @@ class _ReturnStepIndicator extends StatelessWidget {
                     child: Container(
                       height: 2,
                       color: isActive
-                          ? AppColors.primary
+                          ? brand.primary
                           : Colors.grey.withValues(alpha: 0.2),
                     ),
                   ),
@@ -1533,11 +1546,11 @@ class _ReturnStepIndicator extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isActive ? AppColors.primary : Colors.grey.withValues(alpha: 0.15),
+                        color: isActive ? brand.primary : Colors.grey.withValues(alpha: 0.15),
                       ),
                       child: Center(
                         child: isActive
-                            ? const ThinIcon(tabler.Check.new, size: 12, color: Colors.white)
+                            ? ThinIcon(tabler.Check.new, size: 12, color: brand.onPrimary)
                             : FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text('${i + 1}',
@@ -1558,7 +1571,7 @@ class _ReturnStepIndicator extends StatelessWidget {
                             fontSize: 9,
                             fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                             color: isActive
-                                ? AppColors.primary
+                                ? brand.primary
                                 : Colors.grey.withValues(alpha: 0.5),
                           ),
                           maxLines: 1,

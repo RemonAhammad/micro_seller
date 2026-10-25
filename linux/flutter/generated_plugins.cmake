@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  dynamic_color
   file_selector_linux
   isar_community_flutter_libs
   open_file_linux

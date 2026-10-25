@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
+import '../theme/app_color_theme.dart';
+import '../theme/brand_colors.dart';
 
 extension ContextExtensions on BuildContext {
   ThemeData get theme => Theme.of(this);
@@ -75,20 +77,21 @@ extension ContextExtensions on BuildContext {
     String actionLabel = 'UNDO',
   }) {
     final messenger = ScaffoldMessenger.of(this);
+    const background = Color(0xFF323232);
     // Drop any in-flight bar so rapid deletes don't queue up behind each
     // other — the last one is the one the user is reacting to.
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: const Color(0xFF323232),
+        backgroundColor: background,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 10),
         action: SnackBarAction(
           label: actionLabel,
-          textColor: const Color(0xFF4DB6AC),
+          textColor: _readableOn(brand.primaryLight, background),
           onPressed: onUndo,
         ),
       ),
@@ -124,4 +127,16 @@ extension ContextExtensions on BuildContext {
       ),
     );
   }
+}
+
+/// [color] when it reads easily (4.5:1) on [background], else [color] mixed
+/// toward white just enough to. Teal's #4DB6AC on the snackbar's dark grey
+/// is used as is; a dark theme color is lightened.
+Color _readableOn(Color color, Color background) {
+  if (contrastRatio(color, background) >= kReadableContrast) return color;
+  for (var step = 1; step < 20; step++) {
+    final mixed = Color.lerp(color, Colors.white, step / 20)!;
+    if (contrastRatio(mixed, background) >= kReadableContrast) return mixed;
+  }
+  return Colors.white;
 }

@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_icons.dart';
+import '../../../../core/theme/brand_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../dashboard/presentation/widgets/sales_chart.dart'
     show GridLineCallback, axisTitleReserve;
@@ -199,13 +200,15 @@ class BreakdownBars extends StatelessWidget {
     super.key,
     required this.entries,
     required this.format,
-    this.color = AppColors.primary,
+    this.color,
     this.ranked = false,
   });
 
   final Map<String, double> entries;
   final String Function(double) format;
-  final Color color;
+
+  /// The bars' and top ranks' color; the theme's main color by default.
+  final Color? color;
 
   /// Show 1, 2, 3… before each row (top-N lists).
   final bool ranked;
@@ -213,6 +216,7 @@ class BreakdownBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final color = this.color ?? context.brand.primary;
     final items = entries.entries.toList();
     final max = items.fold<double>(0, (m, e) => e.value.abs() > m ? e.value.abs() : m);
     return LayoutBuilder(
@@ -387,9 +391,11 @@ class _NetSalesChartState extends State<NetSalesChart> {
                 BarChartRodData(
                   toY: series[i].value,
                   width: series.length > 20 ? 5 : 12,
+                  // A sales series: the fixed revenue color, as on the
+                  // dashboard's chart, whatever the color theme.
                   color: series[i].value < 0
                       ? AppColors.paymentUnpaid
-                      : AppColors.primary.withValues(alpha: 0.8),
+                      : AppColors.chartRevenue.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(3),
                 ),
               ]),

@@ -20,6 +20,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/theme/document_brand.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
@@ -366,9 +367,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final taxRate = settings.taxRate;
 
     // Rendered once per sheet and shared by Share / Download / Print. Dropped
-    // on failure so the next tap retries instead of replaying the error.
+    // on failure so the next tap retries instead of replaying the error, and
+    // when the color theme's document colors it's drawn in have changed.
     Future<Uint8List>? receipt;
+    Object? receiptColors;
     Future<Uint8List> receiptBytes() async {
+      final colors = (DocumentBrand.color, DocumentBrand.onColor);
+      if (receiptColors != colors) {
+        receipt = null;
+        receiptColors = colors;
+      }
       final pending = receipt ??= pdfService.generateOrderReceipt(
         order,
         shopName: shopName,
@@ -389,6 +397,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Each action keeps its own fixed color, as each sidebar tab does:
+          // following the color theme, this one would be Print's very color
+          // under Indigo, and close to Download's under Blue.
           _InvoiceActionTile(
             icon: tabler.FileTypePdf.new,
             label: s.sharePdf,
@@ -1884,10 +1895,18 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   FilledButton.icon(
                     onPressed: _saving ? null : _saveCustomer,
                     icon: _saving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            // The button's own icon color, like the check it
+                            // replaces: white was all but invisible on the
+                            // disabled button while saving.
+                            child: Builder(
+                              builder: (context) => CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: IconTheme.of(context).color,
+                              ),
+                            ),
                           )
                         : const ThinIcon(tabler.Check.new, size: 18),
                     label: Text(_saving ? s.tr('loading') : s.addAndSelect),

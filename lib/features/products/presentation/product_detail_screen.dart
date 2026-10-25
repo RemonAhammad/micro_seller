@@ -96,7 +96,13 @@ class ProductDetailScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          child: const ThinIcon(tabler.Package.new, size: 80, color: Colors.white30),
+                          // The text color on the main color, at white30's
+                          // alpha.
+                          child: ThinIcon(
+                            tabler.Package.new,
+                            size: 80,
+                            color: theme.colorScheme.onPrimary.withAlpha(0x4D),
+                          ),
                         ),
                 ),
               ),

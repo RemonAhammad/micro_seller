@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/services/csv_export_service.dart';
 import '../../../data/services/report_pdf_service.dart';
@@ -218,13 +219,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final textScaler = MediaQuery.textScalerOf(context);
+    // The theme's main color and its text color (white and white70 on Teal).
+    final brand = context.brand;
+    final onBrand = brand.onPrimary;
+    final onBrandSoft = onBrand.withAlpha(0xB3);
     final tabBar = TabBar(
       controller: _tabs,
       isScrollable: true,
       tabAlignment: TabAlignment.start,
-      labelColor: Colors.white,
-      unselectedLabelColor: Colors.white70,
-      indicatorColor: Colors.white,
+      labelColor: onBrand,
+      unselectedLabelColor: onBrandSoft,
+      indicatorColor: onBrand,
       tabs: [for (final k in _tabKeys) Tab(text: s.tr(k))],
     );
 
@@ -236,13 +241,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             pinned: true,
             expandedHeight:
                 reportsHeaderHeight(textScaler, tabBar.preferredSize.height),
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            backgroundColor: brand.primary,
+            foregroundColor: onBrand,
             centerTitle: false,
             title: Text(
               s.reports,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: onBrand,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
@@ -250,12 +255,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             ),
             actions: [
               _exporting
-                  ? const Padding(
-                      padding: EdgeInsets.all(14),
+                  ? Padding(
+                      padding: const EdgeInsets.all(14),
                       child: SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: onBrand),
                       ),
                     )
                   : IconButton(
@@ -266,7 +271,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(gradient: AppColors.dashboardGradient),
+                decoration: BoxDecoration(gradient: brand.gradient),
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.only(top: kToolbarHeight + 4),
@@ -302,7 +307,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                             alignment: AlignmentDirectional.centerStart,
                             child: Text(
                               '${DateFormatter.format(_from)}  ${s.tr('dateRangeTo')}  ${DateFormatter.format(_to)}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              style: TextStyle(color: onBrandSoft, fontSize: 12),
                               maxLines: 1,
                             ),
                           ),
@@ -339,8 +344,13 @@ class _RangeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // On the header: the selected chip swaps the main color and its text
+    // color (white on Teal).
+    final brand = context.brand;
     return Material(
-      color: selected ? Colors.white : Colors.white.withValues(alpha: 0.18),
+      color: selected
+          ? brand.onPrimary
+          : brand.onPrimary.withValues(alpha: 0.18),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -350,7 +360,7 @@ class _RangeChip extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? AppColors.primary : Colors.white,
+              color: selected ? brand.primary : brand.onPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),

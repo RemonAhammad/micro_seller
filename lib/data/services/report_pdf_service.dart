@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../../core/theme/document_brand.dart';
 import 'pdf_assembly.dart';
 import 'pdf_service.dart';
 import 'report_service.dart';
@@ -48,7 +49,7 @@ class ReportPdfService {
     final images = <Uint8List>[];
     for (var i = 0; i < pages.length; i++) {
       images.add(await captureWidgetPng(
-        _ReportPage(
+        reportPage(
           shopName: shopName,
           reportTitle: reportTitle,
           periodLabel: periodLabel,
@@ -72,6 +73,30 @@ class ReportPdfService {
       height: (_pageHeight * kPdfCapturePixelRatio).round(),
     ));
   }
+
+  /// One page as [generate] captures it ([showHeader] on the first page
+  /// only). Public so a test can pump it and check what it draws.
+  @visibleForTesting
+  static Widget reportPage({
+    required String shopName,
+    required String reportTitle,
+    required String periodLabel,
+    required List<ReportTable> tables,
+    required bool showHeader,
+    required String footer,
+    required TextDirection textDirection,
+    ui.Image? watermarkIcon,
+  }) =>
+      _ReportPage(
+        shopName: shopName,
+        reportTitle: reportTitle,
+        periodLabel: periodLabel,
+        tables: tables,
+        showHeader: showHeader,
+        footer: footer,
+        textDirection: textDirection,
+        watermarkIcon: watermarkIcon,
+      );
 }
 
 class _ReportPage extends StatelessWidget {
@@ -95,7 +120,14 @@ class _ReportPage extends StatelessWidget {
   final TextDirection textDirection;
   final ui.Image? watermarkIcon;
 
-  static const _teal = Color(0xFF00897B);
+  /// The shop name, table titles and header rows, and the text on the header
+  /// rows, from the app's color theme. Read when the page is built, so the
+  /// next report follows a theme change. The shop name and table titles are
+  /// text on the white page: [_brandText], a shade that reads there (a light
+  /// theme color would be all but invisible).
+  static Color get _brand => DocumentBrand.color;
+  static Color get _onBrand => DocumentBrand.onColor;
+  static Color get _brandText => DocumentBrand.textColor;
   static const _grey100 = Color(0xFFF5F5F5);
   static const _grey300 = Color(0xFFE0E0E0);
   static const _grey600 = Color(0xFF757575);
@@ -122,8 +154,8 @@ class _ReportPage extends StatelessWidget {
                     children: [
                       if (showHeader) ...[
                         Text(shopName,
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w800, color: _teal)),
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w800, color: _brandText)),
                         const SizedBox(height: 2),
                         Text(reportTitle,
                             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
@@ -132,8 +164,8 @@ class _ReportPage extends StatelessWidget {
                       ],
                       for (final t in tables) ...[
                         Text(t.title,
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w700, color: _teal)),
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w700, color: _brandText)),
                         const SizedBox(height: 4),
                         _row(t.headers, header: true),
                         for (var i = 0; i < t.rows.length; i++)
@@ -163,7 +195,7 @@ class _ReportPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: header ? _teal : (shaded ? _grey100 : null),
+        color: header ? _brand : (shaded ? _grey100 : null),
         border: header
             ? null
             : const Border(bottom: BorderSide(color: _grey300, width: 0.5)),
@@ -181,7 +213,7 @@ class _ReportPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: header ? FontWeight.w700 : FontWeight.w400,
-                  color: header ? Colors.white : Colors.black,
+                  color: header ? _onBrand : Colors.black,
                 ),
               ),
             ),

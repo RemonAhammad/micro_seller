@@ -14,6 +14,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../../core/theme/brand_colors.dart';
 import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../orders/presentation/widgets/order_card.dart';
@@ -605,8 +606,8 @@ class _PurchaseHistoryChart extends StatelessWidget {
         children: [
           Row(
             children: [
-              const ThinIcon(tabler.ChartBar.new,
-                  size: 18, color: AppColors.primary),
+              ThinIcon(tabler.ChartBar.new,
+                  size: 18, color: context.brand.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -727,7 +728,9 @@ class _PurchaseHistoryChart extends StatelessWidget {
                       barRods: [
                         BarChartRodData(
                           toY: e.value.value,
-                          color: AppColors.primary,
+                          // A sales series: the fixed revenue color, as on
+                          // the dashboard's chart, whatever the color theme.
+                          color: AppColors.chartRevenue,
                           width: 20,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(6),

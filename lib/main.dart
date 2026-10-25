@@ -11,11 +11,13 @@ import 'package:workmanager/workmanager.dart';
 import 'app.dart';
 import 'core/constants/app_icons.dart';
 import 'core/constants/sidebar_items.dart';
+import 'core/theme/dynamic_color_support.dart';
 import 'core/utils/currency_formatter.dart';
 import 'data/services/auto_backup_runner.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/tutorial_service.dart';
 import 'features/settings/providers/display_scale_provider.dart';
+import 'features/settings/providers/settings_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +40,16 @@ void main() async {
   TutorialService.primeFrom(prefs);
   // Before runApp too: the first frame is already at the saved display size.
   DisplayScale.primeFrom(prefs);
+  // ... and in the saved theme mode and color theme.
+  Settings.primeFrom(prefs);
+  final colorTheme = Settings.primedColorTheme;
+  // Phone colors: the system's palette now, or the first frame is Teal.
+  if (colorTheme.isPhone) await DynamicColorSupport.prime();
+  // PDFs are captured without a Theme; they read the brand color here.
+  publishDocumentBrand(
+    colorTheme,
+    lightDynamic: DynamicColorSupport.schemesFor(colorTheme).light,
+  );
 
   // iOS asks for notification permission during init; keep that prompt
   // before the first frame as it always was.

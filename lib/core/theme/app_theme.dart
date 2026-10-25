@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
-import '../constants/app_colors.dart';
 import '../constants/app_icons.dart';
+import 'app_color_theme.dart';
+import 'brand_colors.dart';
 
 /// Flutter's own app-bar buttons (back arrow, drawer, close) drawn with the
 /// same thin Tabler icons as the rest of the app. The back arrow points
@@ -16,19 +17,116 @@ final _thinActionIcons = ActionIconThemeData(
   closeButtonIconBuilder: (_) => const ThinIcon(tabler.X.new),
 );
 
+/// The app's light and dark themes for a color theme.
+///
+/// A color theme sets only the color scheme's primary pair (and its accent);
+/// every component theme reads the scheme, so buttons, the FAB, focused
+/// fields and text selection follow it, with the theme's own text color on
+/// the main color. Surfaces keep their fixed neutrals (white / #F8F9FA in
+/// light mode; #1C1C2E, #252535 and blue-grey in dark mode).
+///
+/// The light and dark component themes differ on purpose, as before themes,
+/// and the layout tests depend on it: only light mode sets the filled and
+/// outlined buttons, chips, dividers, list tiles and the bottom navigation
+/// bar; only dark mode sets text selection and the input icon colors.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData lightTheme = ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.light,
+  /// Teal's light theme, the default.
+  static ThemeData get lightTheme => build(Brightness.light, kDefaultColorTheme);
+
+  /// Teal's dark theme, the default.
+  static ThemeData get darkTheme => build(Brightness.dark, kDefaultColorTheme);
+
+  static const _cacheSize = 32;
+
+  /// Recently built themes, least recently used first.
+  static final _cache = <Object, ThemeData>{};
+
+  /// [brightness]'s theme for [theme]. With [dynamicScheme] (Phone colors),
+  /// that system scheme is the color scheme, with its own onPrimary, and
+  /// [theme]'s colors are not used.
+  ///
+  /// Memoized by brightness and the colors that mode uses (not the theme's
+  /// id or name), or by the system scheme, so a rebuild for another reason
+  /// (language, shop name) gets the identical [ThemeData] back. The most
+  /// recent 32 are kept: the theme editor builds one per color it previews.
+  static ThemeData build(Brightness brightness, AppColorTheme theme,
+      {ColorScheme? dynamicScheme}) {
+    assert(dynamicScheme == null || dynamicScheme.brightness == brightness,
+        'dynamicScheme is a ${dynamicScheme.brightness.name} scheme');
+    final Object key = dynamicScheme != null
+        ? (brightness, dynamicScheme)
+        : (
+            brightness,
+            theme.seed,
+            theme.accent,
+            theme.style,
+            theme.onPrimary,
+            theme.primaryFor(brightness),
+            theme.onPrimaryFor(brightness),
+          );
+    final cached = _cache.remove(key);
+    if (cached != null) return _cache[key] = cached;
+    final built = _create(brightness, theme, dynamicScheme);
+    _cache[key] = built;
+    if (_cache.length > _cacheSize) _cache.remove(_cache.keys.first);
+    return built;
+  }
+
+  static ThemeData _create(
+      Brightness brightness, AppColorTheme theme, ColorScheme? dynamicScheme) {
+    final scheme = dynamicScheme ?? _scheme(brightness, theme);
+    final brand = dynamicScheme == null &&
+            brightness == Brightness.dark &&
+            _isTealPalette(theme)
+        ? BrandColors.teal
+        : BrandColors.fromPair(
+            primary: scheme.primary,
+            onPrimary: scheme.onPrimary,
+            accent: scheme.secondary,
+            onAccent: scheme.onSecondary,
+          );
+    return brightness == Brightness.light
+        ? _light(scheme, brand)
+        : _dark(scheme, brand);
+  }
+
+  /// Teal's colors (the preset, Phone colors' fallback, or a saved copy):
+  /// they keep two details of the scheme Teal had before themes.
+  static bool _isTealPalette(AppColorTheme theme) =>
+      theme.seed == kDefaultColorTheme.seed &&
+      theme.accent == kDefaultColorTheme.accent &&
+      theme.style == kDefaultColorTheme.style &&
+      theme.onPrimary == kDefaultColorTheme.onPrimary;
+
+  /// Material 3's scheme for the theme's main color and style, with the
+  /// theme's exact pair as primary / onPrimary and its accent as secondary
+  /// (text color picked by contrast).
+  static ColorScheme _scheme(Brightness brightness, AppColorTheme theme) {
+    var scheme = ColorScheme.fromSeed(
+      seedColor: theme.seedColor,
+      brightness: brightness,
+      dynamicSchemeVariant: theme.style.variant,
     ).copyWith(
-      primary: AppColors.primary,
-      secondary: AppColors.accent,
-      tertiary: const Color(0xFF00BFA5),
-    ),
+      primary: theme.primaryFor(brightness),
+      onPrimary: theme.onPrimaryFor(brightness).color,
+    );
+    final accent = theme.accentColor;
+    if (accent != null) {
+      final onAccent = recommendedOnColor(accent).color;
+      scheme = scheme.copyWith(secondary: accent, onSecondary: onAccent);
+      // Teal's light scheme also had the accent as its tertiary color.
+      if (brightness == Brightness.light && _isTealPalette(theme)) {
+        scheme = scheme.copyWith(tertiary: accent, onTertiary: onAccent);
+      }
+    }
+    return scheme;
+  }
+
+  static ThemeData _light(ColorScheme scheme, BrandColors brand) => ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
     fontFamily: 'Roboto',
     actionIconTheme: _thinActionIcons,
     appBarTheme: const AppBarTheme(
@@ -55,12 +153,13 @@ class AppTheme {
       ),
       color: Colors.white,
       surfaceTintColor: Colors.transparent,
-      shadowColor: Colors.black.withOpacity(0.06),
+      // 6% black, exactly as `withOpacity(0.06)` rounded it.
+      shadowColor: Colors.black.withAlpha(15),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -75,8 +174,8 @@ class AppTheme {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -89,8 +188,8 @@ class AppTheme {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary,
-        side: const BorderSide(color: AppColors.primary),
+        foregroundColor: scheme.primary,
+        side: BorderSide(color: scheme.primary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -101,9 +200,9 @@ class AppTheme {
         ),
       ),
     ),
-    inputDecorationTheme: InputDecorationTheme(
+    inputDecorationTheme: InputDecorationThemeData(
       filled: true,
-      fillColor: const Color(0xFFF8F9FA),
+      fillColor: kLightScaffoldColor,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -114,7 +213,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        borderSide: BorderSide(color: scheme.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -135,8 +234,8 @@ class AppTheme {
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
+      backgroundColor: scheme.primary,
+      foregroundColor: scheme.onPrimary,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
@@ -144,25 +243,20 @@ class AppTheme {
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: Color(0xFF9CA3AF),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      selectedItemColor: scheme.primary,
+      unselectedItemColor: const Color(0xFF9CA3AF),
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),
-    scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+    scaffoldBackgroundColor: kLightScaffoldColor,
+    extensions: [brand],
   );
 
-  static ThemeData darkTheme = ThemeData(
+  static ThemeData _dark(ColorScheme scheme, BrandColors brand) => ThemeData(
     useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.dark,
-    ).copyWith(
-      primary: AppColors.primaryLight,
-      secondary: AppColors.accent,
-    ),
+    colorScheme: scheme,
     fontFamily: 'Roboto',
     actionIconTheme: _thinActionIcons,
     appBarTheme: const AppBarTheme(
@@ -192,8 +286,8 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -205,7 +299,7 @@ class AppTheme {
         ),
       ),
     ),
-    inputDecorationTheme: InputDecorationTheme(
+    inputDecorationTheme: InputDecorationThemeData(
       filled: true,
       fillColor: Colors.blueGrey.shade800,
       border: OutlineInputBorder(
@@ -218,7 +312,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+        borderSide: BorderSide(color: scheme.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -231,14 +325,14 @@ class AppTheme {
       suffixIconColor: Colors.blueGrey.shade300,
     ),
     textSelectionTheme: TextSelectionThemeData(
-      cursorColor: AppColors.primaryLight,
-      selectionColor: AppColors.primaryLight.withValues(alpha: 0.3),
-      selectionHandleColor: AppColors.primaryLight,
+      cursorColor: scheme.primary,
+      selectionColor: scheme.primary.withValues(alpha: 0.3),
+      selectionHandleColor: scheme.primary,
     ),
-    scaffoldBackgroundColor: Colors.blueGrey.shade900,
+    scaffoldBackgroundColor: kDarkScaffoldColor,
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: AppColors.primaryLight,
-      foregroundColor: Colors.white,
+      backgroundColor: scheme.primary,
+      foregroundColor: scheme.onPrimary,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
@@ -246,5 +340,6 @@ class AppTheme {
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ),
+    extensions: [brand],
   );
 }

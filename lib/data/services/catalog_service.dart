@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart' show SvgStringLoader, vg;
 
 import '../../core/constants/app_strings.dart';
+import '../../core/theme/document_brand.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../models/product.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -389,7 +390,13 @@ class _CatalogPageWidget extends StatelessWidget {
     required this.art,
   });
 
-  static const _teal = Color(0xFF00897B);
+  /// The header and prices, and the text on the header, from the app's color
+  /// theme. Read when the page is built, so the next catalog follows a theme
+  /// change. Prices are text on the white page: [_brandText], a shade that
+  /// reads there (a light theme color would be all but invisible).
+  static Color get _brand => DocumentBrand.color;
+  static Color get _onBrand => DocumentBrand.onColor;
+  static Color get _brandText => DocumentBrand.textColor;
   static const _grey100 = Color(0xFFF5F5F5);
   static const _grey300 = Color(0xFFE0E0E0);
   static const _grey600 = Color(0xFF757575);
@@ -437,7 +444,7 @@ class _CatalogPageWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
-        color: _teal,
+        color: _brand,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -452,8 +459,8 @@ class _CatalogPageWidget extends StatelessWidget {
                   shopName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _onBrand,
                     fontWeight: FontWeight.w700,
                     fontSize: 22,
                   ),
@@ -462,16 +469,19 @@ class _CatalogPageWidget extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     shopPhone!,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    // The header text color at 70% (Colors.white70 when the
+                    // text is white).
+                    style: TextStyle(
+                        color: _onBrand.withAlpha(0xB3), fontSize: 12),
                   ),
                 ],
               ],
             ),
           ),
-          const Text(
+          Text(
             'PRODUCT CATALOG',
             style: TextStyle(
-              color: Colors.white,
+              color: _onBrand,
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.1,
@@ -543,8 +553,8 @@ class _CatalogPageWidget extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   CurrencyFormatter.format(p.sellingPrice, symbol: sym),
-                  style: const TextStyle(
-                    color: _teal,
+                  style: TextStyle(
+                    color: _brandText,
                     fontWeight: FontWeight.w700,
                     fontSize: 17,
                   ),
@@ -659,7 +669,7 @@ class _CatalogPageWidget extends StatelessWidget {
               const Text(
                 AppStrings.appName,
                 style: TextStyle(
-                  color: _teal,
+                  color: kPdfWatermarkColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
@@ -238,7 +237,9 @@ Future<bool> _runBackgroundBackup() async {
     );
 
     final drive = DriveService();
-    final settingsSnapshot = _exportSettingsFromPrefs(prefs);
+    // No Riverpod in this isolate: the same encoder as
+    // Settings.exportSettings(), reading the stored values.
+    final settingsSnapshot = Settings.exportFromPrefs(prefs);
     await drive.backupToDrive(
       isar,
       settings: settingsSnapshot,
@@ -292,36 +293,4 @@ Future<bool> _runBackgroundBackup() async {
       } catch (_) {/* schedule failure logged inside */}
     }
   }
-}
-
-/// Mirrors `Settings.exportSettings()` but reads raw prefs so it can run
-/// in a background isolate (no Riverpod available there). Keys must match
-/// `Settings._key*` in `settings_provider.dart`.
-Map<String, dynamic> _exportSettingsFromPrefs(SharedPreferences prefs) {
-  List<String> decodeList(String? raw) {
-    if (raw == null || raw.isEmpty) return const [];
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is List) return decoded.map((e) => e.toString()).toList();
-    } catch (_) {/* corrupt — fall through */}
-    return const [];
-  }
-
-  return {
-    'shopName': prefs.getString('shopName') ?? 'My Shop',
-    'currencySymbol': prefs.getString('currencySymbol') ?? '\$',
-    'lowStockThreshold': prefs.getInt('lowStockThreshold') ?? 10,
-    'themeMode': prefs.getString('themeMode') ?? 'system',
-    'taxRate': prefs.getDouble('taxRate') ?? 0.0,
-    'language': prefs.getString('language') ?? 'en',
-    'downloadDirectory': prefs.getString('downloadDirectory') ?? '',
-    'sidebarOrder': decodeList(prefs.getString('sidebarOrder')),
-    'sidebarPosition': prefs.getString('sidebarPosition') ?? 'left',
-    'hiddenSidebarItems':
-        decodeList(prefs.getString('hiddenSidebarItems')),
-    'autoBackup': prefs.getBool('autoBackup') ?? false,
-    'securityFingerprintEnabled':
-        prefs.getBool('securityFingerprintEnabled') ?? true,
-    'securityPinEnabled': prefs.getBool('securityPinEnabled') ?? true,
-  };
 }

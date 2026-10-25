@@ -7,11 +7,12 @@ import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/brand_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_preview_sample.dart';
 import '../../../../shared/widgets/app_zoom.dart';
 import '../../../../shared/widgets/bottom_sheet_handle.dart';
-import '../../../dashboard/presentation/widgets/stat_card.dart';
 import '../../providers/display_scale_provider.dart';
 
 // Settings → Display size and Text size (displayScaleProvider, applied by
@@ -93,14 +94,14 @@ class _DisplaySizeSheetState extends ConsumerState<_DisplaySizeSheet> {
         const SizedBox(height: 12),
         _PreviewHeader(percent: percent),
         const SizedBox(height: 8),
-        _PreviewFrame(
-          sample: const _AppSample(),
+        AppPreviewFrame(
+          sample: const AppPreviewSample(),
           // Relative to the zoom the sheet is drawn at, so the sample shows
           // at [percent] of its coded size, and stays put when the app takes
           // that size on release.
           preview: ZoomBox(
             scale: percent / 100 / AppZoomScope.scaleOf(context),
-            child: const _AppSample(),
+            child: const AppPreviewSample(),
           ),
         ),
         const SizedBox(height: 8),
@@ -178,7 +179,7 @@ class _TextSizeSheetState extends ConsumerState<_TextSizeSheet> {
         const SizedBox(height: 8),
         _PreviewHeader(percent: percent, following: following),
         const SizedBox(height: 8),
-        _PreviewFrame(
+        AppPreviewFrame(
           sample: const _TextSample(),
           preview: MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: textScaler),
@@ -264,7 +265,7 @@ class _PreviewHeader extends StatelessWidget {
           '$percent%',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w800,
-            color: following ? muted : AppColors.primary,
+            color: following ? muted : context.brand.primary,
           ),
         ),
       ],
@@ -280,67 +281,6 @@ String _upperCase(BuildContext context, String text) =>
       'tr' || 'az' => text.replaceAll('i', 'İ').toUpperCase(),
       _ => text.toUpperCase(),
     };
-
-/// The preview box.
-class _PreviewFrame extends StatelessWidget {
-  const _PreviewFrame({required this.sample, required this.preview});
-
-  /// The sample as the app draws it now. Laid out but never shown, it sets
-  /// the box's height, which therefore can't change while the slider is
-  /// held: the slider below stays under the finger.
-  final Widget sample;
-
-  /// The sample at the size being picked, drawn from the top and clipped to
-  /// the box: a larger size runs off the bottom, a smaller one leaves room.
-  final Widget preview;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final radius = BorderRadius.circular(14);
-    // A picture of the app, not controls: no taps, no keyboard focus (the
-    // sample's button would take a Tab), nothing for a screen reader.
-    return ExcludeFocus(
-      child: ExcludeSemantics(
-        child: IgnorePointer(
-          child: Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor,
-              borderRadius: radius,
-            ),
-            // In front, so a sample running off the bottom doesn't cover it.
-            foregroundDecoration: BoxDecoration(
-              borderRadius: radius,
-              border: Border.all(color: theme.colorScheme.outlineVariant),
-            ),
-            child: Stack(
-              // The sample gets the box's own width, as the preview does.
-              fit: StackFit.passthrough,
-              children: [
-                Visibility(
-                  visible: false,
-                  maintainState: true,
-                  maintainAnimation: true,
-                  maintainSize: true,
-                  child: sample,
-                ),
-                Positioned.fill(
-                  child: OverflowBox(
-                    alignment: Alignment.topCenter,
-                    minHeight: 0,
-                    maxHeight: double.infinity,
-                    child: preview,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// A percent slider from [kMinDisplayPercent] to [max] in
 /// [kDisplayPercentStep] steps, with the range at its ends.
@@ -474,175 +414,17 @@ class _IconBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brand = context.brand;
     return Container(
       width: 40,
       height: 40,
       // Centered: the box's tight size would stretch the icon to fill it.
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: brand.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: ThinIcon(icon, color: AppColors.primary, size: 20),
-    );
-  }
-}
-
-/// The soft shadow the app's cards cast (OrderCard, the Dashboard's
-/// sections).
-final _cardShadow = [
-  BoxShadow(
-    color: Colors.black.withValues(alpha: 0.04),
-    blurRadius: 8,
-    offset: const Offset(0, 2),
-  ),
-];
-
-/// A slice of the app as it is drawn, with sample figures: two Dashboard
-/// cards, an order as the Orders list shows it, and a button.
-class _AppSample extends StatelessWidget {
-  const _AppSample();
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppStrings.of(context);
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final orderTitle = theme.textTheme.titleSmall?.copyWith(
-      fontWeight: FontWeight.w800,
-    );
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            height: statCardHeight(MediaQuery.textScalerOf(context)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: StatCard(
-                    label: s.monthRevenue,
-                    value: CurrencyFormatter.formatCompact(48250),
-                    iconBuilder: AppIcons.revenue,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: StatCard(
-                    label: s.pendingOrders,
-                    value: '12',
-                    iconBuilder: AppIcons.pending,
-                    color: AppColors.statusPending,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: _cardShadow,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      // An order number is data: the app never translates it.
-                      child: Text(
-                        'ORD-042',
-                        style: orderTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      s.today,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.4),
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    // All the room the amount leaves, so the badges only
-                    // shorten when it is really tight.
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: _Badge(s.pending, AppColors.statusPending),
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: _Badge(s.paid, AppColors.paymentPaid),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      CurrencyFormatter.format(1250),
-                      style: orderTitle?.copyWith(color: cs.primary),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: FilledButton.icon(
-              onPressed: () {},
-              style: FilledButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-              ),
-              icon: const ThinIcon(tabler.Plus.new, size: 18),
-              label: Text(s.addOrder),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// An order's status pill, as the Orders list draws it.
-class _Badge extends StatelessWidget {
-  const _Badge(this.label, this.color);
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      child: ThinIcon(icon, color: brand.primary, size: 20),
     );
   }
 }
@@ -672,7 +454,7 @@ class _TextSample extends StatelessWidget {
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: _cardShadow,
+          boxShadow: previewCardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -9,13 +9,16 @@ import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/display_scale_provider.dart';
 import '../providers/settings_provider.dart';
+import 'color_theme_screen.dart';
 import 'widgets/display_size_sheets.dart';
 import '../../../data/services/auto_backup_runner.dart';
 import '../../../data/services/drive_service.dart';
 import '../../../data/services/local_backup_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_color_theme.dart';
+import '../../../core/theme/brand_colors.dart';
+import '../../../core/theme/dynamic_color_support.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
@@ -317,17 +320,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final s = AppStrings.of(context);
     ref.watch(settingsProvider);
     final theme = Theme.of(context);
+    final brand = context.brand;
 
     return Scaffold(
       appBar: AppBar(title: Text(s.settings)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Theme
+          // Theme: Light / Dark / System, and the color theme.
           _SectionHeader(s.theme),
-          _ThemeModeSelector(
-            currentMode: ref.read(settingsProvider.notifier).themeMode,
-            onChanged: (mode) => ref.read(settingsProvider.notifier).updateThemeMode(mode),
+          _SettingsCard(
+            children: [
+              _ThemeModeSelector(
+                currentMode: ref.read(settingsProvider.notifier).themeMode,
+                onChanged: (mode) => ref.read(settingsProvider.notifier).updateThemeMode(mode),
+              ),
+              const Divider(height: 1),
+              const _ColorThemeTile(),
+            ],
           ),
           const SizedBox(height: 16),
 
@@ -342,10 +352,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: brand.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const ThinIcon(tabler.ZoomIn.new, color: AppColors.primary, size: 20),
+                  child: ThinIcon(tabler.ZoomIn.new, color: brand.primary, size: 20),
                 ),
                 title: Text(s.displaySize),
                 subtitle: const _DisplaySizeValue(),
@@ -359,10 +369,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: brand.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const ThinIcon(tabler.TextSize.new, color: AppColors.primary, size: 20),
+                  child: ThinIcon(tabler.TextSize.new, color: brand.primary, size: 20),
                 ),
                 title: Text(s.textSize),
                 subtitle: const _TextSizeValue(),
@@ -383,10 +393,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: brand.primary.withAlpha(26),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const ThinIcon(tabler.Language.new, color: AppColors.primary, size: 20),
+                  child: ThinIcon(tabler.Language.new, color: brand.primary, size: 20),
                 ),
                 title: Text(s.language),
                 subtitle: Text(
@@ -422,10 +432,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: brand.primary.withAlpha(26),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const ThinIcon(tabler.LayoutSidebar.new, color: AppColors.primary, size: 20),
+                  child: ThinIcon(tabler.LayoutSidebar.new, color: brand.primary, size: 20),
                 ),
                 title: Text(s.sidebarOrder),
                 subtitle: Text(
@@ -447,10 +457,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         height: 40,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: brand.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const ThinIcon(tabler.ArrowsExchange.new, color: AppColors.primary, size: 20),
+                        child: ThinIcon(tabler.ArrowsExchange.new, color: brand.primary, size: 20),
                       ),
                       title: Text(s.sidebarPosition),
                     ),
@@ -501,10 +511,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: brand.primary.withAlpha(26),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const ThinIcon(tabler.CurrencyDollar.new, color: AppColors.primary, size: 20),
+                  child: ThinIcon(tabler.CurrencyDollar.new, color: brand.primary, size: 20),
                 ),
                 title: Text(s.currencySymbol),
                 subtitle: Text(
@@ -568,10 +578,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: brand.primary.withAlpha(26),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const ThinIcon(tabler.Folder.new, color: AppColors.primary, size: 20),
+                  child: ThinIcon(tabler.Folder.new, color: brand.primary, size: 20),
                 ),
                 title: Text(s.pdfDownloadFolder),
                 subtitle: Text(
@@ -780,17 +790,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     height: 40,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: brand.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const ThinIcon(tabler.UserCircle.new, color: AppColors.primary, size: 20),
+                    child: ThinIcon(tabler.UserCircle.new, color: brand.primary, size: 20),
                   ),
                   title: Text(s.googleAccount),
                   subtitle: Text(
                     _googleAccountEmail ?? s.signIn,
                     style: TextStyle(
                       color: _googleAccountEmail != null
-                          ? AppColors.primary
+                          ? brand.primary
                           : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
@@ -930,10 +940,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     height: 40,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: brand.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const ThinIcon(tabler.InfoCircle.new, color: AppColors.primary, size: 20),
+                    child: ThinIcon(tabler.InfoCircle.new, color: brand.primary, size: 20),
                   ),
                   title: Text(s.appVersion),
                 ),
@@ -972,13 +982,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                           height: 40,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: brand.primary.withAlpha(26),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: ThinIcon(
                             tabler.Fingerprint.new,
                             color: available
-                                ? AppColors.primary
+                                ? brand.primary
                                 : theme.colorScheme.onSurface.withOpacity(0.4),
                             size: 20,
                           ),
@@ -1013,11 +1023,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       height: 40,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: brand.primary.withAlpha(26),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const ThinIcon(tabler.Password.new,
-                          color: AppColors.primary, size: 20),
+                      child: ThinIcon(tabler.Password.new,
+                          color: brand.primary, size: 20),
                     ),
                     title: Text(s.tr('securityPin')),
                     subtitle: Text(
@@ -1458,13 +1468,14 @@ class _EditableTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brand = context.brand;
     return ListTile(
       leading: Container(
         width: 40,
         height: 40,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-        child: ThinIcon(icon, color: AppColors.primary, size: 20),
+        decoration: BoxDecoration(color: brand.primary.withAlpha(26), borderRadius: BorderRadius.circular(10)),
+        child: ThinIcon(icon, color: brand.primary, size: 20),
       ),
       title: Text(label),
       subtitle: Text(value),
@@ -1510,65 +1521,105 @@ class _ThemeModeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
+    final brand = context.brand;
     final modes = [
       ('light', tabler.Sun.new, s.light),
       ('dark', tabler.Moon.new, s.dark),
       ('system', tabler.SunMoon.new, s.system),
     ];
 
-    return _SettingsCard(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: modes.map((entry) {
-              final (value, icon, label) = entry;
-              final isSelected = currentMode == value;
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Material(
-                    color: isSelected ? AppColors.primary.withOpacity(0.12) : theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: modes.map((entry) {
+          final (value, icon, label) = entry;
+          final isSelected = currentMode == value;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Material(
+                color: isSelected ? brand.primary.withAlpha(31) : theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => onChanged(value),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () => onChanged(value),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.12),
-                            width: isSelected ? 2 : 1,
+                      border: Border.all(
+                        color: isSelected ? brand.primary : theme.colorScheme.onSurface.withAlpha(31),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        ThinIcon(
+                          icon,
+                          color: isSelected ? brand.primary : theme.colorScheme.onSurface.withAlpha(128),
+                          size: 24,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected ? brand.primary : theme.colorScheme.onSurface.withAlpha(179),
                           ),
                         ),
-                        child: Column(
-                          children: [
-                            ThinIcon(
-                              icon,
-                              color: isSelected ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.5),
-                              size: 24,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? AppColors.primary : theme.colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Settings → Color theme: the active theme's swatch (its main color with
+/// its text color on it) and name. Opens the Color theme screen.
+class _ColorThemeTile extends ConsumerWidget {
+  const _ColorThemeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    // Plain values: only a change of theme or of the saved ones rebuilds.
+    ref.watch(settingsProvider.select((m) => m['colorThemeId']));
+    ref.watch(settingsProvider.select((m) => m['customColorThemes']));
+    final active = ref.read(settingsProvider.notifier).activeColorTheme;
+    // Phone colors saved (e.g. from another phone's backup) on a phone that
+    // has none: the app is drawn in Teal, so name what is actually shown.
+    final phoneState = ref.watch(dynamicColorAvailableProvider);
+    final shown = active.isPhone &&
+            phoneState.hasValue &&
+            !(phoneState.value ?? false)
+        ? kDefaultColorTheme
+        : active;
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: cs.primary,
+          borderRadius: BorderRadius.circular(10),
         ),
-      ],
+        child: ThinIcon(tabler.Palette.new, color: cs.onPrimary, size: 20),
+      ),
+      title: Text(s.colorTheme),
+      subtitle: Text(
+        colorThemeName(context, shown),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+      trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+      onTap: () => context.push('/settings/color-theme'),
     );
   }
 }

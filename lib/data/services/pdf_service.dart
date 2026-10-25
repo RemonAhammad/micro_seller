@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../models/order.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/theme/document_brand.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
 import 'pdf_assembly.dart';
@@ -39,8 +40,8 @@ class PdfService {
     // invoices. Anything taller gets clipped — for now this is more than
     // enough for the receipt layout (header + items table + totals + footer).
     final pngBytes = await captureWidgetPng(
-      _ReceiptWidget(
-        order: order,
+      receiptPage(
+        order,
         shopName: shopName,
         sym: sym,
         taxRate: taxRate,
@@ -55,6 +56,24 @@ class PdfService {
     // page), so it stays PNG — see [assemblePdf].
     return assemblePdf([pngBytes]);
   }
+
+  /// The receipt page [generateOrderReceipt] captures. Public so a test can
+  /// pump it and check what it draws.
+  @visibleForTesting
+  static Widget receiptPage(
+    Order order, {
+    required String shopName,
+    required String sym,
+    required double taxRate,
+    ui.Image? watermarkIcon,
+  }) =>
+      _ReceiptWidget(
+        order: order,
+        shopName: shopName,
+        sym: sym,
+        taxRate: taxRate,
+        watermarkIcon: watermarkIcon,
+      );
 
   String generateWhatsAppText(Order order, {String? currencySymbol}) {
     final waSym = currencySymbol ?? CurrencyFormatter.symbol;
@@ -99,9 +118,10 @@ class PdfService {
   }
 }
 
-/// Pure Flutter receipt — gets rasterised to PNG via `screenshot.captureFromWidget`.
-/// Looks like the on-screen order detail screen (teal header, bill-to card,
-/// items table, totals, payment badge, footer) but in a fixed A4-friendly width.
+/// Pure Flutter receipt — gets rasterised to PNG via [captureWidgetPng].
+/// Looks like the on-screen order detail screen (header in the app's theme
+/// color, bill-to card, items table, totals, payment badge, footer) but in a
+/// fixed A4-friendly width.
 class _ReceiptWidget extends StatelessWidget {
   final Order order;
   final String shopName;
@@ -117,7 +137,10 @@ class _ReceiptWidget extends StatelessWidget {
     required this.watermarkIcon,
   });
 
-  static const _teal = Color(0xFF00897B);
+  /// The header's color and the text on it, from the app's color theme.
+  /// Read when the page is built, so the next receipt follows a theme change.
+  static Color get _brand => DocumentBrand.color;
+  static Color get _onBrand => DocumentBrand.onColor;
   static const _grey100 = Color(0xFFF5F5F5);
   static const _grey200 = Color(0xFFEEEEEE);
   static const _grey300 = Color(0xFFE0E0E0);
@@ -210,7 +233,7 @@ class _ReceiptWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _teal,
+        color: _brand,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -220,28 +243,28 @@ class _ReceiptWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(shopName,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _onBrand,
                     fontWeight: FontWeight.w700,
                     fontSize: 20,
                   )),
               const SizedBox(height: 4),
-              const Text('Invoice',
-                  style: TextStyle(color: Colors.white, fontSize: 12)),
+              Text('Invoice',
+                  style: TextStyle(color: _onBrand, fontSize: 12)),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(order.orderNumber,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _onBrand,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                   )),
               const SizedBox(height: 4),
               Text(DateFormatter.format(order.createdAt),
-                  style: const TextStyle(color: Colors.white, fontSize: 10)),
+                  style: TextStyle(color: _onBrand, fontSize: 10)),
             ],
           ),
         ],
@@ -438,6 +461,11 @@ class _ReceiptWidget extends StatelessWidget {
 /// The pixelRatio every PDF page is captured at (2× the 96-DPI A4 canvas).
 const double kPdfCapturePixelRatio = 2.0;
 
+/// The "Micro Seller" wordmark in every document's watermark. The watermark
+/// is the app's own branding, so it stays teal whatever color theme the
+/// seller picked (the rest of the page follows [DocumentBrand]).
+const Color kPdfWatermarkColor = Color(0xFF00897B);
+
 const String _kWatermarkAsset = 'assets/icons/app_icon.png';
 const double _kWatermarkIconSize = 16;
 
@@ -524,7 +552,7 @@ class PdfWatermark extends StatelessWidget {
           const Text(
             AppStrings.appName,
             style: TextStyle(
-              color: Color(0xFF00897B),
+              color: kPdfWatermarkColor,
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,

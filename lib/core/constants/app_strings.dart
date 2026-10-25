@@ -660,4 +660,67 @@ class _L10nStrings {
       .tr('pageOf')
       .replaceAll('{page}', '$page')
       .replaceAll('{total}', '$total');
+
+  // Color themes
+  String get colorTheme => _l10n.tr('colorTheme');
+  String get colorThemeDesc => _l10n.tr('colorThemeDesc');
+  String get phoneColors => _l10n.tr('phoneColors');
+  String get phoneColorsDesc => _l10n.tr('phoneColorsDesc');
+  String get presetThemes => _l10n.tr('presetThemes');
+  String get myThemes => _l10n.tr('myThemes');
+  String get createTheme => _l10n.tr('createTheme');
+  String get editTheme => _l10n.tr('editTheme');
+  String get customizeTheme => _l10n.tr('customizeTheme');
+  String get themeName => _l10n.tr('themeName');
+  String get themeNameRequired => _l10n.tr('themeNameRequired');
+  String get mainColor => _l10n.tr('mainColor');
+  String get accentColor => _l10n.tr('accentColor');
+  String get useAccentColor => _l10n.tr('useAccentColor');
+  String get themeStyle => _l10n.tr('themeStyle');
+  String get themeStyleVivid => _l10n.tr('themeStyleVivid');
+  String get themeStyleSoft => _l10n.tr('themeStyleSoft');
+  String get themeStyleMuted => _l10n.tr('themeStyleMuted');
+  String get textColor => _l10n.tr('textColor');
+  String get textColorWhite => _l10n.tr('textColorWhite');
+  String get textColorBlack => _l10n.tr('textColorBlack');
+  String get recommended => _l10n.tr('recommended');
+  String get readabilityEasy => _l10n.tr('readabilityEasy');
+  String get readabilityLargeOnly => _l10n.tr('readabilityLargeOnly');
+  String get readabilityHard => _l10n.tr('readabilityHard');
+  String get hardToSeeOnLight => _l10n.tr('hardToSeeOnLight');
+  String get hardToSeeOnDark => _l10n.tr('hardToSeeOnDark');
+  String get hue => _l10n.tr('hue');
+  String get saturation => _l10n.tr('saturation');
+  String get brightness => _l10n.tr('brightness');
+  String get hexColor => _l10n.tr('hexColor');
+
+  /// The name of a preset color theme, by its id in `kPresetColorThemes`
+  /// (`'phone'` gives Phone colors). Any other id comes back unchanged:
+  /// custom themes carry their own name.
+  String presetThemeName(String id) => switch (id) {
+        'teal' => _l10n.tr('themePresetTeal'),
+        'blue' => _l10n.tr('themePresetBlue'),
+        'indigo' => _l10n.tr('themePresetIndigo'),
+        'purple' => _l10n.tr('themePresetPurple'),
+        'pink' => _l10n.tr('themePresetPink'),
+        'red' => _l10n.tr('themePresetRed'),
+        'orange' => _l10n.tr('themePresetOrange'),
+        'amber' => _l10n.tr('themePresetAmber'),
+        'green' => _l10n.tr('themePresetGreen'),
+        'brown' => _l10n.tr('themePresetBrown'),
+        'slate' => _l10n.tr('themePresetSlate'),
+        'mono' => _l10n.tr('themePresetMono'),
+        'phone' => phoneColors,
+        _ => id,
+      };
+  String deleteThemeConfirm(String name) =>
+      _l10n.tr('deleteThemeConfirm').replaceAll('{name}', name);
+  String themeLimitReached(int count) =>
+      _l10n.tr('themeLimitReached').replaceAll('{count}', '$count');
+
+  /// Phone colors is the saved theme, but this phone has none to give (a
+  /// backup restored on an iPhone or an older Android): the app is drawn in
+  /// the theme [name] instead.
+  String phoneColorsUnavailable(String name) =>
+      _l10n.tr('phoneColorsUnavailable').replaceAll('{name}', name);
 }
