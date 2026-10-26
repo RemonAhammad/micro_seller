@@ -17,6 +17,7 @@ import '../../../data/models/variant_combination.dart';
 import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/product_image_store.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../core/utils/validators.dart';
@@ -63,6 +64,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _categoryCtrl = TextEditingController();
   final _qrCtrl = TextEditingController();
 
+  /// The photo as `Product.imagePath` stores it: relative to the documents
+  /// directory (ProductImageStore). Shown via [resolveProductImagePath].
   String? _imagePath;
   bool _isCompressing = false;
   bool _isLoading = false;
@@ -302,9 +305,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final fileName = '${const Uuid().v4()}.jpg';
-      final targetPath = '${dir.path}/product_images/$fileName';
+      final folder = '${dir.path}/$kProductImagesFolder';
+      final targetPath = '$folder/$fileName';
 
-      await Directory('${dir.path}/product_images').create(recursive: true);
+      await Directory(folder).create(recursive: true);
 
       final compressed = await FlutterImageCompress.compressAndGetFile(
         picked.path,
@@ -315,7 +319,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       );
 
       if (compressed != null && mounted) {
-        setState(() => _imagePath = compressed.path);
+        // Stored relative to the documents directory, which iOS can move
+        // on an update; resolved against it where the photo is shown.
+        ProductImageStore.documentsDirectory ??= dir.path;
+        setState(() => _imagePath = storedProductImagePath(compressed.path));
       }
     } finally {
       if (mounted) setState(() => _isCompressing = false);
@@ -467,7 +474,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         name: _nameCtrl.text.trim(),
         sku: _skuCtrl.text.trim(),
         description: _descCtrl.text.trim(),
-        imagePath: _imagePath ?? '',
+        // Relative, also for a photo an earlier version stored absolute.
+        imagePath: storedProductImagePath(_imagePath ?? ''),
         sellingPrice: double.parse(_sellingPriceCtrl.text),
         costPrice: double.tryParse(_costPriceCtrl.text) ?? 0.0,
         stockQty: int.parse(_stockCtrl.text),
@@ -535,6 +543,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final combinations = _combinations;
+    final photo = resolveProductImagePath(_imagePath);
 
     return Scaffold(
       appBar: AppBar(
@@ -573,12 +582,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           ),
                           child: _isCompressing
                               ? const Center(child: CircularProgressIndicator())
-                              : _imagePath != null
+                              : photo != null
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
                                   child: Image.file(
-                                    File(_imagePath!),
+                                    File(photo),
                                     fit: BoxFit.cover,
+                                    // The file is gone (a backup restored on
+                                    // another phone carries no photos).
+                                    errorBuilder: (_, _, _) => ThinIcon(
+                                      tabler.PhotoOff.new,
+                                      size: 36,
+                                      color: cs.primary.withValues(alpha: 0.5),
+                                    ),
                                   ),
                                 )
                               : Column(

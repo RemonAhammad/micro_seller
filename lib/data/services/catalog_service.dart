@@ -14,6 +14,7 @@ import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
 import 'pdf_assembly.dart';
 import 'pdf_service.dart';
+import 'product_image_store.dart';
 import 'widget_capture.dart';
 
 /// What to include on each catalog tile. Sellers share these into chat
@@ -258,9 +259,10 @@ class CatalogService {
     final out = <_CatalogItem>[];
     for (final p in products) {
       Uint8List? bytes;
-      if (options.includePhotos && p.imagePath.isNotEmpty) {
+      final photo = resolveProductImagePath(p.imagePath);
+      if (options.includePhotos && photo != null) {
         try {
-          final file = File(p.imagePath);
+          final file = File(photo);
           if (await file.exists()) bytes = await file.readAsBytes();
         } catch (_) {
           bytes = null;

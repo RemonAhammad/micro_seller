@@ -1,0 +1,5 @@
+/* Urdu texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "QR کوڈ/بارکوڈ اسکین کرنے اور مصنوعات کی تصاویر لینے کے لیے استعمال ہوتا ہے";
+"NSPhotoLibraryUsageDescription" = "آپ کی فوٹو لائبریری سے مصنوعات کی تصاویر منتخب کرنے کے لیے استعمال ہوتا ہے";
+"NSPhotoLibraryAddUsageDescription" = "مصنوعات کی تصاویر محفوظ کرنے کے لیے استعمال ہوتا ہے";
+"NSFaceIDUsageDescription" = "Micro Seller تمام ڈیٹا صاف کرنے جیسی حساس کاروائیوں کی تصدیق کے لیے Face ID استعمال کرتا ہے۔";

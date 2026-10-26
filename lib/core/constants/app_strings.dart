@@ -405,6 +405,19 @@ class _L10nStrings {
   String get importBackupConfirm => _l10n.tr('importBackupConfirm');
   String get allDataCleared => _l10n.tr('allDataCleared');
   String get googleDriveBackup => _l10n.tr('googleDriveBackup');
+  String googleSignInSideloadHint(String app) =>
+      _l10n.tr('googleSignInSideloadHint').replaceAll('{app}', app);
+  // Google Drive errors (DriveErrorCode), shown by Settings.
+  String get driveErrorNotSignedIn => _l10n.tr('driveErrorNotSignedIn');
+  String get driveErrorSignInCancelled => _l10n.tr('driveErrorSignInCancelled');
+  String get driveErrorSignInFailed => _l10n.tr('driveErrorSignInFailed');
+  String get driveErrorNotConfigured => _l10n.tr('driveErrorNotConfigured');
+  String get driveErrorNetwork => _l10n.tr('driveErrorNetwork');
+  String get driveErrorUploadFailed => _l10n.tr('driveErrorUploadFailed');
+  String get driveErrorDownloadFailed => _l10n.tr('driveErrorDownloadFailed');
+  String get driveErrorInvalidBackup => _l10n.tr('driveErrorInvalidBackup');
+  String get driveErrorRolledBack => _l10n.tr('driveErrorRolledBack');
+  String get driveErrorRestoreFailed => _l10n.tr('driveErrorRestoreFailed');
   String get selectBackupToRestore => _l10n.tr('selectBackupToRestore');
   String get shop => _l10n.tr('shop');
   String get downloads => _l10n.tr('downloads');

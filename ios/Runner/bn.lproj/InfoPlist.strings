@@ -1,0 +1,5 @@
+/* Bengali texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "QR কোড/বারকোড স্ক্যান করতে এবং পণ্যের ছবি তুলতে ব্যবহৃত হয়";
+"NSPhotoLibraryUsageDescription" = "আপনার ফটো লাইব্রেরি থেকে পণ্যের ছবি বাছাই করতে ব্যবহৃত হয়";
+"NSPhotoLibraryAddUsageDescription" = "পণ্যের ছবি সেভ করতে ব্যবহৃত হয়";
+"NSFaceIDUsageDescription" = "সব ডাটা মুছে ফেলার মতো সংবেদনশীল কাজ নিশ্চিত করতে Micro Seller অ্যাপ Face ID ব্যবহার করে।";

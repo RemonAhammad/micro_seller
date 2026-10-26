@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:micro_seller/core/l10n/app_localizations.dart';
 import 'package:micro_seller/core/theme/app_theme.dart';
@@ -119,19 +120,26 @@ void setLayoutScreen(WidgetTester tester, double width,
 /// Pumps [home] the way the app shows a screen on a phone: beside the
 /// sidebar's icon rail (unless [rail] is false), with the app's light theme
 /// as a phone draws it ([layoutPhoneTheme]), strings and [textScale] applied
-/// over the whole app the way a font size is.
+/// over the whole app the way a font size is. [locale] is the app language
+/// (English when null); with one, Flutter's own strings and the text
+/// direction follow it too, as in the app.
 Future<void> pumpLayoutApp(
   WidgetTester tester,
   Widget home, {
   double textScale = 1,
   List<Override> overrides = const [],
   bool rail = true,
+  Locale? locale,
 }) async {
   await tester.pumpWidget(ProviderScope(
     overrides: overrides,
     child: MaterialApp(
       theme: layoutPhoneTheme,
-      localizationsDelegates: const [AppLocalizations.delegate],
+      locale: locale,
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        if (locale != null) ...GlobalMaterialLocalizations.delegates,
+      ],
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context)

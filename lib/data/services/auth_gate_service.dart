@@ -20,12 +20,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Use via [AuthGateService.runGate] which returns true if the user passed
 /// the gate (biometric ok OR pin verified OR pin freshly set up).
 class AuthGateService {
-  AuthGateService();
+  /// [localAuth] stands in for the device's biometric API in tests; the app
+  /// passes none.
+  AuthGateService({LocalAuthentication? localAuth})
+      : _auth = localAuth ?? LocalAuthentication();
 
   static const _keyPinHash = 'authGate.pinHash';
   static const _keyPinSalt = 'authGate.pinSalt';
 
-  final LocalAuthentication _auth = LocalAuthentication();
+  final LocalAuthentication _auth;
 
   /// True if the device has biometrics that the user has enrolled. False if
   /// the OS doesn't support biometrics, the device has none enrolled, or the
@@ -37,6 +40,8 @@ class AuthGateService {
       if (!canCheck || !isSupported) return false;
       final available = await _auth.getAvailableBiometrics();
       return available.isNotEmpty;
+    } on LocalAuthException {
+      return false;
     } on PlatformException {
       return false;
     }
@@ -44,6 +49,11 @@ class AuthGateService {
 
   /// Triggers the system biometric prompt with [reason] as the dialog message.
   /// Returns true on success, false on user-cancel or failure.
+  ///
+  /// local_auth 3 reports a cancel (Face ID's Cancel button included), a
+  /// lockout, or biometrics that aren't available as a [LocalAuthException]
+  /// rather than a [PlatformException]. Uncaught, it escaped `runAuthGate`
+  /// and the screen that asked.
   Future<bool> authenticateBiometric(String reason) async {
     try {
       return await _auth.authenticate(
@@ -53,6 +63,8 @@ class AuthGateService {
         // is backgrounded mid-auth.
         persistAcrossBackgrounding: true,
       );
+    } on LocalAuthException {
+      return false;
     } on PlatformException {
       return false;
     }

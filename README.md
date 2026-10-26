@@ -5,6 +5,7 @@
 </p>
 <p align="center">
   <a href="https://github.com/RemonAhammad/micro_seller/releases/latest"><img alt="Or download the Android APK" src="https://img.shields.io/badge/or_download-Android_APK-00897B?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="#iphone-sideload"><img alt="Or sideload the iPhone app" src="https://img.shields.io/badge/or_sideload-iPhone_app-00897B?style=for-the-badge&logo=apple&logoColor=white"></a>
 </p>
 <p align="center">
   <a href="https://github.com/RemonAhammad/micro_seller/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/RemonAhammad/micro_seller?include_prereleases&label=latest&color=00897B"></a>
@@ -56,6 +57,28 @@ For phones without Google Play. GitHub Actions builds and signs each release fro
 
 - **Updates:** download the next release and keep the same file type. Android won't switch from a per-CPU APK (arm64-v8a, armeabi-v7a) to the universal one.
 - **Already installed from Google Play?** A GitHub APK can't update a Play install, or the other way round, because Google Play signs its copy with its own key. To switch, back up first (Settings → Backup), uninstall, then install.
+
+### iPhone (sideload)
+
+Micro Seller isn't on the App Store yet. Releases also include an iPhone app, `micro-seller-vX.Y.Z-unsigned.ipa`, which GitHub Actions builds from this repo like the APKs. It's **unsigned**: iOS installs it only after a sideloading tool signs it with your own Apple ID. It needs iOS 16 or later.
+
+1. On a Mac or Windows PC, set up one of these free tools by following its guide: [AltStore](https://altstore.io), [SideStore](https://sidestore.io) or [Sideloadly](https://sideloadly.io).
+2. Download the `.ipa` from the [latest release](https://github.com/RemonAhammad/micro_seller/releases/latest)'s **Assets**, and install it with the tool, signed in with your Apple ID.
+3. The first time, on the iPhone: turn on **Settings → Privacy & Security → Developer Mode** (the iPhone restarts), then open **Settings → General → VPN & Device Management**, tap your Apple ID and trust it.
+
+With a free Apple ID:
+
+- **Refresh it every 7 days.** Apple's signature lasts 7 days, and then the app won't open until it's signed again. AltStore and SideStore can refresh it for you automatically; otherwise, install it again with your tool. Your data stays as long as you don't delete the app.
+- **3 apps at most.** You can have at most 3 sideloaded apps installed at once, and AltStore or SideStore counts as one of them.
+
+Your data:
+
+- **Google Drive backup works on iPhone.** In **Settings → Google Drive Backup**, sign in with Google, then tap **Backup to Drive**. The automatic daily backup is Android-only, so back up now and then by hand.
+- **If Google sign-in fails:** some sideloading tools change the app's ID when they sign it, and Google sign-in can then fail with an error. Back up to a file instead: **Settings → Local Backup → Export Backup**, then save it in Files or iCloud Drive.
+- **Always back up to a file before you delete the app.** Deleting it deletes your data. If the app has stopped opening, refresh it rather than deleting it.
+- **Updates:** install the new release's `.ipa` with the same tool and the same Apple ID. iOS then updates the app in place and keeps your data. Back up first anyway.
+
+App Store and TestFlight need a paid Apple Developer account. They're planned; until then, sideloading is how to get Micro Seller on an iPhone.
 
 ## Features
 
@@ -150,7 +173,8 @@ Micro Seller has no account and no server. Your business data stays on your devi
 | Platform | Status |
 | --- | --- |
 | Android | On [Google Play](https://play.google.com/store/apps/details?id=com.blackshadowsoftware.micro_seller), and APKs on [GitHub Releases](https://github.com/RemonAhammad/micro_seller/releases) |
-| iOS, macOS, Windows, Linux, Web | Built from the same code; build them from source (see below) |
+| iOS | An unsigned `.ipa` on [GitHub Releases](https://github.com/RemonAhammad/micro_seller/releases), to [sideload](#iphone-sideload) with your own Apple ID. App Store and TestFlight are planned. |
+| macOS, Windows, Linux, Web | Built from the same code; build them from source (see below) |
 
 ## For developers
 
@@ -195,7 +219,7 @@ flutter test                                    # includes tests on a real Isar 
 bash .claude/skills/l10n/scripts/l10n_parity.sh # every string in all 12 languages
 ```
 
-GitHub Actions runs the same checks on every push and pull request ([`ci.yml`](.github/workflows/ci.yml)). The tests cover the money flows (profit, returns and refunds, dues), worker isolates, backups, paging, and every screen's layout from small phones up to 150% text.
+GitHub Actions runs the same checks on every push and pull request ([`ci.yml`](.github/workflows/ci.yml)), and also builds the iPhone app (unsigned) on macOS. The tests cover the money flows (profit, returns and refunds, dues), worker isolates, backups, paging, and every screen's layout from small phones up to 150% text.
 
 ### Project structure
 
@@ -215,9 +239,9 @@ From your Mac, `./release.sh` cuts a release:
 1. It syncs with GitHub and picks the next version.
 2. It runs the checks.
 3. It commits, tags and pushes.
-4. GitHub Actions builds the signed APKs and the Play Store bundle and drafts the GitHub release, and the script follows the build.
+4. GitHub Actions builds the signed APKs, the Play Store bundle and the unsigned iPhone app (`.ipa`), and drafts the GitHub release, and the script follows the build.
 
-See [RELEASE.md](RELEASE.md) for the Play Store guide and the CI/CD setup.
+The release build is [`release.yml`](.github/workflows/release.yml). The iPhone build needs no Apple account and no secret beyond the `DOTENV` one the APKs use. Its `.ipa` is attached to the draft only when it passes; an iOS failure never holds up the Android files.
 
 ## License
 

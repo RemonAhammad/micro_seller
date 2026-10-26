@@ -63,9 +63,22 @@ Duration _durationUntilNextScheduledTime() {
 /// Runs on a fire-and-forget basis — never blocks app startup, never
 /// shows UI, fails silently and logs via `dart:developer`.
 class AutoBackupRunner {
-  AutoBackupRunner(this._ref);
+  /// [driveService] stands in for the Drive service in tests; the app
+  /// passes none.
+  AutoBackupRunner(this._ref, {DriveService Function()? driveService})
+      : _driveService = driveService ?? DriveService.new;
 
   final Ref _ref;
+  final DriveService Function() _driveService;
+
+  /// Whether Auto Backup is offered on this platform: everywhere but the iOS
+  /// app. iPhone backs up to Drive by hand (Back up to Drive / Restore in
+  /// Settings) but has no Auto Backup: no daily worker (WorkManager is
+  /// Android's), and no catch-up at app start either. Settings hides the
+  /// switch and the paused banner there, and [runIfDue] does nothing, even
+  /// when a backup restored from an Android phone turned `autoBackup` on.
+  static bool get isSupported =>
+      kIsWeb || defaultTargetPlatform != TargetPlatform.iOS;
 
   /// Single-flight guard — even if the runner is invoked multiple times
   /// (e.g. settings being toggled and back, hot reloads in dev), we only
@@ -73,6 +86,7 @@ class AutoBackupRunner {
   bool _ranThisProcess = false;
 
   Future<void> runIfDue() async {
+    if (!isSupported) return;
     if (_ranThisProcess) return;
     _ranThisProcess = true;
 
@@ -94,7 +108,7 @@ class AutoBackupRunner {
 
       // Only run if a Drive account is already signed in. Triggering the
       // sign-in flow on cold start would be a hostile UX.
-      final drive = DriveService();
+      final drive = _driveService();
       // No-UI check: a lightweight sign-in could flash a sheet at startup.
       if (!await drive.hasDriveAccess()) {
         developer.log('skipped — not signed in to Drive', name: 'AutoBackup');
@@ -130,7 +144,8 @@ class AutoBackupRunner {
   /// reusing the same uniqueName with `replace` cancels any pending instance
   /// (e.g. user toggled off and on). The app-start path passes
   /// `replace: false` (`keep`): replacing on every cold start re-enqueues
-  /// the pending run and can cancel one that is running. Android-only.
+  /// the pending run and can cancel one that is running. Android-only, so
+  /// never on iOS ([isSupported]).
   ///
   /// Implemented as a one-off + self-rescheduling chain rather than
   /// `registerPeriodicTask` because WorkManager's periodic API can only

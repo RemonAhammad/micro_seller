@@ -420,6 +420,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.downloadPdf,
             color: Colors.blue,
             onTap: () async {
+              // iOS: no folder to keep (pdfDownloadAsksWhereToSave); the
+              // system's save sheet asks where, each time.
+              if (pdfDownloadAsksWhereToSave) {
+                final bytes = await runWithProgress(context, receiptBytes);
+                await savePdfWithSystemSheet(
+                  fileName: '${order.orderNumber}_invoice.pdf',
+                  bytes: bytes,
+                );
+                return;
+              }
               // Folder first: cancelling the picker shouldn't cost a render.
               var downloadDir = settings.downloadDirectory;
               if (downloadDir.isEmpty) {

@@ -6,6 +6,14 @@ on:
     branches: [main]
   # release.yml runs these same checks before building a release.
   workflow_call:
+    inputs:
+      skip-ios:
+        description: >-
+          Skip the iOS build check. release.yml sets it: its own ios job
+          builds the real .ipa, and the Android release must not wait for a
+          macOS runner.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -67,3 +75,34 @@ jobs:
             exit 1
           fi
           echo "No skipped tests."
+
+  ios:
+    name: iOS build (no codesign)
+    # Runs beside the checks, not after them. release.yml's call skips it
+    # (see skip-ios above). On main it also saves the macOS Flutter and pub
+    # caches (setup-flutter), which release runs can only restore.
+    if: ${{ !inputs.skip-ios }}
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Also writes the placeholder .env (a declared asset) from .env.example.
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Build
+        run: |
+          xcodebuild -version
+          flutter build ios --release --no-codesign
+          # flutter build may re-resolve; the build must match the lock.
+          git diff --exit-code -- pubspec.lock
+          # Flutter migrates an outdated Xcode project (e.g. to Swift Package
+          # Manager) during the build. It still builds, but the result belongs
+          # in the repo so every build starts from the same project.
+          drift=$(git status --porcelain -- ios)
+          if [ -n "$drift" ]; then
+            echo "$drift"
+            echo "::warning::The iOS build changed files under ios/ (listed in the log). Run 'flutter build ios --no-codesign' on your Mac and commit what it changes under ios/."
+          fi

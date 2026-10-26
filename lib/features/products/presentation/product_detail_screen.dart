@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/product_detail_providers.dart';
 import '../providers/product_provider.dart';
+import '../../../data/services/product_image_store.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/app_colors.dart';
@@ -39,6 +40,7 @@ class ProductDetailScreen extends ConsumerWidget {
             body: Center(child: Text(s.productNotFound)),
           );
         }
+        final photo = resolveProductImagePath(product.imagePath);
 
         return Scaffold(
           body: CustomScrollView(
@@ -83,27 +85,15 @@ class ProductDetailScreen extends ConsumerWidget {
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  background: product.imagePath.isNotEmpty
-                      ? Image.file(File(product.imagePath), fit: BoxFit.cover)
-                      : Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                theme.colorScheme.primary,
-                                theme.colorScheme.primary.withOpacity(0.6),
-                              ],
-                            ),
-                          ),
-                          // The text color on the main color, at white30's
-                          // alpha.
-                          child: ThinIcon(
-                            tabler.Package.new,
-                            size: 80,
-                            color: theme.colorScheme.onPrimary.withAlpha(0x4D),
-                          ),
-                        ),
+                  background: photo != null
+                      ? Image.file(
+                          File(photo),
+                          fit: BoxFit.cover,
+                          // The file is gone (a backup restored on another
+                          // phone carries no photos): as without a photo.
+                          errorBuilder: (_, _, _) => _noPhoto(theme),
+                        )
+                      : _noPhoto(theme),
                 ),
               ),
               SliverToBoxAdapter(
@@ -340,6 +330,27 @@ class ProductDetailScreen extends ConsumerWidget {
       },
     );
   }
+
+  /// The header of a product without a photo: the main color's gradient
+  /// and a package icon.
+  Widget _noPhoto(ThemeData theme) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primary,
+              theme.colorScheme.primary.withValues(alpha: 0.6),
+            ],
+          ),
+        ),
+        // The text color on the main color, at white30's alpha.
+        child: ThinIcon(
+          tabler.Package.new,
+          size: 80,
+          color: theme.colorScheme.onPrimary.withAlpha(0x4D),
+        ),
+      );
 }
 
 class _InfoCard extends StatelessWidget {

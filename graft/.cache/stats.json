@@ -1,6 +1,6 @@
 {
-  "nodeCount": 5383,
-  "edgeCount": 1419,
+  "nodeCount": 5447,
+  "edgeCount": 1458,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 5383,
+  "totalCount": 5447,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-10-26T03:42:07.504Z",
-  "lastFile": "README.md"
+  "syncedAt": "2026-10-26T06:52:46.999Z",
+  "lastFile": "CLAUDE.md"
 }

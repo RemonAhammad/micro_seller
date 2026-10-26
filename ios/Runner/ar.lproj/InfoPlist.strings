@@ -1,0 +1,5 @@
+/* Arabic texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "يُستخدم لمسح رموز QR والباركود والتقاط صور المنتجات";
+"NSPhotoLibraryUsageDescription" = "يُستخدم لاختيار صور المنتجات من مكتبة الصور لديك";
+"NSPhotoLibraryAddUsageDescription" = "يُستخدم لحفظ صور المنتجات";
+"NSFaceIDUsageDescription" = "يستخدم Micro Seller بصمة الوجه (Face ID) لتأكيد الإجراءات الحساسة، مثل مسح جميع البيانات.";

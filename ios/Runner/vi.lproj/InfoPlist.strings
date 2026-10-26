@@ -1,0 +1,5 @@
+/* Vietnamese texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "Dùng để quét mã QR/mã vạch và chụp ảnh sản phẩm";
+"NSPhotoLibraryUsageDescription" = "Dùng để chọn ảnh sản phẩm từ thư viện ảnh của bạn";
+"NSPhotoLibraryAddUsageDescription" = "Dùng để lưu ảnh sản phẩm";
+"NSFaceIDUsageDescription" = "Micro Seller dùng Face ID để xác nhận các thao tác nhạy cảm, chẳng hạn như xóa tất cả dữ liệu.";

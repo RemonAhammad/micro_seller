@@ -448,6 +448,19 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
         break;
 
       case 'download_pdf':
+        // iOS: no folder to keep (pdfDownloadAsksWhereToSave); the system's
+        // save sheet asks where, each time.
+        if (pdfDownloadAsksWhereToSave) {
+          final bytes = await _receipt(context, order,
+              shopName: shopName,
+              currencySymbol: currencySymbol,
+              taxRate: taxRate);
+          await savePdfWithSystemSheet(
+            fileName: '${order.orderNumber}_receipt.pdf',
+            bytes: bytes,
+          );
+          break;
+        }
         // Folder first: cancelling the picker shouldn't cost a render.
         // Get saved download directory or ask user to pick one
         var downloadDir = settings.downloadDirectory;

@@ -14,6 +14,21 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>bn</string>
+		<string>ar</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>pt</string>
+		<string>tr</string>
+		<string>id</string>
+		<string>th</string>
+		<string>vi</string>
+		<string>ur</string>
+		<string>ms</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>micro_seller</string>
 	<key>CFBundlePackageType</key>
@@ -22,12 +37,29 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1084592092620-u1b2d9ubukcg8qut58luo19tm2c7m36t</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>1084592092620-u1b2d9ubukcg8qut58luo19tm2c7m36t.apps.googleusercontent.com</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Used to scan QR/barcodes and take product photos</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Micro Seller uses Face ID to confirm sensitive actions, such as clearing all data.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Used to save product photos</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -62,8 +94,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>

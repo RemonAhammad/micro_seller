@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../data/models/product.dart';
+import '../../../../data/services/product_image_store.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import 'stock_badge.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -22,6 +23,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final photo = resolveProductImagePath(product.imagePath);
 
     return GestureDetector(
       onTap: () => context.push('/products/${product.id}'),
@@ -46,10 +48,10 @@ class ProductCard extends StatelessWidget {
               child: ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(16)),
-                child: product.imagePath.isNotEmpty
+                child: photo != null
                     ? LayoutBuilder(
                         builder: (context, constraints) => Image.file(
-                          File(product.imagePath),
+                          File(photo),
                           fit: BoxFit.cover,
                           width: double.infinity,
                           cacheWidth:

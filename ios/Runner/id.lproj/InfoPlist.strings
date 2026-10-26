@@ -1,0 +1,5 @@
+/* Indonesian texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "Digunakan untuk memindai kode QR/barcode dan memotret produk";
+"NSPhotoLibraryUsageDescription" = "Digunakan untuk memilih foto produk dari pustaka foto Anda";
+"NSPhotoLibraryAddUsageDescription" = "Digunakan untuk menyimpan foto produk";
+"NSFaceIDUsageDescription" = "Micro Seller menggunakan Face ID untuk mengonfirmasi tindakan sensitif, seperti menghapus semua data.";

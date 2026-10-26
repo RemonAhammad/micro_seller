@@ -11,6 +11,7 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/catalog_service.dart';
+import '../../../data/services/product_image_store.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../providers/product_provider.dart';
@@ -139,7 +140,8 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
   static const _thumbRadius = 20.0;
 
   Widget _thumb(Product p) {
-    if (p.imagePath.isEmpty) {
+    final photo = resolveProductImagePath(p.imagePath);
+    if (photo == null) {
       return const CircleAvatar(
         radius: _thumbRadius,
         child: ThinIcon(tabler.Package.new, size: 18),
@@ -151,7 +153,10 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
             .ceil();
     return CircleAvatar(
       radius: _thumbRadius,
-      backgroundImage: ResizeImage(FileImage(File(p.imagePath)), width: width),
+      backgroundImage: ResizeImage(FileImage(File(photo)), width: width),
+      // The file is gone (a backup restored on another phone carries no
+      // photos): the plain avatar, without reporting an error.
+      onBackgroundImageError: (_, _) {},
     );
   }
 

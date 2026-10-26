@@ -39,5 +39,17 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Xcode 27's iOS SDK supports deployment targets from 15.0 only, but
+    # Flutter 3.44's generated Flutter.podspec still declares 13.0 (and
+    # flutter_additional_ios_build_settings only lifts pods below 13.0). Raise
+    # any pod below the app's own minimum (platform :ios above) so every target
+    # builds, as macos/Podfile does for macOS.
+    target.build_configurations.each do |config|
+      deployment_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      if deployment_target && Gem::Version.new(deployment_target) < Gem::Version.new('16.0')
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      end
+    end
   end
 end

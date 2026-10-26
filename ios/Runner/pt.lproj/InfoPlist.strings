@@ -1,0 +1,5 @@
+/* Portuguese texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "Usado para escanear QR codes e códigos de barras e tirar fotos dos produtos";
+"NSPhotoLibraryUsageDescription" = "Usado para escolher fotos de produtos na sua fototeca";
+"NSPhotoLibraryAddUsageDescription" = "Usado para salvar fotos de produtos";
+"NSFaceIDUsageDescription" = "O Micro Seller usa o Face ID para confirmar ações sensíveis, como limpar todos os dados.";

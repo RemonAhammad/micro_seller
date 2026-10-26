@@ -1,0 +1,5 @@
+/* Turkish texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "QR kodları ve barkodları taramak ve ürün fotoğrafı çekmek için kullanılır";
+"NSPhotoLibraryUsageDescription" = "Fotoğraf arşivinizden ürün fotoğrafı seçmek için kullanılır";
+"NSPhotoLibraryAddUsageDescription" = "Ürün fotoğraflarını kaydetmek için kullanılır";
+"NSFaceIDUsageDescription" = "Micro Seller, tüm verileri silmek gibi hassas işlemleri onaylamak için Face ID'yi kullanır.";

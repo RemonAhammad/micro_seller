@@ -96,9 +96,28 @@ class DriveService {
   //
   // On Android without google-services.json, v7 requires the **web** OAuth
   // client id as `serverClientId` (GOOGLE_OAUTH_WEB_CLIENT_ID in .env).
+  //
+  // On iOS the app's own iOS OAuth client signs in. No `clientId` is passed
+  // here, so the plugin reads it from `GIDClientID` in ios/Runner/Info.plist,
+  // the file that also registers its reversed id as the URL scheme Google's
+  // sign-in page returns through. Keeping both in one place matters: a
+  // missing GIDClientID, or a client id without its URL scheme, makes the
+  // interactive sign-in raise a native exception Dart can't catch, which
+  // closes the app (test/drive_ios_test.dart checks the pair). With no
+  // `clientId`, iOS ignores `serverClientId`; Drive doesn't need it there.
+  // Back up to Drive and Restore work on iPhone too; Auto Backup isn't
+  // offered there (AutoBackupRunner.isSupported).
 
   static bool _initialized = false;
   static GoogleSignInAccount? _account;
+
+  /// Forgets that Google Sign-In was initialised, so a test can initialise it
+  /// again (as another platform, with another `.env`).
+  @visibleForTesting
+  static void resetForTesting() {
+    _initialized = false;
+    _account = null;
+  }
 
   static Future<void> _ensureInitialized() async {
     if (_initialized) return;
@@ -106,6 +125,7 @@ class DriveService {
         ? dotenv.maybeGet('GOOGLE_OAUTH_WEB_CLIENT_ID')?.trim()
         : null;
     await GoogleSignIn.instance.initialize(
+      // Never an empty string: unset or blank in .env is no server client.
       serverClientId:
           (webClientId?.isNotEmpty ?? false) ? webClientId : null,
     );

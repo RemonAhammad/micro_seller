@@ -24,6 +24,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/auth_gate.dart';
 import '../../../shared/widgets/app_zoom.dart';
+import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../../data/services/auth_gate_service.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -85,32 +86,59 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     }
   }
 
+  /// [e] in the app's language. The exception's own message is English
+  /// detail for the log (_logFailure), never shown.
   String _driveErrorMessage(DriveBackupException e) {
+    final s = AppStrings.of(context);
     switch (e.code) {
       case DriveErrorCode.notSignedIn:
-        return 'Please sign in to Google first.';
+        return s.driveErrorNotSignedIn;
       case DriveErrorCode.signInCancelled:
-        return 'Sign-in was cancelled.';
+        return s.driveErrorSignInCancelled;
       case DriveErrorCode.signInFailed:
-        return 'Could not sign in to Google. Please try again.';
+        return s.driveErrorSignInFailed;
       case DriveErrorCode.developerError:
-        return 'Google sign-in is not configured. Check Cloud Console: '
-            'package name, SHA-1, and Drive API enablement.';
+        return s.driveErrorNotConfigured;
       case DriveErrorCode.network:
-        return 'Network error. Check your internet connection.';
+        return s.driveErrorNetwork;
       case DriveErrorCode.uploadFailed:
-        return 'Could not upload backup. Check your connection and try again.';
+        return s.driveErrorUploadFailed;
       case DriveErrorCode.downloadFailed:
-        return 'Could not download backup. Check your connection and try again.';
+        return s.driveErrorDownloadFailed;
       case DriveErrorCode.invalidBackup:
-        return 'This backup file is corrupted or unrecognised.';
+        return s.driveErrorInvalidBackup;
       case DriveErrorCode.rolledBack:
-        return 'Restore failed. Your previous data has been preserved.';
+        return s.driveErrorRolledBack;
       case DriveErrorCode.restoreFailed:
-        return 'Restore failed. Some data may be inconsistent — try again.';
+        return s.driveErrorRestoreFailed;
       case DriveErrorCode.unknown:
-        return e.message;
+        return s.errorOccurred;
     }
+  }
+
+  /// Shows [e] as a red snackbar: [_driveErrorMessage], and on iOS, when
+  /// Google sign-in failed, a hint that a sideloaded install may not be able
+  /// to sign in. AltStore, SideStore or Sideloadly can re-sign the app under
+  /// another app ID, which the app's iOS OAuth client doesn't know; Local
+  /// Backup works there.
+  void _showDriveError(DriveBackupException e) {
+    final message = _driveErrorMessage(e);
+    final signInFailed = e.code == DriveErrorCode.signInFailed ||
+        e.code == DriveErrorCode.developerError;
+    final iosApp = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+    final hint = signInFailed && iosApp
+        ? AppStrings.of(context).googleSignInSideloadHint(AppStrings.appName)
+        : null;
+    ScaffoldMessenger.of(context).showSnackBar(
+      hint == null
+          ? SnackBar(content: Text(message), backgroundColor: Colors.red)
+          : SnackBar(
+              content: Text('$message\n$hint'),
+              backgroundColor: Colors.red,
+              // Two messages to read.
+              duration: const Duration(seconds: 8),
+            ),
+    );
   }
 
   void _logFailure(String tag, Object error, StackTrace stack) {
@@ -135,11 +163,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       }
     } on DriveBackupException catch (e, st) {
       _logFailure('backup', e, st);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_driveErrorMessage(e)), backgroundColor: Colors.red));
-      }
+      if (mounted) _showDriveError(e);
     } catch (e, st) {
       _logFailure('backup.unexpected', e, st);
       if (mounted) {
@@ -199,11 +223,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       }
     } on DriveBackupException catch (e, st) {
       _logFailure('restore', e, st);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_driveErrorMessage(e)), backgroundColor: Colors.red));
-      }
+      if (mounted) _showDriveError(e);
     } catch (e, st) {
       _logFailure('restore.unexpected', e, st);
       if (mounted) {
@@ -568,47 +588,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Downloads
-          _SectionHeader(s.downloads),
-          _SettingsCard(
-            children: [
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: brand.primary.withAlpha(26),
-                    borderRadius: BorderRadius.circular(10),
+          // Downloads. Not on iOS, where Download PDF asks where to save
+          // each time (pdfDownloadAsksWhereToSave).
+          if (!pdfDownloadAsksWhereToSave) ...[
+            _SectionHeader(s.downloads),
+            _SettingsCard(
+              children: [
+                ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: brand.primary.withAlpha(26),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ThinIcon(tabler.Folder.new, color: brand.primary, size: 20),
                   ),
-                  child: ThinIcon(tabler.Folder.new, color: brand.primary, size: 20),
-                ),
-                title: Text(s.pdfDownloadFolder),
-                subtitle: Text(
-                  ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
-                      ? s.tr('notSetWillAsk')
-                      : ref.read(settingsProvider.notifier).downloadDirectory,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
-                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
-                        : null,
+                  title: Text(s.pdfDownloadFolder),
+                  subtitle: Text(
+                    ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
+                        ? s.tr('notSetWillAsk')
+                        : ref.read(settingsProvider.notifier).downloadDirectory,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: ref.read(settingsProvider.notifier).downloadDirectory.isEmpty
+                          ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)
+                          : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  trailing: const ThinIcon(tabler.Pencil.new, size: 18),
+                  onTap: () async {
+                    final dir = await FilePicker.getDirectoryPath();
+                    if (dir != null) {
+                      ref.read(settingsProvider.notifier).updateDownloadDirectory(dir);
+                      setState(() {});
+                    }
+                  },
                 ),
-                trailing: const ThinIcon(tabler.Pencil.new, size: 18),
-                onTap: () async {
-                  final dir = await FilePicker.getDirectoryPath();
-                  if (dir != null) {
-                    ref.read(settingsProvider.notifier).updateDownloadDirectory(dir);
-                    setState(() {});
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Recycle Bin — deleted records, recoverable for 30 days.
           _SectionHeader(s.recycleBin),
@@ -744,9 +767,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Google Drive
+          // Google Drive. iOS has no Auto Backup, so no paused banner and no
+          // switch there (AutoBackupRunner.isSupported).
           _SectionHeader(s.googleDriveBackup),
-          if (ref.watch(settingsProvider)['autoBackupError'] != null)
+          if (AutoBackupRunner.isSupported &&
+              ref.watch(settingsProvider)['autoBackupError'] != null)
             _AutoBackupErrorBanner(
               message: ref
                       .watch(settingsProvider)['autoBackupError']
@@ -762,14 +787,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       .clearAutoBackupError();
                   // Re-schedule so the next backup attempt runs soon.
                   await AutoBackupRunner.scheduleAutoBackup();
-                  if (mounted) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(s.tr('autoBackupResumed')),
                       backgroundColor: Colors.green,
                     ));
                   }
                 } catch (e) {
-                  if (mounted) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('${s.tr('signInFailed')}: $e'),
                       backgroundColor: Colors.red,
@@ -811,8 +836,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       await _driveService.signOut();
                       setState(() => _googleAccountEmail = null);
                     } else {
-                      final account = await _driveService.signIn();
-                      setState(() => _googleAccountEmail = account?.email);
+                      try {
+                        final account = await _driveService.signIn();
+                        if (!mounted) return;
+                        setState(() => _googleAccountEmail = account?.email);
+                      } on DriveBackupException catch (e, st) {
+                        // A failure used to escape the button unseen.
+                        _logFailure('signIn', e, st);
+                        if (mounted) _showDriveError(e);
+                      }
                     }
                   },
                   child: Text(_googleAccountEmail != null ? s.signOut : s.signIn),
@@ -859,51 +891,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: _isRestoring ? null : _restore,
               ),
-              const Divider(height: 1),
-              // Auto-backup switch — when enabled and the user is signed
-              // into Drive, AutoBackupRunner kicks off a backup on app
-              // startup (throttled to ≥12h between runs).
-              SwitchListTile(
-                secondary: Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.indigo.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+              // Not on iOS (AutoBackupRunner.isSupported).
+              if (AutoBackupRunner.isSupported) ...[
+                const Divider(height: 1),
+                // Auto-backup switch — when enabled and the user is signed
+                // into Drive, AutoBackupRunner kicks off a backup on app
+                // startup (throttled to ≥12h between runs).
+                SwitchListTile(
+                  secondary: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const ThinIcon(tabler.Refresh.new,
+                        color: Colors.indigo, size: 20),
                   ),
-                  child: const ThinIcon(tabler.Refresh.new,
-                      color: Colors.indigo, size: 20),
-                ),
-                title: Text(s.tr('autoBackup')),
-                subtitle: Text(
-                  s.tr('autoBackupDesc'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  title: Text(s.tr('autoBackup')),
+                  subtitle: Text(
+                    s.tr('autoBackupDesc'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
-                ),
-                value: ref.watch(settingsProvider)['autoBackup'] as bool? ??
-                    false,
-                onChanged: (v) async {
-                  await ref
-                      .read(settingsProvider.notifier)
-                      .updateAutoBackup(v);
-                  // Schedule / cancel the WorkManager periodic worker so
-                  // background backups follow the toggle. No-op on iOS /
-                  // desktop — the helpers already early-return there.
-                  if (v) {
-                    await AutoBackupRunner.scheduleAutoBackup();
-                  } else {
-                    await AutoBackupRunner.cancelAutoBackup();
-                    // Clearing the error too: with auto-backup off the
-                    // banner is meaningless.
+                  value: ref.watch(settingsProvider)['autoBackup'] as bool? ??
+                      false,
+                  onChanged: (v) async {
                     await ref
                         .read(settingsProvider.notifier)
-                        .clearAutoBackupError();
-                  }
-                },
-              ),
+                        .updateAutoBackup(v);
+                    // Schedule / cancel the WorkManager periodic worker so
+                    // background backups follow the toggle. No-op on
+                    // desktop — the helpers already early-return there.
+                    if (v) {
+                      await AutoBackupRunner.scheduleAutoBackup();
+                    } else {
+                      await AutoBackupRunner.cancelAutoBackup();
+                      // Clearing the error too: with auto-backup off the
+                      // banner is meaningless.
+                      await ref
+                          .read(settingsProvider.notifier)
+                          .clearAutoBackupError();
+                    }
+                  },
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 16),

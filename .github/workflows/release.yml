@@ -1,9 +1,10 @@
 name: Release
 
 on:
-  # A version tag (v1.0.5, v1.0.5-rc.1) builds the signed APKs and drafts a
-  # GitHub Release for review. Push one tag at a time: GitHub sends no events
-  # when more than three tags are pushed at once.
+  # A version tag (v1.0.5, v1.0.5-rc.1) builds the signed APKs and the
+  # unsigned iPhone app, and drafts a GitHub Release for review. Push one tag
+  # at a time: GitHub sends no events when more than three tags are pushed at
+  # once.
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+*']
   # "Run workflow" on main: the same signed build, artifacts only, no release.
@@ -27,6 +28,10 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/ci.yml
+    with:
+      # The ios job below builds the real app, so the Android build doesn't
+      # also wait for ci.yml's iOS check on a macOS runner.
+      skip-ios: true
 
   android:
     name: Signed APKs + AAB
@@ -246,10 +251,173 @@ jobs:
         if: always()
         run: rm -f "$RUNNER_TEMP/upload.jks" android/key.properties .env
 
+  ios:
+    name: Unsigned iPhone app (.ipa)
+    # Runs beside the android job. publish waits for it to finish, not to
+    # succeed: the .ipa joins the draft only when this job passed. Users
+    # sideload it with AltStore, SideStore or Sideloadly, which sign it with
+    # their own Apple ID: no Apple account or signing secret here.
+    needs: checks
+    runs-on: macos-26
+    timeout-minutes: 60
+    # Only for DOTENV: the same approval and branch rules as the android job.
+    environment: release
+    permissions:
+      contents: read
+    env:
+      # Never change it: a sideloaded copy updates in place, keeping its data,
+      # only under the same bundle ID, and the iOS OAuth client in Info.plist
+      # (Google Drive backup) is registered for it.
+      IOS_BUNDLE_ID: com.blackshadowsoftware.microseller
+    outputs:
+      ipa: ${{ steps.package.outputs.ipa }}
+      sha256: ${{ steps.package.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the tag check needs origin/main
+          persist-credentials: false
+
+      - name: Version matches the tag
+        id: version
+        # The android job's check. Apple's version is three numbers, and
+        # Flutter would turn 1.0.5-rc.1 into 1.0.5.1, so an rc is built as
+        # 1.0.5; its build number still sets it apart from the final release.
+        run: |
+          v=$(sed -nE 's/^version:[[:space:]]*([^[:space:]#]+).*/\1/p' pubspec.yaml)
+          name=${v%%+*}
+          code=${v##*+}
+          if [[ $v != *+* || ! $code =~ ^[0-9]+$ ]]; then
+            echo "::error::pubspec.yaml version '$v' must be name+code, e.g. 1.0.5+10"
+            exit 1
+          fi
+          build_name=${name%%-*}
+          if [[ ! $build_name =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::pubspec.yaml version name '$name' must start with three numbers, e.g. 1.0.5 or 1.0.5-rc.1"
+            exit 1
+          fi
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            if [ "$GITHUB_REF_NAME" != "v$name" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME doesn't match pubspec.yaml (v$name)."
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "::error::The tagged commit isn't on main."
+              exit 1
+            fi
+          fi
+          {
+            echo "name=$name"
+            echo "code=$code"
+            echo "build_name=$build_name"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: .env
+        # The android job's step: a Flutter asset (plain text inside the app,
+        # so not confidential), but the release one must carry the real ids.
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          [ -n "$DOTENV" ] || { echo "::error::DOTENV not found in the 'release' environment's secrets (paste the whole .env as a secret named DOTENV)."; exit 1; }
+          printf '%s\n' "$DOTENV" > .env
+          # Read the line the way flutter_dotenv does: optional "export",
+          # spaces around "=", quotes, trailing comment.
+          web_id=$(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?GOOGLE_OAUTH_WEB_CLIENT_ID[[:space:]]*=(.*)$/\2/p' .env \
+            | tail -n 1 | sed -E 's/(^|[[:space:]])#.*$//' | tr -d " \t\r\"'")
+          if [ -z "$web_id" ]; then
+            # Key names only — never values.
+            keys=$(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' .env | tr '\n' ' ')
+            if [ -z "$keys" ]; then
+              echo "::error::DOTENV doesn't look like a .env file (no KEY=value lines). In the project folder run 'pbcopy < .env' and paste it into the DOTENV secret again."
+            else
+              echo "::error::DOTENV has no value for GOOGLE_OAUTH_WEB_CLIENT_ID (Drive backup sign-in needs it). Keys found in DOTENV: $keys"
+            fi
+            exit 1
+          fi
+
+      - name: Build
+        env:
+          BUILD_NAME: ${{ steps.version.outputs.build_name }}
+          CODE: ${{ steps.version.outputs.code }}
+        run: |
+          xcodebuild -version
+          flutter build ios --release --no-codesign --obfuscate --tree-shake-icons \
+            --split-debug-info=build/debug-info-ios \
+            --build-name "$BUILD_NAME" --build-number "$CODE"
+          # flutter build may re-resolve; the shipped build must match the lock.
+          git diff --exit-code -- pubspec.lock
+          # Flutter migrates an outdated Xcode project during the build (see
+          # ci.yml's ios job): it still builds, but from files the repo lacks.
+          drift=$(git status --porcelain -- ios)
+          if [ -n "$drift" ]; then
+            echo "$drift"
+            echo "::warning::The iOS build changed files under ios/ (listed in the log). Run 'flutter build ios --no-codesign' on your Mac and commit what it changes under ios/."
+          fi
+
+      - name: Package and verify
+        id: package
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+          BUILD_NAME: ${{ steps.version.outputs.build_name }}
+          CODE: ${{ steps.version.outputs.code }}
+        # An .ipa is a zip of Payload/<name>.app. The crash-report symbols get
+        # their own artifact, as on Android.
+        run: |
+          ipa="micro-seller-v$NAME-unsigned.ipa"
+          stage="$RUNNER_TEMP/ipa"
+          rm -rf "$stage" dist/ipa dist/ios-symbols
+          mkdir -p "$stage/Payload" dist/ipa dist/ios-symbols
+          ditto build/ios/iphoneos/Runner.app "$stage/Payload/Runner.app"
+          (cd "$stage" && zip -qry -X "$GITHUB_WORKSPACE/dist/ipa/$ipa" Payload)
+          bash tool/ci/verify_ios_artifacts.sh "$IOS_BUNDLE_ID" "$BUILD_NAME" "$CODE" "dist/ipa/$ipa"
+          sha=$(shasum -a 256 "dist/ipa/$ipa" | awk '{print $1}')
+
+          # Dart symbols (the code is obfuscated) and the native dSYMs.
+          cp -R build/debug-info-ios/. dist/ios-symbols/
+          while IFS= read -r dsym; do
+            ditto "$dsym" "dist/ios-symbols/${dsym##*/}"
+          done < <(find build/ios/Release-iphoneos -maxdepth 2 -type d -name '*.dSYM' -prune)
+
+          {
+            echo "ipa=$ipa"
+            echo "sha256=$sha"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Micro Seller v$NAME ($CODE) @ ${GITHUB_SHA:0:7}, iPhone"
+            echo '```'
+            echo "$sha  $ipa"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ios-ipa
+          path: dist/ipa/
+          if-no-files-found: error
+          retention-days: ${{ github.event_name == 'push' && 30 || 3 }}
+          compression-level: 0
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          # Needed to read crash reports of this version. Artifacts expire
+          # (90 days at most): archive it with the Android symbols.
+          name: ios-symbols
+          path: dist/ios-symbols/
+          if-no-files-found: error
+          retention-days: ${{ github.event_name == 'push' && 90 || 3 }}
+
+      - name: Remove .env
+        if: always()
+        run: rm -f .env
+
   publish:
     name: Draft GitHub Release
-    needs: [checks, android]
-    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: [checks, android, ios]
+    # Waits for the iOS build but needs only the Android one: the APKs are
+    # drafted whatever happens to the .ipa (unless the run is cancelled).
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref_type == 'tag' && needs.android.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -260,6 +428,17 @@ jobs:
           name: apks
           path: dist
 
+      - name: Download the iPhone app
+        id: ipa
+        if: needs.ios.result == 'success' && needs.ios.outputs.ipa != ''
+        # Outside dist/ until its checksum is checked, and never fatal here:
+        # the next step drafts the Android files first.
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ios-ipa
+          path: ipa
+
       - name: Create or update the draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -268,9 +447,31 @@ jobs:
           NAME: ${{ needs.android.outputs.name }}
           PRERELEASE: ${{ needs.android.outputs.prerelease }}
           SIGNER: ${{ needs.android.outputs.signer }}
+          IOS_RESULT: ${{ needs.ios.result }}
+          IPA: ${{ steps.ipa.outcome == 'success' && needs.ios.outputs.ipa || '' }}
+          IPA_SHA256: ${{ needs.ios.outputs.sha256 }}
         run: |
           cd dist
           sha256sum -c SHA256SUMS.txt
+          # The .ipa joins the draft only as exactly what the ios job built and
+          # checked. The Android files are drafted either way.
+          ipa_name="micro-seller-v$NAME-unsigned.ipa"
+          no_ipa=""
+          if [ -z "$IPA" ]; then
+            if [ "$IOS_RESULT" = success ]; then
+              no_ipa="the .ipa couldn't be downloaded from the iOS job"
+            else
+              no_ipa="the iOS build ended in '$IOS_RESULT'"
+            fi
+          elif [ "$IPA" != "$ipa_name" ]; then
+            no_ipa="the iOS build made $IPA, expected $ipa_name"
+          elif ! (cd ../ipa && printf '%s  %s\n' "$IPA_SHA256" "$IPA" | sha256sum -c --strict --quiet -); then
+            no_ipa="$IPA doesn't match the checksum its build reported"
+          else
+            mv "../ipa/$IPA" .
+            printf '%s  %s\n' "$IPA_SHA256" "$IPA" >> SHA256SUMS.txt
+          fi
+          [ -z "$no_ipa" ] || IPA=""
           notes=$(cat <<EOF
           **Which file?**
           - \`micro-seller-v$NAME-universal.apk\` works on every Android phone.
@@ -282,6 +483,12 @@ jobs:
           - Check a download with \`sha256sum -c SHA256SUMS.txt\`.
           EOF
           )
+          # Also what a re-run adds to, or removes from, an existing draft.
+          ios_notes=$(printf '%s\n' \
+            '**iPhone**' \
+            "- \`$ipa_name\` is unsigned, so it has to be sideloaded: AltStore, SideStore or Sideloadly signs it with your own Apple ID and installs it (iOS 16 or later). With a free Apple ID, the app must be signed again every 7 days (AltStore and SideStore can do it automatically), and at most 3 sideloaded apps can be installed. Steps: https://github.com/$GH_REPO#iphone-sideload" \
+            "- Google Drive backup works on iPhone (Settings → Google Drive Backup); the automatic daily backup is Android-only. If your sideloading tool changed the app's ID, Google sign-in can fail: then back up with Settings → Local Backup. Back up to a file before you delete the app.")
+          [ -z "$IPA" ] || notes+=$'\n\n'"$ios_notes"
           # A draft can be refreshed by re-running; a published release is final.
           state=$(gh api "repos/$GH_REPO/releases?per_page=100" \
             --jq '[.[] | select(.tag_name == env.TAG)] | if length == 0 then "none" else (.[0].draft | tostring) end')
@@ -300,12 +507,35 @@ jobs:
               ;;
           esac
 
-          # Every file must be attached to the draft before anyone publishes it
-          # (v1.0.5 ended up published with no APKs and nothing noticed).
           attached() {
             gh api "repos/$GH_REPO/releases?per_page=100" \
               --jq '[.[] | select(.tag_name == env.TAG)][0].assets // [] | .[] | select(.state == "uploaded" and .size > 0) | .name'
           }
+          # In a draft that already existed, the iPhone app and its notes follow
+          # this run: added when it attached the .ipa, removed when it didn't.
+          # An .ipa from an earlier attempt (or another commit, if the tag
+          # moved) isn't one this run checked, and SHA256SUMS.txt no longer
+          # lists it.
+          if [ "$state" = true ]; then
+            attached | { grep -E '\.ipa$' || true; } | while IFS= read -r asset; do
+              [ "$asset" = "$IPA" ] || gh release delete-asset "$TAG" "$asset" --yes
+            done
+            body=$(gh api "repos/$GH_REPO/releases?per_page=100" \
+              --jq '[.[] | select(.tag_name == env.TAG)][0].body // ""' | tr -d '\r')
+            if [ -n "$IPA" ]; then
+              [[ $body == *"$IPA"* ]] || gh release edit "$TAG" --notes "$body"$'\n\n'"$ios_notes"
+            elif [[ $body == *"$ipa_name"* ]]; then
+              stripped=${body//$'\n\n'"$ios_notes"/}
+              if [ "$stripped" != "$body" ]; then
+                gh release edit "$TAG" --notes "$stripped"
+              else
+                echo "::warning::The draft's notes still mention $ipa_name, which it no longer has: edit them before publishing."
+              fi
+            fi
+          fi
+
+          # Every file must be attached to the draft before anyone publishes it
+          # (v1.0.5 ended up published with no APKs and nothing noticed).
           missing() { comm -23 <(printf '%s\n' ./* | sed 's|^\./||' | sort) <(attached | sort); }
           if [ -n "$(missing)" ]; then
             echo "::warning::Not attached yet: $(missing | tr '\n' ' ')- uploading again."
@@ -315,9 +545,25 @@ jobs:
             echo "::error::Still missing from release $TAG: $(missing | tr '\n' ' ')"
             exit 1
           fi
+          ipa_fix="The Android files are complete. To add the .ipa, re-run the iOS job on the run page: this job then runs again and attaches it."
           {
             echo "### Draft release $TAG is ready, with $(attached | wc -l | tr -d ' ') files:"
             attached | sed 's/^/- /'
             echo
             echo "On the Releases page, check that **Assets** lists these files, then click **Publish release**."
+            if [ -n "$no_ipa" ]; then
+              echo
+              echo "**No iPhone app (.ipa) in this draft:** $no_ipa. $ipa_fix"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$no_ipa" ]; then
+            if [ "$IOS_RESULT" != success ]; then
+              # The ios job's own result already shows on the run.
+              echo "::warning::No iPhone app (.ipa) in this draft: $no_ipa. $ipa_fix"
+            else
+              # The iOS build worked and only this step lost the .ipa: fail,
+              # now that the draft is complete, so that it isn't missed.
+              echo "::error::No iPhone app (.ipa) in this draft: $no_ipa. $ipa_fix"
+              exit 1
+            fi
+          fi

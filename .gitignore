@@ -49,10 +49,20 @@ app.*.map.json
 # that generated it).
 !pubspec.lock
 
+# Kotlin Gradle plugin cache, written by Android builds.
+android/.kotlin/
+
 # Android signing — NEVER commit these
 android/key.properties
 **/*.jks
 **/*.keystore
+
+# Apple signing (certificates, private keys, provisioning profiles) — NEVER
+# commit these
+*.p12
+*.p8
+*.mobileprovision
+*.cer
 
 # Local secrets
 .env

@@ -1,10 +1,59 @@
 import 'dart:async';
+import 'dart:developer' as developer;
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_strings.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
 import 'app_button.dart';
+
+/// Whether "Download PDF" asks where to save each time, in the system's save
+/// sheet ([savePdfWithSystemSheet]), instead of writing into the folder picked
+/// once (Settings → PDF download folder, which is then hidden). True on iOS:
+/// a folder picked there can't be written to (the picker hands back a bare
+/// path, without the security-scoped access writing needs), and no picked
+/// folder is reachable on a later launch.
+bool get pdfDownloadAsksWhereToSave =>
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+/// "Download PDF" where [pdfDownloadAsksWhereToSave]: offers [bytes] as
+/// [fileName] in the system's save sheet (on iOS, Files: On My iPhone,
+/// iCloud Drive, …), which is its own confirmation. When that sheet can't
+/// open, the share sheet instead, which has Save to Files too. Returns
+/// whether the PDF was saved or shared (false when the user cancels).
+Future<bool> savePdfWithSystemSheet({
+  required String fileName,
+  required Uint8List bytes,
+}) async {
+  try {
+    final saved = await FilePicker.saveFile(
+      fileName: fileName,
+      bytes: bytes,
+      mimeType: 'application/pdf',
+    );
+    return saved != null;
+  } on Exception catch (e, st) {
+    developer.log(
+      'save sheet failed, sharing instead',
+      name: 'PdfDownload',
+      error: e,
+      stackTrace: st,
+    );
+  }
+  // A folder of its own in the system temp folder (the app's tmp/ on iOS),
+  // so the shared file keeps [fileName], as local backups do.
+  final dir = await Directory.systemTemp.createTemp('microseller_pdf');
+  final file = File('${dir.path}/$fileName');
+  await file.writeAsBytes(bytes);
+  final result = await SharePlus.instance.share(
+    ShareParams(files: [XFile(file.path, mimeType: 'application/pdf')]),
+  );
+  return result.status == ShareResultStatus.success;
+}
 
 /// Shows a modal bottom sheet confirming a PDF was saved, with an "Open"
 /// action and an automatic 5-second dismiss.

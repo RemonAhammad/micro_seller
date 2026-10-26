@@ -1,0 +1,5 @@
+/* Thai texts of iOS's permission prompts. The English ones are in Info.plist. */
+"NSCameraUsageDescription" = "ใช้สำหรับสแกน QR โค้ด/บาร์โค้ด และถ่ายรูปสินค้า";
+"NSPhotoLibraryUsageDescription" = "ใช้สำหรับเลือกรูปสินค้าจากคลังรูปภาพของคุณ";
+"NSPhotoLibraryAddUsageDescription" = "ใช้สำหรับบันทึกรูปสินค้า";
+"NSFaceIDUsageDescription" = "Micro Seller ใช้ Face ID เพื่อยืนยันการดำเนินการที่สำคัญ เช่น การล้างข้อมูลทั้งหมด";

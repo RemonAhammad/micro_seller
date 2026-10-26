@@ -14,6 +14,7 @@ import '../models/supplier.dart';
 import '../models/trash_entry.dart';
 import 'dues_service.dart';
 import 'migration_service.dart';
+import 'product_image_store.dart';
 
 part 'isar_service.g.dart';
 
@@ -38,6 +39,8 @@ const kIsarSchemas = [
 @Riverpod(keepAlive: true)
 Future<Isar> isar(Ref ref) async {
   final dir = await getApplicationDocumentsDirectory();
+  // Product photo paths are stored relative to it (ProductImageStore).
+  ProductImageStore.documentsDirectory = dir.path;
   final db = await Isar.open(
     kIsarSchemas,
     directory: dir.path,
@@ -53,6 +56,7 @@ Future<Isar> isar(Ref ref) async {
   // Run one-time migrations
   await migrateVariantsV2(db);
   await migrateOutstandingBalancesV1(db);
+  await migrateProductImagePathsV1(db);
 
   return db;
 }
