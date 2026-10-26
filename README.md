@@ -9,6 +9,7 @@
 <p align="center">
   <a href="https://github.com/RemonAhammad/micro_seller/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/RemonAhammad/micro_seller?include_prereleases&label=latest&color=00897B"></a>
   <a href="https://github.com/RemonAhammad/micro_seller/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/RemonAhammad/micro_seller/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/github/license/RemonAhammad/micro_seller?color=00897B"></a>
 </p>
 
 # Micro Seller
@@ -18,6 +19,7 @@
 - **Works fully offline.** No account, no sign-up. Your data stays on your phone.
 - **Safe.** Back up to a file or to your own Google Drive, restore with automatic rollback, and undo deletes for 30 days.
 - **Speaks your language.** 12 languages, 38 currencies, light and dark themes.
+- **Open source.** Free software under the [GPL-3.0](LICENSE) license.
 
 ## Contents
 
@@ -26,6 +28,7 @@
 - [Privacy](#privacy)
 - [Platforms](#platforms)
 - [For developers](#for-developers)
+- [License](#license)
 
 ## Download
 
@@ -215,3 +218,13 @@ From your Mac, `./release.sh` cuts a release:
 4. GitHub Actions builds the signed APKs and the Play Store bundle and drafts the GitHub release, and the script follows the build.
 
 See [RELEASE.md](RELEASE.md) for the Play Store guide and the CI/CD setup.
+
+## License
+
+Copyright © 2026 Black Shadow Software
+
+Micro Seller is free software. You can redistribute it and/or modify it under the terms of the [GNU General Public License v3.0](LICENSE), as published by the Free Software Foundation, either version 3 of the License or (at your option) any later version.
+
+It is distributed in the hope that it will be useful, but **without any warranty**, without even the implied warranty of merchantability or fitness for a particular purpose. See the [license](LICENSE) for details.
+
+The license covers the source code. The Micro Seller name, logo and banner aren't licensed under it.
