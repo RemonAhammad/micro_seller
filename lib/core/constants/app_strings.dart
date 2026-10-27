@@ -484,6 +484,7 @@ class _L10nStrings {
   String get update => _l10n.tr('update');
   String get close => _l10n.tr('close');
   String get open => _l10n.tr('open');
+  String get dismiss => _l10n.tr('dismiss');
   String get bkash => _l10n.tr('bkash');
   String get nagad => _l10n.tr('nagad');
 
@@ -736,4 +737,56 @@ class _L10nStrings {
   /// the theme [name] instead.
   String phoneColorsUnavailable(String name) =>
       _l10n.tr('phoneColorsUnavailable').replaceAll('{name}', name);
+
+  // Security (Settings → Security). The biometric row says what the device
+  // has: Face ID or Touch ID on an iPhone, Fingerprint everywhere else.
+  String get securityFingerprint => _l10n.tr('securityFingerprint');
+  String get securityFingerprintDesc => _l10n.tr('securityFingerprintDesc');
+  String get biometricNotAvailable => _l10n.tr('biometricNotAvailable');
+  String get securityFaceId => _l10n.tr('securityFaceId');
+  String get securityFaceIdDesc => _l10n.tr('securityFaceIdDesc');
+  String get faceIdNotSetUp => _l10n.tr('faceIdNotSetUp');
+  String get securityTouchId => _l10n.tr('securityTouchId');
+  String get securityTouchIdDesc => _l10n.tr('securityTouchIdDesc');
+  String get touchIdNotSetUp => _l10n.tr('touchIdNotSetUp');
+
+  // App updates (iPhone, and Android installed from a GitHub APK): the
+  // Dashboard banner and Settings → About → Check for updates.
+
+  /// "Micro Seller 1.0.12 is available", for the new release's [version].
+  String updateAvailable(String version) => _l10n
+      .tr('updateAvailable')
+      .replaceAll('{app}', AppStrings.appName)
+      .replaceAll('{version}', version);
+  String get updateHowToAndroid => _l10n.tr('updateHowToAndroid');
+  String get updateHowToIos => _l10n.tr('updateHowToIos');
+  String get download => _l10n.tr('download');
+  String get checkForUpdates => _l10n.tr('checkForUpdates');
+  String get upToDate => _l10n.tr('upToDate');
+  String get updateCheckFailed => _l10n.tr('updateCheckFailed');
+
+  // Keypad bar (iOS) above the number and phone pads; its other button is
+  // [done].
+  String get next => _l10n.tr('next');
+
+  // Camera (Scanner, QR scanner, product photos). Like every text that names
+  // the app, two of them keep it as `{app}` in all languages, filled in here.
+  String get cameraAccessOff => _l10n.tr('cameraAccessOff');
+  String get cameraAllowPrompt =>
+      _l10n.tr('cameraAllowPrompt').replaceAll('{app}', AppStrings.appName);
+  String get cameraAllowInSettings =>
+      _l10n.tr('cameraAllowInSettings').replaceAll('{app}', AppStrings.appName);
+  String get cameraRestricted => _l10n.tr('cameraRestricted');
+  String get cameraStartFailed => _l10n.tr('cameraStartFailed');
+  String get noCameraAvailable => _l10n.tr('noCameraAvailable');
+  String get allowCamera => _l10n.tr('allowCamera');
+  String get openSettings => _l10n.tr('openSettings');
+  String get tryAgain => _l10n.tr('tryAgain');
+  String get torchOn => _l10n.tr('torchOn');
+  String get torchOff => _l10n.tr('torchOff');
+
+  // Calls: a device that can't call (most iPads) offers to copy the number.
+  String get callNotAvailable => _l10n.tr('callNotAvailable');
+  String get copyNumber => _l10n.tr('copyNumber');
+  String get numberCopied => _l10n.tr('numberCopied');
 }

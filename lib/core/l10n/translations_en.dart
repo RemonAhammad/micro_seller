@@ -555,6 +555,13 @@ const translationsEn = <String, String>{
   'securityPinDesc': 'Require a 4-digit PIN for sensitive actions',
   'biometricNotAvailable': 'No fingerprint enrolled on this device',
   'changeSecurity': 'Verify to change security settings',
+  // On an iPhone the biometric row names what it has: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'Use Face ID to authorize sensitive actions',
+  'faceIdNotSetUp': 'Face ID is not set up on this device',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'Use Touch ID to authorize sensitive actions',
+  'touchIdNotSetUp': 'Touch ID is not set up on this device',
 
   // Background auto-backup status (worker → UI handoff)
   'autoBackupPaused': 'Auto backup paused',
@@ -741,4 +748,35 @@ const translationsEn = <String, String>{
   'rateThisApp': 'Rate this app',
   'rateThisAppSubtitle': 'Help other sellers find {app}',
   'about': 'About',
+
+  // App updates (iPhone, and Android installed from a GitHub APK): the
+  // Dashboard banner and Settings → About → Check for updates
+  'updateAvailable': '{app} {version} is available',
+  'updateHowToAndroid': 'Download the same type of APK you installed before (universal or arm64-v8a) and install it over this one. Your data stays.',
+  'updateHowToIos': 'Install it with the same sideloading tool and Apple ID you used before, so your data stays. Back up first.',
+  'download': 'Download',
+  'checkForUpdates': 'Check for updates',
+  'upToDate': 'You have the latest version',
+  'updateCheckFailed': 'Couldn\'t check for updates. Check your internet connection and try again.',
+
+  // Keypad bar (iOS): above the number and phone pads, which have no return key
+  'next': 'Next',
+
+  // Camera (Scanner, QR scanner, product photos)
+  'cameraAccessOff': 'Camera access is off',
+  'cameraAllowPrompt': '{app} needs the camera to scan codes and take photos.',
+  'cameraAllowInSettings': 'To scan codes and take photos, allow camera access for {app} in Settings.',
+  'cameraRestricted': 'The camera is restricted on this device.',
+  'cameraStartFailed': 'The camera couldn\'t start.',
+  'noCameraAvailable': 'No camera is available on this device.',
+  'allowCamera': 'Allow camera',
+  'openSettings': 'Open Settings',
+  'tryAgain': 'Try again',
+  'torchOn': 'Turn on flashlight',
+  'torchOff': 'Turn off flashlight',
+
+  // Calls: a device that can't call (most iPads) offers to copy the number
+  'callNotAvailable': 'Calls aren\'t available on this device',
+  'copyNumber': 'Copy number',
+  'numberCopied': 'Number copied',
 };
