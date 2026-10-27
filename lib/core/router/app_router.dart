@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'shell_back_swipe.dart';
 import '../../data/services/tutorial_service.dart';
 import '../../features/settings/providers/settings_provider.dart';
 import '../../features/settings/presentation/sidebar_order_screen.dart';
@@ -39,7 +41,30 @@ import '../../features/cash_register/presentation/cash_register_screen.dart';
 import '../../features/scanner/presentation/scanner_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
-/// Fade-through transition for pushed routes (form, detail, edit screens).
+
+/// The sidebar's width: the icon rail on a phone, and with labels in a
+/// window at least [kSidebarExpandMinWidth] wide (a tablet, or its wider
+/// Split View windows).
+const double kSidebarRailWidth = 56;
+const double kSidebarExpandedWidth = 200;
+
+/// The narrowest window that gets the sidebar with labels.
+const double kSidebarExpandMinWidth = 600;
+
+/// Whether pushed screens are iOS pages: its slide, and its back swipe. Not
+/// on the web, where Safari's own edge swipe goes back in the browser.
+bool get _iosPages => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+/// A pushed screen's page (form, detail, edit screens). On iOS a
+/// [MaterialPage], which the theme slides in as iOS does, with the back
+/// swipe from the page's leading edge; the shell's [ShellEdgeBackSwipe] adds
+/// the screen's edge, over the sidebar. Elsewhere the fade ([_fadePage]).
+Page<T> _subPage<T>(Widget child, GoRouterState state) => _iosPages
+    ? MaterialPage<T>(
+        key: state.pageKey, name: state.name ?? state.path, child: child)
+    : _fadePage<T>(child, state);
+
+/// Fade-through transition for pushed routes on Android and the web.
 /// Branch root routes use the shell's built-in indexed-stack switch, so they
 /// don't go through this helper.
 CustomTransitionPage<T> _fadePage<T>(Widget child, GoRouterState state) {
@@ -65,6 +90,11 @@ CustomTransitionPage<T> _fadePage<T>(Widget child, GoRouterState state) {
   );
 }
 
+/// A sidebar tab's branch. Its observer tells the shell's
+/// [ShellEdgeBackSwipe] which page is on top.
+StatefulShellBranch _branch(List<RouteBase> routes) =>
+    StatefulShellBranch(routes: routes, observers: [BranchTopRouteObserver()]);
+
 // First read is MaterialApp.router's build, after main() primed the flag.
 final appRouter = GoRouter(
   initialLocation: TutorialService.splashShown ? '/' : '/splash',
@@ -76,10 +106,10 @@ final appRouter = GoRouter(
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) => _NavigationShell(navigationShell: navigationShell),
       branches: [
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/products',
             builder: (_, __) => const ProductListScreen(),
@@ -87,7 +117,7 @@ final appRouter = GoRouter(
               GoRoute(
                 path: 'catalog',
                 pageBuilder: (_, s) =>
-                    _fadePage(const CatalogShareScreen(), s),
+                    _subPage(const CatalogShareScreen(), s),
               ),
               GoRoute(
                 path: 'add',
@@ -95,7 +125,7 @@ final appRouter = GoRouter(
                   // From scanner: prefill the qr/sku of the new product.
                   final extra = s.extra;
                   final prefill = extra is ScannerPrefill ? extra : null;
-                  return _fadePage(
+                  return _subPage(
                     ProductFormScreen(
                       product: null,
                       initialQrCode: prefill?.qrCode,
@@ -107,14 +137,14 @@ final appRouter = GoRouter(
               ),
               GoRoute(
                 path: ':id',
-                pageBuilder: (_, s) => _fadePage(
+                pageBuilder: (_, s) => _subPage(
                     ProductDetailScreen(
                         productId: int.parse(s.pathParameters['id']!)),
                     s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    pageBuilder: (_, s) => _fadePage(
+                    pageBuilder: (_, s) => _subPage(
                         ProductFormScreen(
                             productId: int.parse(s.pathParameters['id']!)),
                         s),
@@ -124,25 +154,25 @@ final appRouter = GoRouter(
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/orders',
             builder: (_, __) => const OrderListScreen(),
             routes: [
               GoRoute(
                 path: 'add',
-                pageBuilder: (_, s) => _fadePage(const OrderFormScreen(), s),
+                pageBuilder: (_, s) => _subPage(const OrderFormScreen(), s),
               ),
               GoRoute(
                 path: ':id',
-                pageBuilder: (_, s) => _fadePage(
+                pageBuilder: (_, s) => _subPage(
                     OrderDetailScreen(
                         orderId: int.parse(s.pathParameters['id']!)),
                     s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    pageBuilder: (_, s) => _fadePage(
+                    pageBuilder: (_, s) => _subPage(
                         OrderFormScreen(
                             orderId: int.parse(s.pathParameters['id']!)),
                         s),
@@ -152,10 +182,10 @@ final appRouter = GoRouter(
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(path: '/returns', builder: (_, __) => const ReturnsScreen()),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/customers',
             builder: (_, __) => const CustomerListScreen(),
@@ -163,18 +193,18 @@ final appRouter = GoRouter(
               GoRoute(
                 path: 'add',
                 pageBuilder: (_, s) =>
-                    _fadePage(const CustomerFormScreen(customer: null), s),
+                    _subPage(const CustomerFormScreen(customer: null), s),
               ),
               GoRoute(
                 path: ':id',
-                pageBuilder: (_, s) => _fadePage(
+                pageBuilder: (_, s) => _subPage(
                     CustomerDetailScreen(
                         customerId: int.parse(s.pathParameters['id']!)),
                     s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    pageBuilder: (_, s) => _fadePage(
+                    pageBuilder: (_, s) => _subPage(
                         CustomerFormScreen(
                             customerId: int.parse(s.pathParameters['id']!)),
                         s),
@@ -184,14 +214,14 @@ final appRouter = GoRouter(
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/inventory',
             builder: (_, __) => const InventoryScreen(),
             routes: [
               GoRoute(
                 path: 'adjust/:id',
-                pageBuilder: (_, s) => _fadePage(
+                pageBuilder: (_, s) => _subPage(
                     StockAdjustmentScreen(
                         productId: int.parse(s.pathParameters['id']!)),
                     s),
@@ -199,7 +229,7 @@ final appRouter = GoRouter(
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/suppliers',
             builder: (_, __) => const SupplierListScreen(),
@@ -207,21 +237,21 @@ final appRouter = GoRouter(
               GoRoute(
                 path: 'add',
                 pageBuilder: (_, s) =>
-                    _fadePage(const SupplierFormScreen(), s),
+                    _subPage(const SupplierFormScreen(), s),
               ),
               GoRoute(
                 path: 'purchases',
                 pageBuilder: (_, s) =>
-                    _fadePage(const PurchaseListScreen(), s),
+                    _subPage(const PurchaseListScreen(), s),
                 routes: [
                   GoRoute(
                     path: 'add',
                     pageBuilder: (_, s) =>
-                        _fadePage(const PurchaseFormScreen(), s),
+                        _subPage(const PurchaseFormScreen(), s),
                   ),
                   GoRoute(
                     path: ':id',
-                    pageBuilder: (_, s) => _fadePage(
+                    pageBuilder: (_, s) => _subPage(
                         PurchaseDetailScreen(
                             purchaseId: int.parse(s.pathParameters['id']!)),
                         s),
@@ -230,21 +260,21 @@ final appRouter = GoRouter(
               ),
               GoRoute(
                 path: ':id',
-                pageBuilder: (_, s) => _fadePage(
+                pageBuilder: (_, s) => _subPage(
                     SupplierDetailScreen(
                         supplierId: int.parse(s.pathParameters['id']!)),
                     s),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    pageBuilder: (_, s) => _fadePage(
+                    pageBuilder: (_, s) => _subPage(
                         SupplierFormScreen(
                             supplierId: int.parse(s.pathParameters['id']!)),
                         s),
                   ),
                   GoRoute(
                     path: 'purchase/add',
-                    pageBuilder: (_, s) => _fadePage(
+                    pageBuilder: (_, s) => _subPage(
                         PurchaseFormScreen(
                             supplierId: int.parse(s.pathParameters['id']!)),
                         s),
@@ -254,7 +284,7 @@ final appRouter = GoRouter(
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/expenses',
             builder: (_, __) => const ExpenseListScreen(),
@@ -262,11 +292,11 @@ final appRouter = GoRouter(
               GoRoute(
                 path: 'add',
                 pageBuilder: (_, s) =>
-                    _fadePage(const ExpenseFormScreen(expense: null), s),
+                    _subPage(const ExpenseFormScreen(expense: null), s),
               ),
               GoRoute(
                 path: ':id/edit',
-                pageBuilder: (_, s) => _fadePage(
+                pageBuilder: (_, s) => _subPage(
                     ExpenseFormScreen(
                         expenseId: int.parse(s.pathParameters['id']!)),
                     s),
@@ -274,16 +304,16 @@ final appRouter = GoRouter(
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(path: '/cash-register', builder: (_, __) => const CashRegisterScreen()),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(path: '/categories', builder: (_, __) => const CategoryScreen()),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(path: '/reports', builder: (_, __) => const ReportsScreen()),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/settings',
             builder: (_, __) => const SettingsScreen(),
@@ -291,27 +321,27 @@ final appRouter = GoRouter(
               GoRoute(
                 path: 'sidebar-order',
                 pageBuilder: (_, s) =>
-                    _fadePage(const SidebarOrderScreen(), s),
+                    _subPage(const SidebarOrderScreen(), s),
               ),
               GoRoute(
                 path: 'recycle-bin',
                 pageBuilder: (_, s) =>
-                    _fadePage(const RecycleBinScreen(), s),
+                    _subPage(const RecycleBinScreen(), s),
               ),
               GoRoute(
                 path: 'color-theme',
                 pageBuilder: (_, s) =>
-                    _fadePage(const ColorThemeScreen(), s),
+                    _subPage(const ColorThemeScreen(), s),
               ),
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(path: '/scanner', builder: (_, __) => const ScannerScreen()),
         ]),
         // Branch 13 — appended, never inserted: branch indices are persisted
         // by `SidebarItem.branchIndex` and must stay stable.
-        StatefulShellBranch(routes: [
+        _branch([
           GoRoute(
             path: '/dues',
             // `?age=60` (from the dashboard's overdue banner) opens the list
@@ -405,7 +435,7 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final expanded = width >= 600;
+    final expanded = width >= kSidebarExpandMinWidth;
 
     // Watch only the position so the Row swaps live when it changes, without
     // rebuilding the shell on every other settings write.
@@ -427,10 +457,19 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
     final content = Expanded(child: widget.navigationShell);
 
     return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children:
-              isRight ? [content, sidebar] : [sidebar, content],
+      // On iOS a pushed screen is swiped back from its leading edge, which
+      // starts beside the sidebar when the sidebar is on that side (the
+      // Row's first child, so on the right in Arabic and Urdu): the strip
+      // over the sidebar starts it from the screen's edge too. With the
+      // sidebar on the other side, the page's edge is the screen's.
+      body: ShellEdgeBackSwipe(
+        enabled: _iosPages && !isRight,
+        shell: widget.navigationShell,
+        child: SafeArea(
+          child: Row(
+            children:
+                isRight ? [content, sidebar] : [sidebar, content],
+          ),
         ),
       ),
     );
@@ -489,7 +528,7 @@ class _Sidebar extends ConsumerWidget {
     final unselectedColor = colorScheme.onSurfaceVariant;
 
     return Container(
-      width: expanded ? 200 : 56,
+      width: expanded ? kSidebarExpandedWidth : kSidebarRailWidth,
       color: bgColor,
       child: Column(
         children: [
