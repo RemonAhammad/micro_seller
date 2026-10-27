@@ -18,6 +18,8 @@ import '../../../data/services/isar_service.dart';
 import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/number_input.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/document_brand.dart';
@@ -145,9 +147,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   /// total reads one of these instead of a chain of getters.
   _FormTotals _readTotals() {
     final subtotal = _items.fold(0.0, (sum, item) => sum + item.totalPrice);
-    final discount = double.tryParse(_discountCtrl.text) ?? 0;
-    final delivery = double.tryParse(_deliveryCtrl.text) ?? 0;
-    final taxRate = double.tryParse(_taxRateCtrl.text) ?? 0;
+    final discount = NumberInput.parseDecimal(_discountCtrl.text) ?? 0;
+    final delivery = NumberInput.parseDecimal(_deliveryCtrl.text) ?? 0;
+    final taxRate = NumberInput.parseDecimal(_taxRateCtrl.text) ?? 0;
     final totals = orderTotals(subtotal: subtotal, discount: discount, taxRate: taxRate, delivery: delivery);
     return _FormTotals(
       subtotal: subtotal,
@@ -156,11 +158,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       taxRate: taxRate,
       tax: totals.tax,
       total: totals.total,
-      paid: double.tryParse(_amountPaidCtrl.text) ?? 0,
+      paid: NumberInput.parseDecimal(_amountPaidCtrl.text) ?? 0,
     );
   }
 
-  int get _recurringDays => int.tryParse(_recurringDaysCtrl.text) ?? 30;
+  /// The interval typed, or 30 days when it's empty or 0.
+  int get _recurringDays {
+    final days = NumberInput.parseInteger(_recurringDaysCtrl.text);
+    return days != null && days >= 1 ? days : 30;
+  }
 
   // ─── Customer ────────────────────────────────────────────────────────
 
@@ -404,13 +410,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             icon: tabler.FileTypePdf.new,
             label: s.sharePdf,
             color: Colors.teal,
-            onTap: () async {
+            onTap: (origin) async {
               await runWithProgress(context, () async {
                 final bytes = await receiptBytes();
                 final dir = await getTemporaryDirectory();
                 final file = File('${dir.path}/${order.orderNumber}.pdf');
                 await file.writeAsBytes(bytes);
-                await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
+                await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], sharePositionOrigin: origin));
               });
             },
           ),
@@ -419,7 +425,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             icon: tabler.Download.new,
             label: s.downloadPdf,
             color: Colors.blue,
-            onTap: () async {
+            onTap: (origin) async {
               // iOS: no folder to keep (pdfDownloadAsksWhereToSave); the
               // system's save sheet asks where, each time.
               if (pdfDownloadAsksWhereToSave) {
@@ -427,6 +433,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 await savePdfWithSystemSheet(
                   fileName: '${order.orderNumber}_invoice.pdf',
                   bytes: bytes,
+                  shareOrigin: origin,
                 );
                 return;
               }
@@ -461,7 +468,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             icon: tabler.Printer.new,
             label: s.print,
             color: Colors.indigo,
-            onTap: () async {
+            onTap: (_) async {
               final bytes = await runWithProgress(context, receiptBytes);
               await Printing.layoutPdf(onLayout: (_) async => bytes);
             },
@@ -471,9 +478,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             icon: tabler.Message.new,
             label: s.shareViaWhatsApp,
             color: Colors.green,
-            onTap: () async {
+            onTap: (origin) async {
               final text = pdfService.generateWhatsAppText(order, currencySymbol: currencySymbol);
-              await SharePlus.instance.share(ShareParams(text: text));
+              await SharePlus.instance.share(ShareParams(text: text, sharePositionOrigin: origin));
             },
           ),
           const SizedBox(height: 16),
@@ -608,6 +615,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                           width: math.max(60.0, 60 * MediaQuery.textScalerOf(context).scale(16) / 16),
                           child: TextField(
                             keyboardType: TextInputType.number,
+                            // Whole days, up to 999.
+                            inputFormatters: [const IntegerInputFormatter(), LengthLimitingTextInputFormatter(3)],
                             textAlign: TextAlign.center,
                             decoration: const InputDecoration(
                               isDense: true,
@@ -893,7 +902,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 label: s.discount,
                 controller: _discountCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+                inputFormatters: const [DecimalInputFormatter.money()],
               ),
             ),
             const SizedBox(width: 12),
@@ -902,7 +911,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 label: s.deliveryFee,
                 controller: _deliveryCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+                inputFormatters: const [DecimalInputFormatter.money()],
               ),
             ),
           ],
@@ -917,7 +926,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               label: s.taxVat,
               controller: _taxRateCtrl,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+              inputFormatters: const [DecimalInputFormatter.percent()],
               prefixIcon: const ThinIcon(tabler.Percentage.new, size: 18),
               helperText: tax > 0 ? 'Tax: ${CurrencyFormatter.format(tax)}' : null,
             );
@@ -991,7 +1000,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 hint: s.payLaterHint,
                 controller: _amountPaidCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+                inputFormatters: const [DecimalInputFormatter.money()],
               ),
             ),
             const SizedBox(width: 8),
@@ -1758,6 +1767,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   late final List<String> _lowerNames = [for (final c in widget.customers) c.name.toLowerCase()];
 
   void _setQuery(String query) {
+    // Phones are saved with 0-9: a Bengali or Arabic keyboard's digits find
+    // them too.
+    final phone = NumberInput.toAsciiDigits(query);
     setState(() {
       _query = query;
       final customers = widget.customers;
@@ -1765,19 +1777,21 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
           ? customers
           : [
               for (var i = 0; i < customers.length; i++)
-                if (_lowerNames[i].contains(query) || customers[i].phone.contains(query)) customers[i],
+                if (_lowerNames[i].contains(query) || customers[i].phone.contains(phone)) customers[i],
             ];
     });
   }
 
   void _openForm() {
-    // Pre-fill from search query
+    // Pre-fill from search query: digits (any script's, as the phone field
+    // types them: 0-9) go to the phone, anything else to the name.
     final q = _searchCtrl.text.trim();
-    final isPhone = RegExp(r'^\d{3,}$').hasMatch(q);
+    final digits = NumberInput.toAsciiDigits(q);
+    final isPhone = RegExp(r'^[0-9]{3,}$').hasMatch(digits);
     setState(() {
       _showForm = true;
       if (isPhone) {
-        _phoneCtrl.text = q;
+        _phoneCtrl.text = digits;
       } else if (q.isNotEmpty) {
         _nameCtrl.text = q;
       }
@@ -1884,7 +1898,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   TextField(
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]'))],
+                    inputFormatters: const [PhoneInputFormatter()],
                     decoration: InputDecoration(
                       labelText: s.phone,
                       prefixIcon: const ThinIcon(tabler.Phone.new, size: 20),
@@ -2031,7 +2045,10 @@ class _InvoiceActionTile extends StatelessWidget {
   final ThinIconBuilder icon;
   final String label;
   final Color color;
-  final Future<void> Function() onTap;
+
+  /// Runs the action. [origin] is where the tile is on screen, which an
+  /// iPad's share sheet points at.
+  final Future<void> Function(Rect? origin) onTap;
 
   const _InvoiceActionTile({required this.icon, required this.label, required this.color, required this.onTap});
 
@@ -2044,7 +2061,7 @@ class _InvoiceActionTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          await onTap();
+          await onTap(shareOriginOf(context));
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

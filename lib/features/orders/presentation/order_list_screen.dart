@@ -6,6 +6,7 @@ import '../providers/order_provider.dart';
 import '../../../data/services/csv_export_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/order_card.dart';
@@ -30,15 +31,16 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     return [s.all, s.pending, s.tr('active'), s.completed, s.cancelled];
   }
 
-  /// Exports every order, not just the loaded pages.
-  Future<void> _exportCsv() async {
+  /// Exports every order, not just the loaded pages. [origin] is the export
+  /// button's rect, which an iPad's share sheet points at.
+  Future<void> _exportCsv(Rect? origin) async {
     if (_exporting) return;
     setState(() => _exporting = true);
     try {
       final isar = await ref.read(isarProvider.future);
       final orders = await loadAllOrdersNewestFirst(isar);
       if (orders.isEmpty) return;
-      await CsvExportService().exportOrders(orders);
+      await CsvExportService().exportOrders(orders, shareOrigin: origin);
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -66,10 +68,13 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
       appBar: AppBar(
         title: Text(s.orders),
         actions: [
-          IconButton(
-            icon: const ThinIcon(tabler.FileDownload.new),
-            tooltip: s.exportCsv,
-            onPressed: _exporting ? null : _exportCsv,
+          Builder(
+            builder: (button) => IconButton(
+              icon: const ThinIcon(tabler.FileDownload.new),
+              tooltip: s.exportCsv,
+              onPressed:
+                  _exporting ? null : () => _exportCsv(shareOriginOf(button)),
+            ),
           ),
         ],
         bottom: countsAsync.whenOrNull(

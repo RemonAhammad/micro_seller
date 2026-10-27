@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/services/dues_service.dart';
@@ -79,7 +79,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
     final typed = _refundCtrl.text.trim();
     final refund = typed == _suggestedRefund.toStringAsFixed(2)
         ? _suggestedRefund
-        : double.tryParse(typed) ?? 0;
+        : NumberInput.parseDecimal(typed) ?? 0;
     if (refund < 0 || refund > _maxRefundable + kDueEpsilon) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(AppStrings.of(context)
@@ -235,9 +235,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
             label: s.tr('refund'),
             controller: _refundCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
-            ],
+            inputFormatters: const [DecimalInputFormatter.money()],
             prefixIcon: const ThinIcon(tabler.Cash.new),
           ),
           const SizedBox(height: 4),

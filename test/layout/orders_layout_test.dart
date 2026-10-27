@@ -216,11 +216,14 @@ const _badgeLabels = {
 // ─── Pumping ─────────────────────────────────────────────────────────────
 
 /// [screen] as the app shows it: in its shell branch's Navigator beside the
-/// sidebar rail (so its sheets and menus open there too), pushed over the
-/// branch's first page unless [pushed] is false (so it has a back button).
-Widget _shell(Widget screen, {bool pushed = true, bool rtl = false}) => Row(
+/// sidebar, [railWidth] wide (so its sheets and menus open there too), pushed
+/// over the branch's first page unless [pushed] is false (so it has a back
+/// button).
+Widget _shell(Widget screen,
+        {required double railWidth, bool pushed = true, bool rtl = false}) =>
+    Row(
       children: [
-        const SizedBox(width: kRailWidth),
+        SizedBox(width: railWidth),
         Expanded(
           child: Theme(
             data: _phoneTheme,
@@ -239,6 +242,11 @@ Widget _shell(Widget screen, {bool pushed = true, bool rtl = false}) => Row(
       ],
     );
 
+/// The sidebar beside the screen in the test window, as the app lays it out:
+/// the icon rail on a phone, labels from 600 dp ([railWidthFor]).
+double _railWidth(WidgetTester tester) =>
+    railWidthFor(tester.view.physicalSize.width / tester.view.devicePixelRatio);
+
 Future<void> _pump(
   WidgetTester tester,
   Widget screen, {
@@ -249,7 +257,7 @@ Future<void> _pump(
 }) async {
   await pumpLayoutApp(
     tester,
-    _shell(screen, pushed: pushed, rtl: rtl),
+    _shell(screen, railWidth: _railWidth(tester), pushed: pushed, rtl: rtl),
     textScale: textScale,
     overrides: overrides,
     rail: false,
@@ -263,17 +271,19 @@ Future<void> _settle(WidgetTester tester) async {
   }
 }
 
-/// Closes the open menu by tapping its barrier, beside the rail (the
-/// window's corner is the rail, outside the branch's overlay).
+/// Closes the open menu by tapping its barrier, beside the sidebar (the
+/// window's corner is the sidebar, outside the branch's overlay).
 Future<void> _dismiss(WidgetTester tester) async {
-  await tester.tapAt(const Offset(kRailWidth + 4, 4));
+  await tester.tapAt(Offset(_railWidth(tester) + 4, 4));
   await _settle(tester);
 }
 
 /// Pumps until [finder] shows up, letting the database answer meanwhile
-/// (its queries run outside the test's fake clock).
+/// (its queries run outside the test's fake clock). It allows several
+/// seconds: a busy machine (tests running side by side) made a second too
+/// little for saving an order.
 Future<void> _waitFor(WidgetTester tester, Finder finder) async {
-  for (var i = 0; i < 100 && finder.evaluate().isEmpty; i++) {
+  for (var i = 0; i < 500 && finder.evaluate().isEmpty; i++) {
     await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 10)));
     await tester.pump();
@@ -566,6 +576,28 @@ void main() {
         _expectClean(tester, where);
         _expectCardsWhole(tester, where);
       }, height: 1600, widths: [600, 800]);
+    });
+
+    testWidgets('is one row once the card itself is wide enough',
+        (tester) async {
+      requireRoboto();
+      // It used to follow the window: from 600 dp it took the row layout
+      // even though the sidebar there is 200 dp wide, which left the row a
+      // 368 dp card. An iPad mini's 744 dp window gives a 512 dp card.
+      final order = _everydayOrder(status: OrderStatus.confirmed);
+      await _forEachLayout(tester, (where, width, t) async {
+        await _pump(tester, list([order]), textScale: t, pushed: false);
+        _expectClean(tester, where);
+        _expectCardsWhole(tester, where);
+        final card = tester.getRect(find.byType(OrderCard));
+        expect(card.width, width - _railWidth(tester) - 2 * 16, reason: where);
+        final row = card.width >= OrderCard.rowLayoutMinWidth;
+        expect(row, width >= 744, reason: where);
+        // One row: the amount beside the order number, not under it.
+        final number = tester.getRect(find.text(order.orderNumber));
+        final amount = tester.getRect(find.text(_money(order.totalAmount)));
+        expect(amount.top < number.bottom, row, reason: where);
+      }, widths: [411, 600, 694, 743, 744, 800, 1133]);
     });
   });
 
@@ -897,6 +929,97 @@ void main() {
         expect(_drawnAtFullSize(tester, find.text('Add').last), isTrue,
             reason: where);
       }, height: 1400, widths: [360, 411], textScales: [1.0]);
+    });
+  });
+
+  // ─── Tablets ────────────────────────────────────────────────────────────
+
+  // iPads and Android tablets in both orientations, and the app's window in
+  // Split View, at 100% and 150% text: each screen beside the sidebar the
+  // app gives that window (labels from 600 dp).
+  group('on tablets', () {
+    testWidgets('the order list lays out in every tablet window',
+        (tester) async {
+      requireRoboto();
+      final orders = _cardOrders();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await _pump(tester, const OrderListScreen(),
+            textScale: t,
+            pushed: false,
+            overrides: [
+              orderTabCountsProvider.overrideWithValue(
+                  const AsyncValue.data([123456, 12345, 1234, 123, 0])),
+              orderPagesProvider.overrideWithBuild((ref, pages) =>
+                  Stream.value(OrderPage(orders, hasMore: false))),
+            ]);
+        _expectClean(tester, where);
+        _expectCardsWhole(tester, where);
+
+        // The long-press status menu.
+        await tester.longPress(find.byType(OrderCard).first);
+        await _settle(tester);
+        expect(find.byType(PopupMenuItem<OrderStatus>), findsWidgets,
+            reason: where);
+        _expectClean(tester, '$where, status menu');
+        await _dismiss(tester);
+      });
+    });
+
+    testWidgets('the order detail lays out in every tablet window',
+        (tester) async {
+      if (coreLibrary == null) return markTestSkipped('no Isar core library');
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        for (final order in [
+          _worstOrder(),
+          _worstOrder(
+              status: OrderStatus.pending,
+              returnStatus: ReturnStatus.received),
+        ]) {
+          final at = '$where, ${order.orderNumber}';
+          await _pump(tester, OrderDetailScreen(orderId: order.id),
+              textScale: t,
+              overrides: [
+                isarProvider.overrideWithValue(AsyncValue.data(db!)),
+                orderByIdProvider(order.id)
+                    .overrideWithValue(AsyncValue.data(order)),
+              ]);
+          _expectClean(tester, at);
+          if (!order.isReturn) {
+            await tester.tap(find.byType(PopupMenuButton<String>));
+            await _settle(tester);
+            expect(find.byType(PopupMenuItem<String>), findsWidgets,
+                reason: at);
+            _expectClean(tester, '$at, actions menu');
+            await _dismiss(tester);
+
+            await tester.ensureVisible(find.text('Record Payment'));
+            await tester.tap(find.text('Record Payment'));
+            await _settle(tester);
+            expect(find.byType(Dialog), findsOneWidget, reason: at);
+            _expectClean(tester, '$at, payment dialog');
+          }
+          await tester.pumpWidget(const SizedBox());
+          await _settle(tester);
+        }
+      });
+    });
+
+    testWidgets('the order form and its product picker lay out in every '
+        'tablet window', (tester) async {
+      if (coreLibrary == null) return markTestSkipped('no Isar core library');
+      requireRoboto();
+      final order = _worstOrder()
+          .copyWith(isRecurring: true, recurringIntervalDays: 365);
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await _pump(tester, OrderFormScreen(order: order),
+            textScale: t, overrides: dbOverrides());
+        _expectClean(tester, where);
+
+        await tester.tap(find.text('Add').first);
+        await _waitFor(tester, find.text(_teeName));
+        _expectClean(tester, '$where, product picker');
+      });
     });
   });
 

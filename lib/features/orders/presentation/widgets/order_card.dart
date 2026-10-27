@@ -16,6 +16,13 @@ class OrderCard extends StatelessWidget {
 
   const OrderCard({super.key, required this.order, this.onStatusChange});
 
+  /// The narrowest card laid out as one row (number, items, badges, amount):
+  /// the card a 600 dp window used to draw beside the 56 dp rail, less the
+  /// list's 16 dp padding each side. The card's own width decides, not the
+  /// window's: at 600 dp the sidebar is 200 dp wide (and Split View narrows
+  /// the window), which squeezed the row.
+  static const double rowLayoutMinWidth = 600.0 - 56 - 2 * 16;
+
   void _showStatusMenu(BuildContext context, Offset globalPosition) {
     final currentStatus = order.orderStatus;
     // The menu is laid out in the nearest Navigator's overlay (the shell
@@ -98,7 +105,6 @@ class OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isWide = MediaQuery.sizeOf(context).width >= 600;
 
     return GestureDetector(
       onTap: () => context.push('/orders/${order.id}'),
@@ -118,7 +124,13 @@ class OrderCard extends StatelessWidget {
             ),
           ],
         ),
-        child: isWide ? _buildWideLayout(theme, cs) : _buildCompactLayout(theme, cs),
+        // The card's content, inside its 16 dp padding each side.
+        child: LayoutBuilder(
+          builder: (context, constraints) =>
+              constraints.maxWidth + 2 * 16 >= rowLayoutMinWidth
+                  ? _buildWideLayout(theme, cs)
+                  : _buildCompactLayout(theme, cs),
+        ),
       ),
     );
   }

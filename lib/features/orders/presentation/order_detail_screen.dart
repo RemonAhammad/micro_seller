@@ -2,7 +2,6 @@ import 'dart:developer' as developer;
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
@@ -10,7 +9,6 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../../data/models/order.dart';
 import '../providers/order_provider.dart';
@@ -18,10 +16,13 @@ import '../../../data/services/isar_service.dart';
 import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/number_input.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../../core/theme/document_brand.dart';
+import '../../../shared/widgets/call_phone.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/payment_method_chips.dart';
@@ -67,6 +68,9 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
   /// document colors it's drawn in. Dropped with the screen.
   Object? _receiptKey;
   Uint8List? _receiptPdf;
+
+  /// The actions menu's button, which an iPad's share sheet points at.
+  final _menuButton = GlobalKey();
 
   Future<Uint8List> _receipt(
     BuildContext context,
@@ -128,8 +132,9 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                 onPressed: () => context.push('/orders/${order.id}/edit'),
               ),
               PopupMenuButton<String>(
-                onSelected: (action) =>
-                    _handleAction(context, ref, order, action),
+                key: _menuButton,
+                onSelected: (action) => _handleAction(context, ref, order,
+                    action, origin: shareOriginOf(_menuButton.currentContext)),
                 itemBuilder: (_) => [
                   PopupMenuItem(
                       value: 'share_text',
@@ -287,7 +292,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                                 ),
                                 const SizedBox(width: 8),
                                 GestureDetector(
-                                  onTap: () => launchUrl(Uri.parse('tel:${order.customerPhone}')),
+                                  onTap: () => callPhone(context, order.customerPhone),
                                   child: ThinIcon(
                                     tabler.Phone.new,
                                     size: 18,
@@ -420,8 +425,11 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
     };
   }
 
+  /// Runs a menu [action]. [origin] is the menu button's rect, which an
+  /// iPad's share sheet points at.
   Future<void> _handleAction(
-      BuildContext context, WidgetRef ref, Order order, String action) async {
+      BuildContext context, WidgetRef ref, Order order, String action,
+      {Rect? origin}) async {
     final pdfService = PdfService();
     final settings = ref.read(settingsProvider.notifier);
     final shopName = settings.shopName;
@@ -433,7 +441,8 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
       case 'share_text':
         final text = pdfService.generateWhatsAppText(order,
             currencySymbol: currencySymbol);
-        await SharePlus.instance.share(ShareParams(text: text));
+        await SharePlus.instance.share(
+            ShareParams(text: text, sharePositionOrigin: origin));
         break;
 
       case 'share_pdf':
@@ -444,7 +453,8 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
         final dir = await getTemporaryDirectory();
         final file = File('${dir.path}/${order.orderNumber}.pdf');
         await file.writeAsBytes(bytes);
-        await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
+        await SharePlus.instance.share(ShareParams(
+            files: [XFile(file.path)], sharePositionOrigin: origin));
         break;
 
       case 'download_pdf':
@@ -458,6 +468,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
           await savePdfWithSystemSheet(
             fileName: '${order.orderNumber}_receipt.pdf',
             bytes: bytes,
+            shareOrigin: origin,
           );
           break;
         }
@@ -604,9 +615,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                   autofocus: true,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-                  ],
+                  inputFormatters: const [DecimalInputFormatter.money()],
                   decoration: InputDecoration(
                     labelText: s.paymentAmount,
                     prefixText: '${CurrencyFormatter.symbol} ',
@@ -633,7 +642,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                 onPressed: () => Navigator.pop(ctx), child: Text(s.cancel)),
             FilledButton(
               onPressed: () async {
-                final amount = double.tryParse(amountCtrl.text) ?? 0;
+                final amount = NumberInput.parseDecimal(amountCtrl.text) ?? 0;
                 if (amount <= 0) return;
                 await ref.read(orderProvider.notifier).recordPayment(
                       order.id,
