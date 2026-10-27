@@ -9,6 +9,7 @@ import '../providers/supplier_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -384,6 +385,7 @@ class _BodyState extends ConsumerState<_Body> {
               controller: ctrl,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const [DecimalInputFormatter.money()],
               decoration: InputDecoration(
                 labelText: s.paymentAmount,
                 isDense: true,
@@ -395,16 +397,24 @@ class _BodyState extends ConsumerState<_Body> {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(s.cancel)),
-          FilledButton(
-            onPressed: () async {
-              final amount = double.tryParse(ctrl.text);
-              if (amount == null || amount <= 0) return;
-              await ref
-                  .read(supplierProvider.notifier)
-                  .recordPurchasePayment(purchase.id, amount);
-              if (ctx.mounted) Navigator.pop(ctx);
+          // Enabled once there's an amount to pay, as the Due Book's
+          // Collect is: a tap on an empty or zero amount used to do nothing.
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: ctrl,
+            builder: (_, value, _) {
+              final amount = NumberInput.parseDecimal(value.text);
+              return FilledButton(
+                onPressed: amount == null || amount <= 0
+                    ? null
+                    : () async {
+                        await ref
+                            .read(supplierProvider.notifier)
+                            .recordPurchasePayment(purchase.id, amount);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                child: Text(s.pay),
+              );
             },
-            child: Text(s.pay),
           ),
         ],
       ),

@@ -11,6 +11,7 @@ import '../providers/dues_provider.dart';
 import 'widgets/due_actions.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
@@ -359,18 +360,25 @@ class _DueActions extends ConsumerWidget {
               icon: const ThinIcon(tabler.Cash.new, size: 18),
               label: Text(s.collect),
             ),
-            OutlinedButton.icon(
-              onPressed: () =>
-                  sendDueReminder(
-                  context, ref, customer, due.orderDues, due.totalDue),
-              icon: const ThinIcon(tabler.MessageCircle.new, size: 18),
-              label: Text(s.remind),
+            // Remind and Statement each have their own context: an iPad's
+            // share sheet points at the button tapped.
+            Builder(
+              builder: (buttonContext) => OutlinedButton.icon(
+                onPressed: () => sendDueReminder(
+                    context, ref, customer, due.orderDues, due.totalDue,
+                    shareOrigin: shareOriginOf(buttonContext)),
+                icon: const ThinIcon(tabler.MessageCircle.new, size: 18),
+                label: Text(s.remind),
+              ),
             ),
           ],
-          OutlinedButton.icon(
-            onPressed: () => shareCustomerStatement(context, ref, customer),
-            icon: const ThinIcon(tabler.FileDescription.new, size: 18),
-            label: Text(s.statement),
+          Builder(
+            builder: (buttonContext) => OutlinedButton.icon(
+              onPressed: () => shareCustomerStatement(context, ref, customer,
+                  shareOrigin: shareOriginOf(buttonContext)),
+              icon: const ThinIcon(tabler.FileDescription.new, size: 18),
+              label: Text(s.statement),
+            ),
           ),
         ],
       ),

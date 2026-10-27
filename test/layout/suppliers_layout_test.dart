@@ -4,7 +4,7 @@
 // ellipsized, and no word of a name breaks across lines. At 100% text on a
 // 360 dp or larger phone, rows keep the layout they had.
 import 'dart:async';
-import 'dart:ffi';
+import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -244,6 +244,24 @@ Future<void> _sweep(
     }
   }
 }
+
+/// [_sweep] on tablets and in Split View ([forEachTabletLayout]): each
+/// tablet window, portrait and landscape, and each Split View width, at 100%
+/// and 150% text, beside the sidebar the window gets in the app.
+Future<void> _sweepTablets(
+  WidgetTester tester,
+  Widget Function() build,
+  Future<void> Function(String where, Size window, double textScale) check, {
+  List<Override> overrides = const [],
+  Future<void> Function()? afterEach,
+}) =>
+    forEachTabletLayout(tester, (where, window, t) async {
+      await pumpLayoutApp(tester, build(), textScale: t, overrides: overrides);
+      // List entrance animations.
+      await tester.pump(const Duration(seconds: 1));
+      await check(where, window, t);
+      await afterEach?.call();
+    });
 
 /// Frames enough for a route (a sheet, a dialog) to finish opening or
 /// closing.
@@ -647,6 +665,160 @@ void main() {
       await tester.tap(find.text('Rahim'));
       await _pumpFrames(tester);
       expectCleanLayout(tester, '$where, supplier picked');
+    });
+  });
+
+  // iPads and Android tablets in both orientations, and the app's window in
+  // Split View: beside the 56 dp rail below 600 dp, the 200 dp sidebar from
+  // there.
+  group('on tablets and in Split View', () {
+    testWidgets('the supplier list and form', (tester) async {
+      requireRoboto();
+      final suppliers = [_bigSupplier(), _plainSupplier(), _smallSupplier()];
+      await _sweepTablets(tester, () => const SupplierListScreen(),
+          overrides: [
+            suppliersProvider.overrideWithValue(AsyncValue.data(suppliers)),
+          ], (where, window, t) async {
+        expectCleanLayout(tester, where);
+        for (final s in suppliers) {
+          expectWholeText(tester, find.text(s.name), where);
+        }
+        expectWholeText(tester,
+            find.text('Due: ${CurrencyFormatter.format(_big)}'), where);
+        _expectWholeWords(tester, where);
+      });
+      await _sweepTablets(tester, () => SupplierFormScreen(supplier: _bigSupplier()),
+          (where, window, t) async {
+        expectCleanLayout(tester, '$where, form');
+        _expectWholeWords(tester, '$where, form');
+      });
+    });
+
+    testWidgets('supplier detail and its pay dialog', (tester) async {
+      requireRoboto();
+      final s = _bigSupplier();
+      await _sweepTablets(tester, () => const SupplierDetailScreen(supplierId: 1),
+          overrides: [
+            supplierByIdProvider(s.id).overrideWithValue(AsyncValue.data(s)),
+            supplierProductsProvider(s.id).overrideWithValue(AsyncValue.data(
+                _products().where((p) => p.supplierId == 1).toList())),
+            supplierStockMovementsProvider(s.id)
+                .overrideWithValue(AsyncValue.data(_movements())),
+          ], (where, window, t) async {
+        expectCleanLayout(tester, where);
+        for (final text in [
+          s.company,
+          s.phone,
+          _email,
+          s.address,
+          CurrencyFormatter.format(_big),
+        ]) {
+          expectWholeText(tester, find.text(text), where);
+        }
+        _expectWholeWords(tester, where, unbreakable: {_email});
+        // New Purchase and Pay Due side by side or stacked, never
+        // overlapping.
+        final buttons = [
+          tester.getRect(_button<FilledButton>('New Purchase')),
+          tester.getRect(_button<OutlinedButton>('Pay Due')),
+        ];
+        expect(buttons[0].overlaps(buttons[1]), isFalse, reason: where);
+
+        await tester.ensureVisible(find.text('Pay Due'));
+        await _pumpFrames(tester);
+        await tester.tap(find.text('Pay Due'));
+        await _pumpFrames(tester);
+        expectCleanLayout(tester, '$where, pay dialog');
+        expectWholeText(tester,
+            find.text('Due: ${CurrencyFormatter.format(_big)}'),
+            '$where, pay dialog');
+        await tester.enterText(find.byType(TextField), '12345678.9');
+        await tester.pump();
+        expectCleanLayout(tester, '$where, pay dialog');
+        await tester.tap(find.text('Cancel'));
+        await _pumpFrames(tester);
+      });
+    });
+
+    testWidgets('the purchase list', (tester) async {
+      requireRoboto();
+      final purchases = [_bigPurchase(), _paidPurchase(), _bulkPurchase()];
+      await _sweepTablets(tester, () => const PurchaseListScreen(),
+          overrides: [
+            purchasesProvider.overrideWithValue(AsyncValue.data(purchases)),
+          ], (where, window, t) async {
+        expectCleanLayout(tester, where);
+        for (final text in [
+          _longName,
+          CurrencyFormatter.format(_big),
+          'Due: ${CurrencyFormatter.format(_big)}',
+        ]) {
+          expectWholeText(tester, find.text(text), where);
+        }
+        _expectWholeWords(tester, where);
+      });
+    });
+
+    testWidgets('purchase detail and its pay dialog', (tester) async {
+      if (isar == null) return markTestSkipped('no Isar core library');
+      requireRoboto();
+      final db = isar!;
+      final p = _bigPurchase();
+      await _sweepTablets(tester, () => PurchaseDetailScreen(purchaseId: p.id),
+          overrides: [isarProvider.overrideWithValue(AsyncValue.data(db))],
+          afterEach: () => _settleDb(tester, db), (where, window, t) async {
+        await _pumpUntilFound(tester, find.text(p.referenceNumber));
+        expectCleanLayout(tester, where);
+        for (final text in [
+          '${p.items.first.qty}',
+          p.items.first.productName,
+          CurrencyFormatter.format(p.totalAmount),
+          p.referenceNumber,
+        ]) {
+          expectWholeText(tester, find.text(text), where);
+        }
+        _expectWholeWords(tester, where, unbreakable: {p.referenceNumber});
+        await tester.ensureVisible(find.text('Record Payment'));
+        await _pumpFrames(tester);
+        await tester.tap(find.text('Record Payment'));
+        await _pumpFrames(tester);
+        expectCleanLayout(tester, '$where, pay dialog');
+        await tester.tap(find.text('Cancel'));
+        await _pumpFrames(tester);
+      });
+    });
+
+    testWidgets('the purchase form with an item', (tester) async {
+      if (isar == null) return markTestSkipped('no Isar core library');
+      requireRoboto();
+      final db = isar!;
+      await _sweepTablets(tester, () => const PurchaseFormScreen(supplierId: 1),
+          overrides: [isarProvider.overrideWithValue(AsyncValue.data(db))],
+          afterEach: () => _settleDb(tester, db), (where, window, t) async {
+        await _pumpUntilFound(tester, find.text(_longName));
+        expectCleanLayout(tester, where);
+        _expectWholeWords(tester, where);
+        _expectFullLabel(tester, 'Amount Paid', where);
+
+        // The product picker: the big product added.
+        await tester.tap(_button<TextButton>('Add'));
+        await _pumpUntilFound(tester, _button<FilledButton>('Add'));
+        expectCleanLayout(tester, '$where, products');
+        _expectWholeWords(tester, '$where, products');
+        await tester.tap(_button<FilledButton>('Add').first);
+        await tester.pump();
+        expect(find.text('1 item'), findsOneWidget, reason: where);
+        await tester.tap(find.text('Done'));
+        await _pumpFrames(tester);
+
+        where = '$where, items';
+        expectCleanLayout(tester, where);
+        expectWholeText(
+            tester, find.text(CurrencyFormatter.format(_big)), where);
+        _expectWholeWords(tester, where);
+        _expectFullLabel(tester, 'Unit Cost', where);
+        _expectFullLabel(tester, 'Amount Paid', where);
+      });
     });
   });
 }

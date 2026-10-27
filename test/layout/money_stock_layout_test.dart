@@ -4,7 +4,7 @@
 // (long names, big amounts, many variants), every screen, menu, dialog and
 // sheet lays out without overflowing and draws every amount whole. At 100%
 // text on a 360 / 411 dp phone, rows that fit look as they did before.
-import 'dart:ffi';
+import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -1278,6 +1278,274 @@ void main() {
         );
         await dispose(tester);
       }
+    });
+
+    testWidgets('lays out on tablets and in Split View', (tester) async {
+      if (coreLibrary == null) return markTestSkipped('no Isar core library');
+      final product = _variantProduct();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        final errors = await _errorsDuring(() async {
+          await pumpLayoutApp(
+            tester,
+            StockAdjustmentScreen(productId: variantId),
+            textScale: t,
+            overrides: [isarProvider.overrideWith((ref) async => isar)],
+          );
+          await pumpUntilFound(
+            tester,
+            find.text('$_long Wholesale Supplier Limited'),
+          );
+          await tester.pumpAndSettle();
+          // A whole-number quantity, typed in Bengali digits.
+          final qty = find.widgetWithText(TextFormField, 'Adjust Quantity');
+          await tester.ensureVisible(qty);
+          await tester.pumpAndSettle();
+          await tester.enterText(qty, '১২৩৪৫৬৭');
+          await tester.pump();
+          expect(find.text('1234567'), findsOneWidget, reason: where);
+        });
+        expect(errors, isEmpty, reason: where);
+        // The stock stays whole inside the header; every combination chip
+        // shows its count, inside the page.
+        final name = find.text(product.name);
+        final header = _box(tester, name).deflate(16);
+        final stock = find.text('${product.totalStock}');
+        _expectWhole(tester, stock, where);
+        _expectWithin(tester, stock, header.left, header.right, where);
+        final chips = find.byType(ChoiceChip);
+        for (var i = 1; i < chips.evaluate().length; i++) {
+          final count = find.descendant(
+            of: chips.at(i),
+            matching: find.textContaining(RegExp(r'\(\d+\)')),
+          );
+          _expectWhole(tester, count, where);
+          final chip = tester.getRect(chips.at(i));
+          expect(
+            chip.left,
+            greaterThanOrEqualTo(railWidthFor(window.width) + 20 - _eps),
+            reason: where,
+          );
+          expect(
+            chip.right,
+            lessThanOrEqualTo(window.width - 20 + _eps),
+            reason: where,
+          );
+        }
+        await dispose(tester);
+      });
+    });
+  });
+
+  // iPads and Android tablets in both orientations, and the app's window in
+  // Split View: beside the 56 dp rail below 600 dp, the 200 dp sidebar from
+  // there.
+  group('on tablets and in Split View', () {
+    /// Pumps [home] in the tablet window [forEachTabletLayout] set up, and
+    /// lets it settle.
+    Future<void> showOnTablet(
+      WidgetTester tester,
+      Widget home,
+      double textScale, {
+      List<Override> overrides = const [],
+    }) async {
+      await pumpLayoutApp(
+        tester,
+        home,
+        textScale: textScale,
+        overrides: overrides,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('expenses: the list, its export button and the form', (
+      tester,
+    ) async {
+      final amount = CurrencyFormatter.format(_big);
+      final total = CurrencyFormatter.format(_big * 5);
+      await forEachTabletLayout(tester, (where, window, t) async {
+        var errors = await _errorsDuring(
+          () => showOnTablet(
+            tester,
+            const ExpenseListScreen(),
+            t,
+            overrides: [
+              expensesProvider.overrideWithValue(
+                AsyncValue.data(_bigExpenses()),
+              ),
+            ],
+          ),
+        );
+        expect(errors, isEmpty, reason: where);
+        final banner = _box(tester, find.text(total)).deflate(16);
+        _expectWhole(tester, find.text(total), where);
+        _expectWithin(tester, find.text(total), banner.left, banner.right,
+            where);
+        final cards = find.byType(ExpenseCard);
+        expect(cards, findsWidgets, reason: where);
+        for (var i = 0; i < cards.evaluate().length; i++) {
+          final card = tester.getRect(cards.at(i)).deflate(14);
+          final cardAmount = find.descendant(
+            of: cards.at(i),
+            matching: find.text(amount),
+          );
+          _expectWhole(tester, cardAmount, where);
+          _expectWithin(tester, cardAmount, card.left, card.right, where);
+        }
+        // The export button stays in the app bar, inside the window.
+        _expectWithin(
+          tester,
+          find.byTooltip('Export CSV'),
+          railWidthFor(window.width),
+          window.width,
+          where,
+        );
+        await tester.pumpWidget(const SizedBox());
+
+        errors = await _errorsDuring(
+          () => showOnTablet(
+            tester,
+            ExpenseFormScreen(expense: _bigExpenses().first),
+            t,
+          ),
+        );
+        expect(errors, isEmpty, reason: 'form, $where');
+        for (final label in [
+          'Logistics',
+          'Packaging',
+          'Marketing',
+          'Supplies',
+          'Other',
+        ]) {
+          _expectWhole(tester, find.text(label), 'form, $where');
+        }
+      });
+    });
+
+    testWidgets('the cash register, its dialogs and the closed state', (
+      tester,
+    ) async {
+      final money = find.textContaining('৳');
+      List<Override> registers({bool open = true}) => [
+        cashRegistersProvider.overrideWithValue(
+          AsyncValue.data(_registers(open: open)),
+        ),
+      ];
+      await forEachTabletLayout(tester, (where, window, t) async {
+        final rail = railWidthFor(window.width);
+        var errors = await _errorsDuring(
+          () => showOnTablet(
+            tester,
+            const CashRegisterScreen(),
+            t,
+            overrides: registers(),
+          ),
+        );
+        expect(errors, isEmpty, reason: where);
+        // Every amount whole, inside its card, at the top and at the end of
+        // the history.
+        _expectWhole(tester, money, where);
+        _expectWithin(tester, money, rail + 30, window.width - 30, where);
+        await tester.fling(
+          find.byType(CustomScrollView),
+          const Offset(0, -4000),
+          4000,
+        );
+        await tester.pumpAndSettle();
+        _expectWhole(tester, money, '$where, history');
+        _expectWithin(
+          tester,
+          money,
+          rail + 30,
+          window.width - 30,
+          '$where, history',
+        );
+        await tester.pumpWidget(const SizedBox());
+
+        for (final button in ['Cash In', 'Cash Out', 'Close Register']) {
+          errors = await _errorsDuring(() async {
+            await showOnTablet(
+              tester,
+              const CashRegisterScreen(),
+              t,
+              overrides: registers(),
+            );
+            await tester.tap(
+              find.ancestor(
+                of: find.text(button),
+                matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(find.byType(AlertDialog), findsOneWidget, reason: where);
+            await tester.enterText(find.byType(TextField).first, '12345678.9');
+            await tester.pump();
+          });
+          expect(errors, isEmpty, reason: '$button dialog, $where');
+          await tester.pumpWidget(const SizedBox());
+        }
+
+        errors = await _errorsDuring(() async {
+          await showOnTablet(
+            tester,
+            const CashRegisterScreen(),
+            t,
+            overrides: registers(open: false),
+          );
+          await tester.tap(find.text('Open Register'));
+          await tester.pumpAndSettle();
+          expect(find.byType(AlertDialog), findsOneWidget, reason: where);
+        });
+        expect(errors, isEmpty, reason: 'closed state, $where');
+      });
+    });
+
+    testWidgets('inventory: stock levels and movements', (tester) async {
+      final products = _bigProducts();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        var errors = await _errorsDuring(
+          () => showOnTablet(
+            tester,
+            const InventoryScreen(),
+            t,
+            overrides: _inventory(products),
+          ),
+        );
+        expect(errors, isEmpty, reason: where);
+        for (final p in products) {
+          final name = find.text(p.name);
+          if (name.evaluate().isEmpty) continue; // below a short window
+          final tileBox = find
+              .ancestor(of: name, matching: find.byType(Container))
+              .first;
+          final tile = tester.getRect(tileBox).deflate(14);
+          final stock = find
+              .descendant(of: tileBox, matching: find.text('${p.totalStock}'))
+              .first;
+          _expectWhole(tester, stock, where);
+          _expectWithin(tester, stock, tile.left, tile.right, where);
+        }
+        await tester.pumpWidget(const SizedBox());
+
+        errors = await _errorsDuring(() async {
+          await showOnTablet(
+            tester,
+            const InventoryScreen(),
+            t,
+            overrides: _inventory(products),
+          );
+          await tester.tap(find.text('Movements'));
+          await tester.pumpAndSettle();
+        });
+        expect(errors, isEmpty, reason: 'movements, $where');
+        expect(find.byType(StockMovementTile), findsWidgets, reason: where);
+        _expectWithin(
+          tester,
+          find.textContaining('1234567'),
+          railWidthFor(window.width) + 16,
+          window.width - 16,
+          'movements, $where',
+        );
+      });
     });
   });
 

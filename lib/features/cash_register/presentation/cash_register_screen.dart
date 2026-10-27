@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/cash_register_provider.dart';
 import '../../../data/models/cash_register.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/animated_entrance.dart';
@@ -324,9 +324,7 @@ class _OpenRegisterCard extends StatelessWidget {
           autofocus: true,
           keyboardType:
               const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-          ],
+          inputFormatters: const [DecimalInputFormatter.money()],
           decoration:
               InputDecoration(labelText: s.amount, isDense: true),
         ),
@@ -334,22 +332,30 @@ class _OpenRegisterCard extends StatelessWidget {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(s.cancel)),
-          FilledButton(
-            onPressed: () async {
-              final amount = double.tryParse(ctrl.text);
-              if (amount == null || amount <= 0) return;
-              if (isIn) {
-                await ref
-                    .read(cashRegisterProvider.notifier)
-                    .addCashIn(register.id, amount);
-              } else {
-                await ref
-                    .read(cashRegisterProvider.notifier)
-                    .addCashOut(register.id, amount);
-              }
-              if (ctx.mounted) Navigator.pop(ctx);
+          // Enabled once there's an amount: a tap on an empty or zero
+          // amount used to do nothing.
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: ctrl,
+            builder: (_, value, _) {
+              final amount = NumberInput.parseDecimal(value.text);
+              return FilledButton(
+                onPressed: amount == null || amount <= 0
+                    ? null
+                    : () async {
+                        if (isIn) {
+                          await ref
+                              .read(cashRegisterProvider.notifier)
+                              .addCashIn(register.id, amount);
+                        } else {
+                          await ref
+                              .read(cashRegisterProvider.notifier)
+                              .addCashOut(register.id, amount);
+                        }
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                child: Text(s.confirm),
+              );
             },
-            child: Text(s.confirm),
           ),
         ],
       ),
@@ -358,8 +364,14 @@ class _OpenRegisterCard extends StatelessWidget {
 
   void _showCloseDialog(BuildContext context) {
     final s = AppStrings.of(context);
+    // The expected cash, to the shop currency's decimals, unless it's
+    // negative (more cash out than in): that can't be a count, and the
+    // field, which takes no sign, wouldn't let it be edited.
+    final expected = register.expectedClosing;
     final ctrl = TextEditingController(
-        text: register.expectedClosing.toStringAsFixed(2));
+        text: expected >= 0
+            ? expected.toStringAsFixed(NumberInput.moneyDecimals)
+            : '');
     final notesCtrl = TextEditingController();
     showDialog(
       context: context,
@@ -376,9 +388,7 @@ class _OpenRegisterCard extends StatelessWidget {
               autofocus: true,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-              ],
+              inputFormatters: const [DecimalInputFormatter.money()],
               decoration: InputDecoration(
                   labelText: s.tr('closingAmount'), isDense: true),
             ),
@@ -395,17 +405,25 @@ class _OpenRegisterCard extends StatelessWidget {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(s.cancel)),
-          FilledButton(
-            onPressed: () async {
-              final amount = double.tryParse(ctrl.text);
-              if (amount == null) return;
-              await ref
-                  .read(cashRegisterProvider.notifier)
-                  .closeRegister(register.id, amount,
-                      notes: notesCtrl.text.trim());
-              if (ctx.mounted) Navigator.pop(ctx);
+          // Enabled while there's an amount (0 included): a tap on an
+          // empty one used to do nothing.
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: ctrl,
+            builder: (_, value, _) {
+              final amount = NumberInput.parseDecimal(value.text);
+              return FilledButton(
+                onPressed: amount == null
+                    ? null
+                    : () async {
+                        await ref
+                            .read(cashRegisterProvider.notifier)
+                            .closeRegister(register.id, amount,
+                                notes: notesCtrl.text.trim());
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                child: Text(s.close),
+              );
             },
-            child: Text(s.close),
           ),
         ],
       ),
@@ -470,9 +488,7 @@ class _ClosedStateCard extends StatelessWidget {
           autofocus: true,
           keyboardType:
               const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-          ],
+          inputFormatters: const [DecimalInputFormatter.money()],
           decoration: InputDecoration(
               labelText: s.openingAmount, isDense: true),
         ),
@@ -482,7 +498,8 @@ class _ClosedStateCard extends StatelessWidget {
               child: Text(s.cancel)),
           FilledButton(
             onPressed: () async {
-              final amount = double.tryParse(ctrl.text) ?? 0;
+              // Empty opens the register with no cash.
+              final amount = NumberInput.parseDecimal(ctrl.text) ?? 0;
               await ref
                   .read(cashRegisterProvider.notifier)
                   .openRegister(amount);

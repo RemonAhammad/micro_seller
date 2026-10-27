@@ -8,6 +8,7 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../settings/providers/trash_provider.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/animated_entrance.dart';
@@ -27,14 +28,18 @@ class ExpenseListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(s.expenses),
         actions: [
-          IconButton(
-            icon: const ThinIcon(tabler.FileDownload.new),
-            tooltip: s.exportCsv,
-            onPressed: () async {
-              final expenses = ref.read(expensesProvider).value ?? [];
-              if (expenses.isEmpty) return;
-              await CsvExportService().exportExpenses(expenses);
-            },
+          // Its own context: an iPad's share sheet points at the button.
+          Builder(
+            builder: (buttonContext) => IconButton(
+              icon: const ThinIcon(tabler.FileDownload.new),
+              tooltip: s.exportCsv,
+              onPressed: () async {
+                final expenses = ref.read(expensesProvider).value ?? [];
+                if (expenses.isEmpty) return;
+                await CsvExportService().exportExpenses(expenses,
+                    shareOrigin: shareOriginOf(buttonContext));
+              },
+            ),
           ),
         ],
       ),

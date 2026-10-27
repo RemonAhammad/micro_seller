@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
@@ -9,6 +8,7 @@ import '../../../data/models/supplier.dart';
 import '../../../features/products/providers/product_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -83,7 +83,7 @@ class _StockAdjustmentScreenState
   }
 
   Future<void> _submit() async {
-    final qty = int.tryParse(_qtyCtrl.text);
+    final qty = NumberInput.parseInteger(_qtyCtrl.text);
     if (qty == null || qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.of(context).pleaseEnterValidQty)),
@@ -446,7 +446,7 @@ class _StockAdjustmentScreenState
                     label: s.adjustQty,
                     controller: _qtyCtrl,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: const [IntegerInputFormatter()],
                     prefixIcon: const ThinIcon(tabler.Number.new),
                     helperText: _type == StockMovementType.sale ||
                             _type == StockMovementType.damage

@@ -229,10 +229,11 @@ List<Override> _overrides({
 
 // ─── Harness ─────────────────────────────────────────────────────────────
 
-/// Pumps [screen] the way the app shows it on a phone: in a shell branch's
-/// Navigator beside the sidebar rail (so a bottom sheet opens beside the
-/// rail), with the app's theme, [lang] strings and [textScale] applied over
-/// the whole app, and lets list entrances finish.
+/// Pumps [screen] the way the app shows it: in a shell branch's Navigator
+/// beside the sidebar (so a bottom sheet opens beside it) — the icon rail on
+/// a phone, the sidebar with labels in a window 600 dp or wider
+/// ([railWidthFor]) — with the app's theme, [lang] strings and [textScale]
+/// applied over the whole app, and lets list entrances finish.
 Future<void> _pump(
   WidgetTester tester,
   Widget screen, {
@@ -260,7 +261,7 @@ Future<void> _pump(
       ),
       home: Row(
         children: [
-          const SizedBox(width: kRailWidth),
+          SizedBox(width: _sidebarWidth(tester)),
           Expanded(
             child: Directionality(
               textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
@@ -284,6 +285,11 @@ Future<void> _settle(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
+
+/// The sidebar's width beside a screen in the test window, as the app lays
+/// it out: 56 dp on a phone, 200 dp from 600 dp.
+double _sidebarWidth(WidgetTester tester) => railWidthFor(
+    tester.view.physicalSize.width / tester.view.devicePixelRatio);
 
 /// Runs [body] at every layout width × text scale (× [langs]), clearing the
 /// screen after each.
@@ -800,5 +806,156 @@ void main() {
         await _settle(tester);
       }
     }
+  });
+
+  // iPads and Android tablets in both orientations, and the app's window in
+  // Split View: beside the 56 dp rail below 600 dp, the 200 dp sidebar from
+  // there.
+  group('on tablets and in Split View', () {
+    Future<void> clear(WidgetTester tester) async {
+      await tester.pumpWidget(const SizedBox());
+      await _settle(tester);
+    }
+
+    testWidgets('the customer list, form and detail lay out cleanly',
+        (tester) async {
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await _pump(tester, const CustomerListScreen(), textScale: t);
+        expectCleanLayout(tester, 'list, $where');
+        for (final text in [
+          _money(_big.totalSpent),
+          _money(_big.outstandingBalance),
+          _longPhone,
+          _karim.phone,
+        ]) {
+          _expectOneLine(tester, find.text(text), 'list, $where: $text');
+        }
+        await clear(tester);
+
+        await _pump(tester, CustomerFormScreen(customer: _big), textScale: t);
+        expectCleanLayout(tester, 'form, $where');
+        for (final tag in ['New', 'Regular', 'VIP']) {
+          _expectOneLine(tester, find.text(tag), 'form, $where');
+        }
+        await clear(tester);
+
+        await _pump(tester, const CustomerDetailScreen(customerId: 7),
+            textScale: t);
+        where = 'detail, $where';
+        expectCleanLayout(tester, where);
+        for (final value in ['12345', '৳12.3M', '৳1.2M']) {
+          _expectOneLine(tester, find.text(value), '$where: $value');
+        }
+        for (final label in ['Orders', 'Total Spent', 'Outstanding']) {
+          _expectWholeWords(tester, find.text(label), '$where: $label');
+        }
+        _expectWholeWords(tester, find.text(_address), where);
+        for (final p in _payments) {
+          final amount = '${p.isRefund ? '−' : '+'}${_money(p.amount.abs())}';
+          _expectOneLine(tester, find.text(amount), '$where: $amount');
+        }
+        // Collect, Remind and Statement: each label whole, inside the page.
+        final page = tester.getRect(find.byType(CustomScrollView));
+        for (final label in ['Collect', 'Remind', 'Statement']) {
+          _expectOneLine(tester, find.text(label), '$where: $label');
+          final button = tester.getRect(find.ancestor(
+              of: find.text(label),
+              matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)));
+          expect(button.left, greaterThanOrEqualTo(page.left + 20 - _eps),
+              reason: '$where: $label');
+          expect(button.right, lessThanOrEqualTo(page.right - 20 + _eps),
+              reason: '$where: $label');
+        }
+      });
+    });
+
+    testWidgets('the Due Book and its filter and collect sheets lay out '
+        'cleanly', (tester) async {
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await _pump(tester, const DueBookScreen(), textScale: t);
+        expectCleanLayout(tester, where);
+        final list = find
+            .descendant(
+                of: find.byType(ListView), matching: find.byType(Scrollable))
+            .first;
+        for (final d in _worstDues) {
+          // A landscape window may not have built the last card yet.
+          await tester.scrollUntilVisible(find.text(d.customer.name), 200,
+              scrollable: list);
+          await tester.pump();
+          expectCleanLayout(tester, where);
+          _expectOneLine(tester, find.text(_money(d.totalDue)), where);
+          _expectWholeWords(tester, find.text(d.customer.name), where);
+          // Collect, Remind and the call button stay inside the card.
+          final card = find
+              .ancestor(
+                  of: find.text(d.customer.name), matching: find.byType(Card))
+              .first;
+          final box = tester.getRect(card);
+          final controls = find.descendant(
+              of: card,
+              matching: find.byWidgetPredicate(
+                  (w) => w is TextButton || w is IconButton));
+          expect(controls, findsAtLeastNWidgets(2), reason: where);
+          for (var i = 0; i < controls.evaluate().length; i++) {
+            final r = tester.getRect(controls.at(i));
+            expect(
+                r.left >= box.left - _eps &&
+                    r.right <= box.right + _eps &&
+                    r.top >= box.top - _eps &&
+                    r.bottom <= box.bottom + _eps,
+                isTrue,
+                reason: '${d.customer.name}, $where: $r in $box');
+          }
+        }
+
+        // The filter sheet, with a decimal minimum due.
+        await tester.tap(find.byTooltip('Filter'));
+        await _settle(tester);
+        expectCleanLayout(tester, '$where, filter sheet');
+        await tester.enterText(find.byType(TextField).last, '12345678.5');
+        await tester.pump();
+        expectCleanLayout(tester, '$where, filter sheet');
+        _expectWholeWords(tester, find.text('Clear filters').last, where);
+        _expectWholeWords(tester, find.text('Done'), where);
+        await tester.ensureVisible(find.text('Done'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Done'));
+        await tester.pumpAndSettle();
+        expect(find.byType(BottomSheet), findsNothing, reason: where);
+        expectCleanLayout(tester, '$where, active filters');
+        // Only the worst debtor owes that much.
+        _expectOneLine(tester, find.text(_money(123456789.01)), where);
+        expect(find.text('Karim Uddin'), findsNothing, reason: where);
+        await clear(tester);
+
+        // The collect sheet: a preview over several orders, then an error.
+        await _pump(tester, const DueBookScreen(), textScale: t);
+        final card = find
+            .ancestor(of: find.text(_longName), matching: find.byType(Card))
+            .first;
+        final collect =
+            find.descendant(of: card, matching: find.text('Collect'));
+        await tester.ensureVisible(collect);
+        await tester.pumpAndSettle();
+        await tester.tap(collect);
+        await tester.pumpAndSettle();
+        final amount = find.widgetWithText(TextField, 'Payment Amount');
+        await tester.enterText(amount, '30000000.5');
+        await tester.pump();
+        expectCleanLayout(tester, '$where, preview');
+        _expectOneLine(tester, find.text(_money(12345678.9)), where);
+        _expectOneLine(tester, find.text(_money(5308642.7)), where);
+        await tester.enterText(amount, '999999999');
+        await tester.pump();
+        expectCleanLayout(tester, '$where, error');
+        for (final p in tester.renderObjectList<RenderParagraph>(
+            find.textContaining(_money(123456789.01)))) {
+          expect(p.didExceedMaxLines, isFalse, reason: '$where, error');
+        }
+      });
+    });
   });
 }

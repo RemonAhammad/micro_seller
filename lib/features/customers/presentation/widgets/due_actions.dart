@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +10,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/number_input.dart';
 import '../../../../data/models/customer.dart';
 import '../../../../data/models/order.dart';
 import '../../../../data/models/payment.dart';
@@ -213,7 +213,7 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
   bool _saving = false;
 
   double get _totalDue => widget.totalDue;
-  double get _amount => double.tryParse(_amountCtrl.text) ?? 0;
+  double get _amount => NumberInput.parseDecimal(_amountCtrl.text) ?? 0;
 
   @override
   void dispose() {
@@ -269,9 +269,7 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
           controller: _amountCtrl,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-          ],
+          inputFormatters: const [DecimalInputFormatter.money()],
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             labelText: s.paymentAmount,
@@ -282,8 +280,10 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
             // Wraps rather than cutting off the amount it names.
             errorMaxLines: 3,
             suffixIcon: TextButton(
-              onPressed: () => setState(() =>
-                  _amountCtrl.text = _totalDue.toStringAsFixed(2)),
+              // Every decimal the shop's currency has (the Kuwaiti Dinar's
+              // 3), so the full due is the whole due.
+              onPressed: () => setState(() => _amountCtrl.text =
+                  _totalDue.toStringAsFixed(NumberInput.moneyDecimals)),
               child: Text(s.fullDue),
             ),
           ),

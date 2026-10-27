@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
@@ -11,6 +10,7 @@ import '../../../data/models/product.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/number_input.dart';
 import '../providers/supplier_provider.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -94,7 +94,8 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   double get _totalAmount =>
       _items.fold(0.0, (s, i) => s + i.totalCost);
 
-  double get _amountPaid => double.tryParse(_amountPaidCtrl.text) ?? 0;
+  double get _amountPaid =>
+      NumberInput.parseDecimal(_amountPaidCtrl.text) ?? 0;
 
   double get _balanceDue =>
       (_totalAmount - _amountPaid).clamp(0, double.infinity);
@@ -145,7 +146,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
 
   // No setState: ListenableBuilders on the cost controllers redraw the totals.
   void _updateItemCost(int index, String value) {
-    final cost = double.tryParse(value) ?? 0;
+    final cost = NumberInput.parseDecimal(value) ?? 0;
     _items[index] = _items[index].copyWith(
       unitCost: cost,
       totalCost: cost * _items[index].qty,
@@ -392,19 +393,19 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 controller: _amountPaidCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-                ],
+                inputFormatters: const [DecimalInputFormatter.money()],
               );
               final payFull = ListenableBuilder(
                 listenable: _totalsListenable,
                 builder: (context, _) => TextButton(
+                  // Every decimal the shop's currency has (the Kuwaiti
+                  // Dinar's 3), so paying in full pays the whole total.
                   onPressed: _totalAmount > 0
                       ? () => _amountPaidCtrl.text =
                           _totalAmount.toStringAsFixed(
                               _totalAmount == _totalAmount.roundToDouble()
                                   ? 0
-                                  : 2)
+                                  : NumberInput.moneyDecimals)
                       : null,
                   child: Text(s.payFull),
                 ),
@@ -619,9 +620,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                         style: const TextStyle(fontSize: 12),
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-                        ],
+                        inputFormatters: const [DecimalInputFormatter.money()],
                         controller: costCtrl,
                         onChanged: (val) => _updateItemCost(index, val),
                       ),

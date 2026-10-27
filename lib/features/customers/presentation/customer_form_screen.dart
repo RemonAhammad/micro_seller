@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
@@ -7,6 +6,7 @@ import '../../../data/models/customer.dart';
 import '../providers/customer_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -148,9 +148,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 label: s.phone,
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s]')),
-                ],
+                inputFormatters: const [PhoneInputFormatter()],
                 validator: Validators.phone,
                 textInputAction: TextInputAction.next,
                 prefixIcon: const ThinIcon(tabler.Phone.new),

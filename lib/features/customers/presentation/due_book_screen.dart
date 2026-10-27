@@ -1,10 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
@@ -12,12 +10,15 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/debouncer.dart';
+import '../../../core/utils/number_input.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/services/dues_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../shared/widgets/call_phone.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../providers/dues_provider.dart';
@@ -489,10 +490,19 @@ class _FilterSheet extends StatefulWidget {
 
 class _FilterSheetState extends State<_FilterSheet> {
   late _DueFilters _f = widget.initial;
-  late final _minCtrl = TextEditingController(
-      text: widget.initial.minDue > 0
-          ? widget.initial.minDue.toStringAsFixed(0)
-          : '');
+  late final _minCtrl =
+      TextEditingController(text: _amountText(widget.initial.minDue));
+
+  /// [amount] as it was typed: 12.5 stays 12.5 (rounding it to a whole
+  /// number showed 13 while the filter was 12.5), 100 shows as 100. Empty
+  /// for none.
+  static String _amountText(double amount) {
+    if (amount <= 0) return '';
+    final fixed = amount.toStringAsFixed(NumberInput.moneyDecimals);
+    return fixed.contains('.')
+        ? fixed.replaceFirst(RegExp(r'\.?0+$'), '')
+        : fixed;
+  }
 
   @override
   void dispose() {
@@ -566,13 +576,11 @@ class _FilterSheetState extends State<_FilterSheet> {
         TextField(
           controller: _minCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-          ],
+          inputFormatters: const [DecimalInputFormatter.money()],
           decoration:
               InputDecoration(prefixText: '${CurrencyFormatter.symbol} '),
           onChanged: (v) =>
-              _set(_f.copyWith(minDue: double.tryParse(v) ?? 0)),
+              _set(_f.copyWith(minDue: NumberInput.parseDecimal(v) ?? 0)),
         ),
         const SizedBox(height: 8),
         SwitchListTile(
@@ -873,12 +881,19 @@ class _DueCard extends ConsumerWidget {
                                     const ThinIcon(tabler.Cash.new, size: 18),
                                 label: Text(s.collect),
                               ),
-                              TextButton.icon(
-                                onPressed: () => sendDueReminder(context, ref,
-                                    customer, due.orderDues, due.totalDue),
-                                icon: const ThinIcon(tabler.MessageCircle.new,
-                                    size: 18),
-                                label: Text(s.remind),
+                              // Its own context: an iPad's share sheet
+                              // points at the button.
+                              Builder(
+                                builder: (buttonContext) => TextButton.icon(
+                                  onPressed: () => sendDueReminder(context, ref,
+                                      customer, due.orderDues, due.totalDue,
+                                      shareOrigin:
+                                          shareOriginOf(buttonContext)),
+                                  icon: const ThinIcon(
+                                      tabler.MessageCircle.new,
+                                      size: 18),
+                                  label: Text(s.remind),
+                                ),
                               ),
                             ],
                           ),
@@ -889,8 +904,8 @@ class _DueCard extends ConsumerWidget {
                   if (customer.phone.isNotEmpty)
                     IconButton(
                       tooltip: s.callCustomer,
-                      onPressed: () =>
-                          launchUrl(Uri.parse('tel:${customer.phone}')),
+                      // A device that can't call shows the number instead.
+                      onPressed: () => callPhone(context, customer.phone),
                       icon: const ThinIcon(tabler.Phone.new, size: 20),
                     ),
                 ],

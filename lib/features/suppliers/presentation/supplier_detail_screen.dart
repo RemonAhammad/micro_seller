@@ -3,14 +3,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/supplier.dart';
 import '../providers/supplier_detail_providers.dart';
 import '../providers/supplier_provider.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/call_phone.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -100,8 +101,10 @@ class SupplierDetailScreen extends ConsumerWidget {
                                 s.phone,
                                 supplier.phone,
                                 keepWhole: true,
+                                // A device that can't call shows the number
+                                // instead.
                                 trailing: GestureDetector(
-                                  onTap: () => launchUrl(Uri.parse('tel:${supplier.phone}')),
+                                  onTap: () => callPhone(context, supplier.phone),
                                   child: ThinIcon(tabler.Phone.new, size: 18, color: cs.primary),
                                 ),
                               ),
@@ -258,6 +261,7 @@ class SupplierDetailScreen extends ConsumerWidget {
               controller: ctrl,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const [DecimalInputFormatter.money()],
               decoration: InputDecoration(
                 labelText: AppStrings.of(context).paymentAmount,
                 isDense: true,
@@ -267,15 +271,23 @@ class SupplierDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.of(context).cancel)),
-          FilledButton(
-            onPressed: () async {
-              final amount = double.tryParse(ctrl.text);
-              if (amount == null || amount <= 0) return;
-              await ref.read(supplierProvider.notifier)
-                  .recordSupplierPayment(supplier.id, amount);
-              if (ctx.mounted) Navigator.pop(ctx);
+          // Enabled once there's an amount to pay, as the Due Book's
+          // Collect is: a tap on an empty or zero amount used to do nothing.
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: ctrl,
+            builder: (_, value, _) {
+              final amount = NumberInput.parseDecimal(value.text);
+              return FilledButton(
+                onPressed: amount == null || amount <= 0
+                    ? null
+                    : () async {
+                        await ref.read(supplierProvider.notifier)
+                            .recordSupplierPayment(supplier.id, amount);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                child: Text(AppStrings.of(context).payDue),
+              );
             },
-            child: Text(AppStrings.of(context).payDue),
           ),
         ],
       ),

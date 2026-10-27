@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
@@ -7,6 +6,7 @@ import '../../../data/models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -91,7 +91,8 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       final expense = Expense(
         id: existing?.id ?? Isar.autoIncrement,
         title: _titleCtrl.text.trim(),
-        amount: double.parse(_amountCtrl.text),
+        // The validator has read it already.
+        amount: NumberInput.parseDecimal(_amountCtrl.text)!,
         category: _category,
         date: _date,
         notes: _notesCtrl.text.trim(),
@@ -157,9 +158,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 controller: _amountCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))
-                ],
+                inputFormatters: const [DecimalInputFormatter.money()],
                 validator: (v) => Validators.positiveNumber(v, 'Amount'),
                 prefixIcon: const ThinIcon(tabler.Coin.new, size: 18),
                 textInputAction: TextInputAction.next,
