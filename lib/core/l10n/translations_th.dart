@@ -555,6 +555,13 @@ const translationsTh = <String, String>{
   'securityPinDesc': 'ต้องใช้ PIN 4 หลักสำหรับการดำเนินการที่สำคัญ',
   'biometricNotAvailable': 'ยังไม่มีการลงทะเบียนลายนิ้วมือบนอุปกรณ์นี้',
   'changeSecurity': 'ยืนยันตัวตนเพื่อเปลี่ยนการตั้งค่าความปลอดภัย',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'ใช้ Face ID เพื่อยืนยันการดำเนินการที่สำคัญ',
+  'faceIdNotSetUp': 'ยังไม่ได้ตั้งค่า Face ID บนอุปกรณ์นี้',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'ใช้ Touch ID เพื่อยืนยันการดำเนินการที่สำคัญ',
+  'touchIdNotSetUp': 'ยังไม่ได้ตั้งค่า Touch ID บนอุปกรณ์นี้',
 
   // Background auto-backup status
   'autoBackupPaused': 'การสำรองข้อมูลอัตโนมัติถูกระงับ',
@@ -741,4 +748,34 @@ const translationsTh = <String, String>{
   'rateThisApp': 'ให้คะแนนแอป',
   'rateThisAppSubtitle': 'ช่วยให้ผู้ขายคนอื่นค้นพบ {app}',
   'about': 'เกี่ยวกับ',
+
+  // App updates
+  'updateAvailable': '{app} {version} พร้อมให้ใช้งานแล้ว',
+  'updateHowToAndroid': 'ดาวน์โหลดไฟล์ APK ประเภทเดียวกับที่เคยติดตั้งไว้ (universal หรือ arm64-v8a) แล้วติดตั้งทับแอปนี้ ข้อมูลของคุณจะไม่หาย',
+  'updateHowToIos': 'ติดตั้งอัปเดตด้วยเครื่องมือไซด์โหลดและ Apple ID เดียวกับที่เคยใช้ เพื่อให้ข้อมูลของคุณไม่หาย ควรสำรองข้อมูลก่อน',
+  'download': 'ดาวน์โหลด',
+  'checkForUpdates': 'ตรวจสอบอัปเดต',
+  'upToDate': 'คุณใช้เวอร์ชันล่าสุดแล้ว',
+  'updateCheckFailed': 'ตรวจสอบอัปเดตไม่สำเร็จ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณแล้วลองอีกครั้ง',
+
+  // Keypad bar (iOS)
+  'next': 'ถัดไป',
+
+  // Camera
+  'cameraAccessOff': 'การเข้าถึงกล้องปิดอยู่',
+  'cameraAllowPrompt': '{app} ต้องใช้กล้องเพื่อสแกนโค้ดและถ่ายรูป',
+  'cameraAllowInSettings': 'หากต้องการสแกนโค้ดและถ่ายรูป ให้อนุญาตการเข้าถึงกล้องสำหรับ {app} ในการตั้งค่า',
+  'cameraRestricted': 'กล้องถูกจำกัดการใช้งานบนอุปกรณ์นี้',
+  'cameraStartFailed': 'เปิดกล้องไม่ได้',
+  'noCameraAvailable': 'ไม่มีกล้องที่ใช้งานได้บนอุปกรณ์นี้',
+  'allowCamera': 'อนุญาตให้ใช้กล้อง',
+  'openSettings': 'เปิดการตั้งค่า',
+  'tryAgain': 'ลองอีกครั้ง',
+  'torchOn': 'เปิดไฟฉาย',
+  'torchOff': 'ปิดไฟฉาย',
+
+  // Calls
+  'callNotAvailable': 'อุปกรณ์นี้ไม่รองรับการโทร',
+  'copyNumber': 'คัดลอกหมายเลข',
+  'numberCopied': 'คัดลอกหมายเลขแล้ว',
 };

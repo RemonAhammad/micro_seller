@@ -554,6 +554,13 @@ const translationsAr = <String, String>{
   'securityPinDesc': 'طلب رمز PIN مكوّن من 4 أرقام للإجراءات الحساسة',
   'biometricNotAvailable': 'لا توجد بصمة مسجلة على هذا الجهاز',
   'changeSecurity': 'تحقق لتغيير إعدادات الأمان',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'بصمة الوجه',
+  'securityFaceIdDesc': 'استخدم بصمة الوجه للتحقق من الإجراءات الحساسة',
+  'faceIdNotSetUp': 'لم يتم إعداد بصمة الوجه على هذا الجهاز',
+  'securityTouchId': 'بصمة الإصبع',
+  'securityTouchIdDesc': 'استخدم بصمة الإصبع للتحقق من الإجراءات الحساسة',
+  'touchIdNotSetUp': 'لم يتم إعداد بصمة الإصبع على هذا الجهاز',
 
   // Background auto-backup status
   'autoBackupPaused': 'تم إيقاف النسخ الاحتياطي التلقائي مؤقتًا',
@@ -740,4 +747,34 @@ const translationsAr = <String, String>{
   'rateThisApp': 'قيّم التطبيق',
   'rateThisAppSubtitle': 'ساعد البائعين الآخرين في العثور على {app}',
   'about': 'حول',
+
+  // App updates
+  'updateAvailable': 'الإصدار {version} من {app} متاح',
+  'updateHowToAndroid': 'نزّل نفس نوع ملف APK الذي قمت بتثبيته سابقًا (universal أو arm64-v8a) وثبّته فوق النسخة الحالية. ستبقى بياناتك كما هي.',
+  'updateHowToIos': 'ثبّت التحديث بنفس أداة التثبيت الجانبي ونفس Apple ID اللذين استخدمتهما سابقًا لتبقى بياناتك كما هي. أنشئ نسخة احتياطية أولًا.',
+  'download': 'تنزيل',
+  'checkForUpdates': 'التحقق من وجود تحديثات',
+  'upToDate': 'لديك أحدث إصدار',
+  'updateCheckFailed': 'تعذّر التحقق من وجود تحديثات. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.',
+
+  // Keypad bar (iOS)
+  'next': 'التالي',
+
+  // Camera
+  'cameraAccessOff': 'الوصول إلى الكاميرا معطّل',
+  'cameraAllowPrompt': 'يحتاج تطبيق {app} إلى استخدام الكاميرا لمسح الرموز والتقاط الصور.',
+  'cameraAllowInSettings': 'لمسح الرموز والتقاط الصور، اسمح لتطبيق {app} بالوصول إلى الكاميرا من الإعدادات.',
+  'cameraRestricted': 'الكاميرا مقيّدة على هذا الجهاز.',
+  'cameraStartFailed': 'تعذّر تشغيل الكاميرا.',
+  'noCameraAvailable': 'لا توجد كاميرا متاحة على هذا الجهاز.',
+  'allowCamera': 'السماح بالكاميرا',
+  'openSettings': 'فتح الإعدادات',
+  'tryAgain': 'إعادة المحاولة',
+  'torchOn': 'تشغيل المصباح',
+  'torchOff': 'إيقاف المصباح',
+
+  // Calls
+  'callNotAvailable': 'المكالمات غير متاحة على هذا الجهاز',
+  'copyNumber': 'نسخ الرقم',
+  'numberCopied': 'تم نسخ الرقم',
 };

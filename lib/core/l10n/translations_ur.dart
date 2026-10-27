@@ -555,6 +555,13 @@ const translationsUr = <String, String>{
   'securityPinDesc': 'حساس کاروائیوں کے لیے 4 ہندسوں کا PIN درکار',
   'biometricNotAvailable': 'اس ڈیوائس پر کوئی فنگر پرنٹ رجسٹرڈ نہیں',
   'changeSecurity': 'سیکیورٹی ترتیبات بدلنے کے لیے تصدیق کریں',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'حساس کاروائیوں کی منظوری کے لیے Face ID استعمال کریں',
+  'faceIdNotSetUp': 'اس ڈیوائس پر Face ID سیٹ اپ نہیں ہے',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'حساس کاروائیوں کی منظوری کے لیے Touch ID استعمال کریں',
+  'touchIdNotSetUp': 'اس ڈیوائس پر Touch ID سیٹ اپ نہیں ہے',
 
   // Background auto-backup status
   'autoBackupPaused': 'خودکار بیک اپ روک دیا گیا',
@@ -741,4 +748,34 @@ const translationsUr = <String, String>{
   'rateThisApp': 'ایپ کو ریٹ کریں',
   'rateThisAppSubtitle': 'دوسرے فروخت کنندگان کو {app} تلاش کرنے میں مدد کریں',
   'about': 'متعلق',
+
+  // App updates
+  'updateAvailable': '{app} {version} دستیاب ہے',
+  'updateHowToAndroid': 'پہلے آپ نے جس قسم کی APK فائل انسٹال کی تھی (universal یا arm64-v8a) وہی ڈاؤنلوڈ کریں اور اسے موجودہ ایپ کے اوپر انسٹال کر دیں۔ آپ کا ڈیٹا محفوظ رہے گا۔',
+  'updateHowToIos': 'اپ ڈیٹ کو اسی سائیڈ لوڈنگ ٹول اور اسی Apple ID سے انسٹال کریں جو آپ نے پہلے استعمال کیے تھے، تاکہ آپ کا ڈیٹا محفوظ رہے۔ پہلے بیک اپ لے لیں۔',
+  'download': 'ڈاؤنلوڈ کریں',
+  'checkForUpdates': 'اپ ڈیٹس چیک کریں',
+  'upToDate': 'آپ کے پاس تازہ ترین ورژن ہے',
+  'updateCheckFailed': 'اپ ڈیٹس چیک نہیں ہو سکیں۔ اپنا انٹرنیٹ کنکشن چیک کر کے دوبارہ کوشش کریں۔',
+
+  // Keypad bar (iOS)
+  'next': 'اگلا',
+
+  // Camera
+  'cameraAccessOff': 'کیمرے تک رسائی بند ہے',
+  'cameraAllowPrompt': '{app} کو کوڈ اسکین کرنے اور تصویر لینے کے لیے کیمرے کی ضرورت ہے۔',
+  'cameraAllowInSettings': 'کوڈ اسکین کرنے اور تصویر لینے کے لیے ترتیبات میں {app} کو کیمرے تک رسائی کی اجازت دیں۔',
+  'cameraRestricted': 'اس ڈیوائس پر کیمرے کے استعمال پر پابندی ہے۔',
+  'cameraStartFailed': 'کیمرا شروع نہیں ہو سکا۔',
+  'noCameraAvailable': 'اس ڈیوائس پر کوئی کیمرا دستیاب نہیں۔',
+  'allowCamera': 'کیمرے کی اجازت دیں',
+  'openSettings': 'ترتیبات کھولیں',
+  'tryAgain': 'دوبارہ کوشش کریں',
+  'torchOn': 'ٹارچ آن کریں',
+  'torchOff': 'ٹارچ آف کریں',
+
+  // Calls
+  'callNotAvailable': 'اس ڈیوائس پر کالز دستیاب نہیں',
+  'copyNumber': 'نمبر کاپی کریں',
+  'numberCopied': 'نمبر کاپی ہو گیا',
 };

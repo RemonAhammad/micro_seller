@@ -555,6 +555,13 @@ const translationsTr = <String, String>{
   'securityPinDesc': 'Hassas işlemler için 4 haneli PIN iste',
   'biometricNotAvailable': 'Bu cihazda kayıtlı parmak izi yok',
   'changeSecurity': 'Güvenlik ayarlarını değiştirmek için doğrula',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'Hassas işlemleri onaylamak için Face ID kullan',
+  'faceIdNotSetUp': 'Bu cihazda Face ID ayarlanmamış',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'Hassas işlemleri onaylamak için Touch ID kullan',
+  'touchIdNotSetUp': 'Bu cihazda Touch ID ayarlanmamış',
 
   // Background auto-backup status
   'autoBackupPaused': 'Otomatik yedekleme duraklatıldı',
@@ -741,4 +748,34 @@ const translationsTr = <String, String>{
   'rateThisApp': 'Uygulamayı puanla',
   'rateThisAppSubtitle': 'Diğer satıcıların {app} uygulamasını bulmasına yardım edin',
   'about': 'Hakkında',
+
+  // App updates
+  'updateAvailable': '{app} {version} sürümü mevcut',
+  'updateHowToAndroid': 'Daha önce yüklediğiniz APK türünün aynısını (universal veya arm64-v8a) indirin ve mevcut uygulamanın üzerine yükleyin. Verileriniz korunur.',
+  'updateHowToIos': 'Güncellemeyi, daha önce kullandığınız aynı yan yükleme (sideload) aracı ve Apple ID ile yükleyin; böylece verileriniz korunur. Önce yedek alın.',
+  'download': 'İndir',
+  'checkForUpdates': 'Güncellemeleri kontrol et',
+  'upToDate': 'En son sürümü kullanıyorsunuz',
+  'updateCheckFailed': 'Güncellemeler kontrol edilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+
+  // Keypad bar (iOS)
+  'next': 'Sonraki',
+
+  // Camera
+  'cameraAccessOff': 'Kamera erişimi kapalı',
+  'cameraAllowPrompt': '{app}, kod taramak ve fotoğraf çekmek için kameraya ihtiyaç duyar.',
+  'cameraAllowInSettings': 'Kod taramak ve fotoğraf çekmek için Ayarlar\'dan {app} uygulamasına kamera erişimi verin.',
+  'cameraRestricted': 'Bu cihazda kamera kullanımı kısıtlanmış.',
+  'cameraStartFailed': 'Kamera başlatılamadı.',
+  'noCameraAvailable': 'Bu cihazda kullanılabilir kamera yok.',
+  'allowCamera': 'Kameraya izin ver',
+  'openSettings': 'Ayarlar\'ı aç',
+  'tryAgain': 'Tekrar dene',
+  'torchOn': 'El fenerini aç',
+  'torchOff': 'El fenerini kapat',
+
+  // Calls
+  'callNotAvailable': 'Bu cihazda arama yapılamıyor',
+  'copyNumber': 'Numarayı kopyala',
+  'numberCopied': 'Numara kopyalandı',
 };

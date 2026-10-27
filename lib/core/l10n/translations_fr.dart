@@ -555,6 +555,13 @@ const translationsFr = <String, String>{
   'securityPinDesc': 'Exiger un code à 4 chiffres pour les actions sensibles',
   'biometricNotAvailable': 'Aucune empreinte enregistrée sur cet appareil',
   'changeSecurity': 'Vérifier pour modifier les paramètres de sécurité',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'Utiliser Face ID pour valider les actions sensibles',
+  'faceIdNotSetUp': 'Face ID n\'est pas configuré sur cet appareil',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'Utiliser Touch ID pour valider les actions sensibles',
+  'touchIdNotSetUp': 'Touch ID n\'est pas configuré sur cet appareil',
 
   // Background auto-backup status
   'autoBackupPaused': 'Sauvegarde automatique suspendue',
@@ -741,4 +748,34 @@ const translationsFr = <String, String>{
   'rateThisApp': 'Noter l\'application',
   'rateThisAppSubtitle': 'Aidez d\'autres vendeurs à trouver {app}',
   'about': 'À propos',
+
+  // App updates
+  'updateAvailable': '{app} {version} est disponible',
+  'updateHowToAndroid': 'Téléchargez le même type d\'APK que celui que vous avez installé auparavant (universal ou arm64-v8a) et installez-le par-dessus la version actuelle. Vos données sont conservées.',
+  'updateHowToIos': 'Installez la mise à jour avec le même outil de sideloading et le même Apple ID que précédemment, afin de conserver vos données. Faites d\'abord une sauvegarde.',
+  'download': 'Télécharger',
+  'checkForUpdates': 'Rechercher des mises à jour',
+  'upToDate': 'Vous avez la dernière version',
+  'updateCheckFailed': 'Impossible de rechercher des mises à jour. Vérifiez votre connexion Internet et réessayez.',
+
+  // Keypad bar (iOS)
+  'next': 'Suivant',
+
+  // Camera
+  'cameraAccessOff': 'L\'accès à la caméra est désactivé',
+  'cameraAllowPrompt': '{app} a besoin de la caméra pour scanner des codes et prendre des photos.',
+  'cameraAllowInSettings': 'Pour scanner des codes et prendre des photos, autorisez l\'accès à la caméra pour {app} dans les paramètres.',
+  'cameraRestricted': 'La caméra est restreinte sur cet appareil.',
+  'cameraStartFailed': 'Impossible de démarrer la caméra.',
+  'noCameraAvailable': 'Aucune caméra n\'est disponible sur cet appareil.',
+  'allowCamera': 'Autoriser la caméra',
+  'openSettings': 'Ouvrir les paramètres',
+  'tryAgain': 'Réessayer',
+  'torchOn': 'Allumer la lampe torche',
+  'torchOff': 'Éteindre la lampe torche',
+
+  // Calls
+  'callNotAvailable': 'Les appels ne sont pas disponibles sur cet appareil',
+  'copyNumber': 'Copier le numéro',
+  'numberCopied': 'Numéro copié',
 };

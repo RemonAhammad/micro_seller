@@ -555,6 +555,13 @@ const translationsMs = <String, String>{
   'securityPinDesc': 'Minta PIN 4 digit untuk tindakan sensitif',
   'biometricNotAvailable': 'Tiada cap jari didaftarkan pada peranti ini',
   'changeSecurity': 'Sahkan untuk menukar tetapan keselamatan',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'Guna Face ID untuk membenarkan tindakan sensitif',
+  'faceIdNotSetUp': 'Face ID belum disediakan pada peranti ini',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'Guna Touch ID untuk membenarkan tindakan sensitif',
+  'touchIdNotSetUp': 'Touch ID belum disediakan pada peranti ini',
 
   // Background auto-backup status
   'autoBackupPaused': 'Sandaran automatik dijeda',
@@ -741,4 +748,34 @@ const translationsMs = <String, String>{
   'rateThisApp': 'Nilaikan aplikasi',
   'rateThisAppSubtitle': 'Bantu penjual lain menemui {app}',
   'about': 'Tentang',
+
+  // App updates
+  'updateAvailable': '{app} {version} sudah tersedia',
+  'updateHowToAndroid': 'Muat turun jenis APK yang sama seperti yang anda pasang sebelum ini (universal atau arm64-v8a), kemudian pasang di atas aplikasi ini. Data anda akan kekal.',
+  'updateHowToIos': 'Pasang kemas kini dengan alat sideload dan Apple ID yang sama seperti sebelum ini supaya data anda kekal. Buat sandaran dahulu.',
+  'download': 'Muat turun',
+  'checkForUpdates': 'Semak kemas kini',
+  'upToDate': 'Anda menggunakan versi terkini',
+  'updateCheckFailed': 'Tidak dapat menyemak kemas kini. Semak sambungan internet anda dan cuba lagi.',
+
+  // Keypad bar (iOS)
+  'next': 'Seterusnya',
+
+  // Camera
+  'cameraAccessOff': 'Akses kamera dimatikan',
+  'cameraAllowPrompt': '{app} memerlukan kamera untuk mengimbas kod dan mengambil gambar.',
+  'cameraAllowInSettings': 'Untuk mengimbas kod dan mengambil gambar, benarkan akses kamera untuk {app} dalam Tetapan.',
+  'cameraRestricted': 'Kamera dihadkan pada peranti ini.',
+  'cameraStartFailed': 'Kamera tidak dapat dimulakan.',
+  'noCameraAvailable': 'Tiada kamera tersedia pada peranti ini.',
+  'allowCamera': 'Benarkan kamera',
+  'openSettings': 'Buka Tetapan',
+  'tryAgain': 'Cuba lagi',
+  'torchOn': 'Hidupkan lampu suluh',
+  'torchOff': 'Matikan lampu suluh',
+
+  // Calls
+  'callNotAvailable': 'Panggilan tidak tersedia pada peranti ini',
+  'copyNumber': 'Salin nombor',
+  'numberCopied': 'Nombor disalin',
 };

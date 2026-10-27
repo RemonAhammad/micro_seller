@@ -555,6 +555,13 @@ const translationsBn = <String, String>{
   'securityPinDesc': 'সংবেদনশীল কাজের জন্য ৪ অঙ্কের পিন প্রয়োজন',
   'biometricNotAvailable': 'এই ডিভাইসে কোনো ফিঙ্গারপ্রিন্ট সেট করা নেই',
   'changeSecurity': 'নিরাপত্তা সেটিংস বদলাতে যাচাই করুন',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'সংবেদনশীল কাজের অনুমতির জন্য Face ID ব্যবহার করুন',
+  'faceIdNotSetUp': 'এই ডিভাইসে Face ID সেট করা নেই',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'সংবেদনশীল কাজের অনুমতির জন্য Touch ID ব্যবহার করুন',
+  'touchIdNotSetUp': 'এই ডিভাইসে Touch ID সেট করা নেই',
 
   // Background auto-backup status
   'autoBackupPaused': 'অটো ব্যাকআপ বিরতিতে আছে',
@@ -741,4 +748,34 @@ const translationsBn = <String, String>{
   'rateThisApp': 'অ্যাপ রেট করুন',
   'rateThisAppSubtitle': 'অন্য বিক্রেতাদের {app} খুঁজে পেতে সাহায্য করুন',
   'about': 'সম্পর্কে',
+
+  // App updates
+  'updateAvailable': '{app} {version} পাওয়া যাচ্ছে',
+  'updateHowToAndroid': 'আগে যে ধরনের APK ইনস্টল করেছিলেন (universal বা arm64-v8a), একই ধরনের APK ডাউনলোড করে বর্তমান অ্যাপের ওপর ইনস্টল করুন। আপনার ডাটা মুছে যাবে না।',
+  'updateHowToIos': 'আগে যে সাইডলোডিং টুল ও Apple ID ব্যবহার করেছিলেন, সেগুলো দিয়েই আপডেটটি ইনস্টল করুন, যাতে আপনার ডাটা মুছে না যায়। প্রথমে ব্যাকআপ নিন।',
+  'download': 'ডাউনলোড',
+  'checkForUpdates': 'আপডেট পরীক্ষা করুন',
+  'upToDate': 'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন',
+  'updateCheckFailed': 'আপডেট পরীক্ষা করা যায়নি। আপনার ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
+
+  // Keypad bar (iOS)
+  'next': 'পরবর্তী',
+
+  // Camera
+  'cameraAccessOff': 'ক্যামেরা অ্যাক্সেস বন্ধ আছে',
+  'cameraAllowPrompt': 'কোড স্ক্যান করতে ও ছবি তুলতে {app}-এর ক্যামেরা ব্যবহারের অনুমতি প্রয়োজন।',
+  'cameraAllowInSettings': 'কোড স্ক্যান করতে ও ছবি তুলতে সেটিংসে {app}-কে ক্যামেরা ব্যবহারের অনুমতি দিন।',
+  'cameraRestricted': 'এই ডিভাইসে ক্যামেরা ব্যবহার সীমাবদ্ধ করা আছে।',
+  'cameraStartFailed': 'ক্যামেরা চালু করা যায়নি।',
+  'noCameraAvailable': 'এই ডিভাইসে কোনো ক্যামেরা উপলব্ধ নেই।',
+  'allowCamera': 'ক্যামেরার অনুমতি দিন',
+  'openSettings': 'সেটিংস খুলুন',
+  'tryAgain': 'আবার চেষ্টা করুন',
+  'torchOn': 'টর্চ চালু করুন',
+  'torchOff': 'টর্চ বন্ধ করুন',
+
+  // Calls
+  'callNotAvailable': 'এই ডিভাইসে কল করা যায় না',
+  'copyNumber': 'নম্বর কপি করুন',
+  'numberCopied': 'নম্বর কপি হয়েছে',
 };

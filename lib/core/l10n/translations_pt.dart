@@ -555,6 +555,13 @@ const translationsPt = <String, String>{
   'securityPinDesc': 'Exigir um PIN de 4 dígitos para ações sensíveis',
   'biometricNotAvailable': 'Nenhuma impressão digital cadastrada neste dispositivo',
   'changeSecurity': 'Verifique para alterar as configurações de segurança',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'Usar Face ID para autorizar ações sensíveis',
+  'faceIdNotSetUp': 'O Face ID não está configurado neste dispositivo',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'Usar Touch ID para autorizar ações sensíveis',
+  'touchIdNotSetUp': 'O Touch ID não está configurado neste dispositivo',
 
   // Background auto-backup status
   'autoBackupPaused': 'Backup automático pausado',
@@ -741,4 +748,34 @@ const translationsPt = <String, String>{
   'rateThisApp': 'Avaliar o app',
   'rateThisAppSubtitle': 'Ajude outros vendedores a encontrar o {app}',
   'about': 'Sobre',
+
+  // App updates
+  'updateAvailable': 'O {app} {version} está disponível',
+  'updateHowToAndroid': 'Baixe o mesmo tipo de APK que você instalou antes (universal ou arm64-v8a) e instale-o por cima da versão atual. Seus dados serão mantidos.',
+  'updateHowToIos': 'Instale a atualização com a mesma ferramenta de sideload e o mesmo Apple ID que você usou antes, para manter seus dados. Faça um backup primeiro.',
+  'download': 'Baixar',
+  'checkForUpdates': 'Verificar atualizações',
+  'upToDate': 'Você está com a versão mais recente',
+  'updateCheckFailed': 'Não foi possível verificar atualizações. Verifique sua conexão com a internet e tente novamente.',
+
+  // Keypad bar (iOS)
+  'next': 'Próximo',
+
+  // Camera
+  'cameraAccessOff': 'O acesso à câmera está desativado',
+  'cameraAllowPrompt': 'O {app} precisa da câmera para escanear códigos e tirar fotos.',
+  'cameraAllowInSettings': 'Para escanear códigos e tirar fotos, permita que o {app} use a câmera nas Configurações.',
+  'cameraRestricted': 'A câmera está restrita neste dispositivo.',
+  'cameraStartFailed': 'Não foi possível iniciar a câmera.',
+  'noCameraAvailable': 'Nenhuma câmera está disponível neste dispositivo.',
+  'allowCamera': 'Permitir câmera',
+  'openSettings': 'Abrir Configurações',
+  'tryAgain': 'Tentar novamente',
+  'torchOn': 'Ligar a lanterna',
+  'torchOff': 'Desligar a lanterna',
+
+  // Calls
+  'callNotAvailable': 'As chamadas não estão disponíveis neste dispositivo',
+  'copyNumber': 'Copiar número',
+  'numberCopied': 'Número copiado',
 };

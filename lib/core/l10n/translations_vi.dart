@@ -555,6 +555,13 @@ const translationsVi = <String, String>{
   'securityPinDesc': 'Yêu cầu mã PIN 4 chữ số cho các thao tác nhạy cảm',
   'biometricNotAvailable': 'Chưa có vân tay nào được đăng ký trên thiết bị này',
   'changeSecurity': 'Xác minh để thay đổi cài đặt bảo mật',
+  // iPhone biometrics: Face ID or Touch ID
+  'securityFaceId': 'Face ID',
+  'securityFaceIdDesc': 'Dùng Face ID để xác nhận các thao tác nhạy cảm',
+  'faceIdNotSetUp': 'Face ID chưa được thiết lập trên thiết bị này',
+  'securityTouchId': 'Touch ID',
+  'securityTouchIdDesc': 'Dùng Touch ID để xác nhận các thao tác nhạy cảm',
+  'touchIdNotSetUp': 'Touch ID chưa được thiết lập trên thiết bị này',
 
   // Background auto-backup status
   'autoBackupPaused': 'Tự động sao lưu đang tạm dừng',
@@ -741,4 +748,34 @@ const translationsVi = <String, String>{
   'rateThisApp': 'Đánh giá ứng dụng',
   'rateThisAppSubtitle': 'Giúp những người bán khác tìm thấy {app}',
   'about': 'Giới thiệu',
+
+  // App updates
+  'updateAvailable': '{app} {version} đã có sẵn',
+  'updateHowToAndroid': 'Tải xuống loại APK giống bản bạn đã cài trước đó (universal hoặc arm64-v8a) rồi cài đè lên bản hiện tại. Dữ liệu của bạn sẽ được giữ nguyên.',
+  'updateHowToIos': 'Cài bản cập nhật bằng đúng công cụ sideload và Apple ID bạn đã dùng trước đó để giữ nguyên dữ liệu. Hãy sao lưu trước.',
+  'download': 'Tải xuống',
+  'checkForUpdates': 'Kiểm tra cập nhật',
+  'upToDate': 'Bạn đang dùng phiên bản mới nhất',
+  'updateCheckFailed': 'Không thể kiểm tra cập nhật. Kiểm tra kết nối internet của bạn rồi thử lại.',
+
+  // Keypad bar (iOS)
+  'next': 'Tiếp',
+
+  // Camera
+  'cameraAccessOff': 'Quyền truy cập camera đang tắt',
+  'cameraAllowPrompt': '{app} cần dùng camera để quét mã và chụp ảnh.',
+  'cameraAllowInSettings': 'Để quét mã và chụp ảnh, hãy cho phép {app} truy cập camera trong Cài đặt.',
+  'cameraRestricted': 'Camera bị hạn chế trên thiết bị này.',
+  'cameraStartFailed': 'Không thể khởi động camera.',
+  'noCameraAvailable': 'Thiết bị này không có camera khả dụng.',
+  'allowCamera': 'Cho phép dùng camera',
+  'openSettings': 'Mở Cài đặt',
+  'tryAgain': 'Thử lại',
+  'torchOn': 'Bật đèn pin',
+  'torchOff': 'Tắt đèn pin',
+
+  // Calls
+  'callNotAvailable': 'Thiết bị này không hỗ trợ gọi điện',
+  'copyNumber': 'Sao chép số',
+  'numberCopied': 'Đã sao chép số',
 };
