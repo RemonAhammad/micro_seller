@@ -56,6 +56,10 @@ Finder _icon(ThinIconBuilder builder) => find.byWidgetPredicate(
     (w) => w is ThinIcon && w.builder == builder,
     description: 'ThinIcon');
 
+/// The camera's controller of the scanner on screen.
+MobileScannerController _controllerOf(WidgetTester tester) =>
+    tester.widget<MobileScanner>(find.byType(MobileScanner)).controller!;
+
 /// The app goes to the background, as when the seller opens Settings:
 /// inactive, hidden, paused.
 void _background(WidgetTester tester) {
@@ -274,6 +278,56 @@ void main() {
       }
     });
 
+    testWidgets('stays explained when an iPad turns, or the camera reports '
+        'anything else', (tester) async {
+      addTearDown(() => _foreground(tester));
+      camera.startError = FakeCamera.refused;
+      device.camera = CameraAccess.permanentlyDenied;
+      await pumpScanner(tester);
+      expect(find.byType(ScannerErrorView), findsOneWidget);
+      final controller = _controllerOf(tester);
+
+      // What mobile_scanner does when the screen turns (an iPad rotates):
+      // its state's update forgets the error, though the camera is off.
+      controller.value = controller.value.copyWith(
+        deviceOrientation: DeviceOrientation.landscapeLeft,
+      );
+      await tester.pump();
+      expect(controller.value.error, isNull);
+      expect(find.byType(ScannerErrorView), findsOneWidget);
+      expect(find.text('Camera access is off'), findsOneWidget);
+      expect(find.text('Open Settings'), findsOneWidget);
+      // No scanning frame or hint over a black preview.
+      expect(find.text(_englishHint), findsNothing);
+      // The flashlight's stream, likewise.
+      camera.torch = TorchState.unavailable;
+      await tester.pump();
+      expect(find.byType(ScannerErrorView), findsOneWidget);
+
+      // Shown again from the background, still refused: still explained,
+      // and not asked for again.
+      _background(tester);
+      await tester.pump();
+      _foreground(tester);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(ScannerErrorView), findsOneWidget);
+      expect(find.text('Open Settings'), findsOneWidget);
+      expect(camera.starts, 1);
+
+      // Allowed in Settings meanwhile: it starts by itself, and the view goes.
+      camera.startError = null;
+      device.camera = CameraAccess.granted;
+      _background(tester);
+      await tester.pump();
+      _foreground(tester);
+      await tester.pump();
+      await tester.pump();
+      expect(camera.starts, 2);
+      expect(find.byType(ScannerErrorView), findsNothing);
+      expect(find.text(_englishHint), findsOneWidget);
+    });
+
     testWidgets('restricted by a device policy has no button', (tester) async {
       camera.startError = FakeCamera.refused;
       device.camera = CameraAccess.restricted;
@@ -452,6 +506,14 @@ void main() {
       expect(find.text('Camera access is off'), findsOneWidget);
       expect(find.text(_englishHint), findsNothing);
       expect(find.text(_pluginText), findsNothing);
+      // Still, once the screen turned (an iPad rotating).
+      final controller = _controllerOf(tester);
+      controller.value = controller.value.copyWith(
+        deviceOrientation: DeviceOrientation.landscapeRight,
+      );
+      await tester.pump();
+      expect(find.byType(ScannerErrorView), findsOneWidget);
+      expect(find.text(_englishHint), findsNothing);
       await tester.tap(find.text('Open Settings'));
       await tester.pump();
       expect(device.settingsOpens, 1);

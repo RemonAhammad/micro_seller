@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/customer_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/debouncer.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/customer_card.dart';
@@ -77,7 +78,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
               : allCustomers
                   .where((c) =>
                       c.name.toLowerCase().contains(_query) ||
-                      c.phone.contains(_query))
+                      NumberInput.phoneMatches(c.phone, _query))
                   .toList();
 
           if (customers.isEmpty) {

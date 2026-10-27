@@ -546,6 +546,74 @@ void main() {
     expect(_page, findsNothing);
   }, variant: _iOS);
 
+  testWidgets('a route the app pushes mid-swipe leaves the page sliding back '
+      'in, not where the finger left it', (tester) async {
+    await _pumpApp(tester);
+    final navigator = await _openSidebarOrder(tester);
+    final route = ModalRoute.of(tester.element(_page))!;
+
+    final gesture = await _startSwipe(tester, const Offset(2, 400));
+    await gesture.moveBy(const Offset(100, 0));
+    await tester.pump();
+    expect(route.animation!.value, lessThan(1));
+    // As the order form shows "Order created" on its tab once it saved.
+    unawaited(
+      showModalBottomSheet<void>(
+        context: tester.element(_page),
+        builder: (_) => const SizedBox(height: 200, child: Text('Sheet')),
+      ),
+    );
+    await tester.pump();
+    expect(route.isCurrent, isFalse);
+    await gesture.moveBy(const Offset(40, 0));
+    await gesture.up();
+    await tester.pump();
+    // Still following the swipe until it's back in: its slide stays linear.
+    expect(navigator.userGestureInProgress, isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Sheet'), findsOneWidget);
+    expect(route.animation!.status, AnimationStatus.completed);
+    expect(tester.getTopLeft(_page).dx, kSidebarRailWidth);
+    expect(navigator.userGestureInProgress, isFalse);
+    expect(_shellIgnoresTouches(tester), isFalse);
+
+    // The sheet closed, the page is in place, and the next swipe works.
+    Navigator.of(tester.element(find.text('Sheet'))).pop();
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(_page).dx, kSidebarRailWidth);
+    await tester.dragFrom(const Offset(2, 400), const Offset(300, 0));
+    await tester.pumpAndSettle();
+    expect(_page, findsNothing);
+  }, variant: _iOS);
+
+  testWidgets('another tab shown while a pushed route covers the swiped '
+      'page puts it back in place at once', (tester) async {
+    await _pumpApp(tester);
+    final navigator = await _openSidebarOrder(tester);
+    final route = ModalRoute.of(tester.element(_page))!;
+
+    final gesture = await _startSwipe(tester, const Offset(2, 400));
+    await gesture.moveBy(const Offset(100, 0));
+    await tester.pump();
+    unawaited(
+      showModalBottomSheet<void>(
+        context: tester.element(_page),
+        builder: (_) => const SizedBox(height: 200, child: Text('Sheet')),
+      ),
+    );
+    await tester.pump();
+    appRouter.go('/categories');
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(CategoryScreen), findsOneWidget);
+    expect(route.animation!.status, AnimationStatus.completed);
+    expect(navigator.userGestureInProgress, isFalse);
+    expect(_shellIgnoresTouches(tester), isFalse);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(navigator.userGestureInProgress, isFalse);
+  }, variant: _iOS);
+
   testWidgets('a page gone between the touch and the drag: nothing is swiped, '
       'not even the screen under it', (tester) async {
     await _pumpApp(tester);

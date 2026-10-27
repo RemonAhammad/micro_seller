@@ -113,52 +113,40 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         children: [
           // Camera view with overlay
           Expanded(
-            child: Stack(
-              // The camera, or why it won't run, fills the space.
-              fit: StackFit.expand,
-              children: [
-                MobileScanner(
-                  controller: _controller,
-                  onDetect: _onDetect,
-                  errorBuilder: (context, error) => ScannerErrorView(error: error, session: _session),
-                ),
-                // The frame and hint, over the camera only: not over why it won't run.
-                Positioned.fill(
-                  child: ValueListenableBuilder<MobileScannerState>(
-                    valueListenable: _controller,
-                    builder: (context, camera, overlay) => camera.error == null ? overlay! : const SizedBox.shrink(),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 240,
-                            height: 240,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: theme.colorScheme.primary, width: 3),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 24,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
-                              child: Text(
-                                s.pointCameraAtCode,
-                                style: const TextStyle(color: Colors.white70, fontSize: 13),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+            // The frame and hint over the camera; why it won't run instead
+            // of them.
+            child: ScannerPreview(
+              session: _session,
+              onDetect: _onDetect,
+              overlay: Stack(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.colorScheme.primary, width: 3),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    bottom: 24,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                        child: Text(
+                          s.pointCameraAtCode,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 

@@ -1,6 +1,7 @@
 // The customers, suppliers and money screens take amounts as every phone
-// types them: a French or Brazilian iPhone's number pad types 12,50, an
-// Arabic one ١٢٫٥٠. Each field keeps its text canonical (12.50) and reads it
+// types them: a French or Brazilian phone's number pad types 12,50 (the
+// typing tests run in France, where ',' is the point), an Arabic one
+// ١٢٫٥٠. Each field keeps its text canonical (12.50) and reads it
 // back with NumberInput, so the amount reaches the books; money fields take
 // the shop currency's decimals (the Kuwaiti Dinar's 3). A dialog with
 // nothing to pay keeps its button off, where a tap used to do nothing. On an
@@ -27,7 +28,9 @@ import 'package:micro_seller/data/services/dues_service.dart';
 import 'package:micro_seller/features/cash_register/presentation/cash_register_screen.dart';
 import 'package:micro_seller/features/cash_register/providers/cash_register_provider.dart';
 import 'package:micro_seller/features/customers/presentation/customer_form_screen.dart';
+import 'package:micro_seller/features/customers/presentation/customer_list_screen.dart';
 import 'package:micro_seller/features/customers/presentation/due_book_screen.dart';
+import 'package:micro_seller/features/customers/providers/customer_provider.dart';
 import 'package:micro_seller/features/customers/providers/dues_provider.dart';
 import 'package:micro_seller/features/expenses/presentation/expense_list_screen.dart';
 import 'package:micro_seller/features/expenses/providers/expense_provider.dart';
@@ -224,6 +227,10 @@ void main() {
   }
 
   group('typing amounts', () {
+    // A French phone: its number pad's ',' is the decimal point.
+    setUp(() => NumberInput.debugDeviceLocale = const Locale('fr', 'FR'));
+    tearDown(() => NumberInput.debugDeviceLocale = null);
+
     testWidgets(
       'the Due Book collects a comma-typed amount, and its full due',
       (tester) async {
@@ -471,6 +478,50 @@ void main() {
       await tester.tap(close);
       await tester.pumpAndSettle();
       expect(register.closed, [(100, 0.0)]);
+    });
+  });
+
+  group('searching phones', () {
+    // Phones are saved with 0-9; a Bengali or Arabic keyboard types its own
+    // digits into a search box, which found no one but in the order form.
+    Future<void> search(WidgetTester tester, String query) async {
+      await tester.enterText(find.byType(TextField).first, query);
+      await tester.pump(const Duration(milliseconds: 500)); // the debounce
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the customer list finds a phone typed in Bengali digits', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        const CustomerListScreen(),
+        overrides: [
+          customersProvider.overrideWithValue(
+            AsyncValue.data([_karim, _rahim]),
+          ),
+        ],
+      );
+      await search(tester, '০১৭১২');
+      expect(find.text('Karim Uddin'), findsOneWidget);
+      expect(find.text('Rahim'), findsNothing);
+      await search(tester, '٠١٧');
+      expect(find.text('Karim Uddin'), findsOneWidget);
+    });
+
+    testWidgets('the Due Book finds one too', (tester) async {
+      await pump(
+        tester,
+        const DueBookScreen(),
+        overrides: [
+          duesProvider.overrideWithValue(
+            AsyncValue.data([_due(_karim, 1000), _due(_rahim, 2000)]),
+          ),
+        ],
+      );
+      await search(tester, '০১৭১২');
+      expect(find.text('Karim Uddin'), findsOneWidget);
+      expect(find.text('Rahim'), findsNothing);
     });
   });
 

@@ -514,7 +514,7 @@ class _StockSupplierPickerSheetState extends State<_StockSupplierPickerSheet> {
             .where((s) =>
                 s.name.toLowerCase().contains(_query) ||
                 s.company.toLowerCase().contains(_query) ||
-                s.phone.contains(_query))
+                NumberInput.phoneMatches(s.phone, _query))
             .toList();
 
     return DraggableScrollableSheet(

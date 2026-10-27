@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
+import '../../core/utils/number_input.dart';
+
+final _asciiDigit = RegExp('[0-9]');
 
 /// What an editable field takes from its width besides its value, the paste
 /// button included: the theme's 16 dp content padding and a 4 dp gap at the
@@ -163,6 +166,17 @@ class _PasteButton extends StatelessWidget {
     this.onChanged,
   });
 
+  /// Whether the field takes a number or a phone number: one of
+  /// number_input.dart's formatters.
+  bool get _takesDigits =>
+      inputFormatters?.any(
+        (f) =>
+            f is DecimalInputFormatter ||
+            f is IntegerInputFormatter ||
+            f is PhoneInputFormatter,
+      ) ??
+      false;
+
   @override
   Widget build(BuildContext context) {
     return IconButton(
@@ -171,6 +185,13 @@ class _PasteButton extends StatelessWidget {
       onPressed: () async {
         final pasted = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
         if (pasted == null || !context.mounted) return;
+        // A number or phone field takes nothing from text without a digit
+        // in any script ('-', '.', a name): read as a key typed over the
+        // whole value, it would only empty the field.
+        if (_takesDigits &&
+            !NumberInput.toAsciiDigits(pasted).contains(_asciiDigit)) {
+          return;
+        }
         final current = controller.value;
         // The formatters see a paste over all of the text.
         final old = current.copyWith(
@@ -190,7 +211,12 @@ class _PasteButton extends StatelessWidget {
         ]) {
           value = formatter.formatEditUpdate(old, value);
         }
-        if (value.text == current.text) return;
+        // Text the formatters refused down to nothing, or to spaces, leaves
+        // the field as it was.
+        if (value.text == current.text ||
+            (value.text.trim().isEmpty && pasted.trim().isNotEmpty)) {
+          return;
+        }
         controller.value = value;
         onChanged?.call(value.text);
       },

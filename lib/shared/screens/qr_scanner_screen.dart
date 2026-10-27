@@ -68,68 +68,53 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
         title: Text(AppStrings.of(context).scanQrBarcode),
         actions: [TorchButton(controller: _controller)],
       ),
-      body: Stack(
-        // The camera, or why it won't run, fills the screen.
-        fit: StackFit.expand,
-        children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onDetect,
-            errorBuilder: (context, error) =>
-                ScannerErrorView(error: error, session: _session),
-          ),
-          // The frame and hint, over the camera only: not over why it
-          // won't run.
-          Positioned.fill(
-            child: ValueListenableBuilder<MobileScannerState>(
-              valueListenable: _controller,
-              builder: (context, camera, overlay) =>
-                  camera.error == null ? overlay! : const SizedBox.shrink(),
-              child: Stack(
-                children: [
-                  // Scanning frame overlay
-                  Center(
-                    child: Container(
-                      width: 240,
-                      height: 240,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: theme.colorScheme.primary, width: 3),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Corner brackets
-                          ..._corners(theme.colorScheme.primary),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 48,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          AppStrings.of(context).pointCameraAtCode,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 13),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+      // The frame and hint over the camera; why it won't run instead of
+      // them.
+      body: ScannerPreview(
+        session: _session,
+        onDetect: _onDetect,
+        overlay: Stack(
+          children: [
+            // Scanning frame overlay
+            Center(
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: theme.colorScheme.primary, width: 3),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Stack(
+                  children: [
+                    // Corner brackets
+                    ..._corners(theme.colorScheme.primary),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              bottom: 48,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    AppStrings.of(context).pointCameraAtCode,
+                    style: const TextStyle(
+                        color: Colors.white70, fontSize: 13),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

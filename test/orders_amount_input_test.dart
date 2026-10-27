@@ -1,9 +1,10 @@
 // Typing amounts in the order screens. A phone's number pad types its own
 // region's digits and decimal point: '12,50' on a French or Brazilian
-// iPhone, '١٢٫٥' on an Arabic one, a Bengali keyboard's own digits on
-// Android. The order form, the order detail's Record Payment and a return's
-// refund show each amount as the app writes it (0-9, '.' as the point) and
-// save the amount the seller meant.
+// phone (the tests run in France, where ',' is the point), '١٢٫٥' on an
+// Arabic one, a Bengali keyboard's own digits on Android. The order form,
+// the order detail's Record Payment and a return's refund show each amount
+// as the app writes it (0-9, '.' as the point) and save the amount the
+// seller meant; with the Kuwaiti Dinar, to its 3 decimals.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -12,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
 import 'package:micro_seller/core/l10n/app_localizations.dart';
 import 'package:micro_seller/core/utils/currency_formatter.dart';
+import 'package:micro_seller/core/utils/number_input.dart';
 import 'package:micro_seller/data/models/order.dart';
 import 'package:micro_seller/data/models/order_item.dart';
 import 'package:micro_seller/data/services/isar_service.dart';
@@ -135,9 +137,24 @@ final _daysField = find.descendant(
 String _text(WidgetTester tester, Finder field) =>
     tester.widget<TextField>(field).controller!.text;
 
+/// The shop's currency is [symbol], as set at startup and saved in Settings
+/// (which applies it again when it loads).
+void _currency(String symbol) {
+  CurrencyFormatter.setSymbol(symbol);
+  SharedPreferences.setMockInitialValues({'currencySymbol': symbol});
+}
+
 void main() {
   setUpAll(() => CurrencyFormatter.setSymbol('৳'));
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    // A French phone: its number pad's ',' is the decimal point.
+    NumberInput.debugDeviceLocale = const Locale('fr', 'FR');
+  });
+  tearDown(() {
+    NumberInput.debugDeviceLocale = null;
+    CurrencyFormatter.setSymbol('৳');
+  });
 
   testWidgets('the order form saves amounts typed in any script', (
     tester,
@@ -230,6 +247,65 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(orders.payments, [12.5]);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets("editing a Kuwaiti Dinar order keeps the amounts' fils", (
+    tester,
+  ) async {
+    _currency(CurrencyFormatter.kuwaitiDinarSymbol);
+    final order = _order.copyWith(
+      discountAmount: 0.125,
+      deliveryFee: 1.5,
+      amountPaid: 5.125,
+    );
+    final orders = await _pump(tester, OrderFormScreen(order: order));
+    // Shown with the dinar's 3 decimals: 2 made them 0.13 and 5.13.
+    expect(_text(tester, _field('Discount')), '0.125');
+    expect(_text(tester, _field('Delivery Fee')), '1.500');
+    expect(_text(tester, _field('Amount Paid')), '5.125');
+
+    // Only the notes changed: the amounts are saved as they were.
+    await tester.tap(find.widgetWithText(FilledButton, 'Edit Order'));
+    await tester.pumpAndSettle();
+    final saved = orders.updated.single;
+    expect(saved.discountAmount, 0.125);
+    expect(saved.deliveryFee, 1.5);
+    expect(saved.amountPaid, 5.125);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets("Pay Full types the total with the currency's decimals", (
+    tester,
+  ) async {
+    for (final (symbol, expected) in [
+      ('৳', '901.25'),
+      (CurrencyFormatter.kuwaitiDinarSymbol, '901.250'),
+    ]) {
+      _currency(symbol);
+      await _pump(
+        tester,
+        OrderFormScreen(order: _order.copyWith(deliveryFee: 1.25)),
+      );
+      await tester.tap(find.text('Pay Full'));
+      await tester.pump();
+      expect(_text(tester, _field('Amount Paid')), expected, reason: symbol);
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
+
+  testWidgets("a Kuwaiti Dinar return's refund shows its fils, and refunds "
+      'them left as suggested', (tester) async {
+    _currency(CurrencyFormatter.kuwaitiDinarSymbol);
+    final orders = await _pump(
+      tester,
+      CreateReturnScreen(originalOrder: _order.copyWith(amountPaid: 1.125)),
+    );
+    // At most what was paid: 2 decimals showed 1.13.
+    expect(_text(tester, _field('Refund')), '1.125');
+    await tester.tap(find.text('Submit Return Request'));
+    await tester.pumpAndSettle();
+    expect(orders.refunds, [1.125]);
     await tester.pumpWidget(const SizedBox());
   });
 

@@ -213,8 +213,9 @@ class _ShellEdgeBackSwipeState extends State<ShellEdgeBackSwipe> {
 
   /// Ends a swipe the shell can't finish: another tab is shown, the strip is
   /// switched off, or the shell is going away. After this frame, since
-  /// ending the gesture rebuilds the pages: a page still on top is put back
-  /// in place at once (it's out of sight or going), and the gesture ends.
+  /// ending the gesture rebuilds the pages: a page still in the tab, on top
+  /// or under a route pushed since, is put back in place at once (it's out
+  /// of sight or going), and the gesture ends.
   void _abandon() {
     final route = _route;
     final navigator = _navigator;
@@ -224,7 +225,7 @@ class _ShellEdgeBackSwipeState extends State<ShellEdgeBackSwipe> {
     _swiping = false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!navigator.mounted) return;
-      route.handleUpdateBackGestureProgress(progress: 1);
+      if (route.isActive) _transitionOf(route).value = 1;
       _settle(route, navigator, keep: route.isActive);
     });
   }
@@ -238,7 +239,7 @@ class _ShellEdgeBackSwipeState extends State<ShellEdgeBackSwipe> {
     required bool keep,
   }) {
     final animation = route.animation!;
-    if (keep) {
+    if (keep && (route.isCurrent || animation.isCompleted)) {
       // Slides the page back in, and ends the gesture at the animation's
       // next status change.
       route.handleCancelBackGesture();
@@ -256,9 +257,18 @@ class _ShellEdgeBackSwipeState extends State<ShellEdgeBackSwipe> {
       });
       return;
     }
-    // A pop slides the page off from where the finger left it.
-    // handleCommitBackGesture would start that from all the way in.
-    if (route.isCurrent) navigator.pop();
+    if (keep) {
+      // Covered mid-swipe by a route the app pushed on the tab (the order
+      // form's "Order created" sheet): the back-gesture API moves only a
+      // page on top, so this one would stay where the finger left it, the
+      // page below showing beside it. It slides back in here, as Flutter's
+      // own iOS swipe does, with the gesture lasting until it is in.
+      _transitionOf(route).forward();
+    } else if (route.isCurrent) {
+      // A pop slides the page off from where the finger left it.
+      // handleCommitBackGesture would start that from all the way in.
+      navigator.pop();
+    }
     var ended = false;
     void end() {
       if (ended) return;
@@ -266,7 +276,8 @@ class _ShellEdgeBackSwipeState extends State<ShellEdgeBackSwipe> {
       if (navigator.mounted) navigator.didStopUserGesture();
     }
 
-    // The gesture lasts until the page is gone, so its slide stays linear.
+    // The gesture lasts until the page is gone or back in, so its slide
+    // stays linear.
     if (!animation.isAnimating) {
       end();
       return;
@@ -281,6 +292,13 @@ class _ShellEdgeBackSwipeState extends State<ShellEdgeBackSwipe> {
     // A page removed mid-slide gets no status change.
     route.completed.whenComplete(end);
   }
+
+  /// The controller of [route]'s slide. The back-gesture API moves it only
+  /// while the route is on top, and Flutter's own swipes drive it directly,
+  /// as [_settle] does for a page covered mid-swipe.
+  static AnimationController _transitionOf(PageRoute<dynamic> route) =>
+      // ignore: invalid_use_of_protected_member
+      route.controller!;
 
   /// [value] along the reading direction: towards the trailing side is
   /// positive, in right-to-left languages too.

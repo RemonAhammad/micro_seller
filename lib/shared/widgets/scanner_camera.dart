@@ -30,6 +30,7 @@ import 'app_button.dart';
 class CameraSession with WidgetsBindingObserver {
   CameraSession(this.controller, this.device) {
     WidgetsBinding.instance.addObserver(this);
+    controller.addListener(_followCamera);
   }
 
   final MobileScannerController controller;
@@ -38,6 +39,21 @@ class CameraSession with WidgetsBindingObserver {
   /// Whether the app may use the camera, while the camera is refused: null
   /// when it isn't, and until the check after a refusal answers.
   final access = ValueNotifier<CameraAccess?>(null);
+
+  /// Why the camera won't run: the error its last start failed with, kept
+  /// until a start succeeds. The controller's own error isn't enough:
+  /// mobile_scanner clears it with any later change of the camera's state,
+  /// such as an iPad turning, although the camera is still off.
+  final error = ValueNotifier<MobileScannerException?>(null);
+
+  void _followCamera() {
+    final camera = controller.value;
+    if (camera.isRunning) {
+      error.value = null;
+    } else if (camera.error case final failed?) {
+      error.value = failed;
+    }
+  }
 
   bool _visible = false;
   bool _resumed = switch (WidgetsBinding.instance.lifecycleState) {
@@ -117,7 +133,49 @@ class CameraSession with WidgetsBindingObserver {
   void dispose() {
     _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
+    controller.removeListener(_followCamera);
     access.dispose();
+    error.dispose();
+  }
+}
+
+/// A scanner's camera, with [overlay] (its frame and hint) over the camera
+/// while it runs or starts, and why it won't run ([ScannerErrorView]) in
+/// their place when it can't: from [session], which keeps why, rather than
+/// from the controller, which forgets it.
+class ScannerPreview extends StatelessWidget {
+  const ScannerPreview({
+    super.key,
+    required this.session,
+    required this.onDetect,
+    required this.overlay,
+  });
+
+  final CameraSession session;
+  final void Function(BarcodeCapture capture) onDetect;
+  final Widget overlay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      // The camera, or why it won't run, fills the space.
+      fit: StackFit.expand,
+      children: [
+        MobileScanner(
+          controller: session.controller,
+          onDetect: onDetect,
+          // Why is drawn above, from the session.
+          errorBuilder: (_, _) => const ColoredBox(color: Colors.black),
+        ),
+        ValueListenableBuilder<MobileScannerException?>(
+          valueListenable: session.error,
+          builder: (context, error, overlay) => error == null
+              ? overlay!
+              : ScannerErrorView(error: error, session: session),
+          child: overlay,
+        ),
+      ],
+    );
   }
 }
 
@@ -159,9 +217,9 @@ _Blocked _blockedBy(MobileScannerErrorCode code, CameraAccess? access) =>
     };
 
 /// What a scanner shows instead of its preview when the camera won't run
-/// (its `MobileScanner.errorBuilder`): why, in the app's language, and the
-/// buttons that fix it. A refused camera offers Allow camera while Android
-/// may still ask, and Open Settings; a camera that failed, Try again.
+/// ([ScannerPreview]): why, in the app's language, and the buttons that fix
+/// it. A refused camera offers Allow camera while Android may still ask,
+/// and Open Settings; a camera that failed, Try again.
 class ScannerErrorView extends StatelessWidget {
   const ScannerErrorView({
     super.key,

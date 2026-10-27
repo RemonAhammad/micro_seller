@@ -61,9 +61,14 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
   /// The pre-filled refund at full precision; the field shows it rounded.
   double _suggestedRefund = 0;
 
+  /// The suggested refund as the field shows it: rounded to the currency's
+  /// decimals (2, or the Kuwaiti Dinar's 3).
+  String get _suggestedText =>
+      _suggestedRefund.toStringAsFixed(NumberInput.moneyDecimals);
+
   void _updateRefundAmount() {
     _suggestedRefund = _returnTotal.clamp(0.0, _maxRefundable);
-    _refundCtrl.text = _suggestedRefund.toStringAsFixed(2);
+    _refundCtrl.text = _suggestedText;
   }
 
   Future<void> _submit() async {
@@ -77,7 +82,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
     // credit to the paisa. The field rounds it, and can round up past
     // `amountPaid`; allow that half-paisa (processRefund caps at amountPaid).
     final typed = _refundCtrl.text.trim();
-    final refund = typed == _suggestedRefund.toStringAsFixed(2)
+    final refund = typed == _suggestedText
         ? _suggestedRefund
         : NumberInput.parseDecimal(typed) ?? 0;
     if (refund < 0 || refund > _maxRefundable + kDueEpsilon) {

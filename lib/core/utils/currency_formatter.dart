@@ -11,6 +11,9 @@ class CurrencyFormatter {
 
   static final NumberFormat _amountFormat = NumberFormat('#,##0.##');
 
+  /// The Kuwaiti Dinar's amounts: up to 3 decimals, its fils.
+  static final NumberFormat _filsFormat = NumberFormat('#,##0.###');
+
   static String get symbol => _symbol;
 
   /// Sets the shop's currency, and with it the decimals money fields take
@@ -20,9 +23,14 @@ class CurrencyFormatter {
     NumberInput.moneyDecimals = symbol == kuwaitiDinarSymbol ? 3 : 2;
   }
 
+  /// [amount] with the currency's symbol, grouped in thousands with ',' and
+  /// with as many decimals as it has, up to the currency's: 2, or the
+  /// Kuwaiti Dinar's 3 (a due of 1.125 dinars shows its fils, as the money
+  /// fields type them).
   static String format(double amount, {String? symbol}) {
     final sym = symbol ?? _symbol;
-    final formatted = _amountFormat.format(amount);
+    final amounts = sym == kuwaitiDinarSymbol ? _filsFormat : _amountFormat;
+    final formatted = amounts.format(amount);
     return '$sym$formatted';
   }
 

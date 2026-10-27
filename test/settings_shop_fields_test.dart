@@ -63,14 +63,20 @@ void main() {
     );
   }
 
-  /// Opens [label]'s edit dialog, types [typed] into it, saves, and returns
-  /// what the field held.
+  /// Opens [label]'s edit dialog, enters [typed] over its whole value (a
+  /// paste, or a keyboard's text over it all), saves, and returns what the
+  /// field held.
   Future<String> edit(WidgetTester tester, String label, String typed) async {
     await tester.tap(find.text(label));
     await tester.pumpAndSettle();
     final field = find.descendant(
       of: find.byType(AlertDialog),
       matching: find.byType(TextField),
+    );
+    final controller = tester.widget<TextField>(field).controller!;
+    controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: controller.text.length,
     );
     await tester.enterText(field, typed);
     await tester.pump();

@@ -102,15 +102,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _items
       ..clear()
       ..addAll(order.items.map((i) => i.copyWith()));
-    _discountCtrl.text = order.discountAmount > 0
-        ? order.discountAmount.toStringAsFixed(order.discountAmount == order.discountAmount.roundToDouble() ? 0 : 2)
-        : '0';
-    _deliveryCtrl.text = order.deliveryFee > 0
-        ? order.deliveryFee.toStringAsFixed(order.deliveryFee == order.deliveryFee.roundToDouble() ? 0 : 2)
-        : '0';
-    _amountPaidCtrl.text = order.amountPaid > 0
-        ? order.amountPaid.toStringAsFixed(order.amountPaid == order.amountPaid.roundToDouble() ? 0 : 2)
-        : '';
+    // Every decimal the shop's currency has (the Kuwaiti Dinar's 3), so an
+    // edit saves the amounts as they were.
+    _discountCtrl.text = order.discountAmount > 0 ? _amountText(order.discountAmount) : '0';
+    _deliveryCtrl.text = order.deliveryFee > 0 ? _amountText(order.deliveryFee) : '0';
+    _amountPaidCtrl.text = order.amountPaid > 0 ? _amountText(order.amountPaid) : '';
     _transactionIdCtrl.text = order.transactionId;
     // Back-calculate tax rate from stored taxAmount
     if (order.taxAmount > 0) {
@@ -129,6 +125,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _paymentMethod = order.paymentMethod;
     setState(() {});
   }
+
+  /// [amount] as a money field shows it: whole, or with the currency's
+  /// decimals (2, or the Kuwaiti Dinar's 3).
+  static String _amountText(double amount) =>
+      amount.toStringAsFixed(amount == amount.roundToDouble() ? 0 : NumberInput.moneyDecimals);
 
   @override
   void dispose() {
@@ -1013,7 +1014,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   return TextButton(
                     // Setting the text notifies _moneyFields; no setState needed.
                     onPressed: total > 0
-                        ? () => _amountPaidCtrl.text = total.toStringAsFixed(total == total.roundToDouble() ? 0 : 2)
+                        ? () => _amountPaidCtrl.text = _amountText(total)
                         : null,
                     child: child!,
                   );
@@ -1767,9 +1768,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   late final List<String> _lowerNames = [for (final c in widget.customers) c.name.toLowerCase()];
 
   void _setQuery(String query) {
-    // Phones are saved with 0-9: a Bengali or Arabic keyboard's digits find
-    // them too.
-    final phone = NumberInput.toAsciiDigits(query);
     setState(() {
       _query = query;
       final customers = widget.customers;
@@ -1777,7 +1775,8 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
           ? customers
           : [
               for (var i = 0; i < customers.length; i++)
-                if (_lowerNames[i].contains(query) || customers[i].phone.contains(phone)) customers[i],
+                // A Bengali or Arabic keyboard's digits find a phone too.
+                if (_lowerNames[i].contains(query) || NumberInput.phoneMatches(customers[i].phone, query)) customers[i],
             ];
     });
   }

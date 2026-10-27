@@ -244,7 +244,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
         .where((d) =>
             _query.isEmpty ||
             d.customer.name.toLowerCase().contains(_query) ||
-            d.customer.phone.contains(_query))
+            NumberInput.phoneMatches(d.customer.phone, _query))
         .where(_filters.matches)
         .toList();
     _sortDues(visible, _sort);

@@ -1,4 +1,5 @@
 import 'package:isar_community/isar.dart';
+import '../../core/utils/number_input.dart';
 import '../models/customer.dart';
 
 class CustomerRepository {
@@ -21,7 +22,8 @@ class CustomerRepository {
       .filter()
       .nameContains(query, caseSensitive: false)
       .or()
-      .phoneContains(query)
+      // Phones are saved with 0-9: a Bengali keyboard's digits find them.
+      .phoneContains(NumberInput.toAsciiDigits(query))
       .findAll();
 
   Future<void> save(Customer customer) async {
