@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:micro_seller/core/utils/currency_formatter.dart';
+import 'package:micro_seller/data/services/release_update_service.dart';
 import 'package:micro_seller/features/cash_register/providers/cash_register_provider.dart';
 import 'package:micro_seller/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:micro_seller/features/dashboard/presentation/widgets/due_summary_card.dart';
@@ -14,6 +15,8 @@ import 'package:micro_seller/features/dashboard/providers/dashboard_provider.dar
 import 'package:micro_seller/features/reports/presentation/reports_screen.dart';
 import 'package:micro_seller/features/reports/presentation/widgets/report_widgets.dart';
 import 'package:micro_seller/features/splash/presentation/splash_screen.dart';
+import 'package:micro_seller/features/updates/presentation/update_notice.dart';
+import 'package:micro_seller/features/updates/providers/update_notice_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/layout_harness.dart';
@@ -24,7 +27,9 @@ import 'dashboard_reports_data.dart';
 // out without an overflow and draw all of their text whole, at the narrowest
 // layout the Display size allows up to a large phone font; and look as they
 // always did at 100% text on a normal phone. (test/text_scale_layout_test.dart
-// covers the headers, stat cards and loading states without data.)
+// covers the headers, stat cards and loading states without data.) On
+// tablets too: iPads and Android tablets in both orientations, and the app's
+// window in Split View, where the Dashboard turns wide from 700 dp.
 
 const _eps = 0.01;
 
@@ -101,6 +106,35 @@ void _expectLinesCentered(RenderParagraph p, String where) {
     final (left, right) = lines[top]!;
     expect((left + right) / 2, closeTo(p.size.width / 2, 2),
         reason: '$where: line at $top of "$text" is not centered');
+  }
+}
+
+/// A newer release, for the Dashboard's update notice.
+class _Notice extends UpdateNotice {
+  @override
+  Future<AvailableUpdate?> build() async => AvailableUpdate(
+        tag: 'v1.0.12',
+        url: Uri.parse(
+            'https://github.com/RemonAhammad/micro_seller/releases/tag/v1.0.12'),
+      );
+}
+
+/// Scrolls [scrollable] from where it is to its end, a screenful at a time,
+/// running [check] at each stop: a tablet's window is too short to build a
+/// whole screen at once, and lists and slivers past it aren't built.
+Future<void> _checkThroughout(
+  WidgetTester tester,
+  Finder scrollable,
+  void Function(String step) check,
+) async {
+  for (var step = 0;; step++) {
+    check('screenful $step');
+    final position = tester.state<ScrollableState>(scrollable).position;
+    if (position.pixels >= position.maxScrollExtent - _eps) break;
+    expect(step, lessThan(40), reason: 'never reached the end');
+    await tester.drag(
+        scrollable, Offset(0, -position.viewportDimension * 0.7));
+    await tester.pumpAndSettle();
   }
 }
 
@@ -337,6 +371,94 @@ void main() {
             reason: '$width dp');
         await tester.pumpWidget(const SizedBox());
       }
+    });
+  });
+
+  group('on tablets and in Split View', () {
+    testWidgets('the dashboard draws every section whole', (tester) async {
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await pumpLayoutApp(tester, const DashboardScreen(),
+            textScale: t,
+            overrides: [
+              ...dashboardOverrides(
+                stats: worstDashboardStats(),
+                dues: worstDues(),
+                collected: kBig,
+                updates: UpdateChannel.github,
+              ),
+              updateNoticeProvider.overrideWith(_Notice.new),
+            ]);
+        await tester.pumpAndSettle();
+        expect(find.byType(UpdateNoticeBanner), findsOneWidget,
+            reason: where);
+        // Every section, one screenful at a time.
+        final seen = <Type>{};
+        await _checkThroughout(tester, find.byType(Scrollable).first,
+            (step) {
+          expectCleanLayout(tester, '$where, $step');
+          expectTextIntact(tester, '$where, $step');
+          for (final section in [
+            SalesChart,
+            OrderStatusChart,
+            RevenueExpenseChart,
+            LowStockList,
+            DueSummaryCard,
+          ]) {
+            if (find.byType(section).evaluate().isNotEmpty) seen.add(section);
+          }
+        });
+        expect(seen, hasLength(5), reason: '$where: $seen');
+        // Side by side where the content is 700 dp or wider.
+        final wide = window.width - railWidthFor(window.width) >= 700;
+        final low = tester.getRect(find.byType(LowStockList));
+        final due = tester.getRect(find.byType(DueSummaryCard));
+        expect(due.left > low.right, wide, reason: where);
+      });
+    });
+
+    testWidgets('every Reports tab draws whole', (tester) async {
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await pumpLayoutApp(tester, const ReportsScreen(),
+            textScale: t, overrides: reportOverrides());
+        await tester.pumpAndSettle();
+        for (var tab = 0; tab < 4; tab++) {
+          await _showTab(tester, tab);
+          final list = find.descendant(
+            of: find.byType(TabBarView),
+            matching: find.byWidgetPredicate((w) =>
+                w is Scrollable && w.axisDirection == AxisDirection.down),
+          );
+          // Every section, one screenful at a time.
+          final seen = <String>{};
+          await _checkThroughout(tester, list.first, (step) {
+            expectCleanLayout(tester, '$where, tab $tab, $step');
+            expectTextIntact(tester, '$where, tab $tab, $step');
+            seen.addAll(tester
+                .widgetList<ReportSectionCard>(find.byType(ReportSectionCard))
+                .map((card) => card.title));
+          });
+          expect(seen, hasLength(_sectionsPerTab[tab]),
+              reason: '$where, tab $tab: $seen');
+          // Back to the top for the next tab's header.
+          await tester.fling(list.first, const Offset(0, 20000), 20000);
+          await tester.pumpAndSettle();
+        }
+      });
+    });
+
+    testWidgets('the export sheet opens cleanly', (tester) async {
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await pumpLayoutApp(tester, const ReportsScreen(),
+            textScale: t, overrides: reportOverrides());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('Export'));
+        await tester.pumpAndSettle();
+        expect(find.text('Share as CSV'), findsOneWidget, reason: where);
+        expectCleanLayout(tester, where);
+        expectTextIntact(tester, where);
+      });
     });
   });
 

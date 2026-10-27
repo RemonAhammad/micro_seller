@@ -9,11 +9,13 @@ import 'package:micro_seller/data/models/order.dart';
 import 'package:micro_seller/data/models/product.dart';
 import 'package:micro_seller/data/models/stock_movement.dart';
 import 'package:micro_seller/data/services/dues_service.dart';
+import 'package:micro_seller/data/services/release_update_service.dart';
 import 'package:micro_seller/data/services/report_service.dart';
 import 'package:micro_seller/features/customers/providers/dues_provider.dart';
 import 'package:micro_seller/features/dashboard/providers/dashboard_provider.dart';
 import 'package:micro_seller/features/expenses/providers/expense_provider.dart';
 import 'package:micro_seller/features/reports/providers/reports_provider.dart';
+import 'package:micro_seller/features/updates/providers/update_notice_provider.dart';
 
 // Worst-case data for the Dashboard and Reports layout tests: long names
 // and SKUs, eight-digit amounts, every status, method and reason, and a
@@ -135,12 +137,17 @@ DashboardStats typicalDashboardStats() => DashboardStats(
       },
     );
 
+/// The Dashboard's data. [updates] is how the install updates:
+/// [UpdateChannel.none] by default, so neither Play nor GitHub is asked (a
+/// test of the GitHub notice overrides the release check too).
 List<Override> dashboardOverrides({
   required DashboardStats stats,
   List<CustomerDue> dues = const [],
   double collected = 0,
+  UpdateChannel updates = UpdateChannel.none,
 }) =>
     [
+      updateChannelProvider.overrideWithValue(AsyncValue.data(updates)),
       dashboardStatsProvider.overrideWithValue(AsyncValue.data(stats)),
       duesProvider.overrideWithValue(AsyncValue.data(dues)),
       duesCollectedThisMonthProvider
@@ -297,15 +304,19 @@ const _eps = 0.01;
 /// compact ("৳12.3M").
 final _amount = RegExp(r'৳-?[\d,]+(?:\.\d+)?[KM]?');
 
-/// Render objects of the horizontally scrolling rows on screen (chip rows,
-/// the TabBar), whose content may run past the screen edge on purpose. A
-/// TabBarView's pages are not among them.
+/// Render objects of the horizontally scrolling rows (chip rows, the
+/// TabBar), whose content may run past the screen edge on purpose: those on
+/// screen, and those scrolled out of view (still laid out). A TabBarView's
+/// pages are not among them.
 Set<RenderObject> _sidewaysScrollers(WidgetTester tester) => {
       for (final e in find
-          .byWidgetPredicate((w) =>
-              w is Scrollable &&
-              axisDirectionToAxis(w.axisDirection) == Axis.horizontal &&
-              w.controller is! PageController)
+          .byWidgetPredicate(
+            (w) =>
+                w is Scrollable &&
+                axisDirectionToAxis(w.axisDirection) == Axis.horizontal &&
+                w.controller is! PageController,
+            skipOffstage: false,
+          )
           .evaluate())
         ?e.renderObject,
     };

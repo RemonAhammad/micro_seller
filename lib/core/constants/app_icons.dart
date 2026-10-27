@@ -49,6 +49,10 @@ abstract final class AppIcons {
   static const ThinIconBuilder alert = tabler.AlertTriangle.new;
   static const ThinIconBuilder whatsapp = tabler.BrandWhatsapp.new;
 
+  // ── Updates: the Dashboard's update notice and Settings → Check for
+  // updates ──
+  static const ThinIconBuilder update = tabler.CloudDownload.new;
+
   // ── Warmed into the SVG cache after the first frame (main.dart); the
   // sidebar's icons come from sidebarItems so the two can't drift apart ──
   static const List<ThinIconBuilder> dashboardSet = [

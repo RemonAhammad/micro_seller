@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/brand_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/share_origin.dart';
 import '../../../../shared/widgets/aging_bar.dart';
 import '../../../customers/presentation/widgets/due_actions.dart';
 import '../../../customers/providers/dues_provider.dart';
@@ -133,13 +134,18 @@ class _ChaseRow extends ConsumerWidget {
                   ),
                 ),
                 if (beside) amount,
-                IconButton(
-                  tooltip: s.remind,
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => sendDueReminder(
-                      context, ref, due.customer, due.orderDues, due.totalDue),
-                  icon: const ThinIcon(AppIcons.whatsapp,
-                      color: Color(0xFF25D366), size: 22),
+                // Its own context: an iPad's share sheet (without WhatsApp,
+                // or without a phone number) points at this button.
+                Builder(
+                  builder: (button) => IconButton(
+                    tooltip: s.remind,
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => sendDueReminder(context, ref,
+                        due.customer, due.orderDues, due.totalDue,
+                        shareOrigin: shareOriginOf(button)),
+                    icon: const ThinIcon(AppIcons.whatsapp,
+                        color: Color(0xFF25D366), size: 22),
+                  ),
                 ),
                 IconButton(
                   tooltip: s.collect,

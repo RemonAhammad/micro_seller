@@ -2,11 +2,19 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_update/in_app_update.dart';
 
+import 'release_update_service.dart';
+
 class UpdateService {
   /// Check for Play Store updates and prompt the user.
   /// - Immediate updates for critical versions (priority >= 4)
   /// - Flexible updates for normal versions
-  static Future<void> checkForUpdate() async {
+  ///
+  /// Installs from Google Play only ([UpdateChannel.play]; read from the
+  /// installer when [channel] is null): Play can't update an APK it didn't
+  /// install, so those, like the iPhone app, get the GitHub release notice
+  /// instead (`release_update_service.dart`).
+  static Future<void> checkForUpdate({UpdateChannel? channel}) async {
+    if ((channel ?? await readUpdateChannel()) != UpdateChannel.play) return;
     if (!Platform.isAndroid) return;
 
     try {

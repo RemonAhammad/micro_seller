@@ -9,8 +9,11 @@ import '../../../data/models/order.dart';
 import '../../../data/models/expense.dart';
 import '../../../data/services/update_service.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/release_update_service.dart';
 import '../../../data/services/review_service.dart';
 import '../../../data/services/tutorial_service.dart';
+import '../../updates/presentation/update_notice.dart';
+import '../../updates/providers/update_notice_provider.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../shared/widgets/rate_app_dialog.dart';
 import '../../../core/constants/app_colors.dart';
@@ -40,22 +43,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      UpdateService.checkForUpdate();
-      _maybeAskForReview();
+      if (!mounted) return;
+      final channel = ref.read(updateChannelProvider.future);
+      _checkForStoreUpdate(channel);
+      _maybeAskForReview(channel);
     });
   }
 
-  /// Ported from the Fuel Cost app: ask happy, regular sellers for a Play
+  /// Play's own in-app update, on a Play install only ([channel]). The
+  /// iPhone app and APKs from GitHub get the update notice under the date
+  /// bar instead (updateNoticeProvider).
+  Future<void> _checkForStoreUpdate(Future<UpdateChannel> channel) async =>
+      UpdateService.checkForUpdate(channel: await channel);
+
+  /// Ported from the Fuel Cost app: ask happy, regular sellers for a store
   /// rating. See [ReviewService] for the eligibility and back-off rules.
-  Future<void> _maybeAskForReview() async {
+  /// [channel] is how this install updates: only a Play install gets Play's
+  /// review sheet.
+  Future<void> _maybeAskForReview(Future<UpdateChannel> channel) async {
     // The showcase tour runs on first launch — a dialog on top of its
     // spotlight overlay would trap the user, so let the tour finish first.
     if (!await TutorialService.isTourCompleted()) return;
+    // Never ask and then do nothing: no listing to rate (the sideloaded
+    // iPhone app, desktop), or an APK from GitHub, which Play never shows
+    // its review sheet to. Checked first, as it needs no database.
+    final updates = await channel;
+    if (!await ReviewService.canPrompt(channel: updates)) return;
     if (!mounted) return;
     final isar = await ref.read(isarProvider.future);
     if (!await ReviewService.isEligible(isar)) return;
-    // Never ask and then do nothing (non-Play installs, iOS, desktop).
-    if (!await ReviewService.canPrompt()) return;
     if (!mounted) return;
 
     // Let the entrance animations settle before interrupting.
@@ -69,7 +85,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     switch (choice) {
       case RateAppChoice.rate:
-        await ReviewService.requestReview();
+        await ReviewService.requestReview(channel: updates);
         await ReviewService.markRated();
       case RateAppChoice.decline:
         await ReviewService.markDeclined();
@@ -143,6 +159,9 @@ class _DashboardContent extends ConsumerWidget {
         ref.watch(dashboardDateRangeProvider), DateTime.now());
     // Amounts read CurrencyFormatter's static symbol, so redraw on a change.
     ref.watch(settingsProvider.select((m) => m['currencySymbol']));
+    // A newer release on GitHub, for the iPhone app and APKs from GitHub
+    // (null on a Play install, which Play updates).
+    final update = ref.watch(updateNoticeProvider).value;
 
     return CustomScrollView(
       slivers: [
@@ -163,6 +182,19 @@ class _DashboardContent extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: _OverdueBanner(summary: dueSummary),
+            ),
+          ),
+
+        // ── A newer release to install ──
+        if (update != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: UpdateNoticeBanner(
+                update: update,
+                onDismiss: () =>
+                    ref.read(updateNoticeProvider.notifier).dismiss(),
+              ),
             ),
           ),
 

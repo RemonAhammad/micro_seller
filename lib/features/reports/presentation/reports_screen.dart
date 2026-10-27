@@ -8,6 +8,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../data/services/csv_export_service.dart';
 import '../../../data/services/report_pdf_service.dart';
 import '../../../data/services/report_service.dart';
@@ -58,6 +59,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   late DateTime _from;
   late DateTime _to;
   bool _exporting = false;
+
+  /// The app bar's export slot (the button, or its spinner while
+  /// exporting): an iPad's share sheet points at it.
+  final _exportSlot = GlobalKey();
 
   static const _tabKeys = [
     'tabProfitSales',
@@ -154,6 +159,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       // animating until the share sheet opens.
       await WidgetsBinding.instance.endOfFrame;
       final tables = await _currentTables(s.tr);
+      final origin = shareOriginOf(_exportSlot.currentContext);
       if (pdf) {
         final bytes = await ReportPdfService().generate(
           shopName: settings.shopName,
@@ -166,7 +172,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         final dir = await getTemporaryDirectory();
         final file = File('${dir.path}/$fileName.pdf');
         await file.writeAsBytes(bytes);
-        await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: title));
+        await SharePlus.instance.share(ShareParams(
+          files: [XFile(file.path)],
+          subject: title,
+          sharePositionOrigin: origin,
+        ));
       } else {
         await CsvExportService().exportReport(
           shopName: settings.shopName,
@@ -174,6 +184,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           periodLabel: period,
           tables: tables,
           fileName: fileName,
+          shareOrigin: origin,
         );
       }
     } catch (_) {
@@ -254,20 +265,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               ),
             ),
             actions: [
-              _exporting
-                  ? Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: onBrand),
+              KeyedSubtree(
+                key: _exportSlot,
+                child: _exporting
+                    ? Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: onBrand),
+                        ),
+                      )
+                    : IconButton(
+                        tooltip: s.tr('export'),
+                        icon: const ThinIcon(tabler.Share.new),
+                        onPressed: _openExportSheet,
                       ),
-                    )
-                  : IconButton(
-                      tooltip: s.tr('export'),
-                      icon: const ThinIcon(tabler.Share.new),
-                      onPressed: _openExportSheet,
-                    ),
+              ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(

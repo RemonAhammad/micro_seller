@@ -9,18 +9,24 @@ import 'package:micro_seller/core/constants/app_icons.dart';
 import 'package:micro_seller/core/constants/app_strings.dart';
 import 'package:micro_seller/core/l10n/app_localizations.dart';
 import 'package:micro_seller/core/theme/app_theme.dart';
+import 'package:micro_seller/data/services/auth_gate_service.dart';
 import 'package:micro_seller/data/services/drive_service.dart';
+import 'package:micro_seller/data/services/release_update_service.dart';
 import 'package:micro_seller/features/settings/presentation/settings_screen.dart';
 import 'package:micro_seller/features/settings/providers/settings_provider.dart';
+import 'package:micro_seller/features/updates/providers/update_notice_provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
 import '../support/layout_harness.dart';
 
 // Layout of Settings under the Display size / Text size settings: every
 // section, row, picker and dialog lays out cleanly from the narrowest layout
 // (320 dp) to a large phone font (150%), in every language and with long
-// data, and looks as before at 100% text on a phone.
+// data, and looks as before at 100% text on a phone. On tablets too, and in
+// Split View; and with the Security row naming Face ID or Touch ID, as an
+// iPhone or iPad does.
 
 const _eps = 0.01;
 
@@ -43,8 +49,13 @@ const _tall = 6000.0;
 /// title styles name no font family: a phone draws those in its system font
 /// (Roboto on Android), a test in its square test font, far wider. Naming
 /// Roboto there measures them as on a phone.
-final ThemeData _phoneTheme = () {
-  final theme = AppTheme.lightTheme;
+final ThemeData _phoneTheme = _onPhone(AppTheme.lightTheme);
+
+/// The app's dark theme as a phone draws it ([_phoneTheme]).
+final ThemeData _phoneDarkTheme = _onPhone(AppTheme.darkTheme);
+
+/// [theme] with Roboto named where it leaves the font to the system.
+ThemeData _onPhone(ThemeData theme) {
   ButtonStyle? roboto(ButtonStyle? style) => style?.copyWith(
     textStyle: WidgetStateProperty.resolveWith(
       (states) =>
@@ -67,7 +78,7 @@ final ThemeData _phoneTheme = () {
       style: roboto(theme.elevatedButtonTheme.style),
     ),
   );
-}();
+}
 
 /// Long data in every field Settings shows, an auto-backup failure for the
 /// Drive banner, and [lang] as the app's language.
@@ -113,21 +124,47 @@ class _FakeDrive extends DriveService {
   ];
 }
 
+/// The device's biometrics, as an iPhone or iPad with [kind] reports them.
+class _FakeAuth extends AuthGateService {
+  _FakeAuth(this.kind, {this.available = true});
+
+  final BiometricKind kind;
+  final bool available;
+
+  @override
+  Future<({bool available, BiometricKind kind})> biometrics() async =>
+      (available: available, kind: kind);
+
+  @override
+  Future<bool> isBiometricAvailable() async => available;
+}
+
 /// Pumps Settings the way the app shows it on a phone: in a shell branch's
-/// Navigator beside the sidebar rail, so a sheet opens beside the rail and a
-/// dialog over the whole window, with the app's theme, [lang] strings and
-/// [textScale] over the whole app. Returns a context inside the branch.
+/// Navigator beside the sidebar (as wide as the window gives it), so a sheet
+/// opens beside it and a dialog over the whole window, with the app's theme,
+/// [lang] strings and [textScale] over the whole app, in [theme] (the light
+/// one by default). The install updates through [updates] (GitHub by
+/// default: About offers Check for updates), and [auth] stands in for the
+/// device's biometrics when given. Returns a context inside the branch.
 Future<BuildContext> _pumpSettings(
   WidgetTester tester, {
   double textScale = 1,
   String lang = 'en',
   _FakeDrive? drive,
+  UpdateChannel updates = UpdateChannel.github,
+  AuthGateService? auth,
+  ThemeData? theme,
 }) async {
   late BuildContext branch;
+  final window = tester.view.physicalSize / tester.view.devicePixelRatio;
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [
+        updateChannelProvider.overrideWithValue(AsyncValue.data(updates)),
+        if (auth != null) authGateServiceProvider.overrideWithValue(auth),
+      ],
       child: MaterialApp(
-        theme: _phoneTheme,
+        theme: theme ?? _phoneTheme,
         locale: Locale(lang),
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -144,7 +181,7 @@ Future<BuildContext> _pumpSettings(
         ),
         home: Row(
           children: [
-            const SizedBox(width: kRailWidth),
+            SizedBox(width: railWidthFor(window.width)),
             Expanded(
               child: Navigator(
                 onGenerateRoute: (_) => MaterialPageRoute<void>(
@@ -223,8 +260,9 @@ void _expectNothingCut(WidgetTester tester, Finder scope, String where) {
   }
 }
 
-/// Every line break in [finder]'s text falls between words: a box too narrow
-/// for a word breaks it across lines without reporting any overflow.
+/// Every line break in [finder]'s text falls between words (or after a
+/// hyphen: "4-|digit"): a box too narrow for a word breaks it across lines
+/// without reporting any overflow.
 void _expectWholeWords(WidgetTester tester, Finder finder, String where) {
   final paragraphs = tester.renderObjectList<RenderParagraph>(finder);
   expect(paragraphs, isNotEmpty, reason: where);
@@ -235,7 +273,9 @@ void _expectWholeWords(WidgetTester tester, Finder finder, String where) {
       final top = p.getOffsetForCaret(TextPosition(offset: i), Rect.zero).dy;
       if (lastTop != null && top > lastTop + 0.5) {
         expect(
-          text[i - 1].trim().isEmpty || text[i].trim().isEmpty,
+          text[i - 1].trim().isEmpty ||
+              text[i].trim().isEmpty ||
+              text[i - 1] == '-',
           isTrue,
           reason:
               '$where: "$text" broken inside a word at '
@@ -255,6 +295,12 @@ Finder _card(Finder text) =>
 /// button's label.
 Finder _inTile(Finder finder) =>
     find.descendant(of: find.byType(ListTile), matching: finder);
+
+/// The switch row titled [title]: its texts and its switch, one node for a
+/// screen reader.
+Finder _switchRow(String title) => find
+    .ancestor(of: find.text(title), matching: find.byType(MergeSemantics))
+    .first;
 
 /// Sidebar position's Left / Right toggle.
 final _toggle = find.byWidgetPredicate(
@@ -310,6 +356,9 @@ void main() {
           );
           expect(find.text(s.tr('securityPin')), findsOneWidget, reason: where);
           expect(find.text(_version), findsOneWidget, reason: where);
+          // About's rows: Rate this app, Check for updates, the version.
+          expect(find.text(s.rateThisApp), findsOneWidget, reason: where);
+          expect(find.text(s.checkForUpdates), findsOneWidget, reason: where);
           if (_latin.contains(lang)) {
             // The rows with a control at their end never break a word: the
             // control goes under the texts instead.
@@ -319,6 +368,15 @@ void main() {
               s.signIn,
               s.appVersion,
               _version,
+              // The switch rows: Auto Backup and Security. (Not Auto
+              // Backup's description: a word as long as Spanish's
+              // "automáticamente" is wider than any row's texts at 320 dp
+              // and 150% text.)
+              s.tr('autoBackup'),
+              s.securityFingerprint,
+              s.biometricNotAvailable,
+              s.tr('securityPin'),
+              s.tr('securityPinDesc'),
             ]) {
               _expectWholeWords(tester, find.text(text), where);
             }
@@ -334,11 +392,18 @@ void main() {
     ) async {
       requireRoboto();
       addTearDown(tester.view.reset);
-      for (final width in [360.0, 411.0]) {
-        final where = '${width.toInt()} dp';
+      // ListTile's end padding: the light theme sets 16; the dark theme
+      // keeps Material 3's 24.
+      for (final (mode, theme, padding, width) in [
+        for (final width in [360.0, 411.0]) ...[
+          ('light', _phoneTheme, 16.0, width),
+          ('dark', _phoneDarkTheme, 24.0, width),
+        ],
+      ]) {
+        final where = '$mode, ${width.toInt()} dp';
         SharedPreferences.setMockInitialValues(_prefs('en'));
         setLayoutScreen(tester, width, height: _tall);
-        final branch = await _pumpSettings(tester);
+        final branch = await _pumpSettings(tester, theme: theme);
         final s = AppStrings.of(branch);
         expectCleanLayout(tester, where);
         // Where the toggle is drawn, it is pressed: its right half.
@@ -355,10 +420,17 @@ void main() {
         );
         // The geometry needs Roboto's real widths: in the test font the
         // controls go under the texts.
+        Finder switchOf(String title) => find.descendant(
+          of: _switchRow(title),
+          matching: find.byType(Switch),
+        );
         for (final (title, control) in [
           (s.sidebarPosition, _toggle),
           (s.googleAccount, find.widgetWithText(TextButton, s.signIn)),
+          (s.tr('autoBackup'), switchOf(s.tr('autoBackup'))),
           (s.appVersion, find.text(_version)),
+          (s.securityFingerprint, switchOf(s.securityFingerprint)),
+          (s.tr('securityPin'), switchOf(s.tr('securityPin'))),
         ]) {
           final card = tester.getRect(_card(find.text(title)));
           final tile = tester.getRect(
@@ -371,13 +443,13 @@ void main() {
           final what = '$where, $title';
           // ListTile's trailing: its padding from the card's end, centered
           // across the row ...
-          expect(end.right, closeTo(card.right - 16, _eps), reason: what);
+          expect(end.right, closeTo(card.right - padding, _eps), reason: what);
           expect(end.center.dy, closeTo(tile.center.dy, _eps), reason: what);
           // ... and the title gets what the padding, the icon box, the gaps
           // and the control leave it, as with ListTile's trailing.
           expect(
             tester.getSize(_inTile(find.text(title))).width,
-            closeTo(card.width - end.width - 104, _eps),
+            closeTo(card.width - end.width - 88 - padding, _eps),
             reason: what,
           );
           expect(tile.left, closeTo(card.left, _eps), reason: what);
@@ -542,6 +614,156 @@ void main() {
       expect((rowInk as dynamic).debugInkFeatures, isNotEmpty);
       await gesture.up();
       await tester.pumpAndSettle();
+    });
+  });
+
+  group('the Security row on an iPhone or iPad', () {
+    testWidgets('names Face ID whole at every size, in every language', (
+      tester,
+    ) async {
+      requireRoboto();
+      await _forEachLayout(
+        tester,
+        (where, width, t, lang) async {
+          final branch = await _pumpSettings(
+            tester,
+            textScale: t,
+            lang: lang,
+            auth: _FakeAuth(BiometricKind.faceId),
+          );
+          final s = AppStrings.of(branch);
+          expectCleanLayout(tester, where);
+          final row = _switchRow(s.securityFaceId);
+          expect(row, findsOneWidget, reason: where);
+          _expectNothingCut(tester, row, where);
+          expect(
+            find.descendant(of: row, matching: find.text(s.securityFaceIdDesc)),
+            findsOneWidget,
+            reason: where,
+          );
+          expect(
+            find.descendant(
+              of: row,
+              matching: find.byWidgetPredicate(
+                (w) => w is ThinIcon && w.builder == tabler.FaceId.new,
+              ),
+            ),
+            findsOneWidget,
+            reason: where,
+          );
+          if (_latin.contains(lang)) {
+            for (final text in [s.securityFaceId, s.securityFaceIdDesc]) {
+              _expectWholeWords(tester, find.text(text), where);
+            }
+          }
+        },
+        heights: const [_tall],
+        langs: _langs,
+      );
+    });
+
+    testWidgets('names Touch ID, and Face ID not set up, whole at every size', (
+      tester,
+    ) async {
+      requireRoboto();
+      await _forEachLayout(
+        tester,
+        (where, width, t, lang) async {
+          for (final (auth, title, subtitle) in [
+            (
+              _FakeAuth(BiometricKind.touchId),
+              'securityTouchId',
+              'securityTouchIdDesc',
+            ),
+            (
+              _FakeAuth(BiometricKind.touchId, available: false),
+              'securityTouchId',
+              'touchIdNotSetUp',
+            ),
+            (
+              _FakeAuth(BiometricKind.faceId, available: false),
+              'securityFaceId',
+              'faceIdNotSetUp',
+            ),
+          ]) {
+            final branch = await _pumpSettings(
+              tester,
+              textScale: t,
+              lang: lang,
+              auth: auth,
+            );
+            final s = AppStrings.of(branch);
+            final what = '$where, $subtitle';
+            expectCleanLayout(tester, what);
+            final row = _switchRow(s.tr(title));
+            expect(row, findsOneWidget, reason: what);
+            expect(
+              find.descendant(of: row, matching: find.text(s.tr(subtitle))),
+              findsOneWidget,
+              reason: what,
+            );
+            _expectNothingCut(tester, row, what);
+            if (_latin.contains(lang)) {
+              for (final key in [title, subtitle]) {
+                _expectWholeWords(tester, find.text(s.tr(key)), what);
+              }
+            }
+            await tester.pumpWidget(const SizedBox());
+          }
+        },
+        heights: const [_tall],
+        langs: const ['en', 'fr', 'ar', 'bn'],
+      );
+    });
+  });
+
+  group('Settings on tablets and in Split View', () {
+    testWidgets('lays out from top to bottom', (tester) async {
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        SharedPreferences.setMockInitialValues(_prefs('en'));
+        final branch = await _pumpSettings(
+          tester,
+          textScale: t,
+          auth: _FakeAuth(BiometricKind.faceId),
+        );
+        final s = AppStrings.of(branch);
+        final list = find.byType(Scrollable).first;
+        // A screenful at a time: rows past the window aren't built.
+        final seen = <String>{};
+        for (var step = 0;; step++) {
+          final at = '$where, screenful $step';
+          expectCleanLayout(tester, at);
+          _expectNothingCut(tester, find.byType(SettingsScreen), at);
+          for (final text in [
+            s.displaySize,
+            s.sidebarPosition,
+            s.exportBackup,
+            s.googleAccount,
+            s.checkForUpdates,
+            s.appVersion,
+            s.securityFaceId,
+            s.clearAllData,
+          ]) {
+            if (find.text(text).evaluate().isNotEmpty) seen.add(text);
+          }
+          for (final text in [s.sidebarPosition, s.googleAccount, s.appVersion]) {
+            final found = find.text(text);
+            if (found.evaluate().isNotEmpty) {
+              _expectWholeWords(tester, found, at);
+            }
+          }
+          final position = tester.state<ScrollableState>(list).position;
+          if (position.pixels >= position.maxScrollExtent - _eps) break;
+          expect(step, lessThan(40), reason: '$at: never reached the end');
+          await tester.drag(
+            list,
+            Offset(0, -position.viewportDimension * 0.7),
+          );
+          await tester.pumpAndSettle();
+        }
+        expect(seen, hasLength(8), reason: '$where: $seen');
+      });
     });
   });
 

@@ -22,7 +22,8 @@ import '../support/layout_harness.dart';
 // Layout of Settings → Color theme and its editor from the narrowest layout
 // (320 dp) to a large phone font (150%), left to right and right to left:
 // every preset, twelve saved themes with 30-character names, Phone colors,
-// the editor with both color pickers, and Settings' Color theme row.
+// the editor with both color pickers, and Settings' Color theme row. On
+// tablets too, and in Split View.
 
 const _eps = 0.01;
 
@@ -57,10 +58,10 @@ class _FakeDrive extends DriveService {
   Future<GoogleSignInAccount?> getCurrentUser() async => null;
 }
 
-/// Pumps [screen] the way the app shows a Settings page on a phone: in the
-/// Settings branch's Navigator beside the sidebar rail, with Phone colors
-/// offered (unless not [phone]), [lang] strings and [textScale] over the
-/// whole app.
+/// Pumps [screen] the way the app shows a Settings page: in the Settings
+/// branch's Navigator beside the sidebar (as wide as the window gives it),
+/// with Phone colors offered (unless not [phone]), [lang] strings and
+/// [textScale] over the whole app.
 Future<void> _pump(
   WidgetTester tester,
   Widget screen, {
@@ -92,7 +93,11 @@ Future<void> _pump(
         ),
         home: Row(
           children: [
-            const SizedBox(width: kRailWidth),
+            SizedBox(
+              width: railWidthFor(
+                tester.view.physicalSize.width / tester.view.devicePixelRatio,
+              ),
+            ),
             Expanded(
               child: Navigator(
                 onGenerateRoute: (_) =>
@@ -406,5 +411,84 @@ void main() {
       langs: const ['en', 'ar'],
       height: 6000,
     );
+  });
+
+  group('on tablets and in Split View', () {
+    /// Scrolls [scope]'s first list from the top to its end, a screenful at a
+    /// time, running [check] at each stop: a tablet's window is too short to
+    /// build the whole screen at once.
+    Future<void> checkThroughout(
+      WidgetTester tester,
+      Finder scope,
+      void Function(String step) check,
+    ) async {
+      final list = find
+          .descendant(of: scope, matching: find.byType(Scrollable))
+          .first;
+      for (var step = 0; ; step++) {
+        check('screenful $step');
+        final position = tester.state<ScrollableState>(list).position;
+        if (position.pixels >= position.maxScrollExtent - _eps) break;
+        expect(step, lessThan(40), reason: 'never reached the end');
+        await tester.drag(list, Offset(0, -position.viewportDimension * 0.7));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    testWidgets('Color theme lays out from top to bottom', (tester) async {
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        SharedPreferences.setMockInitialValues(_prefs);
+        await _pump(tester, const ColorThemeScreen(), textScale: t, lang: 'en');
+        final screen = find.byType(ColorThemeScreen);
+        final s = AppStrings.of(tester.element(screen));
+        final seen = <String>{};
+        await checkThroughout(tester, screen, (step) {
+          expectCleanLayout(tester, '$where, $step');
+          _expectNothingCut(tester, screen, '$where, $step');
+          for (final preset in kPresetColorThemes) {
+            final name = find.text(s.presetThemeName(preset.id));
+            if (name.evaluate().isEmpty) continue;
+            seen.add(preset.id);
+            _expectWholeWords(tester, name, '$where, $step, ${preset.id}');
+          }
+          for (final theme in _customs.skip(1)) {
+            if (find.text(theme.name!).evaluate().isNotEmpty) {
+              seen.add(theme.id);
+            }
+          }
+        });
+        // Every preset and every saved theme was on screen.
+        expect(
+          seen,
+          hasLength(kPresetColorThemes.length + _customs.length - 1),
+          reason: where,
+        );
+      });
+    });
+
+    testWidgets('the editor lays out from top to bottom', (tester) async {
+      requireRoboto();
+      await forEachTabletLayout(tester, (where, window, t) async {
+        SharedPreferences.setMockInitialValues(_prefs);
+        await _pump(
+          tester,
+          ColorThemeEditor.edit(theme: _customs.first),
+          textScale: t,
+          lang: 'en',
+        );
+        final editor = find.byType(ColorThemeEditor);
+        await checkThroughout(tester, editor, (step) {
+          expectCleanLayout(tester, '$where, $step');
+          _expectNothingCut(tester, editor, '$where, $step');
+          _expectEditorWords(tester, 'en', '$where, $step');
+        });
+        // Save stays on screen under the form.
+        final s = AppStrings.of(tester.element(editor));
+        final save = tester.getRect(find.widgetWithText(FilledButton, s.save));
+        expect(save.bottom, lessThanOrEqualTo(window.height + _eps),
+            reason: where);
+      });
+    });
   });
 }

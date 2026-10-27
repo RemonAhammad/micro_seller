@@ -16,6 +16,7 @@ import 'package:micro_seller/data/models/expense.dart';
 import 'package:micro_seller/data/models/product.dart';
 import 'package:micro_seller/data/models/variant_attribute.dart';
 import 'package:micro_seller/data/services/isar_service.dart';
+import 'package:micro_seller/data/services/release_update_service.dart';
 import 'package:micro_seller/features/categories/providers/category_provider.dart';
 import 'package:micro_seller/features/customers/providers/dues_provider.dart';
 import 'package:micro_seller/features/dashboard/presentation/dashboard_screen.dart';
@@ -27,6 +28,7 @@ import 'package:micro_seller/features/products/presentation/widgets/product_card
 import 'package:micro_seller/features/products/presentation/widgets/stock_badge.dart';
 import 'package:micro_seller/features/reports/presentation/reports_screen.dart';
 import 'package:micro_seller/features/reports/presentation/widgets/report_widgets.dart';
+import 'package:micro_seller/features/updates/providers/update_notice_provider.dart';
 import 'package:micro_seller/shared/widgets/loading_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -300,6 +302,9 @@ void main() {
       pendingOrders: 1234,
     );
     List<Override> overrides(AsyncValue<DashboardStats> value) => [
+          // Neither Play nor GitHub is asked for an update.
+          updateChannelProvider
+              .overrideWithValue(const AsyncValue.data(UpdateChannel.none)),
           dashboardStatsProvider.overrideWithValue(value),
           duesProvider
               .overrideWithValue(const AsyncValue.data(<CustomerDue>[])),

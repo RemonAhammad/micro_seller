@@ -21,6 +21,8 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../core/theme/dynamic_color_support.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/number_input.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/auth_gate.dart';
 import '../../../shared/widgets/app_zoom.dart';
@@ -29,15 +31,23 @@ import '../../../data/services/auth_gate_service.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../../data/services/release_update_service.dart';
 import '../../../data/services/review_service.dart';
+import '../../updates/presentation/update_notice.dart';
+import '../../updates/providers/update_notice_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key, this.driveService});
+  const SettingsScreen({super.key, this.driveService, this.localBackupService});
 
   /// Replaces the Google Drive service, so a test can list backups without
   /// signing in. The app passes none.
   @visibleForTesting
   final DriveService? driveService;
+
+  /// Replaces the local backup service, so a test can export without a
+  /// database. The app passes none.
+  @visibleForTesting
+  final LocalBackupService? localBackupService;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -46,12 +56,22 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen>
     with WidgetsBindingObserver {
   late final _driveService = widget.driveService ?? DriveService();
-  final _localBackupService = LocalBackupService();
+  late final _localBackupService =
+      widget.localBackupService ?? LocalBackupService();
   bool _isBackingUp = false;
   bool _isRestoring = false;
   bool _isLocalExporting = false;
   bool _isLocalImporting = false;
   String? _googleAccountEmail;
+
+  /// The device's biometrics, which the Security row names (Face ID or
+  /// Touch ID on an iPhone or iPad). Asked once, not on every rebuild, and
+  /// again when the app comes back to the front: the seller may have set
+  /// up Face ID in the system's Settings meanwhile.
+  Future<({bool available, BiometricKind kind})>? _biometrics;
+
+  /// Local Backup's Export row.
+  final _exportBackupRow = GlobalKey();
 
   @override
   void initState() {
@@ -76,6 +96,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     // surface the banner without requiring a navigation away and back.
     if (state == AppLifecycleState.resumed) {
       ref.read(settingsProvider.notifier).refreshAutoBackupError();
+      // Biometrics may have been set up (or removed) meanwhile.
+      setState(() => _biometrics = null);
     }
   }
 
@@ -242,7 +264,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   Future<bool> _verifyFingerprint(String reason) async {
     final settings = ref.read(settingsProvider.notifier);
     if (!settings.securityFingerprintEnabled) return true;
-    final svc = AuthGateService();
+    final svc = ref.read(authGateServiceProvider);
     if (!await svc.isBiometricAvailable()) return true;
     if (!mounted) return false;
     return runAuthGate(
@@ -259,7 +281,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   Future<bool> _verifyPin(String reason) async {
     final settings = ref.read(settingsProvider.notifier);
     if (!settings.securityPinEnabled) return true;
-    final svc = AuthGateService();
+    final svc = ref.read(authGateServiceProvider);
     if (!await svc.hasPin()) return true;
     if (!mounted) return false;
     return runAuthGate(
@@ -284,7 +306,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final s = AppStrings.of(context);
     final passed = await _verifyPin(s.tr('changeSecurity'));
     if (!passed || !mounted) return;
-    final svc = AuthGateService();
+    final svc = ref.read(authGateServiceProvider);
     if (target) {
       // Enable: force a fresh PIN setup so we know one exists going forward.
       final ok = await runPinSetup(
@@ -320,6 +342,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       reason: AppStrings.of(context).clearAllData,
       fingerprintEnabled: settings.securityFingerprintEnabled,
       pinEnabled: settings.securityPinEnabled,
+      service: ref.read(authGateServiceProvider),
     );
     if (!passed || !mounted) return;
 
@@ -341,6 +364,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     ref.watch(settingsProvider);
     final theme = Theme.of(context);
     final brand = context.brand;
+    // How this install updates. Only the channel: opening Settings never
+    // asks GitHub; Check for updates does.
+    final updateChannel = ref.watch(updateChannelProvider).value;
 
     return Scaffold(
       appBar: AppBar(title: Text(s.settings)),
@@ -562,13 +588,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 label: s.defaultLowStockThreshold,
                 value: ref.read(settingsProvider.notifier).lowStockThreshold.toString(),
                 onEdit: (val) {
-                  final n = int.tryParse(val);
+                  final n = NumberInput.parseInteger(val);
                   if (n != null) {
                     ref.read(settingsProvider.notifier).updateLowStockThreshold(n);
                   }
                 },
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                inputFormatters: const [IntegerInputFormatter()],
               ),
               const Divider(height: 1),
               _EditableTile(
@@ -576,13 +602,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 label: s.taxRate,
                 value: ref.read(settingsProvider.notifier).taxRate.toString(),
                 onEdit: (val) {
-                  final rate = double.tryParse(val);
+                  final rate = NumberInput.parseDecimal(val);
                   if (rate != null) {
                     ref.read(settingsProvider.notifier).updateTaxRate(rate);
                   }
                 },
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                inputFormatters: const [DecimalInputFormatter.percent()],
               ),
             ],
           ),
@@ -669,6 +695,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           _SettingsCard(
             children: [
               ListTile(
+                // An iPad's share sheet points at this row.
+                key: _exportBackupRow,
                 leading: Container(
                   width: 40,
                   height: 40,
@@ -686,11 +714,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 onTap: _isLocalExporting
                     ? null
                     : () async {
+                        final origin =
+                            shareOriginOf(_exportBackupRow.currentContext);
                         setState(() => _isLocalExporting = true);
                         try {
                           final isar = await ref.read(isarProvider.future);
                           final settingsSnapshot = ref.read(settingsProvider.notifier).exportSettings();
-                          await _localBackupService.exportBackup(isar, settings: settingsSnapshot);
+                          await _localBackupService.exportBackup(
+                            isar,
+                            settings: settingsSnapshot,
+                            shareOrigin: origin,
+                          );
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -897,8 +931,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 // Auto-backup switch — when enabled and the user is signed
                 // into Drive, AutoBackupRunner kicks off a backup on app
                 // startup (throttled to ≥12h between runs).
-                SwitchListTile(
-                  secondary: Container(
+                _SwitchRow(
+                  leading: Container(
                     width: 40,
                     height: 40,
                     alignment: Alignment.center,
@@ -947,27 +981,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           _SectionHeader(s.about),
           _SettingsCard(
             children: [
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+              // Only where the app has a store listing to rate: not the
+              // sideloaded iPhone app (ReviewService.hasStoreListing).
+              if (ReviewService.hasStoreListing()) ...[
+                ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ThinIcon(tabler.Star.new, color: Colors.amber.shade700, size: 20),
                   ),
-                  child: ThinIcon(tabler.Star.new, color: Colors.amber.shade700, size: 20),
+                  title: Text(s.rateThisApp),
+                  subtitle: Text(s.rateThisAppSubtitle(AppStrings.appName)),
+                  trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                  // The tap is already an opt-in, so skip the gate dialog.
+                  // An APK from GitHub opens the Play listing: Play shows
+                  // its review sheet to Play installs only.
+                  onTap: () async {
+                    await ReviewService.requestReview(channel: updateChannel);
+                    await ReviewService.markRated();
+                  },
                 ),
-                title: Text(s.rateThisApp),
-                subtitle: Text(s.rateThisAppSubtitle(AppStrings.appName)),
-                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
-                // The tap is already an opt-in, so skip the gate dialog.
-                onTap: () async {
-                  await ReviewService.requestReview();
-                  await ReviewService.markRated();
-                },
-              ),
-              const Divider(height: 1, indent: 56),
+                const Divider(height: 1, indent: 56),
+              ],
+              // Installs Play doesn't update: the iPhone app and APKs from
+              // GitHub.
+              if (updateChannel == UpdateChannel.github) ...[
+                const _CheckForUpdatesTile(),
+                const Divider(height: 1, indent: 56),
+              ],
               _EndControl(
                 tile: ListTile(
                   leading: Container(
@@ -1007,12 +1053,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             _SettingsCard(
               children: [
                 if (isFingerprintFeatureEnabled)
-                  FutureBuilder<bool>(
-                    future: AuthGateService().isBiometricAvailable(),
+                  FutureBuilder<({bool available, BiometricKind kind})>(
+                    future: _biometrics ??=
+                        ref.read(authGateServiceProvider).biometrics(),
                     builder: (context, snapshot) {
-                      final available = snapshot.data ?? false;
-                      return SwitchListTile(
-                        secondary: Container(
+                      final available = snapshot.data?.available ?? false;
+                      // Named as the device names it: Face ID or Touch ID
+                      // on an iPhone or iPad; Android can't tell a face
+                      // from a fingerprint. The saved setting stays
+                      // securityFingerprintEnabled, as backups carry it.
+                      final (
+                        ThinIconBuilder icon,
+                        String title,
+                        String description,
+                        String notSetUp,
+                      ) = switch (snapshot.data?.kind ?? BiometricKind.other) {
+                        BiometricKind.faceId => (
+                            tabler.FaceId.new,
+                            s.securityFaceId,
+                            s.securityFaceIdDesc,
+                            s.faceIdNotSetUp,
+                          ),
+                        BiometricKind.touchId => (
+                            tabler.Fingerprint.new,
+                            s.securityTouchId,
+                            s.securityTouchIdDesc,
+                            s.touchIdNotSetUp,
+                          ),
+                        BiometricKind.other => (
+                            tabler.Fingerprint.new,
+                            s.securityFingerprint,
+                            s.securityFingerprintDesc,
+                            s.biometricNotAvailable,
+                          ),
+                      };
+                      return _SwitchRow(
+                        leading: Container(
                           width: 40,
                           height: 40,
                           alignment: Alignment.center,
@@ -1021,18 +1097,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: ThinIcon(
-                            tabler.Fingerprint.new,
+                            icon,
                             color: available
                                 ? brand.primary
                                 : theme.colorScheme.onSurface.withOpacity(0.4),
                             size: 20,
                           ),
                         ),
-                        title: Text(s.tr('securityFingerprint')),
+                        title: Text(title),
                         subtitle: Text(
-                          available
-                              ? s.tr('securityFingerprintDesc')
-                              : s.tr('biometricNotAvailable'),
+                          available ? description : notSetUp,
                           style: TextStyle(
                             fontSize: 12,
                             color: theme.colorScheme.onSurface
@@ -1052,8 +1126,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 if (isFingerprintFeatureEnabled && isPinFeatureEnabled)
                   const Divider(height: 1),
                 if (isPinFeatureEnabled)
-                  SwitchListTile(
-                    secondary: Container(
+                  _SwitchRow(
+                    leading: Container(
                       width: 40,
                       height: 40,
                       alignment: Alignment.center,
@@ -1185,6 +1259,68 @@ class _TextSizeValue extends ConsumerWidget {
     return Text(
       custom == null ? AppStrings.of(context).phoneTextSize('${phoneTextPercent(context)}%') : '$custom%',
       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+    );
+  }
+}
+
+/// About → Check for updates, on installs Play doesn't update (the iPhone
+/// app, APKs from GitHub): asks GitHub now, whatever the daily throttle and
+/// a dismissed notice, and says what it found. While it asks, a spinner, and
+/// taps are ignored.
+class _CheckForUpdatesTile extends ConsumerStatefulWidget {
+  const _CheckForUpdatesTile();
+
+  @override
+  ConsumerState<_CheckForUpdatesTile> createState() =>
+      _CheckForUpdatesTileState();
+}
+
+class _CheckForUpdatesTileState extends ConsumerState<_CheckForUpdatesTile> {
+  bool _checking = false;
+
+  Future<void> _check() async {
+    setState(() => _checking = true);
+    final result = await ref.read(updateNoticeProvider.notifier).checkNow();
+    if (!mounted) return;
+    setState(() => _checking = false);
+    final s = AppStrings.of(context);
+    switch (result) {
+      case Available(:final update):
+        await UpdateNoticeDialog.show(context, update);
+      case UpToDate():
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(s.upToDate)));
+      case CheckFailed():
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(s.updateCheckFailed),
+          backgroundColor: Colors.red,
+        ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final brand = context.brand;
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: brand.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: _checking
+            ? const Padding(
+                padding: EdgeInsets.all(10),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : ThinIcon(AppIcons.update, color: brand.primary, size: 20),
+      ),
+      title: Text(s.checkForUpdates),
+      trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+      onTap: _checking ? null : _check,
     );
   }
 }
@@ -1321,20 +1457,35 @@ class _SettingsCard extends StatelessWidget {
 /// the row's title or subtitle wouldn't fit beside [control], the control
 /// goes under them instead, in line with the title.
 ///
-/// [tile] is the row's ListTile, without a trailing widget. Beside it, the
-/// control sits exactly where ListTile's trailing would.
+/// [tile] is the row's ListTile, without a trailing widget or a padding of
+/// its own. Beside it, the control sits exactly where ListTile's trailing
+/// would, in the light theme and the dark one.
 class _EndControl extends MultiChildRenderObjectWidget {
   _EndControl({required Widget tile, required Widget control})
       : super(children: [tile, control]);
 
+  /// Where a ListTile ends its trailing: its end padding, from the ListTile
+  /// theme or Material's default (16 in the light theme, which sets one;
+  /// Material 3's 24 in the dark theme, which doesn't).
+  static double _endPadding(BuildContext context) {
+    final direction = Directionality.of(context);
+    final padding = (ListTileTheme.of(context).contentPadding ??
+            (Theme.of(context).useMaterial3
+                ? const EdgeInsetsDirectional.only(start: 16, end: 24)
+                : const EdgeInsets.symmetric(horizontal: 16)))
+        .resolve(direction);
+    return direction == TextDirection.rtl ? padding.left : padding.right;
+  }
+
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderEndControl(Directionality.of(context));
+      _RenderEndControl(Directionality.of(context), _endPadding(context));
 
   @override
   void updateRenderObject(BuildContext context, RenderObject renderObject) {
-    (renderObject as _RenderEndControl).textDirection =
-        Directionality.of(context);
+    (renderObject as _RenderEndControl)
+      ..textDirection = Directionality.of(context)
+      ..endPadding = _endPadding(context);
   }
 }
 
@@ -1344,11 +1495,10 @@ class _RenderEndControl extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _EndControlParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _EndControlParentData> {
-  _RenderEndControl(this._textDirection);
+  _RenderEndControl(this._textDirection, this._endPadding);
 
-  /// The theme's ListTile end padding, which is also its title gap: between
-  /// the title and the control, and after the control.
-  static const double _end = 16;
+  /// ListTile's title gap: between the texts and the control.
+  static const double _gap = 16;
 
   /// Where the ListTile's texts start: its padding, the 40 dp icon box and
   /// the title gap.
@@ -1367,6 +1517,15 @@ class _RenderEndControl extends RenderBox
     markNeedsLayout();
   }
 
+  /// The ListTile's end padding, after the control.
+  double get endPadding => _endPadding;
+  double _endPadding;
+  set endPadding(double value) {
+    if (value == _endPadding) return;
+    _endPadding = value;
+    markNeedsLayout();
+  }
+
   RenderBox get _tile => firstChild!;
   RenderBox get _control => lastChild!;
 
@@ -1382,7 +1541,7 @@ class _RenderEndControl extends RenderBox
   /// word of its title and subtitle.
   bool _beside(double width) =>
       _tile.getMinIntrinsicWidth(double.infinity) +
-          _end +
+          _gap +
           _control.getMaxIntrinsicWidth(double.infinity) <=
       width;
 
@@ -1395,11 +1554,13 @@ class _RenderEndControl extends RenderBox
     final width = constraints.maxWidth;
     final rtl = textDirection == TextDirection.rtl;
     if (_beside(width)) {
-      // As ListTile lays out its trailing: centered across the row.
+      // As ListTile lays out its trailing: centered across the row, the
+      // title gap from the texts. The tile's own end padding runs under the
+      // control where it is wider than the gap (in the dark theme).
       final control = layoutChild(_control, BoxConstraints(maxWidth: width));
       final tile = layoutChild(
         _tile,
-        BoxConstraints.tightFor(width: width - control.width - _end),
+        BoxConstraints.tightFor(width: width - control.width - _gap),
       );
       final size = constraints.constrain(
         Size(width, math.max(tile.height, control.height)),
@@ -1407,11 +1568,11 @@ class _RenderEndControl extends RenderBox
       return (
         size: size,
         tile: Offset(
-          rtl ? control.width + _end : 0,
+          rtl ? control.width + _gap : 0,
           (size.height - tile.height) / 2,
         ),
         control: Offset(
-          rtl ? _end : width - _end - control.width,
+          rtl ? _endPadding : width - _endPadding - control.width,
           (size.height - control.height) / 2,
         ),
       );
@@ -1419,7 +1580,7 @@ class _RenderEndControl extends RenderBox
     final tile = layoutChild(_tile, BoxConstraints.tightFor(width: width));
     final control = layoutChild(
       _control,
-      BoxConstraints(maxWidth: math.max(0, width - _textStart - _end)),
+      BoxConstraints(maxWidth: math.max(0, width - _textStart - _endPadding)),
     );
     final top = math.max(0.0, tile.height - _tuck);
     return (
@@ -1434,13 +1595,13 @@ class _RenderEndControl extends RenderBox
   @override
   double computeMinIntrinsicWidth(double height) => math.max(
     _tile.getMinIntrinsicWidth(height),
-    _textStart + _control.getMinIntrinsicWidth(height) + _end,
+    _textStart + _control.getMinIntrinsicWidth(height) + _endPadding,
   );
 
   @override
   double computeMaxIntrinsicWidth(double height) =>
       _tile.getMaxIntrinsicWidth(height) +
-      _end +
+      _gap +
       _control.getMaxIntrinsicWidth(height);
 
   double _intrinsicHeight(double width) => width.isFinite
@@ -1482,6 +1643,54 @@ class _RenderEndControl extends RenderBox
   @override
   void paint(PaintingContext context, Offset offset) =>
       defaultPaint(context, offset);
+}
+
+/// A Settings row with a switch at its end, laid out as a [SwitchListTile]
+/// lays it out, except that the switch goes under the texts when a word of
+/// them wouldn't fit beside it ([_EndControl]): a SwitchListTile broke a
+/// long word across lines, down to a few letters a line, in a narrow layout
+/// at a large text size. A tap anywhere on the row flips the switch; without
+/// [onChanged] the row is disabled.
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({
+    required this.leading,
+    required this.title,
+    this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final Widget leading;
+  final Widget title;
+  final Widget? subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final onChanged = this.onChanged;
+    // One node for a screen reader, as a SwitchListTile is.
+    return MergeSemantics(
+      child: _EndControl(
+        tile: ListTile(
+          enabled: onChanged != null,
+          leading: leading,
+          title: title,
+          subtitle: subtitle,
+          onTap: onChanged == null ? null : () => onChanged(!value),
+        ),
+        // SwitchListTile's switch: no tap-target padding (the row is the
+        // target), and the row, not the switch, takes the focus.
+        control: ExcludeFocus(
+          child: Switch(
+            value: value,
+            onChanged: onChanged,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _EditableTile extends StatelessWidget {
