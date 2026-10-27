@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/share_origin.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/catalog_service.dart';
 import '../../../data/services/product_image_store.dart';
@@ -32,6 +33,11 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
   final _service = CatalogService();
   var _options = const CatalogOptions();
   var _busy = false;
+
+  // The share buttons, which an iPad's share sheet points at. Read when the
+  // catalog is ready, wherever the button is drawn by then.
+  final _imageButton = GlobalKey();
+  final _pdfButton = GlobalKey();
 
   /// Only active products — a soft-deleted item shouldn't be advertised.
   List<Product> _visible(List<Product> all) =>
@@ -206,6 +212,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
             // split a word across lines.
             LayoutBuilder(builder: (context, constraints) {
               final image = FilledButton.icon(
+                key: _imageButton,
                 onPressed: _busy || count == 0
                     ? null
                     : () => _shareImage(all),
@@ -213,6 +220,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
                 label: Text(s.shareAsImage),
               );
               final pdf = OutlinedButton.icon(
+                key: _pdfButton,
                 onPressed:
                     _busy || count == 0 ? null : () => _sharePdf(all),
                 icon: const ThinIcon(tabler.FileTypePdf.new, size: 18),
@@ -274,7 +282,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
         shopPhone: shop.phone,
         options: _options,
       );
-      await _shareBytes(bytes, 'catalog.png');
+      await _shareBytes(bytes, 'catalog.png', _imageButton);
     });
   }
 
@@ -287,7 +295,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
         shopPhone: shop.phone,
         options: _options,
       );
-      await _shareBytes(bytes, 'catalog.pdf');
+      await _shareBytes(bytes, 'catalog.pdf', _pdfButton);
     });
   }
 
@@ -303,11 +311,18 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
     if (mounted) context.showSuccessSnackBar(AppStrings.of(context).priceListCopied);
   }
 
-  Future<void> _shareBytes(Uint8List bytes, String fileName) async {
+  /// Shares the catalog file from [button]: an iPad's share sheet points at
+  /// it.
+  Future<void> _shareBytes(
+      Uint8List bytes, String fileName, GlobalKey button) async {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(bytes);
-    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: fileName));
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path)],
+      subject: fileName,
+      sharePositionOrigin: shareOriginOf(button.currentContext),
+    ));
   }
 
   /// Runs a generation task with the progress bar up, surfacing failures as a

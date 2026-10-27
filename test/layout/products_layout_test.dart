@@ -15,6 +15,7 @@ import 'package:micro_seller/data/models/category.dart';
 import 'package:micro_seller/data/models/product.dart';
 import 'package:micro_seller/data/models/supplier.dart';
 import 'package:micro_seller/data/models/variant_attribute.dart';
+import 'package:micro_seller/data/services/device_channel.dart';
 import 'package:micro_seller/data/services/isar_service.dart';
 import 'package:micro_seller/features/categories/presentation/category_screen.dart';
 import 'package:micro_seller/features/categories/providers/category_provider.dart';
@@ -28,11 +29,13 @@ import 'package:micro_seller/features/products/providers/product_provider.dart';
 import 'package:micro_seller/features/scanner/presentation/scanner_screen.dart';
 import 'package:micro_seller/shared/screens/qr_scanner_screen.dart';
 import 'package:micro_seller/shared/widgets/app_button.dart';
+import 'package:micro_seller/shared/widgets/scanner_camera.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
 import '../support/fake_camera.dart';
+import '../support/fake_device_channel.dart';
 import '../support/isar_core.dart';
 import '../support/layout_harness.dart';
 
@@ -42,7 +45,9 @@ import '../support/layout_harness.dart';
 // worst-case data (long names and SKUs, eight-digit amounts, many variants,
 // a long scanned code). Nothing may overflow or be cut off, an amount is
 // never wrapped or ellipsized, a short label is never split mid-word, and at
-// 100% on a 360 dp or wider phone each layout is the one it was before.
+// 100% on a 360 dp or wider phone each layout is the one it was before. The
+// same in every tablet window (iPads and Android tablets, both orientations,
+// Split View), and for the scanners' camera-off views and dialog.
 
 const _eps = 0.01;
 
@@ -158,14 +163,30 @@ Future<void> _pump(
   List<Override> overrides = const [],
   double height = 800,
   bool rail = true,
+  Locale? locale,
 }) async {
   setLayoutScreen(tester, width, height: height);
+  await _pumpHere(tester, screen,
+      t: t, overrides: overrides, rail: rail, locale: locale);
+}
+
+/// [_pump] in the window as it is (a tablet's, from [forEachTabletLayout]):
+/// beside the sidebar the window gets, or over all of it without [rail].
+Future<void> _pumpHere(
+  WidgetTester tester,
+  Widget screen, {
+  required double t,
+  List<Override> overrides = const [],
+  bool rail = true,
+  Locale? locale,
+}) async {
   await pumpLayoutApp(
     tester,
     Theme(data: _phoneTheme, child: screen),
     textScale: t,
     overrides: overrides,
     rail: rail,
+    locale: locale,
   );
   await _frames(tester);
 }
@@ -224,8 +245,72 @@ Finder _icon(ThinIconBuilder builder) => find.byWidgetPredicate(
     (w) => w is ThinIcon && w.builder == builder,
     description: 'ThinIcon');
 
+/// Scans [code] on the scanner tab and waits for its lookup, or only for the
+/// frames when it can't finish ([settle] false).
+Future<void> _scan(WidgetTester tester, String code,
+    {bool settle = true}) async {
+  tester.widget<MobileScanner>(find.byType(MobileScanner)).onDetect!(
+      BarcodeCapture(barcodes: [Barcode(rawValue: code)]));
+  await tester.pump();
+  if (settle) {
+    await _settleDb(tester,
+        () => find.byType(CircularProgressIndicator).evaluate().isEmpty);
+  } else {
+    await _frames(tester);
+  }
+}
+
+/// Every way a scanner's camera can be off, as the camera fails to start
+/// and as the phone reports its access: refused while Android may still ask,
+/// refused for good (iOS, or Android's "Don't ask again"), forbidden by a
+/// device policy, no camera at all, and a camera that fails.
+const _cameraOff = [
+  ('refused, may ask again', FakeCamera.refused, CameraAccess.denied),
+  ('refused', FakeCamera.refused, CameraAccess.permanentlyDenied),
+  ('restricted', FakeCamera.refused, CameraAccess.restricted),
+  ('no camera', FakeCamera.noCamera, CameraAccess.granted),
+  ('failing', FakeCamera.broken, CameraAccess.granted),
+];
+
+/// The camera-off view laid out: nothing overflows, its text is drawn whole
+/// and no word of it (a button label included) is split across lines.
+void _expectCleanCameraOff(WidgetTester tester, String where) {
+  expectCleanLayout(tester, where);
+  final view = find.byType(ScannerErrorView);
+  expect(view, findsOneWidget, reason: where);
+  final texts = find.descendant(of: view, matching: find.byType(Text));
+  expectWholeText(tester, texts, where);
+  _expectWholeWords(tester, texts, where);
+}
+
+/// A screen whose button shows the camera dialog for [access], as a product
+/// photo taken with a refused camera does.
+Widget _cameraDialogHost(CameraAccess access, DeviceChannel device) =>
+    Scaffold(
+      body: Center(
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showCameraBlockedDialog(context, access, device),
+            child: const Text('Show'),
+          ),
+        ),
+      ),
+    );
+
+/// The camera dialog laid out, as [_expectCleanCameraOff] checks the view.
+void _expectCleanCameraDialog(WidgetTester tester, String where) {
+  expectCleanLayout(tester, where);
+  final dialog = find.byType(AlertDialog);
+  expect(dialog, findsOneWidget, reason: where);
+  final texts = find.descendant(of: dialog, matching: find.byType(Text));
+  expectWholeText(tester, texts, where);
+  _expectWholeWords(tester, texts, where);
+}
+
 void main() {
   final coreLibrary = isarCoreLibrary();
+  final camera = FakeCamera();
+  final device = FakeDeviceChannel();
   late Directory dir;
   late Isar isar;
   late int supplierId;
@@ -234,7 +319,7 @@ void main() {
     await loadRoboto();
     SharedPreferences.setMockInitialValues({'currencySymbol': '৳'});
     CurrencyFormatter.setSymbol('৳');
-    MobileScannerPlatform.instance = FakeCamera();
+    MobileScannerPlatform.instance = camera;
     if (coreLibrary == null) return;
     await Isar.initializeIsarCore(libraries: {Abi.current(): coreLibrary});
     dir = await Directory.systemTemp.createTemp('micro_seller_products_layout');
@@ -268,6 +353,12 @@ void main() {
 
   // Every check below measures text as a phone draws it, in Roboto.
   setUp(requireRoboto);
+
+  // A test that turned the camera off leaves it on for the next.
+  tearDown(() {
+    camera.startError = null;
+    MobileScannerController.resetPlatformSessionOwner();
+  });
 
   List<Override> listOverrides(List<Product> products) => [
         productsProvider.overrideWithValue(AsyncValue.data(products)),
@@ -620,20 +711,6 @@ void main() {
   });
 
   group('scanner', () {
-    /// Scans [code] on the scanner tab and waits for its lookup.
-    Future<void> scan(WidgetTester tester, String code,
-        {bool settle = true}) async {
-      tester.widget<MobileScanner>(find.byType(MobileScanner)).onDetect!(
-          BarcodeCapture(barcodes: [Barcode(rawValue: code)]));
-      await tester.pump();
-      if (settle) {
-        await _settleDb(tester,
-            () => find.byType(CircularProgressIndicator).evaluate().isEmpty);
-      } else {
-        await _frames(tester);
-      }
-    }
-
     // A short window: 320 dp wide is a small phone zoomed in, about 640 tall.
     const height = 640.0;
 
@@ -654,7 +731,7 @@ void main() {
             await _pump(tester, const ScannerScreen(),
                 width: width, t: t, height: height, overrides: db);
             expectCleanLayout(tester, '$where, before scanning');
-            await scan(tester, code);
+            await _scan(tester, code);
             // The panel fits the screen, scrolling inside if it must.
             expectCleanLayout(tester, where);
             final scanAgain = find.text('Scan again');
@@ -693,7 +770,7 @@ void main() {
         final where = '${_where(320, 1.3)}, bold text, $state';
         await _pump(tester, const ScannerScreen(),
             width: 320, t: 1.3, height: height, overrides: db);
-        await scan(tester, code);
+        await _scan(tester, code);
         expectCleanLayout(tester, where);
         _expectWholeWords(tester, find.text('Scan again'), where);
         _expectWholeWords(
@@ -718,7 +795,7 @@ void main() {
                 // The lookup never finishes.
                 isarProvider.overrideWithValue(const AsyncValue.loading()),
               ]);
-          await scan(tester, _longCode, settle: false);
+          await _scan(tester, _longCode, settle: false);
           expectCleanLayout(tester, where);
           _expectWholeWords(tester, find.text('Scan again'), where);
           await _clear(tester);
@@ -737,6 +814,259 @@ void main() {
           await _clear(tester);
         }
       }
+    });
+  });
+
+  group('camera off', () {
+    final overrides = [deviceChannelProvider.overrideWithValue(device)];
+
+    // As short as the scanner layouts above.
+    const height = 640.0;
+
+    testWidgets('both scanners say why at every width and text size',
+        (tester) async {
+      addTearDown(tester.view.reset);
+      for (final width in kLayoutWidths) {
+        for (final t in kLayoutTextScales) {
+          for (final (state, error, access) in _cameraOff) {
+            for (final qr in [false, true]) {
+              final where = '${_where(width, t)}, '
+                  '${qr ? 'QR scanner' : 'scanner tab'}, $state';
+              camera.startError = error;
+              device.camera = access;
+              await _pump(
+                tester,
+                qr ? const QrScannerScreen() : const ScannerScreen(),
+                width: width,
+                t: t,
+                height: height,
+                // The QR scanner is a route of its own, over the whole
+                // window.
+                rail: !qr,
+                overrides: overrides,
+              );
+              _expectCleanCameraOff(tester, where);
+              await _clear(tester);
+            }
+          }
+        }
+      }
+    });
+
+    testWidgets('the scanner says why right to left', (tester) async {
+      addTearDown(tester.view.reset);
+      for (final (state, error, access) in _cameraOff) {
+        final where = '${_where(320, 1.5)}, Arabic, $state';
+        camera.startError = error;
+        device.camera = access;
+        await _pump(tester, const ScannerScreen(),
+            width: 320,
+            t: 1.5,
+            height: height,
+            overrides: overrides,
+            locale: const Locale('ar'));
+        _expectCleanCameraOff(tester, where);
+        await _clear(tester);
+      }
+    });
+
+    testWidgets('the scanner and the dialog say why with Bold text on',
+        (tester) async {
+      addTearDown(tester.view.reset);
+      // The phone's Bold text setting draws every label heavier, so wider.
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(boldText: true);
+      addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      for (final (state, error, access) in _cameraOff) {
+        final where = '${_where(320, 1.5)}, bold text, $state';
+        camera.startError = error;
+        device.camera = access;
+        await _pump(tester, const ScannerScreen(),
+            width: 320, t: 1.5, height: height, overrides: overrides);
+        _expectCleanCameraOff(tester, where);
+        await _clear(tester);
+      }
+      for (final access in [
+        CameraAccess.permanentlyDenied,
+        CameraAccess.restricted,
+      ]) {
+        final where = '${_where(320, 1.5)}, bold text, ${access.name}';
+        await _pump(tester, _cameraDialogHost(access, device),
+            width: 320, t: 1.5, height: height);
+        await tester.tap(find.text('Show'));
+        await _frames(tester);
+        _expectCleanCameraDialog(tester, where);
+        await _clear(tester);
+      }
+    });
+
+    testWidgets('the camera dialog lays out at every width and text size',
+        (tester) async {
+      addTearDown(tester.view.reset);
+      for (final width in kLayoutWidths) {
+        for (final t in kLayoutTextScales) {
+          for (final access in [
+            CameraAccess.denied,
+            CameraAccess.permanentlyDenied,
+            CameraAccess.restricted,
+          ]) {
+            final where = '${_where(width, t)}, ${access.name}';
+            await _pump(tester, _cameraDialogHost(access, device),
+                width: width, t: t, height: height);
+            await tester.tap(find.text('Show'));
+            await _frames(tester);
+            _expectCleanCameraDialog(tester, where);
+            await _clear(tester);
+          }
+        }
+      }
+    });
+  });
+
+  group('tablets', () {
+    final categories = [
+      categoriesProvider.overrideWithValue(AsyncValue.data(_categories())),
+    ];
+
+    testWidgets('the product list lays out in every tablet window',
+        (tester) async {
+      final price = CurrencyFormatter.format(_price);
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await _pumpHere(tester, const ProductListScreen(),
+            t: t, overrides: listOverrides(_products()));
+        expectCleanLayout(tester, '$where, grid');
+        _expectOneWholeLine(tester, find.text(price), '$where, grid');
+
+        await tester.tap(_icon(tabler.List.new));
+        await _frames(tester);
+        expectCleanLayout(tester, '$where, list');
+        final name = find.text(_longName).first;
+        final amount = find.text(price);
+        _expectOneWholeLine(tester, amount, '$where, list');
+        _expectWholeWords(tester, name, '$where, list');
+        // Beside the sidebar with labels, price and stock stay beside the
+        // name at 100%.
+        if (t == 1.0 && window.width >= kWideRailMinWidth) {
+          expect(_sideBySide(tester, name, amount), isTrue, reason: where);
+        }
+      });
+    });
+
+    testWidgets('the product form lays out in every tablet window',
+        (tester) async {
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await _pumpHere(tester, const ProductFormScreen(),
+            t: t, overrides: categories);
+        expectCleanLayout(tester, '$where, new product');
+        _expectWholeWords(tester, find.text('Variant Attributes'), where);
+        final selling = find.widgetWithText(TextFormField, 'Selling Price');
+        final cost = find.widgetWithText(TextFormField, 'Cost Price');
+        if (window.width >= kWideRailMinWidth) {
+          expect(_sideBySide(tester, selling, cost), isTrue, reason: where);
+        }
+
+        // Saving the empty form shows each field's error under it.
+        await tester.scrollUntilVisible(
+          find.byType(AppButton),
+          400,
+          scrollable: find
+              .descendant(
+                  of: find.byType(CustomScrollView),
+                  matching: find.byType(Scrollable))
+              .first,
+        );
+        await tester.pump();
+        await tester.tap(find.byType(AppButton));
+        await _frames(tester);
+        expectCleanLayout(tester, '$where, errors shown');
+        expectWholeText(
+            tester, find.text('Product name is required'), where);
+        await _clear(tester);
+
+        // An edited product with every variant: twelve combinations.
+        await _pumpHere(
+            tester, ProductFormScreen(product: _product(variants: true)),
+            t: t, overrides: categories);
+        expectCleanLayout(tester, '$where, variants');
+        _expectWholeWords(tester, find.text('Combinations (12)'), where);
+      });
+    });
+
+    testWidgets('both scanners lay out in every tablet window',
+        (tester) async {
+      await forEachTabletLayout(tester, (where, window, t) async {
+        await _pumpHere(tester, const ScannerScreen(), t: t, overrides: [
+          // The lookup never finishes.
+          isarProvider.overrideWithValue(const AsyncValue.loading()),
+        ]);
+        expectCleanLayout(tester, '$where, scanner tab');
+        await _scan(tester, _longCode, settle: false);
+        expectCleanLayout(tester, '$where, looking a code up');
+        _expectWholeWords(tester, find.text('Scan again'), where);
+        await _clear(tester);
+
+        // A route of its own, over the whole window.
+        await _pumpHere(tester, const QrScannerScreen(), t: t, rail: false);
+        expectCleanLayout(tester, '$where, QR scanner');
+      });
+    });
+
+    testWidgets("the scanner's result panel lays out in every tablet window",
+        (tester) async {
+      if (coreLibrary == null) return markTestSkipped('no Isar core library');
+      final db = [isarProvider.overrideWith((ref) async => isar)];
+      await forEachTabletLayout(tester, (where, window, t) async {
+        for (final (state, code) in [
+          ('matched', _qrCode),
+          ('no match', _longCode),
+        ]) {
+          await _pumpHere(tester, const ScannerScreen(), t: t, overrides: db);
+          await _scan(tester, code);
+          expectCleanLayout(tester, '$where, $state');
+          final scanAgain = find.text('Scan again');
+          final action = find.text(
+              state == 'matched' ? 'View product' : 'Add as new product');
+          for (final button in [scanAgain, action]) {
+            expect(tester.getRect(button).bottom,
+                lessThanOrEqualTo(window.height + _eps),
+                reason: '$where, $state: a button is off the screen');
+          }
+          _expectWholeWords(tester, scanAgain, '$where, $state');
+          _expectWholeWords(tester, action, '$where, $state');
+          await _clear(tester);
+        }
+      });
+    });
+
+    testWidgets('the camera-off views and dialog lay out in every tablet '
+        'window', (tester) async {
+      final overrides = [deviceChannelProvider.overrideWithValue(device)];
+      await forEachTabletLayout(tester, (where, window, t) async {
+        for (final (state, error, access) in _cameraOff) {
+          camera.startError = error;
+          device.camera = access;
+          await _pumpHere(tester, const ScannerScreen(),
+              t: t, overrides: overrides);
+          _expectCleanCameraOff(tester, '$where, scanner tab, $state');
+          await _clear(tester);
+          await _pumpHere(tester, const QrScannerScreen(),
+              t: t, overrides: overrides, rail: false);
+          _expectCleanCameraOff(tester, '$where, QR scanner, $state');
+          await _clear(tester);
+        }
+        camera.startError = null;
+        for (final access in [
+          CameraAccess.permanentlyDenied,
+          CameraAccess.restricted,
+        ]) {
+          await _pumpHere(tester, _cameraDialogHost(access, device), t: t);
+          await tester.tap(find.text('Show'));
+          await _frames(tester);
+          _expectCleanCameraDialog(tester, '$where, dialog, ${access.name}');
+          await _clear(tester);
+        }
+      });
     });
   });
 

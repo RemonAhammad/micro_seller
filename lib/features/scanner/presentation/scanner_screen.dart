@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar_community/isar.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../../data/models/product.dart';
+import '../../../data/repositories/product_repository.dart';
+import '../../../data/services/device_channel.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../shared/widgets/scanner_camera.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
 /// Scanner screen lives as a sidebar branch. The user scans a QR/barcode and
-/// the screen looks up the matching product (by qrCode or sku). If found the
-/// match card offers "View product"; otherwise it offers "Add as new product"
-/// which jumps to the product form with the code pre-filled.
+/// the screen looks up the matching product (by qrCode, sku or a variant's
+/// sku). If found the match card offers "View product"; otherwise it offers
+/// "Add as new product" which jumps to the product form with the code
+/// pre-filled.
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
 
@@ -22,76 +25,41 @@ class ScannerScreen extends ConsumerStatefulWidget {
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindingObserver {
-  // Started/stopped by hand: the branch stays mounted offstage after a visit.
+class _ScannerScreenState extends ConsumerState<ScannerScreen> {
+  // Started/stopped by the session: the branch stays mounted offstage after a visit.
   final _controller = MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates, autoStart: false);
+  late final CameraSession _session;
 
   String? _scannedCode;
   Product? _matchedProduct;
   bool _searching = false;
-  bool _torchOn = false;
   bool _paused = false;
-
-  bool _tabActive = false;
-  bool _appResumed = true;
-  bool _cameraDenied = false;
-  Future<void> _cameraOp = Future.value();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    _session = CameraSession(_controller, ref.read(deviceChannelProvider));
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // False while another branch is shown or a route covers this one.
-    final active = TickerMode.valuesOf(context).enabled;
-    if (active == _tabActive) return;
-    _tabActive = active;
-    // Opening the tab is the only time a refused camera is asked for again.
-    _syncCamera(retryDenied: active);
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    _appResumed = state == AppLifecycleState.resumed;
-    _syncCamera();
-  }
-
-  /// Serialized because start() throws while a start is in flight; each op applies the latest wanted state.
-  void _syncCamera({bool retryDenied = false}) {
-    _cameraOp = _cameraOp.then((_) async {
-      if (!mounted) return;
-      final want = _tabActive && _appResumed;
-      // Android re-prompts on every start() and the prompt pauses/resumes the app — a resume loop.
-      if (want && _cameraDenied && !retryDenied) return;
-      try {
-        if (want) {
-          await _controller.start();
-          _cameraDenied = _controller.value.error?.errorCode == MobileScannerErrorCode.permissionDenied;
-        } else {
-          await _controller.stop();
-        }
-      } catch (_) {
-        // A failed start shows in the preview.
-      }
-      if (!want && _torchOn && mounted) setState(() => _torchOn = false);
-    });
+    _session.setVisible(TickerMode.valuesOf(context).enabled);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _session.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_paused || _searching) return;
+    // The code as printed: a reader may add spaces or a line break around it.
     final value = capture.barcodes
-        .map((b) => b.rawValue)
+        .map((b) => b.rawValue?.trim())
         .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
     if (value == null) return;
     if (value == _scannedCode) return; // ignore duplicate
@@ -105,8 +73,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindi
 
     try {
       final isar = await ref.read(isarProvider.future);
-      // Match against qrCode OR sku — sellers may print either as a label.
-      final product = await isar.products.filter().qrCodeEqualTo(value).or().skuEqualTo(value).findFirst();
+      // Its qrCode, sku or a variant's sku — sellers may print any as a
+      // label — in either UPC-A spelling, as iOS and Android read one.
+      final product = await ProductRepository(isar).findByScannedCode(value);
       if (!mounted) return;
       setState(() {
         _matchedProduct = product;
@@ -138,45 +107,54 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindi
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         title: Text(s.scanQrBarcode),
-        actions: [
-          IconButton(
-            icon: ThinIcon(
-              _torchOn ? tabler.Bolt.new : tabler.BoltOff.new,
-              color: _torchOn ? Colors.yellow : Colors.white,
-            ),
-            onPressed: () {
-              _controller.toggleTorch();
-              setState(() => _torchOn = !_torchOn);
-            },
-          ),
-        ],
+        actions: [TorchButton(controller: _controller)],
       ),
       body: Column(
         children: [
           // Camera view with overlay
           Expanded(
             child: Stack(
+              // The camera, or why it won't run, fills the space.
+              fit: StackFit.expand,
               children: [
-                MobileScanner(controller: _controller, onDetect: _onDetect),
-                Center(
-                  child: Container(
-                    width: 240,
-                    height: 240,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.colorScheme.primary, width: 3),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
+                MobileScanner(
+                  controller: _controller,
+                  onDetect: _onDetect,
+                  errorBuilder: (context, error) => ScannerErrorView(error: error, session: _session),
                 ),
-                Positioned(
-                  bottom: 24,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
-                      child: Text(s.pointCameraAtCode, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                // The frame and hint, over the camera only: not over why it won't run.
+                Positioned.fill(
+                  child: ValueListenableBuilder<MobileScannerState>(
+                    valueListenable: _controller,
+                    builder: (context, camera, overlay) => camera.error == null ? overlay! : const SizedBox.shrink(),
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 240,
+                            height: 240,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: theme.colorScheme.primary, width: 3),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 24,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                              child: Text(
+                                s.pointCameraAtCode,
+                                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -16,14 +17,18 @@ import '../../../data/models/variant_attribute.dart';
 import '../../../data/models/variant_combination.dart';
 import '../providers/product_provider.dart';
 import '../../categories/providers/category_provider.dart';
+import '../../../data/services/device_channel.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/product_image_store.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/debouncer.dart';
+import '../../../core/utils/number_input.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/variant_utils.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/scanner_camera.dart';
 import '../../../shared/screens/qr_scanner_screen.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -291,14 +296,24 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // ── Image ──
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    // No imageQuality: it made the picker decode the photo at full size. The
-    // 1600 cap lets it subsample that decode; the compress pass sets quality.
-    final picked = await picker.pickImage(
-      source: source,
-      maxWidth: 1600,
-      maxHeight: 1600,
-    );
+    final s = AppStrings.of(context);
+    final XFile? picked;
+    try {
+      // No imageQuality: it made the picker decode the photo at full size.
+      // The 1600 cap lets it subsample that decode; the compress pass sets
+      // quality.
+      picked = await ref.read(imagePickerProvider).pickImage(
+            source: source,
+            maxWidth: 1600,
+            maxHeight: 1600,
+          );
+    } on PlatformException catch (e) {
+      await _pickFailed(e.code);
+      return;
+    } catch (_) {
+      if (mounted) context.showErrorSnackBar(s.error);
+      return;
+    }
     if (picked == null) return;
 
     if (mounted) setState(() => _isCompressing = true);
@@ -324,6 +339,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         ProductImageStore.documentsDirectory ??= dir.path;
         setState(() => _imagePath = storedProductImagePath(compressed.path));
       }
+    } catch (_) {
+      // The photo couldn't be saved (no room left, an unreadable file).
+      if (mounted) context.showErrorSnackBar(s.error);
     } finally {
       if (mounted) setState(() => _isCompressing = false);
       // Only mobile pickers hand back a temp copy; desktop returns the
@@ -333,6 +351,32 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           await File(picked.path).delete();
         } catch (_) {}
       }
+    }
+  }
+
+  /// Tells the seller why the picker didn't open ([code], the picker's
+  /// error). A refused camera is explained, with Open Settings, only when the
+  /// phone won't ask again: iOS never asks twice, while Android asks again
+  /// after a first "Deny", which needs no explanation.
+  Future<void> _pickFailed(String code) async {
+    // The picker may have been open long enough for the form to close.
+    if (!mounted) return;
+    final s = AppStrings.of(context);
+    switch (code) {
+      case 'camera_access_denied' || 'camera_access_restricted':
+        final device = ref.read(deviceChannelProvider);
+        final access = await device.cameraAccess();
+        if (!mounted) return;
+        if (access
+            case CameraAccess.permanentlyDenied ||
+                CameraAccess.restricted ||
+                CameraAccess.unknown) {
+          await showCameraBlockedDialog(context, access, device);
+        }
+      case 'no_available_camera':
+        context.showErrorSnackBar(s.noCameraAvailable);
+      default:
+        context.showErrorSnackBar(s.error);
     }
   }
 
@@ -362,7 +406,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               title: Text(s.takePhoto),
               onTap: () {
                 Navigator.pop(ctx);
-                _pickImage(ImageSource.camera);
+                unawaited(_pickImage(ImageSource.camera));
               },
             ),
             ListTile(
@@ -370,7 +414,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               title: Text(s.chooseFromGallery),
               onTap: () {
                 Navigator.pop(ctx);
-                _pickImage(ImageSource.gallery);
+                unawaited(_pickImage(ImageSource.gallery));
               },
             ),
             if (_imagePath != null)
@@ -463,8 +507,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final variantCombinations = _combinations.map((c) => VariantCombination(
         combinationKey: c.key,
         displayLabel: c.displayLabel,
-        stockQty: int.tryParse(c.stockCtrl.text) ?? 0,
-        priceAdjustment: double.tryParse(c.priceCtrl.text) ?? 0,
+        stockQty: NumberInput.parseInteger(c.stockCtrl.text) ?? 0,
+        priceAdjustment: NumberInput.parseDecimal(c.priceCtrl.text) ?? 0,
         sku: c.skuCtrl.text.trim(),
         isActive: c.isActive,
       )).toList();
@@ -476,10 +520,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         description: _descCtrl.text.trim(),
         // Relative, also for a photo an earlier version stored absolute.
         imagePath: storedProductImagePath(_imagePath ?? ''),
-        sellingPrice: double.parse(_sellingPriceCtrl.text),
-        costPrice: double.tryParse(_costPriceCtrl.text) ?? 0.0,
-        stockQty: int.parse(_stockCtrl.text),
-        lowStockThreshold: int.tryParse(_thresholdCtrl.text) ?? 10,
+        // The selling price and stock passed their validators above.
+        sellingPrice: NumberInput.parseDecimal(_sellingPriceCtrl.text)!,
+        costPrice: NumberInput.parseDecimal(_costPriceCtrl.text) ?? 0.0,
+        stockQty: NumberInput.parseInteger(_stockCtrl.text)!,
+        lowStockThreshold: NumberInput.parseInteger(_thresholdCtrl.text) ?? 10,
         category: categoryName,
         qrCode: _qrCtrl.text.trim(),
         isActive: existing?.isActive ?? true,
@@ -742,9 +787,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           controller: _sellingPriceCtrl,
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                          ],
+                          inputFormatters: const [DecimalInputFormatter.money()],
                           validator: (v) =>
                               Validators.positiveNumber(v, 'Selling price'),
                           textInputAction: TextInputAction.next,
@@ -754,9 +797,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           controller: _costPriceCtrl,
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                          ],
+                          inputFormatters: const [DecimalInputFormatter.money()],
                           validator: (v) => Validators.costPriceNotExceedingSelling(
                               v, _sellingPriceCtrl.text),
                           textInputAction: TextInputAction.next,
@@ -776,9 +817,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           label: s.stockQuantity,
                           controller: _stockCtrl,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
+                          inputFormatters: const [IntegerInputFormatter()],
                           validator: (v) =>
                               Validators.nonNegativeInt(v, 'Stock quantity'),
                           textInputAction: TextInputAction.next,
@@ -787,9 +826,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           label: s.lowStockThreshold,
                           controller: _thresholdCtrl,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
+                          inputFormatters: const [IntegerInputFormatter()],
                           textInputAction: TextInputAction.done,
                         ),
                       ],
@@ -957,14 +994,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: _BulkSetField(
                               label: s.setAllStock,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: const [IntegerInputFormatter()],
                               onApply: (val) {
-                                final v = int.tryParse(val);
-                                if (v == null) return;
+                                final v = NumberInput.parseInteger(val);
+                                if (v == null || v < 0) return false;
                                 setState(() {
                                   for (final c in _combinations) {
-                                    c.stockCtrl.text = val;
+                                    c.stockCtrl.text = '$v';
                                   }
                                 });
+                                return true;
                               },
                             ),
                           ),
@@ -972,12 +1012,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: _BulkSetField(
                               label: s.setAllPrice,
+                              keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true, signed: true),
+                              inputFormatters: const [
+                                DecimalInputFormatter.money(signed: true),
+                              ],
                               onApply: (val) {
+                                // '-' or '.' alone is no amount.
+                                if (NumberInput.parseDecimal(val) == null) {
+                                  return false;
+                                }
                                 setState(() {
                                   for (final c in _combinations) {
                                     c.priceCtrl.text = val;
                                   }
                                 });
+                                return true;
                               },
                             ),
                           ),
@@ -1107,9 +1157,7 @@ class _CombinationRowState extends State<_CombinationRow> {
                       isDense: true,
                     ),
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: const [IntegerInputFormatter()],
                     controller: combo.stockCtrl,
                   ),
                   TextField(
@@ -1119,9 +1167,8 @@ class _CombinationRowState extends State<_CombinationRow> {
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true, signed: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^-?\d*\.?\d*')),
+                    inputFormatters: const [
+                      DecimalInputFormatter.money(signed: true),
                     ],
                     controller: combo.priceCtrl,
                   ),
@@ -1269,9 +1316,19 @@ class _SectionLabel extends StatelessWidget {
 
 class _BulkSetField extends StatefulWidget {
   final String label;
-  final void Function(String) onApply;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter> inputFormatters;
 
-  const _BulkSetField({required this.label, required this.onApply});
+  /// Sets the typed value on every combination: false when it isn't one
+  /// ('', '-', '.'), which leaves it in the field.
+  final bool Function(String) onApply;
+
+  const _BulkSetField({
+    required this.label,
+    required this.keyboardType,
+    required this.inputFormatters,
+    required this.onApply,
+  });
 
   @override
   State<_BulkSetField> createState() => _BulkSetFieldState();
@@ -1305,15 +1362,14 @@ class _BulkSetFieldState extends State<_BulkSetField> {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
             style: const TextStyle(fontSize: 12),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true, signed: true),
+            keyboardType: widget.keyboardType,
+            inputFormatters: widget.inputFormatters,
           ),
         ),
         const SizedBox(width: 4),
         GestureDetector(
           onTap: () {
-            onApply(ctrl.text);
-            ctrl.clear();
+            if (onApply(ctrl.text)) ctrl.clear();
           },
           child: ThinIcon(tabler.CircleCheck.new,
               size: 20, color: Theme.of(context).colorScheme.primary),
@@ -1383,8 +1439,8 @@ class _CombinationEntry {
       _CombinationEntry.fromCombination(VariantCombination(
         combinationKey: other.key,
         displayLabel: displayLabel,
-        stockQty: int.tryParse(other.stockCtrl.text) ?? 0,
-        priceAdjustment: double.tryParse(other.priceCtrl.text) ?? 0,
+        stockQty: NumberInput.parseInteger(other.stockCtrl.text) ?? 0,
+        priceAdjustment: NumberInput.parseDecimal(other.priceCtrl.text) ?? 0,
         sku: other.skuCtrl.text,
         isActive: other.isActive,
       ));

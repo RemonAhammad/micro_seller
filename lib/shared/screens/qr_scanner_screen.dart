@@ -1,27 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/constants/app_strings.dart';
-import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
-import '../../core/constants/app_icons.dart';
+import '../../data/services/device_channel.dart';
+import '../widgets/scanner_camera.dart';
 
-class QrScannerScreen extends StatefulWidget {
+/// Scans one code for the product form's QR / barcode field, and returns it
+/// trimmed (never blank).
+class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
 
   @override
-  State<QrScannerScreen> createState() => _QrScannerScreenState();
+  ConsumerState<QrScannerScreen> createState() => _QrScannerScreenState();
 }
 
-class _QrScannerScreenState extends State<QrScannerScreen> {
+class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
+  // Started and stopped by the session: only in the foreground, and a
+  // refused camera isn't asked for in a loop.
   final _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
   );
-  bool _torchOn = false;
+  late final CameraSession _session;
   bool _scanned = false;
 
   @override
+  void initState() {
+    super.initState();
+    _session = CameraSession(_controller, ref.read(deviceChannelProvider));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // False while a route covers this one.
+    _session.setVisible(TickerMode.valuesOf(context).enabled);
+  }
+
+  @override
   void dispose() {
+    _session.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_scanned) return;
+    // The code as printed: a reader may add spaces or a line break around
+    // it, and a blank one is no code.
+    final value = capture.barcodes
+        .map((b) => b.rawValue?.trim())
+        .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
+    if (value == null) return;
+    _scanned = true;
+    Navigator.of(context).pop(value);
   }
 
   @override
@@ -34,68 +66,66 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         title: Text(AppStrings.of(context).scanQrBarcode),
-        actions: [
-          IconButton(
-            icon: ThinIcon(
-              _torchOn ? tabler.Bolt.new : tabler.BoltOff.new,
-              color: _torchOn ? Colors.yellow : Colors.white,
-            ),
-            onPressed: () {
-              _controller.toggleTorch();
-              setState(() => _torchOn = !_torchOn);
-            },
-          ),
-        ],
+        actions: [TorchButton(controller: _controller)],
       ),
       body: Stack(
+        // The camera, or why it won't run, fills the screen.
+        fit: StackFit.expand,
         children: [
           MobileScanner(
             controller: _controller,
-            onDetect: (BarcodeCapture capture) {
-              if (_scanned) return;
-              final value = capture.barcodes
-                  .map((b) => b.rawValue)
-                  .firstWhere((v) => v != null, orElse: () => null);
-              if (value != null) {
-                _scanned = true;
-                Navigator.of(context).pop(value);
-              }
-            },
+            onDetect: _onDetect,
+            errorBuilder: (context, error) =>
+                ScannerErrorView(error: error, session: _session),
           ),
-          // Scanning frame overlay
-          Center(
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                border: Border.all(
-                    color: theme.colorScheme.primary, width: 3),
-                borderRadius: BorderRadius.circular(16),
-              ),
+          // The frame and hint, over the camera only: not over why it
+          // won't run.
+          Positioned.fill(
+            child: ValueListenableBuilder<MobileScannerState>(
+              valueListenable: _controller,
+              builder: (context, camera, overlay) =>
+                  camera.error == null ? overlay! : const SizedBox.shrink(),
               child: Stack(
                 children: [
-                  // Corner brackets
-                  ..._corners(theme.colorScheme.primary),
+                  // Scanning frame overlay
+                  Center(
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: theme.colorScheme.primary, width: 3),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Corner brackets
+                          ..._corners(theme.colorScheme.primary),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 48,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          AppStrings.of(context).pointCameraAtCode,
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 48,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Point the camera at a QR code or barcode',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
               ),
             ),
           ),

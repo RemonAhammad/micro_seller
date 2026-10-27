@@ -1,6 +1,8 @@
 import 'package:isar_community/isar.dart';
+import '../../core/utils/barcode.dart';
 import '../models/product.dart';
 import '../models/stock_movement.dart';
+import '../models/variant_combination.dart';
 
 class ProductRepository {
   final Isar _isar;
@@ -31,6 +33,31 @@ class ProductRepository {
 
   Future<Product?> getBySku(String sku) =>
       _isar.products.filter().skuEqualTo(sku).findFirst();
+
+  /// The product a scanned [raw] code names: its QR code, its SKU or one of
+  /// its variants' SKUs (a variant opens its product), in any letter case,
+  /// the code trimmed. A UPC-A is asked for in both spellings
+  /// ([barcodeLookupForms]): iOS reads it as 13 digits, Android as 12, so a
+  /// code saved from one phone's scan is found by the other's. Products in
+  /// the Recycle Bin (inactive) don't match. Null when none does.
+  Future<Product?> findByScannedCode(String raw) async {
+    final forms = barcodeLookupForms(raw);
+    if (forms.isEmpty) return null;
+    return _isar.products
+        .filter()
+        .isActiveEqualTo(true)
+        .and()
+        .anyOf(
+            forms,
+            (q, code) => q
+                .qrCodeEqualTo(code, caseSensitive: false)
+                .or()
+                .skuEqualTo(code, caseSensitive: false)
+                .or()
+                .variantCombinationsElement(
+                    (c) => c.skuEqualTo(code, caseSensitive: false)))
+        .findFirst();
+  }
 
   Future<void> save(Product product) async {
     await _isar.writeTxn(() => _isar.products.put(product));
