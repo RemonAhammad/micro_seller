@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/theme/system_ui_style.dart';
 import '../../../data/services/tutorial_service.dart';
 import '../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -44,10 +45,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ));
 
     // Master: 2.5s total
     _master = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500));
@@ -133,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final pillTextSize = (w * 0.03).clamp(11.0, 16.0);
     final pillH = (w * 0.1).clamp(34.0, 48.0);
 
-    return Scaffold(
+    final splash = Scaffold(
       body: AnimatedBuilder(
         animation: Listenable.merge([_master, _pulse, _orbit, _shimmer, _wave, _particleCtrl]),
         builder: (context, _) {
@@ -440,6 +437,13 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           );
         },
       ),
+    );
+    // Light status bar icons over the teal, in either theme. Its own region,
+    // nearer the status bar than the app frame's, so it wins while the
+    // splash is drawn, and the app's style is back as soon as it's gone.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: kSplashSystemUiStyle,
+      child: splash,
     );
   }
 

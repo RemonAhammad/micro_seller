@@ -5,7 +5,8 @@
 //
 // `_legacyLight` / `_legacyDark` (bottom of the file) are the fixed teal
 // `AppTheme.lightTheme` / `darkTheme` as they were before themes, captured
-// role by role from that code.
+// role by role from that code, with two later changes marked there: the app
+// bar title and button text name the app's font, and no status bar style.
 
 import 'dart:collection';
 import 'dart:convert';
@@ -1364,7 +1365,12 @@ Map<String, String> _fingerprint(ThemeData t) {
 }
 
 /// The fixed teal light theme before color themes (`AppTheme.lightTheme`,
-/// captured with [_fingerprint] from that code).
+/// captured with [_fingerprint] from that code), but for two later changes,
+/// in both modes. The app bar title and the button text name the app's font
+/// (Roboto here, on Android; they named none, and iOS drew them in San
+/// Francisco). There is no status bar style: no AppBar reaches the status
+/// bar under the shell's SafeArea, and the app frame sets it
+/// (`system_ui_style.dart`).
 const _legacyLight = <String, String>{
   'useMaterial3': 'true',
   'brightness': 'light',
@@ -1419,8 +1425,8 @@ const _legacyLight = <String, String>{
   'canvas': '0xFFF4FBF8',
   'primaryColor': '0xFF00897B',
   'appBar.colors': '0xFFFFFFFF 0xFF1A1A2E',
-  'appBar.title': '0xFF1A1A2E 20.00 w700 -0.30 null',
-  'appBar.statusBar': '0xFFFFFFFF dark',
+  'appBar.title': '0xFF1A1A2E 20.00 w700 -0.30 Roboto',
+  'appBar.statusBar': 'null',
   'appBar.geometry': 'elevation 0.00/1.00 centerTitle false',
   'card.colors': '0xFFFFFFFF tint 0x00000000 shadow 0x0F000000',
   'card.geometry': 'rrect 12.00 0xFF000000 0.00 none elevation 0.00',
@@ -1435,7 +1441,7 @@ const _legacyLight = <String, String>{
   'elevated.side': 'null',
   'elevated.geometry':
       'rrect 12.00 0xFF000000 0.00 none | 24.00 14.00 24.00 14.00 | elevation 0.00/6.00',
-  'elevated.text': 'null 15.00 w600 0.20 null',
+  'elevated.text': 'null 15.00 w600 0.20 Roboto',
   'filled': 'set',
   'filled.bg': '0xFF00897B',
   'filled.fg': '0xFFFFFFFF',
@@ -1447,7 +1453,7 @@ const _legacyLight = <String, String>{
   'filled.side': 'null',
   'filled.geometry':
       'rrect 12.00 0xFF000000 0.00 none | 24.00 14.00 24.00 14.00 | elevation null/null',
-  'filled.text': 'null 15.00 w600 null null',
+  'filled.text': 'null 15.00 w600 null Roboto',
   'outlined': 'set',
   'outlined.bg': 'null',
   'outlined.fg': '0xFF00897B',
@@ -1459,7 +1465,7 @@ const _legacyLight = <String, String>{
   'outlined.side': '0xFF00897B 1.00 solid',
   'outlined.geometry':
       'rrect 12.00 0xFF000000 0.00 none | 24.00 14.00 24.00 14.00 | elevation null/null',
-  'outlined.text': 'null 15.00 w600 null null',
+  'outlined.text': 'null 15.00 w600 null Roboto',
   'textButton': 'unset',
   'input.fill': 'true 0xFFF8F9FA',
   'input.border': 'outline 12.00 0xFF000000 0.00 none',
@@ -1482,7 +1488,8 @@ const _legacyLight = <String, String>{
   'actionIcons': 'set',
 };
 
-/// The fixed teal dark theme before color themes (`AppTheme.darkTheme`).
+/// The fixed teal dark theme before color themes (`AppTheme.darkTheme`), but
+/// for the same two later changes as [_legacyLight].
 const _legacyDark = <String, String>{
   'useMaterial3': 'true',
   'brightness': 'dark',
@@ -1537,8 +1544,8 @@ const _legacyDark = <String, String>{
   'canvas': '0xFF0E1513',
   'primaryColor': '0xFF0E1513',
   'appBar.colors': '0xFF1C1C2E 0xFFFFFFFF',
-  'appBar.title': '0xFFFFFFFF 20.00 w700 -0.30 null',
-  'appBar.statusBar': '0xFF1C1C2E light',
+  'appBar.title': '0xFFFFFFFF 20.00 w700 -0.30 Roboto',
+  'appBar.statusBar': 'null',
   'appBar.geometry': 'elevation 0.00/1.00 centerTitle false',
   'card.colors': '0xFF252535 tint 0x00000000 shadow null',
   'card.geometry': 'rrect 12.00 0xFF000000 0.00 none elevation 0.00',
@@ -1553,7 +1560,7 @@ const _legacyDark = <String, String>{
   'elevated.side': 'null',
   'elevated.geometry':
       'rrect 12.00 0xFF000000 0.00 none | 24.00 14.00 24.00 14.00 | elevation 0.00/6.00',
-  'elevated.text': 'null 15.00 w600 null null',
+  'elevated.text': 'null 15.00 w600 null Roboto',
   'filled': 'unset',
   'outlined': 'unset',
   'textButton': 'unset',

@@ -81,6 +81,10 @@ class Settings extends _$Settings {
   @visibleForTesting
   static void debugResetPrimed() => _primed = null;
 
+  /// The primed theme mode: 'light', 'dark' or 'system' (also when nothing
+  /// was primed). main() picks the first frame's status bar with it.
+  static String get primedThemeMode => _primed?.themeMode ?? 'system';
+
   /// The color theme the primed settings select; Teal when nothing was
   /// primed. main() brands the documents with it before the first frame.
   static AppColorTheme get primedColorTheme {

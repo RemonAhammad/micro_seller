@@ -12,7 +12,9 @@ import 'app.dart';
 import 'core/constants/app_icons.dart';
 import 'core/constants/sidebar_items.dart';
 import 'core/theme/dynamic_color_support.dart';
+import 'core/theme/system_ui_style.dart';
 import 'core/utils/currency_formatter.dart';
+import 'core/utils/orientation_policy.dart';
 import 'data/services/auto_backup_runner.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/tutorial_service.dart';
@@ -55,17 +57,16 @@ void main() async {
   // before the first frame as it always was.
   if (Platform.isIOS) await NotificationService.init();
 
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Phones stay in portrait; tablets rotate and multitask.
+  await OrientationPolicy.install();
 
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
+  // The first frame's status bar, until the app frame's (or the splash's)
+  // AnnotatedRegion takes over: readable over the theme it will draw.
+  SystemChrome.setSystemUIOverlayStyle(initialSystemUiStyle(
+    splash: !TutorialService.splashShown,
+    themeMode: Settings.primedThemeMode,
+    platform: WidgetsBinding.instance.platformDispatcher.platformBrightness,
+  ));
 
   // The app draws ~140 distinct (icon, stroke) SVGs; flutter_svg keeps 100
   // by default, so icons evicted while navigating were re-parsed in an

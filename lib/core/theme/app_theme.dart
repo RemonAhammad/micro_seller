@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../constants/app_icons.dart';
 import 'app_color_theme.dart';
+import 'app_fonts.dart';
 import 'brand_colors.dart';
 
 /// Flutter's own app-bar buttons (back arrow, drawer, close) drawn with the
@@ -29,6 +29,15 @@ final _thinActionIcons = ActionIconThemeData(
 /// and the layout tests depend on it: only light mode sets the filled and
 /// outlined buttons, chips, dividers, list tiles and the bottom navigation
 /// bar; only dark mode sets text selection and the input icon colors.
+///
+/// Every text style the theme names a font in uses [appFontFamily]: the
+/// bundled Roboto on iOS, Android's system Roboto elsewhere. That includes
+/// the app bar title and the button text styles, which replace the text
+/// theme's rather than merge with it (with no family, iOS drew them in San
+/// Francisco).
+///
+/// It sets no status bar style: no AppBar reaches the status bar under the
+/// shell's SafeArea. The app frame sets it (`system_ui_style.dart`).
 class AppTheme {
   AppTheme._();
 
@@ -51,14 +60,18 @@ class AppTheme {
   /// id or name), or by the system scheme, so a rebuild for another reason
   /// (language, shop name) gets the identical [ThemeData] back. The most
   /// recent 32 are kept: the theme editor builds one per color it previews.
+  /// The font family is in the key too, so iOS's theme (the bundled Roboto)
+  /// is never one built for another platform (a test may switch to iOS).
   static ThemeData build(Brightness brightness, AppColorTheme theme,
       {ColorScheme? dynamicScheme}) {
     assert(dynamicScheme == null || dynamicScheme.brightness == brightness,
         'dynamicScheme is a ${dynamicScheme.brightness.name} scheme');
+    final font = appFontFamily;
     final Object key = dynamicScheme != null
-        ? (brightness, dynamicScheme)
+        ? (brightness, font, dynamicScheme)
         : (
             brightness,
+            font,
             theme.seed,
             theme.accent,
             theme.style,
@@ -68,14 +81,14 @@ class AppTheme {
           );
     final cached = _cache.remove(key);
     if (cached != null) return _cache[key] = cached;
-    final built = _create(brightness, theme, dynamicScheme);
+    final built = _create(brightness, theme, dynamicScheme, font);
     _cache[key] = built;
     if (_cache.length > _cacheSize) _cache.remove(_cache.keys.first);
     return built;
   }
 
-  static ThemeData _create(
-      Brightness brightness, AppColorTheme theme, ColorScheme? dynamicScheme) {
+  static ThemeData _create(Brightness brightness, AppColorTheme theme,
+      ColorScheme? dynamicScheme, String font) {
     final scheme = dynamicScheme ?? _scheme(brightness, theme);
     final brand = dynamicScheme == null &&
             brightness == Brightness.dark &&
@@ -88,8 +101,8 @@ class AppTheme {
             onAccent: scheme.onSecondary,
           );
     return brightness == Brightness.light
-        ? _light(scheme, brand)
-        : _dark(scheme, brand);
+        ? _light(scheme, brand, font)
+        : _dark(scheme, brand, font);
   }
 
   /// Teal's colors (the preset, Phone colors' fallback, or a saved copy):
@@ -124,23 +137,24 @@ class AppTheme {
     return scheme;
   }
 
-  static ThemeData _light(ColorScheme scheme, BrandColors brand) => ThemeData(
+  static ThemeData _light(
+    ColorScheme scheme,
+    BrandColors brand,
+    String font,
+  ) => ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    fontFamily: 'Roboto',
+    fontFamily: font,
     actionIconTheme: _thinActionIcons,
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       centerTitle: false,
       elevation: 0,
       scrolledUnderElevation: 1,
       backgroundColor: Colors.white,
-      foregroundColor: Color(0xFF1A1A2E),
-      systemOverlayStyle: SystemUiOverlayStyle(
-        statusBarColor: Colors.white,
-        statusBarIconBrightness: Brightness.dark,
-      ),
+      foregroundColor: const Color(0xFF1A1A2E),
       titleTextStyle: TextStyle(
-        color: Color(0xFF1A1A2E),
+        fontFamily: font,
+        color: const Color(0xFF1A1A2E),
         fontSize: 20,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.3,
@@ -165,7 +179,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
+          fontFamily: font,
           fontSize: 15,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.2,
@@ -180,7 +195,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
+          fontFamily: font,
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
@@ -194,7 +210,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
+          fontFamily: font,
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
@@ -254,22 +271,23 @@ class AppTheme {
     extensions: [brand],
   );
 
-  static ThemeData _dark(ColorScheme scheme, BrandColors brand) => ThemeData(
+  static ThemeData _dark(
+    ColorScheme scheme,
+    BrandColors brand,
+    String font,
+  ) => ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    fontFamily: 'Roboto',
+    fontFamily: font,
     actionIconTheme: _thinActionIcons,
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       centerTitle: false,
       elevation: 0,
       scrolledUnderElevation: 1,
-      backgroundColor: Color(0xFF1C1C2E),
+      backgroundColor: const Color(0xFF1C1C2E),
       foregroundColor: Colors.white,
-      systemOverlayStyle: SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF1C1C2E),
-        statusBarIconBrightness: Brightness.light,
-      ),
       titleTextStyle: TextStyle(
+        fontFamily: font,
         color: Colors.white,
         fontSize: 20,
         fontWeight: FontWeight.w700,
@@ -293,7 +311,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
+          fontFamily: font,
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),

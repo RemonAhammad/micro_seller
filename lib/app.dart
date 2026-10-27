@@ -11,10 +11,9 @@ import 'core/constants/app_strings.dart';
 import 'core/l10n/app_localizations.dart';
 import 'data/services/auto_backup_runner.dart';
 import 'data/services/isar_service.dart';
-import 'features/settings/providers/display_scale_provider.dart';
 import 'features/settings/providers/settings_provider.dart';
 import 'features/settings/providers/trash_provider.dart';
-import 'shared/widgets/app_zoom.dart';
+import 'shared/widgets/app_frame.dart';
 
 class SellerBookApp extends ConsumerStatefulWidget {
   const SellerBookApp({super.key});
@@ -116,10 +115,11 @@ class _SellerBookAppState extends ConsumerState<SellerBookApp> {
               dynamicScheme: system.dark),
           themeMode: themeMode,
           routerConfig: appRouter,
-          // Display size / Text size. The child is the Router, so every
-          // route, dialog, sheet, menu and snackbar is inside the zoom.
+          // The status bar, closing the keyboard, Display size / Text size
+          // and iOS's keyboard bar. The child is the Router, so every
+          // route, dialog, sheet, menu and snackbar is inside the frame.
           builder: (context, child) =>
-              _DisplayScaleScope(child: child ?? const SizedBox.shrink()),
+              AppFrame(child: child ?? const SizedBox.shrink()),
           locale: Locale(langCode),
           localizationsDelegates: const [
             AppLocalizations.delegate,
@@ -130,25 +130,6 @@ class _SellerBookAppState extends ConsumerState<SellerBookApp> {
           supportedLocales: AppLocalizations.supportedLocales,
         );
       },
-    );
-  }
-}
-
-/// Applies the saved Display size / Text size around the router. Its own
-/// widget, so a size change rebuilds only the zoom — not MaterialApp, its
-/// theme and the Router.
-class _DisplayScaleScope extends ConsumerWidget {
-  const _DisplayScaleScope({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final scale = ref.watch(displayScaleProvider);
-    return AppZoom(
-      displayPercent: scale.displayPercent,
-      textPercent: scale.textPercent,
-      child: child,
     );
   }
 }

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:micro_seller/core/constants/app_icons.dart';
 import 'package:micro_seller/core/l10n/app_localizations.dart';
+import 'package:micro_seller/core/theme/app_theme.dart';
 import 'package:micro_seller/core/utils/currency_formatter.dart';
 import 'package:micro_seller/core/utils/validators.dart';
 import 'package:micro_seller/data/models/order.dart';
@@ -25,6 +26,7 @@ import 'package:micro_seller/shared/widgets/bottom_sheet_handle.dart';
 import 'package:micro_seller/shared/widgets/confirm_dialog.dart';
 import 'package:micro_seller/shared/widgets/drawer_menu_button.dart';
 import 'package:micro_seller/shared/widgets/empty_state.dart';
+import 'package:micro_seller/shared/widgets/keyboard_accessory_bar.dart';
 import 'package:micro_seller/shared/widgets/loading_overlay.dart';
 import 'package:micro_seller/shared/widgets/payment_method_chips.dart';
 import 'package:micro_seller/shared/widgets/pdf_saved_sheet.dart';
@@ -1533,5 +1535,154 @@ void main() {
         langs: ['en', 'pt', 'fr', 'tr'],
       );
     });
+  });
+
+  group('the keyboard bar over the number pads (iOS)', () {
+    const keyboard = 300.0;
+
+    /// The app's iOS theme and strings in [lang] at [textScale], the bar's
+    /// host around the router as the app frame has it, and a decimal field
+    /// whose action is next, focused, with the keyboard up.
+    Future<BuildContext> pumpBar(
+      WidgetTester tester, {
+      required double textScale,
+      required String lang,
+    }) async {
+      late BuildContext screen;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          locale: Locale(lang),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: KeyboardAccessoryHost(child: child!),
+          ),
+          home: Row(
+            children: [
+              const SizedBox(width: kRailWidth),
+              Expanded(
+                child: Scaffold(
+                  body: Builder(
+                    builder: (context) {
+                      screen = context;
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: TextField(
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          textInputAction: TextInputAction.next,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      tester.view.viewInsets = FakeViewPadding(
+        bottom: keyboard * tester.view.devicePixelRatio,
+      );
+      await tester.pump();
+      return screen;
+    }
+
+    Finder bar(BuildContext screen) => find.ancestor(
+      of: find.text(_s(screen).tr('done')),
+      matching: find.byType(TextFieldTapRegion),
+    );
+
+    testWidgets('Next and Done lay out on one line at every size', (
+      tester,
+    ) async {
+      requireRoboto();
+      await _forEachLayout(
+        tester,
+        (where, width, t, lang) async {
+          final screen = await pumpBar(tester, textScale: t, lang: lang);
+          expectCleanLayout(tester, where);
+          final s = _s(screen);
+          final next = find.text(s.tr('next'));
+          final done = find.text(s.tr('done'));
+          final rect = tester.getRect(bar(screen));
+          // The whole window wide, on the keyboard, 44 dp or taller.
+          expect(rect.left, closeTo(0, _eps), reason: where);
+          expect(rect.right, closeTo(width, _eps), reason: where);
+          expect(rect.bottom, closeTo(800 - keyboard, _eps), reason: where);
+          expect(
+            rect.height,
+            closeTo(
+              keyboardAccessoryBarHeight(TextScaler.linear(t)),
+              _eps,
+            ),
+            reason: where,
+          );
+          for (final label in [next, done]) {
+            expectWholeText(tester, label, where);
+            _expectNotTruncated(tester, label, where);
+            // One line: the text ends on the line it starts on.
+            final p = tester.renderObject<RenderParagraph>(label);
+            final length = p.text.toPlainText().length;
+            expect(
+              p.getOffsetForCaret(TextPosition(offset: length), Rect.zero).dy,
+              closeTo(
+                p.getOffsetForCaret(const TextPosition(offset: 0), Rect.zero).dy,
+                1,
+              ),
+              reason: where,
+            );
+            final drawn = tester.getRect(label);
+            expect(drawn.top, greaterThanOrEqualTo(rect.top - _eps));
+            expect(drawn.bottom, lessThanOrEqualTo(rect.bottom + _eps));
+          }
+          // Next at the start, Done at the end, apart.
+          expect(
+            tester.getRect(next).right,
+            lessThan(tester.getRect(done).left),
+            reason: where,
+          );
+          // Drawn at full size where it fits: English on a phone.
+          if (lang == 'en' && width >= 360) {
+            for (final label in [next, done]) {
+              expect(
+                tester.getSize(label),
+                tester.renderObject<RenderParagraph>(label).size,
+                reason: where,
+              );
+            }
+          }
+          tester.view.resetViewInsets();
+        },
+        langs: ['en', 'pt', 'ms', 'bn'],
+      );
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('right to left, Next is on the right and Done on the left', (
+      tester,
+    ) async {
+      addTearDown(tester.view.reset);
+      setLayoutScreen(tester, 360);
+      final screen = await pumpBar(tester, textScale: 1, lang: 'ar');
+      expectCleanLayout(tester, 'ar');
+      final s = _s(screen);
+      expect(
+        tester.getRect(find.text(s.tr('next'))).left,
+        greaterThan(tester.getRect(find.text(s.tr('done'))).right),
+      );
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
   });
 }
