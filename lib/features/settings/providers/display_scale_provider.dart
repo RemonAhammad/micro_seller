@@ -11,7 +11,7 @@ part 'display_scale_provider.g.dart';
 typedef DisplayScaleState = ({int displayPercent, int? textPercent});
 
 /// Settings → Display size / Text size, applied by `AppZoom` around the
-/// router (app.dart).
+/// router (app_frame.dart).
 ///
 /// Per-device on purpose, so it lives outside `Settings` and its
 /// `exportSettings()`: the right size depends on this screen and on the

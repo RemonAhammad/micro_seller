@@ -130,31 +130,14 @@ void requireRoboto() {
   if (!_robotoLoaded) fail(kRobotoRequired);
 }
 
-/// The app's light theme as a phone draws it. The theme's app bar title and
-/// elevated, filled and outlined button text styles name no font family: a
-/// phone draws those in its system font (Roboto on Android), a test in its
-/// 1-em-square test font, far wider. Naming Roboto there measures them as on
-/// a phone, once [loadRoboto] has loaded it.
-final ThemeData layoutPhoneTheme = () {
-  final theme = AppTheme.lightTheme;
-  ButtonStyle? roboto(ButtonStyle? style) => style?.copyWith(
-        textStyle: WidgetStateProperty.resolveWith((states) => style.textStyle
-            ?.resolve(states)
-            ?.copyWith(fontFamily: 'Roboto')),
-      );
-  return theme.copyWith(
-    appBarTheme: theme.appBarTheme.copyWith(
-      titleTextStyle:
-          theme.appBarTheme.titleTextStyle?.copyWith(fontFamily: 'Roboto'),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-        style: roboto(theme.elevatedButtonTheme.style)),
-    filledButtonTheme:
-        FilledButtonThemeData(style: roboto(theme.filledButtonTheme.style)),
-    outlinedButtonTheme:
-        OutlinedButtonThemeData(style: roboto(theme.outlinedButtonTheme.style)),
-  );
-}();
+/// The app's light theme as a phone draws it: [AppTheme.lightTheme] for the
+/// platform the test runs as. Every text style the theme names a font in,
+/// the app bar title and the elevated, filled and outlined button text
+/// styles included, names `appFontFamily`: 'Roboto' on Android, the bundled
+/// 'RobotoStatic' on iOS. [loadRoboto] loads both names, so text measures as
+/// on a phone; without it, a test draws every glyph in its 1-em-square test
+/// font, far wider.
+ThemeData get layoutPhoneTheme => AppTheme.lightTheme;
 
 /// Sets the test window to [width] × [height] logical dp. Call
 /// `addTearDown(tester.view.reset)` in the test.

@@ -50,7 +50,7 @@ void main() {
         addTearDown(controller.dispose);
         await tester.pumpWidget(
           MaterialApp(
-            // As app.dart wires it.
+            // As the app frame (app_frame.dart) wires it.
             builder: (context, child) =>
                 AppZoom(displayPercent: percent, child: child!),
             home: Scaffold(

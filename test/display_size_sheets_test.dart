@@ -1,8 +1,8 @@
 // Settings → Display size and Text size: the two sheets and their Settings
 // rows, on a phone like the owner's (≈ 411 × 914 dp, font size 125%), in an
-// app zoomed from displayScaleProvider the way app.dart does it. The sheets
-// open where the app opens them: in the branch Navigator beside the sidebar
-// rail.
+// app zoomed from displayScaleProvider the way app_frame.dart does it. The
+// sheets open where the app opens them: in the branch Navigator beside the
+// sidebar rail.
 //
 // A size applies only when it is committed: a finger lifting, a tap, an
 // arrow key or a screen reader's adjust. A gesture that the sheet's drag or
@@ -75,8 +75,8 @@ class _Android14At130 extends TextScaler {
   double get textScaleFactor => 1.3;
 }
 
-/// The saved sizes applied around the app, as app.dart's _DisplayScaleScope
-/// applies them.
+/// The saved sizes applied around the app, as app_frame.dart's
+/// _DisplayScaleScope applies them.
 class _Zoom extends ConsumerWidget {
   const _Zoom({required this.child});
 

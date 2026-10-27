@@ -16,7 +16,7 @@ import '../../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../providers/display_scale_provider.dart';
 
 // Settings → Display size and Text size (displayScaleProvider, applied by
-// AppZoom in app.dart).
+// AppZoom in the app frame, app_frame.dart).
 //
 // Dragging a slider only moves the preview. The size is applied when the
 // finger lifts (and on a tap, an arrow key or a screen reader's adjust):

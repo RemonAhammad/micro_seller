@@ -9,7 +9,7 @@ part of 'display_scale_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Settings → Display size / Text size, applied by `AppZoom` around the
-/// router (app.dart).
+/// router (app_frame.dart).
 ///
 /// Per-device on purpose, so it lives outside `Settings` and its
 /// `exportSettings()`: the right size depends on this screen and on the
@@ -23,7 +23,7 @@ part of 'display_scale_provider.dart';
 final displayScaleProvider = DisplayScaleProvider._();
 
 /// Settings → Display size / Text size, applied by `AppZoom` around the
-/// router (app.dart).
+/// router (app_frame.dart).
 ///
 /// Per-device on purpose, so it lives outside `Settings` and its
 /// `exportSettings()`: the right size depends on this screen and on the
@@ -35,7 +35,7 @@ final displayScaleProvider = DisplayScaleProvider._();
 final class DisplayScaleProvider
     extends $NotifierProvider<DisplayScale, DisplayScaleState> {
   /// Settings → Display size / Text size, applied by `AppZoom` around the
-  /// router (app.dart).
+  /// router (app_frame.dart).
   ///
   /// Per-device on purpose, so it lives outside `Settings` and its
   /// `exportSettings()`: the right size depends on this screen and on the
@@ -74,7 +74,7 @@ final class DisplayScaleProvider
 String _$displayScaleHash() => r'9c518418735d54a5eee1db30177d32b80aad1715';
 
 /// Settings → Display size / Text size, applied by `AppZoom` around the
-/// router (app.dart).
+/// router (app_frame.dart).
 ///
 /// Per-device on purpose, so it lives outside `Settings` and its
 /// `exportSettings()`: the right size depends on this screen and on the

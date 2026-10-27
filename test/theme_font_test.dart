@@ -2,10 +2,10 @@
 // font it names appFontFamily, the bundled Roboto (RobotoStatic) on iOS and
 // Android's system Roboto elsewhere. That includes the app bar title and the
 // button text styles, which replace the text theme's (naming none, iOS drew
-// them in San Francisco). iOS and Android each get their own cached theme;
-// the family iOS names is bundled, every font file pubspec.yaml lists exists,
-// and no bundled family is named Roboto. A screen measures, and a PDF page
-// draws, the same on iOS as on Android.
+// them in San Francisco). Each platform gets its own cached theme; the
+// family iOS names is bundled, every font file pubspec.yaml lists exists, and
+// no bundled family is named Roboto. A screen measures, and a PDF page draws,
+// the same on iOS as on Android.
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -200,6 +200,35 @@ void main() {
         identical(_on(TargetPlatform.iOS, () => AppTheme.lightTheme), iOS),
         isTrue,
       );
+    });
+
+    test('every platform gets a theme built for it, not a cached one built '
+        'for another (Android and macOS name the same font)', () {
+      for (final platform in TargetPlatform.values) {
+        for (final dark in [false, true]) {
+          final theme = _on(
+            platform,
+            () => dark ? AppTheme.darkTheme : AppTheme.lightTheme,
+          );
+          final where = '${platform.name} ${dark ? 'dark' : 'light'}';
+          expect(theme.platform, platform, reason: where);
+          expect(
+            theme.visualDensity,
+            VisualDensity.defaultDensityForPlatform(platform),
+            reason: where,
+          );
+          expect(
+            theme.textTheme.bodyMedium!.fontFamily,
+            _expectedFamily(platform),
+            reason: where,
+          );
+        }
+      }
+      final android = _on(TargetPlatform.android, () => AppTheme.lightTheme);
+      final macOS = _on(TargetPlatform.macOS, () => AppTheme.lightTheme);
+      expect(identical(android, macOS), isFalse);
+      expect(android.materialTapTargetSize, MaterialTapTargetSize.padded);
+      expect(macOS.materialTapTargetSize, MaterialTapTargetSize.shrinkWrap);
     });
 
     test('the family iOS names is bundled; every font file pubspec.yaml '

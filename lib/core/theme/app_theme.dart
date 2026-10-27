@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../constants/app_icons.dart';
@@ -60,18 +61,21 @@ class AppTheme {
   /// id or name), or by the system scheme, so a rebuild for another reason
   /// (language, shop name) gets the identical [ThemeData] back. The most
   /// recent 32 are kept: the theme editor builds one per color it previews.
-  /// The font family is in the key too, so iOS's theme (the bundled Roboto)
-  /// is never one built for another platform (a test may switch to iOS).
+  /// The platform is in the key too: it decides the font (the bundled Roboto
+  /// on iOS) and what ThemeData takes from it (`platform`, the tap target
+  /// size and the visual density), so a test that switches platform never
+  /// gets a theme built for another.
   static ThemeData build(Brightness brightness, AppColorTheme theme,
       {ColorScheme? dynamicScheme}) {
     assert(dynamicScheme == null || dynamicScheme.brightness == brightness,
         'dynamicScheme is a ${dynamicScheme.brightness.name} scheme');
     final font = appFontFamily;
+    final platform = defaultTargetPlatform;
     final Object key = dynamicScheme != null
-        ? (brightness, font, dynamicScheme)
+        ? (brightness, platform, dynamicScheme)
         : (
             brightness,
-            font,
+            platform,
             theme.seed,
             theme.accent,
             theme.style,
