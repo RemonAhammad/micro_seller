@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' show Rect;
 import 'package:isar_community/isar.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
@@ -238,9 +239,11 @@ class LocalBackupService {
   /// transaction on a worker isolate.
   Future<void> clearAll(Isar isar) => runDbJob(isar, clearAllDataJob);
 
-  /// Export all data as a JSON file and share it.
+  /// Export all data as a JSON file and share it. [shareOrigin] is the
+  /// tapped control's rect (`shareOriginOf`), for an iPad's share sheet to
+  /// point at.
   Future<String?> exportBackup(Isar isar,
-      {Map<String, dynamic>? settings}) async {
+      {Map<String, dynamic>? settings, Rect? shareOrigin}) async {
     final bytes = await encodeAllBytes(isar, settings: settings);
 
     final dir = await Directory.systemTemp.createTemp('microseller_backup');
@@ -248,7 +251,11 @@ class LocalBackupService {
     final file = File('${dir.path}/microseller_backup_$timestamp.json');
     await file.writeAsBytes(bytes);
 
-    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: 'Micro Seller Backup'));
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path)],
+      subject: 'Micro Seller Backup',
+      sharePositionOrigin: shareOrigin,
+    ));
 
     return file.path;
   }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show Rect;
 import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -9,9 +10,11 @@ import '../models/product.dart';
 import '../models/expense.dart';
 import 'report_service.dart';
 
+/// Every export takes an optional `shareOrigin`: the rect of the control
+/// that was tapped (`shareOriginOf`), for an iPad's share sheet to point at.
 class CsvExportService {
   /// Export orders to CSV and share via system share sheet.
-  Future<void> exportOrders(List<Order> orders) async {
+  Future<void> exportOrders(List<Order> orders, {Rect? shareOrigin}) async {
     final rows = [
       [
         'Order #',
@@ -48,11 +51,14 @@ class CsvExportService {
             o.createdAt?.toIso8601String() ?? '',
           ]),
     ];
-    await _shareAsCsv(rows, 'orders_export');
+    await _shareAsCsv(rows, 'orders_export', shareOrigin: shareOrigin);
   }
 
   /// Export products to CSV and share via system share sheet.
-  Future<void> exportProducts(List<Product> products) async {
+  Future<void> exportProducts(
+    List<Product> products, {
+    Rect? shareOrigin,
+  }) async {
     final rows = [
       [
         'Name',
@@ -77,11 +83,14 @@ class CsvExportService {
             p.isActive ? 'Yes' : 'No',
           ]),
     ];
-    await _shareAsCsv(rows, 'products_export');
+    await _shareAsCsv(rows, 'products_export', shareOrigin: shareOrigin);
   }
 
   /// Export expenses to CSV and share via system share sheet.
-  Future<void> exportExpenses(List<Expense> expenses) async {
+  Future<void> exportExpenses(
+    List<Expense> expenses, {
+    Rect? shareOrigin,
+  }) async {
     final rows = [
       ['Title', 'Amount', 'Category', 'Date', 'Notes'],
       ...expenses.map((e) => [
@@ -92,7 +101,7 @@ class CsvExportService {
             e.notes,
           ]),
     ];
-    await _shareAsCsv(rows, 'expenses_export');
+    await _shareAsCsv(rows, 'expenses_export', shareOrigin: shareOrigin);
   }
 
   /// Export one Reports tab: a header (shop, report, period), then each
@@ -103,6 +112,7 @@ class CsvExportService {
     required String periodLabel,
     required List<ReportTable> tables,
     required String fileName,
+    Rect? shareOrigin,
   }) async {
     final rows = <List<dynamic>>[
       [shopName],
@@ -117,7 +127,7 @@ class CsvExportService {
       ],
     ];
     // BOM so Excel opens Bengali / Arabic text as UTF-8.
-    await _shareAsCsv(rows, fileName, bom: true);
+    await _shareAsCsv(rows, fileName, bom: true, shareOrigin: shareOrigin);
   }
 
   /// Numbers stay numbers (summable in Excel). Text that a spreadsheet would
@@ -130,7 +140,7 @@ class CsvExportService {
   }
 
   Future<void> _shareAsCsv(List<List<dynamic>> rows, String fileName,
-      {bool bom = false}) async {
+      {bool bom = false, Rect? shareOrigin}) async {
     // CSV + UTF-8 encoding of a big export would freeze the UI isolate. The
     // rows hold only plain values (String / num), so they cross as they are.
     final bytes = await compute(_encodeCsv, (rows, bom));
@@ -139,7 +149,11 @@ class CsvExportService {
       '${dir.path}/${fileName}_${DateTime.now().millisecondsSinceEpoch}.csv',
     );
     await file.writeAsBytes(bytes);
-    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: fileName));
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path)],
+      subject: fileName,
+      sharePositionOrigin: shareOrigin,
+    ));
   }
 }
 

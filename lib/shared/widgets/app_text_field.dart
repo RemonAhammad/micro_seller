@@ -133,7 +133,12 @@ class AppTextField extends StatelessWidget {
   }
 
   Widget _withPaste() {
-    final pasteBtn = _PasteButton(controller: controller!);
+    final pasteBtn = _PasteButton(
+      controller: controller!,
+      inputFormatters: inputFormatters,
+      maxLength: maxLength,
+      onChanged: onChanged,
+    );
     if (suffixIcon == null) return pasteBtn;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -142,9 +147,21 @@ class AppTextField extends StatelessWidget {
   }
 }
 
+/// Pastes the clipboard's text over the field's whole value, through the
+/// field's own formatters, as typing a paste into it would: `1,250.00` lands
+/// in an amount field as 1250.00, and text the field refuses leaves it as it
+/// was. Setting the text directly skipped them.
 class _PasteButton extends StatelessWidget {
   final TextEditingController controller;
-  const _PasteButton({required this.controller});
+  final List<TextInputFormatter>? inputFormatters;
+  final int? maxLength;
+  final ValueChanged<String>? onChanged;
+  const _PasteButton({
+    required this.controller,
+    this.inputFormatters,
+    this.maxLength,
+    this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -152,13 +169,30 @@ class _PasteButton extends StatelessWidget {
       icon: const ThinIcon(tabler.Clipboard.new, size: 18),
       tooltip: MaterialLocalizations.of(context).pasteButtonLabel,
       onPressed: () async {
-        final data = await Clipboard.getData(Clipboard.kTextPlain);
-        if (data?.text != null) {
-          controller.text = data!.text!;
-          controller.selection = TextSelection.fromPosition(
-            TextPosition(offset: controller.text.length),
-          );
+        final pasted = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+        if (pasted == null || !context.mounted) return;
+        final current = controller.value;
+        // The formatters see a paste over all of the text.
+        final old = current.copyWith(
+          selection: TextSelection(
+            baseOffset: 0,
+            extentOffset: current.text.length,
+          ),
+          composing: TextRange.empty,
+        );
+        var value = TextEditingValue(
+          text: pasted,
+          selection: TextSelection.collapsed(offset: pasted.length),
+        );
+        for (final formatter in [
+          ...?inputFormatters,
+          if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+        ]) {
+          value = formatter.formatEditUpdate(old, value);
         }
+        if (value.text == current.text) return;
+        controller.value = value;
+        onChanged?.call(value.text);
       },
     );
   }

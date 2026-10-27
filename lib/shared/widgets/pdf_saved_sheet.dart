@@ -23,11 +23,14 @@ bool get pdfDownloadAsksWhereToSave =>
 /// "Download PDF" where [pdfDownloadAsksWhereToSave]: offers [bytes] as
 /// [fileName] in the system's save sheet (on iOS, Files: On My iPhone,
 /// iCloud Drive, …), which is its own confirmation. When that sheet can't
-/// open, the share sheet instead, which has Save to Files too. Returns
-/// whether the PDF was saved or shared (false when the user cancels).
+/// open, the share sheet instead, which has Save to Files too, pointing on
+/// an iPad at [shareOrigin], the rect of the control that was tapped
+/// (`shareOriginOf`). Returns whether the PDF was saved or shared (false
+/// when the user cancels).
 Future<bool> savePdfWithSystemSheet({
   required String fileName,
   required Uint8List bytes,
+  Rect? shareOrigin,
 }) async {
   try {
     final saved = await FilePicker.saveFile(
@@ -50,7 +53,10 @@ Future<bool> savePdfWithSystemSheet({
   final file = File('${dir.path}/$fileName');
   await file.writeAsBytes(bytes);
   final result = await SharePlus.instance.share(
-    ShareParams(files: [XFile(file.path, mimeType: 'application/pdf')]),
+    ShareParams(
+      files: [XFile(file.path, mimeType: 'application/pdf')],
+      sharePositionOrigin: shareOrigin,
+    ),
   );
   return result.status == ShareResultStatus.success;
 }

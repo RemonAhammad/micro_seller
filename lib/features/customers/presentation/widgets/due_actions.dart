@@ -70,13 +70,16 @@ String? whatsAppNumber(String phone) {
   return digits;
 }
 
+/// [shareOrigin] is the tapped control's rect (`shareOriginOf`): on an iPad
+/// the share sheet, used when WhatsApp doesn't open, points at it.
 Future<void> sendDueReminder(
   BuildContext context,
   WidgetRef ref,
   Customer customer,
   List<OrderDue> orderDues,
-  double total,
-) async {
+  double total, {
+  Rect? shareOrigin,
+}) async {
   final s = AppStrings.of(context);
   final settings = ref.read(settingsProvider.notifier);
   final text = buildDueReminderText(context, customer, orderDues, total,
@@ -94,16 +97,20 @@ Future<void> sendDueReminder(
   } else if (context.mounted) {
     context.showSnackBar(s.noPhoneShareInstead);
   }
-  await SharePlus.instance.share(ShareParams(text: text));
+  await SharePlus.instance.share(
+      ShareParams(text: text, sharePositionOrigin: shareOrigin));
 }
 
 // ─── Statement ───────────────────────────────────────────────────────────
 
+/// [shareOrigin] is the tapped control's rect (`shareOriginOf`), for an
+/// iPad's share sheet to point at.
 Future<void> shareCustomerStatement(
   BuildContext context,
   WidgetRef ref,
-  Customer customer,
-) async {
+  Customer customer, {
+  Rect? shareOrigin,
+}) async {
   final s = AppStrings.of(context);
   final settings = ref.read(settingsProvider.notifier);
   final direction = Directionality.of(context);
@@ -157,7 +164,8 @@ Future<void> shareCustomerStatement(
       await file.writeAsBytes(bytes);
       return file;
     });
-    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
+    await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)], sharePositionOrigin: shareOrigin));
   } catch (e) {
     if (context.mounted) context.showErrorSnackBar(s.error);
   }

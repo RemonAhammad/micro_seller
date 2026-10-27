@@ -1,14 +1,23 @@
 import 'package:intl/intl.dart';
 
+import 'number_input.dart';
+
 class CurrencyFormatter {
+  /// The Kuwaiti Dinar's symbol in the currency picker: the one currency it
+  /// offers whose amounts have 3 decimals (1 dinar is 1000 fils).
+  static const kuwaitiDinarSymbol = 'د.ك';
+
   static String _symbol = '\$';
 
   static final NumberFormat _amountFormat = NumberFormat('#,##0.##');
 
   static String get symbol => _symbol;
 
+  /// Sets the shop's currency, and with it the decimals money fields take
+  /// ([NumberInput.moneyDecimals]): 3 for the Kuwaiti Dinar, else 2.
   static void setSymbol(String symbol) {
     _symbol = symbol;
+    NumberInput.moneyDecimals = symbol == kuwaitiDinarSymbol ? 3 : 2;
   }
 
   static String format(double amount, {String? symbol}) {
@@ -25,10 +34,5 @@ class CurrencyFormatter {
       return '$sym${(amount / 1000).toStringAsFixed(1)}K';
     }
     return format(amount, symbol: sym);
-  }
-
-  static double parse(String value) {
-    final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
-    return double.tryParse(cleaned) ?? 0.0;
   }
 }

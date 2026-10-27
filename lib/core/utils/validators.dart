@@ -1,3 +1,5 @@
+import 'number_input.dart';
+
 class Validators {
   Validators._();
 
@@ -12,7 +14,7 @@ class Validators {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName is required';
     }
-    final parsed = double.tryParse(value.replaceAll(',', ''));
+    final parsed = NumberInput.parseDecimal(value);
     if (parsed == null) {
       return 'Please enter a valid number';
     }
@@ -27,7 +29,7 @@ class Validators {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName is required';
     }
-    final parsed = int.tryParse(value);
+    final parsed = NumberInput.parseInteger(value);
     if (parsed == null) {
       return 'Please enter a valid whole number';
     }
@@ -39,7 +41,8 @@ class Validators {
 
   static String? phone(String? value) {
     if (value == null || value.trim().isEmpty) return null;
-    final cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    final cleaned = NumberInput.toAsciiDigits(value)
+        .replaceAll(RegExp(r'[\s\-\(\)]'), '');
     if (cleaned.length < 7 || cleaned.length > 15) {
       return 'Please enter a valid phone number';
     }
@@ -63,8 +66,8 @@ class Validators {
   static String? costPriceNotExceedingSelling(
       String? costValue, String? sellingValue) {
     if (costValue == null || costValue.trim().isEmpty) return null;
-    final cost = double.tryParse(costValue.replaceAll(',', ''));
-    final selling = double.tryParse(sellingValue?.replaceAll(',', '') ?? '');
+    final cost = NumberInput.parseDecimal(costValue);
+    final selling = NumberInput.parseDecimal(sellingValue);
     if (cost == null || selling == null) return null;
     if (cost > selling) {
       return 'Cost price exceeds selling price';
