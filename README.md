@@ -56,7 +56,7 @@ For phones without Google Play. GitHub Actions builds and signs each release fro
 
 3. Open the downloaded file. If Android asks, allow your browser to install apps.
 
-- **Updates:** download the next release and keep the same file type. Android won't switch from a per-CPU APK (arm64-v8a, armeabi-v7a) to the universal one.
+- **Updates:** the app tells you when a new release is out, with a notice on the Dashboard; you can also tap **Settings → About → Check for updates**. Download the next release and keep the same file type. Android won't switch from a per-CPU APK (arm64-v8a, armeabi-v7a) to the universal one.
 - **Already installed from Google Play?** A GitHub APK can't update a Play install, or the other way round, because Google Play signs its copy with its own key. To switch, back up first (Settings → Backup), uninstall, then install.
 
 ### iPhone (sideload)
@@ -77,7 +77,16 @@ Your data:
 - **Google Drive backup works on iPhone.** In **Settings → Google Drive Backup**, sign in with Google, then tap **Backup to Drive**. The automatic daily backup is Android-only, so back up now and then by hand.
 - **If Google sign-in fails:** some sideloading tools change the app's ID when they sign it, and Google sign-in can then fail with an error. Back up to a file instead: **Settings → Local Backup → Export Backup**, then save it in Files or iCloud Drive.
 - **Always back up to a file before you delete the app.** Deleting it deletes your data. If the app has stopped opening, refresh it rather than deleting it.
-- **Updates:** install the new release's `.ipa` with the same tool and the same Apple ID. iOS then updates the app in place and keeps your data. Back up first anyway.
+- **Updates:** when a new release is out, the app shows a notice on the Dashboard, and **Settings → About → Check for updates** checks at any time. **Download** opens the release page. Install the new `.ipa` with the same tool and the same Apple ID: iOS then updates the app in place and keeps your data. Back up first anyway.
+
+On your iPhone or iPad:
+
+- **Face ID or Touch ID** can protect actions such as clearing all data: **Settings → Security**.
+- **Camera:** the scanner and product photos need it. If you tapped **Don't Allow**, iOS won't ask again: tap **Open Settings** in the app, turn on **Camera**, then go back to the scanner.
+- **Going back:** swipe from the left edge of the screen, as in other apps (the right edge in Arabic and Urdu).
+- **Typing prices:** the number pad's own decimal key works (12,50 or 12.50). The bar above the keypad has **Done** (and **Next** where another field follows), and a tap outside a field closes the keyboard.
+- **Barcodes** saved on an Android phone are found by the iPhone's scanner, and the other way round.
+- **On an iPad,** the app turns with the screen and works in Split View. On an iPad that can't make calls, Call shows the number to copy instead.
 
 App Store and TestFlight need a paid Apple Developer account. They're planned; until then, sideloading is how to get Micro Seller on an iPhone.
 
@@ -155,7 +164,7 @@ The Due Book shows who owes you money and since when.
   - Turn on auto backup for a daily Drive backup (Android).
   - A failed restore rolls back to what you had.
 - **Recycle Bin:** undo a delete right away, or restore deleted products, customers, expenses and categories within 30 days.
-- **Fingerprint or PIN** protection for destructive actions, such as clearing all data.
+- **Fingerprint, Face ID or PIN** protection for destructive actions, such as clearing all data.
 
 ### Make it yours
 
@@ -174,7 +183,7 @@ Micro Seller has no account and no server. Your business data stays on your devi
 | Platform | Status |
 | --- | --- |
 | Android | On [Google Play](https://play.google.com/store/apps/details?id=com.blackshadowsoftware.micro_seller), and APKs on [GitHub Releases](https://github.com/RemonAhammad/micro_seller/releases) |
-| iOS | An unsigned `.ipa` on [GitHub Releases](https://github.com/RemonAhammad/micro_seller/releases), to [sideload](#iphone-sideload) with your own Apple ID. App Store and TestFlight are planned. |
+| iOS | An unsigned `.ipa` on [GitHub Releases](https://github.com/RemonAhammad/micro_seller/releases), to [sideload](#iphone-sideload) on an iPhone or iPad with your own Apple ID. App Store and TestFlight are planned. |
 | macOS, Windows, Linux, Web | Built from the same code; build them from source (see below) |
 
 ## For developers
@@ -192,7 +201,7 @@ Micro Seller has no account and no server. Your business data stays on your devi
 | Charts | fl_chart |
 | Backup | Google Sign-In 7 and the Google Drive API (app-data folder) |
 | Background work | WorkManager (daily auto backup on Android) |
-| Security | local_auth (fingerprint) and a salted SHA-256 PIN |
+| Security | local_auth (fingerprint, Face ID, Touch ID) and a salted SHA-256 PIN |
 
 ### Run it locally
 
@@ -220,7 +229,7 @@ flutter test                                    # includes tests on a real Isar 
 bash .claude/skills/l10n/scripts/l10n_parity.sh # every string in all 12 languages
 ```
 
-GitHub Actions runs the same checks on every push and pull request ([`ci.yml`](.github/workflows/ci.yml)), and also builds the iPhone app (unsigned) on macOS. The tests cover the money flows (profit, returns and refunds, dues), worker isolates, backups, paging, and every screen's layout from small phones up to 150% text.
+GitHub Actions runs the same checks on every push and pull request ([`ci.yml`](.github/workflows/ci.yml)), and also builds the iPhone app (unsigned) on macOS. The tests cover the money flows (profit, returns and refunds, dues), worker isolates, backups, paging, and every screen's layout from small phones up to 150% text, and on tablets.
 
 ### Project structure
 
