@@ -29,6 +29,7 @@
 - [Privacy](#privacy)
 - [Platforms](#platforms)
 - [For developers](#for-developers)
+- [Activity](#activity)
 - [License](#license)
 
 ## Download
@@ -242,6 +243,10 @@ From your Mac, `./release.sh` cuts a release:
 4. GitHub Actions builds the signed APKs, the Play Store bundle and the unsigned iPhone app (`.ipa`), and drafts the GitHub release, and the script follows the build.
 
 The release build is [`release.yml`](.github/workflows/release.yml). The iPhone build needs no Apple account and no secret beyond the `DOTENV` one the APKs use. Its `.ipa` is attached to the draft only when it passes; an iOS failure never holds up the Android files.
+
+## Activity
+
+![Micro Seller repository activity: contributions, pushes, issues and pull requests over the last 30 days](https://repobeats.axiom.co/api/embed/fb51f22a4dda629ff7dbf184e1ecf12df064d7cb.svg "Repobeats analytics image")
 
 ## License
 
