@@ -1,8 +1,27 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'device_channel.dart';
+
+part 'auth_gate_service.g.dart';
+
+/// Which biometric the device has, for the Settings → Security row's label.
+enum BiometricKind {
+  /// An iPhone or iPad with Face ID.
+  faceId,
+
+  /// An iPhone or iPad with Touch ID.
+  touchId,
+
+  /// Android (which can't tell a face from a fingerprint), a device without
+  /// biometrics, or one that couldn't be read.
+  other,
+}
 
 /// Gates destructive actions (Clear All Data, etc.) behind a biometric prompt
 /// or, if the device has no biometrics enrolled, a 4-digit PIN.
@@ -20,31 +39,67 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Use via [AuthGateService.runGate] which returns true if the user passed
 /// the gate (biometric ok OR pin verified OR pin freshly set up).
 class AuthGateService {
-  /// [localAuth] stands in for the device's biometric API in tests; the app
-  /// passes none.
-  AuthGateService({LocalAuthentication? localAuth})
-      : _auth = localAuth ?? LocalAuthentication();
+  /// [localAuth] stands in for the device's biometric API and [device] for
+  /// the app's device channel in tests; the app passes neither.
+  AuthGateService({LocalAuthentication? localAuth, DeviceChannel? device})
+      : _auth = localAuth ?? LocalAuthentication(),
+        _device = device ?? const DeviceChannel();
 
   static const _keyPinHash = 'authGate.pinHash';
   static const _keyPinSalt = 'authGate.pinSalt';
 
   final LocalAuthentication _auth;
+  final DeviceChannel _device;
 
   /// True if the device has biometrics that the user has enrolled. False if
   /// the OS doesn't support biometrics, the device has none enrolled, or the
   /// platform check throws (some manufacturers stub the API).
-  Future<bool> isBiometricAvailable() async {
+  Future<bool> isBiometricAvailable() async =>
+      (await _enrolledBiometrics()).isNotEmpty;
+
+  /// Whether biometrics can authorize ([isBiometricAvailable]) and which kind
+  /// the device has, enrolled or not, so Settings can name it.
+  ///
+  /// iOS: Face ID or Touch ID from what is enrolled, else from the device's
+  /// sensor ([DeviceChannel.biometryHardware]), so an iPhone whose Face ID
+  /// isn't set up yet still says Face ID. Elsewhere [BiometricKind.other]:
+  /// Android can't tell a face from a fingerprint. Never throws.
+  Future<({bool available, BiometricKind kind})> biometrics() async {
+    final enrolled = await _enrolledBiometrics();
+    return (available: enrolled.isNotEmpty, kind: await _kindOf(enrolled));
+  }
+
+  /// The biometrics the user has enrolled, or none when the OS doesn't
+  /// support them, the check throws, or local_auth has no implementation
+  /// here (Linux, the web).
+  Future<List<BiometricType>> _enrolledBiometrics() async {
     try {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
-      if (!canCheck || !isSupported) return false;
-      final available = await _auth.getAvailableBiometrics();
-      return available.isNotEmpty;
+      if (!canCheck || !isSupported) return const [];
+      return await _auth.getAvailableBiometrics();
     } on LocalAuthException {
-      return false;
+      return const [];
     } on PlatformException {
-      return false;
+      return const [];
+    } on MissingPluginException {
+      return const [];
     }
+  }
+
+  Future<BiometricKind> _kindOf(List<BiometricType> enrolled) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) {
+      return BiometricKind.other;
+    }
+    if (enrolled.contains(BiometricType.face)) return BiometricKind.faceId;
+    if (enrolled.contains(BiometricType.fingerprint)) {
+      return BiometricKind.touchId;
+    }
+    return switch (await _device.biometryHardware()) {
+      BiometryHardware.faceId => BiometricKind.faceId,
+      BiometryHardware.touchId => BiometricKind.touchId,
+      BiometryHardware.none || BiometryHardware.unknown => BiometricKind.other,
+    };
   }
 
   /// Triggers the system biometric prompt with [reason] as the dialog message.
@@ -124,3 +179,8 @@ class AuthGateService {
     return '$ts.$id';
   }
 }
+
+/// The security gate's service, overridden with a fake in tests.
+@Riverpod(keepAlive: true)
+AuthGateService authGateService(Ref ref) =>
+    AuthGateService(device: ref.watch(deviceChannelProvider));

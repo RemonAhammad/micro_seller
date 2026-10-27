@@ -32,6 +32,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
+import '../support/fake_camera.dart';
 import '../support/isar_core.dart';
 import '../support/layout_harness.dart';
 
@@ -75,37 +76,6 @@ final ThemeData _phoneTheme = () {
         .copyWith(titleTextStyle: roboto(t.appBarTheme.titleTextStyle)),
   );
 }();
-
-/// The camera, without a camera: starts at once and shows a black preview.
-class _FakeCamera extends MobileScannerPlatform {
-  @override
-  Stream<BarcodeCapture?> get barcodesStream => const Stream.empty();
-  @override
-  Stream<TorchState> get torchStateStream => const Stream.empty();
-  @override
-  Stream<double> get zoomScaleStateStream => const Stream.empty();
-  @override
-  Widget buildCameraView() => const ColoredBox(color: Colors.black);
-  @override
-  Future<MobileScannerViewAttributes> start(StartOptions startOptions) async =>
-      const MobileScannerViewAttributes(
-        cameraDirection: CameraFacing.back,
-        currentTorchMode: TorchState.off,
-        size: Size(1080, 1920),
-      );
-  @override
-  Future<void> stop() async {}
-  @override
-  Future<void> pause() async {}
-  @override
-  Future<void> toggleTorch() async {}
-  @override
-  Future<void> updateScanWindow(Rect? window) async {}
-  @override
-  Future<void> setFocusPoint(Offset position) async {}
-  @override
-  Future<void> dispose() async {}
-}
 
 Product _product({int id = 1, int supplierId = 0, bool variants = false}) {
   final attributes = [
@@ -264,7 +234,7 @@ void main() {
     await loadRoboto();
     SharedPreferences.setMockInitialValues({'currencySymbol': '৳'});
     CurrencyFormatter.setSymbol('৳');
-    MobileScannerPlatform.instance = _FakeCamera();
+    MobileScannerPlatform.instance = FakeCamera();
     if (coreLibrary == null) return;
     await Isar.initializeIsarCore(libraries: {Abi.current(): coreLibrary});
     dir = await Directory.systemTemp.createTemp('micro_seller_products_layout');

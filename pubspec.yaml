@@ -150,3 +150,20 @@ flutter:
     - assets/images/
     - assets/icons/
     - .env
+  # Roboto for iOS (lib/core/theme/app_fonts.dart): iPhones ship San
+  # Francisco, so the app bundles Android's font to draw the same there.
+  # Static files from the Flutter SDK (Apache-2.0, see Roboto_LICENSE.txt),
+  # nothing lighter than 400 (the app uses none). Named RobotoStatic, not
+  # Roboto: a bundled family wins over the system's, and Android's variable
+  # system Roboto would lose its real 600 and 800 weights.
+  fonts:
+    - family: RobotoStatic
+      fonts:
+        - asset: assets/fonts/roboto/Roboto-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/roboto/Roboto-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/roboto/Roboto-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/roboto/Roboto-Black.ttf
+          weight: 900

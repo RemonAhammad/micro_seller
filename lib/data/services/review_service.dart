@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/app_distribution.dart';
 import '../models/order.dart';
+import 'release_update_service.dart';
 
 /// Decides when to ask the seller for a store rating, and performs the ask.
 /// Ported from the Fuel Cost app's `ReviewService`.
@@ -64,11 +66,38 @@ class ReviewService {
     return eligibilityFromPrefs(prefs, orderCount: orderCount);
   }
 
-  /// Whether Google Play's in-app review sheet can be shown on this install
-  /// (false on iOS without an App Store listing, desktop, and builds not
-  /// installed from Play). The automatic prompt only appears when true, so we
-  /// never ask and then do nothing.
-  static Future<bool> canPrompt() async {
+  /// Whether the app has a store listing to rate on this platform: Google
+  /// Play on Android; the App Store on iOS once [appStoreId] is set (the
+  /// sideloaded iPhone app has none); none on desktop and the web. Settings
+  /// shows "Rate this app" only when true.
+  static bool hasStoreListing({
+    String? appStoreId = AppDistribution.appStoreId,
+  }) {
+    if (kIsWeb) return false;
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => true,
+      TargetPlatform.iOS => appStoreId != null,
+      _ => false,
+    };
+  }
+
+  /// Whether the automatic prompt may ask: the app has a listing
+  /// ([hasStoreListing]), the review flow is available, and on Android this
+  /// is a Play install ([channel]; read from the installer when null), since
+  /// Play never shows its sheet to an APK installed from GitHub. Checked
+  /// first, so the prompt never asks and then does nothing.
+  ///
+  /// `InAppReview.isAvailable` alone isn't enough: it is true on iOS 10.3+
+  /// whether or not the app is listed.
+  static Future<bool> canPrompt({
+    String? appStoreId = AppDistribution.appStoreId,
+    UpdateChannel? channel,
+  }) async {
+    if (!hasStoreListing(appStoreId: appStoreId)) return false;
+    if (defaultTargetPlatform == TargetPlatform.android &&
+        (channel ?? await readUpdateChannel()) != UpdateChannel.play) {
+      return false;
+    }
     try {
       return await InAppReview.instance.isAvailable();
     } catch (_) {
@@ -102,16 +131,31 @@ class ReviewService {
 
   // ─── The ask itself ───
 
-  /// Show Google Play's review sheet (stars + optional written review),
-  /// falling back to the store listing.
+  /// The seller asked to rate (Rate now, or Settings → Rate this app).
   ///
-  /// On Android this silently does nothing unless the build was installed
-  /// from Play, and Play also enforces an undisclosed quota — neither is an
-  /// error, so failures are logged rather than surfaced.
-  static Future<void> requestReview() async {
+  /// - No listing ([hasStoreListing]): nothing.
+  /// - iOS: the App Store listing ([appStoreId]). Apple's own prompt is
+  ///   rationed and may show nothing after the seller tapped.
+  /// - Android, a Play install ([channel]; read from the installer when
+  ///   null): Google Play's review sheet (stars + optional written review),
+  ///   falling back to the store listing. Play also enforces an undisclosed
+  ///   quota.
+  /// - Android, an APK from GitHub: the Play listing, since Play never shows
+  ///   its sheet there.
+  ///
+  /// Failures are logged rather than surfaced.
+  static Future<void> requestReview({
+    String? appStoreId = AppDistribution.appStoreId,
+    UpdateChannel? channel,
+  }) async {
+    if (!hasStoreListing(appStoreId: appStoreId)) return;
     final inAppReview = InAppReview.instance;
     try {
-      if (await inAppReview.isAvailable()) {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await inAppReview.openStoreListing(appStoreId: appStoreId);
+      } else if ((channel ?? await readUpdateChannel()) != UpdateChannel.play) {
+        await inAppReview.openStoreListing();
+      } else if (await inAppReview.isAvailable()) {
         await inAppReview.requestReview();
       } else {
         await inAppReview.openStoreListing();
