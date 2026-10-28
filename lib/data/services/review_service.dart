@@ -131,7 +131,8 @@ class ReviewService {
 
   // ─── The ask itself ───
 
-  /// The seller asked to rate (Rate now, or Settings → Rate this app).
+  /// The seller tapped Rate now on the Dashboard's prompt. Settings → Rate
+  /// this app uses [openReviewPage] instead.
   ///
   /// - No listing ([hasStoreListing]): nothing.
   /// - iOS: the App Store listing ([appStoreId]). Apple's own prompt is
@@ -162,6 +163,29 @@ class ReviewService {
       }
     } catch (e) {
       debugPrint('[ReviewService] In-app review request failed: $e');
+    }
+  }
+
+  /// The seller tapped Settings → Rate this app: the store page, where they
+  /// rate with its stars. Not Play's in-app sheet, which Play rations and
+  /// may skip without telling the app, so the tap did nothing (Google's
+  /// guidelines say not to put that sheet behind a button for this reason).
+  /// The store page opens every time.
+  ///
+  /// - No listing ([hasStoreListing]): nothing.
+  /// - iOS: the App Store listing ([appStoreId]).
+  /// - Android, from Play or from GitHub: the app's Google Play page (in the
+  ///   browser where the Play Store app is missing).
+  ///
+  /// Failures are logged rather than surfaced.
+  static Future<void> openReviewPage({
+    String? appStoreId = AppDistribution.appStoreId,
+  }) async {
+    if (!hasStoreListing(appStoreId: appStoreId)) return;
+    try {
+      await InAppReview.instance.openStoreListing(appStoreId: appStoreId);
+    } catch (e) {
+      debugPrint('[ReviewService] Opening the store page failed: $e');
     }
   }
 }

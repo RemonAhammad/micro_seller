@@ -109,14 +109,15 @@ void main() {
   });
 
   testWidgets(
-    'Android, from Play: Rate opens Play\'s review sheet',
+    'Android, from Play: Rate opens the Play listing, not the review sheet '
+    'Play may skip',
     (tester) async {
       final context = await _pumpSettings(tester, UpdateChannel.play);
       final s = AppStrings.of(context);
       expect(_aboutRows(tester, context), [s.rateThisApp, s.appVersion]);
       await tester.tap(find.text(s.rateThisApp));
       await tester.pumpAndSettle();
-      expect(store.calls, ['isAvailable', 'requestReview']);
+      expect(store.calls, ['openStoreListing(null)']);
       // Never asked again on the Dashboard.
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('review_prompt_done'), isTrue);

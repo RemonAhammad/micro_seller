@@ -203,6 +203,32 @@ void main() {
       expect(store.calls, ['openStoreListing(null)']);
     });
 
+    test('Settings → Rate this app opens the store page on every install',
+        () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      for (final installer in ['com.android.vending', null]) {
+        installedFrom(installer);
+        store.calls.clear();
+        await ReviewService.openReviewPage();
+        // Never Play's in-app sheet, which may show nothing.
+        expect(store.calls, ['openStoreListing(null)'], reason: '$installer');
+      }
+
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      store.calls.clear();
+      await ReviewService.openReviewPage();
+      expect(store.calls, isEmpty, reason: 'iOS without an App Store id');
+      await ReviewService.openReviewPage(appStoreId: appStoreId);
+      expect(store.calls, ['openStoreListing($appStoreId)']);
+    });
+
+    test('Settings → Rate this app: a failure is swallowed', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      store.error = Exception('No app opens the link');
+      await ReviewService.openReviewPage();
+      expect(store.calls, ['openStoreListing(null)']);
+    });
+
     test('desktop: no listing, no prompt, no calls', () async {
       for (final platform in [
         TargetPlatform.macOS,
@@ -215,6 +241,7 @@ void main() {
         expect(await ReviewService.canPrompt(appStoreId: appStoreId), isFalse,
             reason: platform.name);
         await ReviewService.requestReview(appStoreId: appStoreId);
+        await ReviewService.openReviewPage(appStoreId: appStoreId);
       }
       expect(store.calls, isEmpty);
     });

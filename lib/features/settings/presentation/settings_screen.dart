@@ -999,10 +999,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   subtitle: Text(s.rateThisAppSubtitle(AppStrings.appName)),
                   trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                   // The tap is already an opt-in, so skip the gate dialog.
-                  // An APK from GitHub opens the Play listing: Play shows
-                  // its review sheet to Play installs only.
+                  // It opens the store page rather than Play's in-app
+                  // sheet: Play may skip that sheet without telling the app,
+                  // and then the tap did nothing.
                   onTap: () async {
-                    await ReviewService.requestReview(channel: updateChannel);
+                    await ReviewService.openReviewPage();
                     await ReviewService.markRated();
                   },
                 ),
