@@ -440,15 +440,20 @@ void main() {
     });
 
     test("where it writes them with ',': a lone '.' with 3 digits groups "
-        "thousands, a ',' is the point", () {
+        "thousands, a ',' is the point unless 3 digits follow it", () {
       for (final region in [_france, _indonesia]) {
         _region(region);
         check('$region', const {
           '1.250': ('1250', '1.25', '1250'),
           'Rp 25.000': ('25000', '25.00', '25000'),
-          '1,459': ('1.46', '1.46', null),
-          '1,250': ('1.25', '1.25', null),
-          '25,000': ('25.00', '25.00', '25'),
+          '12,50': ('12.50', '12.50', null),
+          '1,5': ('1.5', '1.5', null),
+          // The app's own amounts (CurrencyFormatter's Rp25,000) paste back
+          // unchanged in these regions too.
+          '1,459': ('1459', '1.46', '1459'),
+          '1,250': ('1250', '1.25', '1250'),
+          '25,000': ('25000', '25.00', '25000'),
+          'Rp25,000': ('25000', '25.00', '25000'),
         });
       }
     });

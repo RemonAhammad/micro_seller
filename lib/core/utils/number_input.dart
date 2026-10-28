@@ -19,7 +19,8 @@ import 'package:intl/number_symbols_data.dart';
 // Whether a ',' is the decimal point or groups thousands depends on where
 // the phone is: France writes 1,5 and 1.250, Bangladesh 1.5 and 1,250. The
 // device's region decides ([NumberInput.deviceDecimalSeparator]), for a ','
-// typed and for a pasted 1,459 or 1.459.
+// typed and for a pasted 1.459. A pasted ',' before exactly 3 digits always
+// groups thousands, the way the app itself writes amounts (1,250).
 
 /// The zero of every script whose digits are mapped to 0-9. Each of these
 /// digits is one UTF-16 unit, like '0'-'9', so mapping one never moves the
@@ -121,7 +122,8 @@ abstract final class NumberInput {
   /// (Persian and Egyptian Arabic '٫', which is always the point).
   ///
   /// It decides what a ',' typed into an amount is, and a pasted single
-  /// '.' or ',' with 3 digits after it (1.459, 1,250).
+  /// '.' with 3 digits after it (1.459). A pasted ',' with 3 digits after it
+  /// always groups thousands (1,250).
   static String? get deviceDecimalSeparator {
     final locale = debugDeviceLocale ?? PlatformDispatcher.instance.locale;
     if (locale != _separatorLocale) {
@@ -200,13 +202,13 @@ abstract final class NumberInput {
   /// Which of '.' and ',' is the point: when both appear, the last one (it
   /// must appear once); a kind that appears more than once groups digits; a
   /// kind that appears once is the point, except with [grouping] (money and
-  /// whole numbers) when exactly 3 digits follow it, after a valid group:
-  /// then it groups thousands when it isn't the decimal separator of the
-  /// device's region ([deviceDecimalSeparator]: 1.459 is 1.459 in
-  /// Bangladesh and 1459 in Germany). Where the region isn't known, a ','
-  /// groups (the app's own 1,250, as `CurrencyFormatter` writes it) and so
-  /// does a '.', unless the field takes 3 decimals (the Kuwaiti Dinar's
-  /// 25.000).
+  /// whole numbers) when exactly 3 digits follow it, after a valid group.
+  /// Then a ',' groups thousands in every region (the app's own 1,250, as
+  /// `CurrencyFormatter` writes it, is 1250 in France too), and a '.' groups
+  /// them when it isn't the decimal separator of the device's region
+  /// ([deviceDecimalSeparator]: 1.459 is 1.459 in Bangladesh and 1459 in
+  /// Germany) or, where the region isn't known, unless the field takes 3
+  /// decimals (the Kuwaiti Dinar's 25.000).
   ///
   /// Digits must be grouped as amounts are, in thousands (1,250,000) or in
   /// South Asian lakhs and crores (1,25,000 · 12,34,56,789), else the paste
@@ -341,9 +343,12 @@ abstract final class NumberInput {
     final groups = number.substring(0, at).split(_nonDigit)..add(after);
     if (!_validGroups(groups)) return false;
     final mark = number[at];
+    // A ',' groups in every region: the app writes amounts that way
+    // (CurrencyFormatter's Rp25,000), so its own text pastes back unchanged.
+    if (mark == ',') return true;
     final region = deviceDecimalSeparator;
     if (region != null) return mark != region;
-    return mark == ',' || integer || (maxDecimals != null && maxDecimals < 3);
+    return integer || (maxDecimals != null && maxDecimals < 3);
   }
 
   /// Whether [groups], a number's whole part cut where it is grouped, are
