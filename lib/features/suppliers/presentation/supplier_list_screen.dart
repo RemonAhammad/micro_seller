@@ -97,10 +97,7 @@ class SupplierListScreen extends ConsumerWidget {
                     final due = s.hasOutstanding
                         ? '${AppStrings.of(context).due}: ${CurrencyFormatter.format(suppliers[i].totalDue)}'
                         : null;
-                    // The due sits at the end of the row, unless that would
-                    // leave the name, company or phone too narrow for one of
-                    // its words (large text, narrow layout): then it goes
-                    // under them, shrunk rather than split if it must be.
+
                     final dueBelow = due != null &&
                         box.maxWidth - _avatarSpace -
                                 _textWidth(context, due, dueStyle) <
@@ -165,12 +162,8 @@ class SupplierListScreen extends ConsumerWidget {
   }
 }
 
-/// The avatar and the gap after it, at the start of a supplier's row.
 const _avatarSpace = 22.0 * 2 + 12;
 
-/// How wide [text] in [style] is where [context] lays it out: on one line,
-/// or with [widestWord], its widest word (the narrowest it wraps to without
-/// breaking a word).
 double _textWidth(BuildContext context, String text, TextStyle? style,
     {bool widestWord = false}) {
   var effective = DefaultTextStyle.of(context).style.merge(style);

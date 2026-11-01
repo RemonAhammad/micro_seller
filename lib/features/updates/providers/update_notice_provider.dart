@@ -1,8 +1,5 @@
-/// The update notice's providers: the channel this install updates through,
-/// the GitHub release check, and the notice the Dashboard shows.
-///
-/// Each one catches everything: Riverpod 3 retries a failing provider by
-/// itself, which would ask GitHub again and again.
+
+
 library;
 
 import 'package:flutter/foundation.dart';
@@ -15,14 +12,9 @@ import '../../../data/services/release_update_service.dart';
 
 part 'update_notice_provider.g.dart';
 
-/// How this install gets its updates: Play's in-app update, the GitHub
-/// notice, or none. Tests override it (`UpdateChannel.none`), so they never
-/// ask GitHub.
 @Riverpod(keepAlive: true)
 Future<UpdateChannel> updateChannel(Ref ref) => readUpdateChannel();
 
-/// The GitHub release check, on the github channel only; null elsewhere, or
-/// when it couldn't be set up.
 @Riverpod(keepAlive: true)
 Future<ReleaseUpdateService?> releaseUpdateService(Ref ref) async {
   try {
@@ -44,8 +36,6 @@ Future<ReleaseUpdateService?> releaseUpdateService(Ref ref) async {
   }
 }
 
-/// The newer release the Dashboard's notice offers, or null. Asks GitHub at
-/// most once a day (`ReleaseUpdateService.check`). Never an error.
 @Riverpod(keepAlive: true)
 class UpdateNotice extends _$UpdateNotice {
   @override
@@ -58,8 +48,6 @@ class UpdateNotice extends _$UpdateNotice {
     }
   }
 
-  /// Hides the notice, and its release's notice until a newer release
-  /// comes out.
   Future<void> dismiss() async {
     final update = state.value;
     state = const AsyncData(null);
@@ -68,12 +56,10 @@ class UpdateNotice extends _$UpdateNotice {
       final service = await ref.read(releaseUpdateServiceProvider.future);
       await service?.snooze(update.tag);
     } catch (_) {
-      // Not remembered: the notice comes back next time.
+
     }
   }
 
-  /// Settings' "Check for updates": asks GitHub now, whatever the throttle,
-  /// offering a dismissed release too, and brings the notice up to date.
   Future<ManualCheck> checkNow() async {
     try {
       final service = await ref.read(releaseUpdateServiceProvider.future);

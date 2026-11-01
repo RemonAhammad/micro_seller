@@ -8,8 +8,6 @@ import '../../../dashboard/presentation/widgets/sales_chart.dart'
     show GridLineCallback, axisTitleReserve;
 import '../../../dashboard/presentation/widgets/stat_card.dart';
 
-/// Shared building blocks for the four Reports tabs.
-
 class ReportSectionCard extends StatelessWidget {
   const ReportSectionCard({
     super.key,
@@ -25,7 +23,6 @@ class ReportSectionCard extends StatelessWidget {
   final Color color;
   final Widget child;
 
-  /// Small note next to the title, e.g. "as of today".
   final String? badge;
 
   @override
@@ -52,10 +49,7 @@ class ReportSectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(builder: (context, constraints) {
-            // The badge ends the title row while it leaves the title a
-            // third of it (the icon's 36 px aside). A longer one (narrow
-            // screen, large text) goes under the title instead of
-            // squeezing it to a letter a line or overflowing.
+
             final badgeText =
                 badge == null ? null : Text(badge!, style: badgeStyle);
             final beside = badge == null ||
@@ -103,7 +97,6 @@ class ReportSectionCard extends StatelessWidget {
   }
 }
 
-/// KPI tiles in a responsive grid (2–4 columns), reusing the dashboard card.
 class KpiGrid extends StatelessWidget {
   const KpiGrid({super.key, required this.items});
 
@@ -138,8 +131,6 @@ class KpiGrid extends StatelessWidget {
   }
 }
 
-/// Profit & loss statement: label / amount rows; [strong] rows are
-/// subtotals drawn bold with a rule above.
 class PnlTable extends StatelessWidget {
   const PnlTable({super.key, required this.rows});
 
@@ -194,7 +185,6 @@ class PnlTable extends StatelessWidget {
   }
 }
 
-/// Ranked horizontal share bars — methods, categories, reasons, top lists.
 class BreakdownBars extends StatelessWidget {
   const BreakdownBars({
     super.key,
@@ -207,10 +197,8 @@ class BreakdownBars extends StatelessWidget {
   final Map<String, double> entries;
   final String Function(double) format;
 
-  /// The bars' and top ranks' color; the theme's main color by default.
   final Color? color;
 
-  /// Show 1, 2, 3… before each row (top-N lists).
   final bool ranked;
 
   @override
@@ -276,9 +264,6 @@ class BreakdownBars extends StatelessWidget {
   }
 }
 
-/// An amount at the end of a row: its own width while that's under
-/// [maxWidth], shrunk to fit beyond it (narrow screen, large text), so the
-/// label keeps room and the number is never cut off or ellipsized.
 class _Amount extends StatelessWidget {
   const _Amount({required this.maxWidth, required this.child});
 
@@ -296,11 +281,6 @@ class _Amount extends StatelessWidget {
       );
 }
 
-/// Net sales per day (or month) as bars; returns can make a bucket negative.
-///
-/// Stateful only so the chart callbacks are stable tear-offs: fl_chart
-/// compares its data (callbacks included) to decide whether to animate, and
-/// closures built in `build` restarted the animation on every rebuild.
 class NetSalesChart extends StatefulWidget {
   const NetSalesChart({super.key, required this.series, required this.byMonth});
 
@@ -316,7 +296,6 @@ class _NetSalesChartState extends State<NetSalesChart> {
 
   final _gridLine = GridLineCallback();
 
-  /// Read by [_bottomTitle]; set in [build].
   Color _labelColor = Colors.transparent;
   int _every = 1;
 
@@ -391,8 +370,7 @@ class _NetSalesChartState extends State<NetSalesChart> {
                 BarChartRodData(
                   toY: series[i].value,
                   width: series.length > 20 ? 5 : 12,
-                  // A sales series: the fixed revenue color, as on the
-                  // dashboard's chart, whatever the color theme.
+
                   color: series[i].value < 0
                       ? AppColors.paymentUnpaid
                       : AppColors.chartRevenue.withValues(alpha: 0.8),
@@ -406,7 +384,6 @@ class _NetSalesChartState extends State<NetSalesChart> {
   }
 }
 
-/// "No data for this period" placeholder inside a tab.
 class ReportEmpty extends StatelessWidget {
   const ReportEmpty({super.key, required this.message});
   final String message;

@@ -73,8 +73,7 @@ class SupplierDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          // Slivers, so the product and restock lists only build what's on
-          // screen.
+
           body: CustomScrollView(
             slivers: [
               SliverPadding(
@@ -83,7 +82,7 @@ class SupplierDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Info card
+
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -101,8 +100,7 @@ class SupplierDetailScreen extends ConsumerWidget {
                                 s.phone,
                                 supplier.phone,
                                 keepWhole: true,
-                                // A device that can't call shows the number
-                                // instead.
+
                                 trailing: GestureDetector(
                                   onTap: () => callPhone(context, supplier.phone),
                                   child: ThinIcon(tabler.Phone.new, size: 18, color: cs.primary),
@@ -117,7 +115,6 @@ class SupplierDetailScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
 
-                      // Stats card
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -140,8 +137,6 @@ class SupplierDetailScreen extends ConsumerWidget {
 
                       const SizedBox(height: 12),
 
-                      // Action buttons: side by side, or stacked when a
-                      // label wouldn't fit its half.
                       if (supplier.hasOutstanding)
                         ButtonPair(
                           gap: 8,
@@ -161,7 +156,6 @@ class SupplierDetailScreen extends ConsumerWidget {
                 ),
               ),
 
-              // Products from this supplier
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: _SupplierProductsSection(supplierId: supplier.id),
@@ -169,7 +163,6 @@ class SupplierDetailScreen extends ConsumerWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-              // Restock Activity (unified: purchases + stock adjustments)
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 sliver: _SupplierRestockActivity(supplierId: supplier.id),
@@ -181,11 +174,6 @@ class SupplierDetailScreen extends ConsumerWidget {
     );
   }
 
-  /// [label] at the start of a line and [value] at its end. A long label
-  /// wraps within half the line (or its longest word, when that's wider)
-  /// and a long value wraps under itself, or goes under the label when a
-  /// word of it wouldn't fit beside it. With [keepWhole] (an amount, a phone
-  /// number) the value shrinks to fit instead, so it is never split.
   Widget _row(ThemeData theme, String label, String value,
       {Color? valueColor, bool keepWhole = false, Widget? trailing}) {
     final labelStyle = theme.textTheme.bodyMedium?.copyWith(
@@ -271,8 +259,7 @@ class SupplierDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.of(context).cancel)),
-          // Enabled once there's an amount to pay, as the Due Book's
-          // Collect is: a tap on an empty or zero amount used to do nothing.
+
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: ctrl,
             builder: (_, value, _) {
@@ -294,8 +281,6 @@ class SupplierDetailScreen extends ConsumerWidget {
     );
   }
 }
-
-// ─── Products From This Supplier Section ───────────────────────────────────
 
 class _SupplierProductsSection extends ConsumerWidget {
   final int supplierId;
@@ -391,10 +376,7 @@ class _SupplierProductsSection extends ConsumerWidget {
                         border: Border.all(color: cs.outline.withValues(alpha: 0.1)),
                       ),
                       child: LayoutBuilder(builder: (context, box) {
-                        // The stock sits at the end of the row, unless that
-                        // would leave the name or SKU too narrow for one of
-                        // its words (large text, narrow layout): then it goes
-                        // under them.
+
                         final stockBelow = box.maxWidth - 42 -
                                 _textWidth(context, stock, stockStyle) <
                             math.max(
@@ -448,8 +430,6 @@ class _SupplierProductsSection extends ConsumerWidget {
   }
 }
 
-// ─── Supplier Restock Activity ──────────────────────────────────────────────
-
 class _SupplierRestockActivity extends ConsumerWidget {
   final int supplierId;
 
@@ -464,7 +444,7 @@ class _SupplierRestockActivity extends ConsumerWidget {
 
     return movementsAsync.when(
       data: (movements) {
-        // Only show incoming (positive qty) restocks
+
         final restocks = movements.where((m) => m.qty > 0).toList();
         final badge = MediaQuery.textScalerOf(context).scale(36);
 
@@ -535,9 +515,7 @@ class _SupplierRestockActivity extends ConsumerWidget {
                   child: Row(
                     children: [
                       Container(
-                        // 36 square at the default text size, growing with
-                        // the text; a quantity too long for it shrinks
-                        // instead of wrapping.
+
                         width: badge,
                         height: badge,
                         decoration: BoxDecoration(
@@ -594,9 +572,6 @@ class _SupplierRestockActivity extends ConsumerWidget {
   }
 }
 
-/// How wide [text] in [style] is where [context] lays it out: on one line,
-/// or with [widestWord], its widest word (the narrowest it wraps to without
-/// breaking a word).
 double _textWidth(BuildContext context, String text, TextStyle? style,
     {bool widestWord = false}) {
   var effective = DefaultTextStyle.of(context).style.merge(style);

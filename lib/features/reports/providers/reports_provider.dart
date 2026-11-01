@@ -19,8 +19,6 @@ import '../../customers/providers/dues_provider.dart';
 
 part 'reports_provider.g.dart';
 
-/// The reporting window for a picked date range: `[start of first day,
-/// start of the day after the last)`.
 ({DateTime start, DateTime end}) reportWindow(DateTime from, DateTime to) => (
   start: DateTime(from.year, from.month, from.day),
   end: DateTime(to.year, to.month, to.day + 1),
@@ -29,9 +27,6 @@ part 'reports_provider.g.dart';
 List<T> _byId<T>(List<T> rows, int Function(T) id) =>
     rows..sort((a, b) => id(a).compareTo(id(b)));
 
-/// Sales (non-return orders) created in `[start, end)`, in id order. Found
-/// through the createdAt index, then put back in id order — the order the
-/// builders' sums always added them in.
 List<Order> loadSalesSync(Isar db, DateTime start, DateTime end) => _byId(
   db.orders
       .where()
@@ -42,14 +37,9 @@ List<Order> loadSalesSync(Isar db, DateTime start, DateTime end) => _byId(
   (o) => o.id,
 );
 
-/// Every return order. Returns are dated by when their goods came back
-/// (`updatedAt`), which can fall in a period even if the return was created
-/// earlier, so they're loaded whole and the builders pick the period's.
 List<Order> loadReturnsSync(Isar db) =>
     db.orders.filter().isReturnEqualTo(true).findAllSync();
 
-/// Ids of cancelled orders — returns against them are ignored (the cancel
-/// already removed the sale).
 Set<int> loadCancelledOrderIdsSync(Isar db) => db.orders
     .filter()
     .orderStatusEqualTo(OrderStatus.cancelled)
@@ -64,11 +54,6 @@ List<Expense> _expensesSync(Isar db, DateTime start, DateTime end) => _byId(
       .findAllSync(),
   (e) => e.id,
 );
-
-// The report jobs below run on a worker isolate (runDbJob): loading and
-// building a "This year" report is thousands of orders of deserialization and
-// arithmetic the UI isolate never sees. Each job takes only plain values, so
-// it can cross isolates, and returns just the finished report.
 
 SalesReport Function(Isar) salesReportJob(DateTime start, DateTime end) =>
     (db) => db.txnSync(
@@ -85,8 +70,7 @@ SalesReport Function(Isar) salesReportJob(DateTime start, DateTime end) =>
     );
 
 DuesReport Function(Isar) duesReportJob(DateTime start, DateTime end) => (db) {
-  // Its own read transaction (Isar can't nest them) — like the separate
-  // Due Book provider the report used to read.
+
   final dues = loadDuesSync(db);
   return db.txnSync(() {
     final payments = _byId(
@@ -97,9 +81,7 @@ DuesReport Function(Isar) duesReportJob(DateTime start, DateTime end) => (db) {
       (p) => p.id,
     );
     final ordersInPeriod = loadSalesSync(db, start, end);
-    // Orders the period's payments belong to (often older than the
-    // period) — needed to tell a later "dues collection" from a
-    // pay-at-sale.
+
     final extra = db.orders.getAllSync(
       {...payments.map((p) => p.orderId)}.toList(),
     );
@@ -108,11 +90,7 @@ DuesReport Function(Isar) duesReportJob(DateTime start, DateTime end) => (db) {
       for (final o in extra)
         if (o != null) o.id: o,
     };
-    // Same-day payments of period orders (for "credit given"). Period
-    // orders were created in the window and ids grow with time, so one
-    // orderId index range covers them; the set check keeps exactly
-    // theirs. (An OR of one condition per order, or one where-clause
-    // per order, measured several times slower.)
+
     final periodIds = {for (final o in ordersInPeriod) o.id};
     final periodPayments = periodIds.isEmpty
         ? const <Payment>[]
@@ -167,7 +145,7 @@ PurchasesReport Function(Isar) purchasesReportJob(
 ) =>
     (db) => db.txnSync(
       () => buildPurchasesReport(
-        // All purchases: "owed to suppliers today" spans every purchase.
+
         purchases: db.purchases.where().findAllSync(),
         suppliers: db.suppliers.where().findAllSync(),
         expenses: _expensesSync(db, start, end),
@@ -180,9 +158,6 @@ PurchasesReport Function(Isar) purchasesReportJob(
       ),
     );
 
-/// Keeps a report for a while after its tab is left, so swiping between the
-/// Reports tabs doesn't reload it. Its triggers still invalidate it, and an
-/// invalidated report with no listeners only rebuilds when shown again.
 void _keepForAWhile(Ref ref) {
   final link = ref.keepAlive();
   final timer = Timer(const Duration(minutes: 3), link.close);
@@ -191,9 +166,7 @@ void _keepForAWhile(Ref ref) {
 
 @riverpod
 Future<SalesReport> salesReport(Ref ref, DateTime from, DateTime to) async {
-  // Live, like the Dashboard: the Reports tab stays mounted, and a stale
-  // report next to a live Dashboard profit would disagree with it. The
-  // revision counters only notice writes; nothing reloads a whole list.
+
   ref.watch(ordersRevisionProvider);
   ref.watch(expensesRevisionProvider);
   _keepForAWhile(ref);
@@ -204,7 +177,7 @@ Future<SalesReport> salesReport(Ref ref, DateTime from, DateTime to) async {
 
 @riverpod
 Future<DuesReport> duesReport(Ref ref, DateTime from, DateTime to) async {
-  // The same writes that refresh the Due Book (orders, customers).
+
   ref.watch(ordersRevisionProvider);
   ref.watch(customersRevisionProvider);
   _keepForAWhile(ref);

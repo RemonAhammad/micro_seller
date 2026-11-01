@@ -161,17 +161,14 @@ class _StockAdjustmentScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (product != null) ...[
-                    // Product header
+
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: cs.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      // The stock column keeps its size while it fits in
-                      // 40% of the card; past that (narrow layout, large
-                      // text) the number shrinks and its caption wraps, so
-                      // the name keeps room.
+
                       child: LayoutBuilder(
                         builder: (context, constraints) => Row(
                           children: [
@@ -227,7 +224,6 @@ class _StockAdjustmentScreenState
                       ),
                     ),
 
-                    // Combination selector
                     if (product.hasVariants) ...[
                       const SizedBox(height: 16),
                       Text(s.selectCombination,
@@ -263,8 +259,7 @@ class _StockAdjustmentScreenState
                             final selected =
                                 _selectedCombinationKey == c.combinationKey;
                             return ChoiceChip(
-                              // A label too long for the chip ellipsizes
-                              // before its stock count, which stays visible.
+
                               label: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -378,7 +373,6 @@ class _StockAdjustmentScreenState
                   ),
                   const SizedBox(height: 20),
 
-                  // Supplier picker (only for Restock)
                   if (_type == StockMovementType.restock) ...[
                     InkWell(
                       onTap: _pickSupplier,
@@ -481,8 +475,6 @@ class _StockAdjustmentScreenState
     );
   }
 }
-
-// ─── Supplier Picker Sheet ──────────────────────────────────────────────────
 
 class _StockSupplierPickerSheet extends StatefulWidget {
   final List<Supplier> suppliers;

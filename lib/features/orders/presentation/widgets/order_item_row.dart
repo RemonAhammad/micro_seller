@@ -14,7 +14,6 @@ class OrderItemRow extends StatelessWidget {
     this.showDivider = true,
   });
 
-  /// The narrowest the name column gets beside the line total, at 100% text.
   static const double _minNameWidth = 64;
 
   @override
@@ -48,8 +47,7 @@ class OrderItemRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
-                  // A long quantity (or a large text size) shrinks to fit
-                  // the box instead of wrapping out of it.
+
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
@@ -65,10 +63,7 @@ class OrderItemRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              // The line total sits beside the name while the name keeps a
-              // readable width, with room for its longest word; otherwise (a
-              // large total, a narrow layout, large text) it goes under the
-              // unit price.
+
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -122,9 +117,6 @@ class OrderItemRow extends StatelessWidget {
   }
 }
 
-/// The width [text] takes on one line in [style] as a [Text] draws it here:
-/// over the ambient text style, at the ambient text size, bold if the phone
-/// asks for it (the Bold text setting).
 double _lineWidth(BuildContext context, String text, TextStyle? style) {
   var effective = DefaultTextStyle.of(context).style.merge(style);
   if (MediaQuery.boldTextOf(context)) {

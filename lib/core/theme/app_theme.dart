@@ -6,9 +6,6 @@ import 'app_color_theme.dart';
 import 'app_fonts.dart';
 import 'brand_colors.dart';
 
-/// Flutter's own app-bar buttons (back arrow, drawer, close) drawn with the
-/// same thin Tabler icons as the rest of the app. The back arrow points
-/// right in RTL layouts (Arabic, Urdu), as Material's own does.
 final _thinActionIcons = ActionIconThemeData(
   backButtonIconBuilder: (context) => Directionality.of(context) == TextDirection.rtl
       ? const ThinIcon(tabler.ArrowRight.new)
@@ -18,53 +15,17 @@ final _thinActionIcons = ActionIconThemeData(
   closeButtonIconBuilder: (_) => const ThinIcon(tabler.X.new),
 );
 
-/// The app's light and dark themes for a color theme.
-///
-/// A color theme sets only the color scheme's primary pair (and its accent);
-/// every component theme reads the scheme, so buttons, the FAB, focused
-/// fields and text selection follow it, with the theme's own text color on
-/// the main color. Surfaces keep their fixed neutrals (white / #F8F9FA in
-/// light mode; #1C1C2E, #252535 and blue-grey in dark mode).
-///
-/// The light and dark component themes differ on purpose, as before themes,
-/// and the layout tests depend on it: only light mode sets the filled and
-/// outlined buttons, chips, dividers, list tiles and the bottom navigation
-/// bar; only dark mode sets text selection and the input icon colors.
-///
-/// Every text style the theme names a font in uses [appFontFamily]: the
-/// bundled Roboto on iOS, Android's system Roboto elsewhere. That includes
-/// the app bar title and the button text styles, which replace the text
-/// theme's rather than merge with it (with no family, iOS drew them in San
-/// Francisco).
-///
-/// It sets no status bar style: no AppBar reaches the status bar under the
-/// shell's SafeArea. The app frame sets it (`system_ui_style.dart`).
 class AppTheme {
   AppTheme._();
 
-  /// Teal's light theme, the default.
   static ThemeData get lightTheme => build(Brightness.light, kDefaultColorTheme);
 
-  /// Teal's dark theme, the default.
   static ThemeData get darkTheme => build(Brightness.dark, kDefaultColorTheme);
 
   static const _cacheSize = 32;
 
-  /// Recently built themes, least recently used first.
   static final _cache = <Object, ThemeData>{};
 
-  /// [brightness]'s theme for [theme]. With [dynamicScheme] (Phone colors),
-  /// that system scheme is the color scheme, with its own onPrimary, and
-  /// [theme]'s colors are not used.
-  ///
-  /// Memoized by brightness and the colors that mode uses (not the theme's
-  /// id or name), or by the system scheme, so a rebuild for another reason
-  /// (language, shop name) gets the identical [ThemeData] back. The most
-  /// recent 32 are kept: the theme editor builds one per color it previews.
-  /// The platform is in the key too: it decides the font (the bundled Roboto
-  /// on iOS) and what ThemeData takes from it (`platform`, the tap target
-  /// size and the visual density), so a test that switches platform never
-  /// gets a theme built for another.
   static ThemeData build(Brightness brightness, AppColorTheme theme,
       {ColorScheme? dynamicScheme}) {
     assert(dynamicScheme == null || dynamicScheme.brightness == brightness,
@@ -109,17 +70,12 @@ class AppTheme {
         : _dark(scheme, brand, font);
   }
 
-  /// Teal's colors (the preset, Phone colors' fallback, or a saved copy):
-  /// they keep two details of the scheme Teal had before themes.
   static bool _isTealPalette(AppColorTheme theme) =>
       theme.seed == kDefaultColorTheme.seed &&
       theme.accent == kDefaultColorTheme.accent &&
       theme.style == kDefaultColorTheme.style &&
       theme.onPrimary == kDefaultColorTheme.onPrimary;
 
-  /// Material 3's scheme for the theme's main color and style, with the
-  /// theme's exact pair as primary / onPrimary and its accent as secondary
-  /// (text color picked by contrast).
   static ColorScheme _scheme(Brightness brightness, AppColorTheme theme) {
     var scheme = ColorScheme.fromSeed(
       seedColor: theme.seedColor,
@@ -133,7 +89,7 @@ class AppTheme {
     if (accent != null) {
       final onAccent = recommendedOnColor(accent).color;
       scheme = scheme.copyWith(secondary: accent, onSecondary: onAccent);
-      // Teal's light scheme also had the accent as its tertiary color.
+
       if (brightness == Brightness.light && _isTealPalette(theme)) {
         scheme = scheme.copyWith(tertiary: accent, onTertiary: onAccent);
       }
@@ -171,7 +127,7 @@ class AppTheme {
       ),
       color: Colors.white,
       surfaceTintColor: Colors.transparent,
-      // 6% black, exactly as `withOpacity(0.06)` rounded it.
+
       shadowColor: Colors.black.withAlpha(15),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(

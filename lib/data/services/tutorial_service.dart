@@ -6,8 +6,6 @@ class TutorialService {
 
   static bool _splashShown = false;
 
-  /// Synchronous copy of the splash flag for the router's initialLocation.
-  /// Valid once [primeFrom] has run (main(), before runApp).
   static bool get splashShown => _splashShown;
 
   static void primeFrom(SharedPreferences prefs) {

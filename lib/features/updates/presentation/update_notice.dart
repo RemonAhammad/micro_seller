@@ -1,8 +1,5 @@
-/// The update notice of installs no store updates (the iPhone app, and
-/// Android APKs from GitHub): the Dashboard's banner ([UpdateNoticeBanner])
-/// and the dialog Settings → Check for updates opens ([UpdateNoticeDialog]).
-/// Both say how to install the new version over this one so the seller's
-/// data stays, and Download opens the release's page, which lists its files.
+
+
 library;
 
 import 'package:flutter/foundation.dart';
@@ -17,8 +14,6 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../data/services/release_update_service.dart';
 import '../../../shared/widgets/app_button.dart';
 
-/// Opens [url], a release's page, in the browser. False when nothing could
-/// open it.
 Future<bool> openReleasePage(Uri url) async {
   try {
     return await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -27,9 +22,6 @@ Future<bool> openReleasePage(Uri url) async {
   }
 }
 
-/// How to install an update over this install, keeping its data: with the
-/// same sideloading tool and Apple ID on an iPhone or iPad, from the same
-/// kind of APK on Android.
 String _howTo(BuildContext context) {
   final s = AppStrings.of(context);
   return !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS
@@ -37,16 +29,12 @@ String _howTo(BuildContext context) {
       : s.updateHowToAndroid;
 }
 
-/// Opens [update]'s page, or says that it couldn't.
 Future<void> _download(BuildContext context, AvailableUpdate update) async {
   final s = AppStrings.of(context);
   if (await openReleasePage(update.url)) return;
   if (context.mounted) context.showErrorSnackBar(s.errorOccurred);
 }
 
-/// The Dashboard's notice of a newer release: what it is and how to install
-/// it, Download, and ✕, which hides it until a newer release comes out
-/// ([onDismiss]).
 class UpdateNoticeBanner extends StatelessWidget {
   const UpdateNoticeBanner({
     super.key,
@@ -76,8 +64,7 @@ class UpdateNoticeBanner extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              // The button goes under the texts, not beside them, so a
-              // narrow screen at a large text size still has room for both.
+
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -122,14 +109,11 @@ class UpdateNoticeBanner extends StatelessWidget {
   }
 }
 
-/// Settings → Check for updates' answer when there is a newer release: what
-/// it is and how to install it, with Close and Download.
 class UpdateNoticeDialog extends StatelessWidget {
   const UpdateNoticeDialog({super.key, required this.update});
 
   final AvailableUpdate update;
 
-  /// Shows the dialog for [update]; its Download opens the release's page.
   static Future<void> show(BuildContext context, AvailableUpdate update) async {
     final download = await showDialog<bool>(
       context: context,
@@ -145,8 +129,7 @@ class UpdateNoticeDialog extends StatelessWidget {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     return AlertDialog(
-      // The how-to scrolls above the buttons when the dialog can't fit it
-      // (a large text size on a short or zoomed-in screen).
+
       scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -167,7 +150,7 @@ class UpdateNoticeDialog extends StatelessWidget {
         textAlign: TextAlign.center,
       ),
       actions: [
-        // Side by side, or stacked when a label wouldn't fit its half.
+
         ButtonPair(
           first: OutlinedButton(
             onPressed: () => Navigator.of(context).pop(false),

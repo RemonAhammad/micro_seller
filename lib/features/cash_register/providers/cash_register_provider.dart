@@ -13,7 +13,6 @@ Stream<List<CashRegister>> cashRegisters(Ref ref) async* {
   yield* reloadOn(isar.cashRegisters.watchLazy(), query.findAll);
 }
 
-/// Returns the currently open register (if any)
 @riverpod
 Future<CashRegister?> openRegister(Ref ref) async {
   final isar = await ref.watch(isarProvider.future);
@@ -33,7 +32,7 @@ class CashRegisterNotifier extends _$CashRegisterNotifier {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
-        // Close any existing open register first
+
         final existing = await isar.cashRegisters
             .filter()
             .isClosedEqualTo(false)

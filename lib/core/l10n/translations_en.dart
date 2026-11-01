@@ -1,5 +1,5 @@
 const translationsEn = <String, String>{
-  // Navigation
+
   'dashboard': 'Dashboard',
   'products': 'Products',
   'orders': 'Orders',
@@ -22,7 +22,6 @@ const translationsEn = <String, String>{
   'scanAgain': 'Scan again',
   'pointCameraAtCode': 'Point the camera at a QR code or barcode',
 
-  // Dashboard
   'todayRevenue': "Today's Revenue",
   'monthRevenue': 'Month Revenue',
   'monthProfit': 'Month Profit',
@@ -46,7 +45,6 @@ const translationsEn = <String, String>{
   'thisMonth': 'This Month',
   'customRange': 'Custom Range',
 
-  // Products
   'addProduct': 'Add Product',
   'editProduct': 'Edit Product',
   'productName': 'Product Name',
@@ -91,7 +89,6 @@ const translationsEn = <String, String>{
   'lastUpdated': 'Last Updated',
   'noVariantsHint': 'No variants. Add attributes like Size, Color, etc.',
 
-  // Orders
   'addOrder': 'New Order',
   'editOrder': 'Edit Order',
   'orderNumber': 'Order #',
@@ -132,7 +129,6 @@ const translationsEn = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'Any special instructions...',
 
-  // Order status
   'pending': 'Pending',
   'confirmed': 'Confirmed',
   'shipped': 'Shipped',
@@ -141,12 +137,10 @@ const translationsEn = <String, String>{
   'active': 'Active',
   'placed': 'Placed',
 
-  // Payment status
   'unpaid': 'Unpaid',
   'partial': 'Partial',
   'paid': 'Paid',
 
-  // Payment methods
   'cash': 'Cash',
   'card': 'Card',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsEn = <String, String>{
   'bank': 'Bank',
   'other': 'Other',
 
-  // Order detail
   'shareViaWhatsApp': 'Share via WhatsApp',
   'sharePdf': 'Share PDF',
   'downloadPdf': 'Download PDF',
@@ -174,7 +167,6 @@ const translationsEn = <String, String>{
   'markAsShipped': 'Mark as Shipped',
   'markAsCompleted': 'Mark as Completed',
 
-  // Customers
   'addCustomer': 'Add Customer',
   'editCustomer': 'Edit Customer',
   'customerName': 'Name',
@@ -190,7 +182,6 @@ const translationsEn = <String, String>{
   'outstanding': 'Outstanding',
   'memberSince': 'Member since',
 
-  // Inventory
   'stockAdjustment': 'Stock Adjustment',
   'stockMovements': 'Stock Movements',
   'stockLevels': 'Stock Levels',
@@ -215,7 +206,6 @@ const translationsEn = <String, String>{
   'inStockLabel': 'in stock',
   'allCategories': 'All Categories',
 
-  // Expenses
   'addExpense': 'Add Expense',
   'editExpense': 'Edit Expense',
   'expenseTitle': 'Expense Title',
@@ -230,7 +220,6 @@ const translationsEn = <String, String>{
   'marketing': 'Marketing',
   'supplies': 'Supplies',
 
-  // Settings
   'shopName': 'Shop Name',
   'currencySymbol': 'Currency Symbol',
   'googleAccount': 'Google Account',
@@ -284,7 +273,6 @@ const translationsEn = <String, String>{
   'downloads': 'Downloads',
   'dangerZone': 'Danger Zone',
 
-  // Suppliers
   'addSupplier': 'Add Supplier',
   'editSupplier': 'Edit Supplier',
   'supplierNotFound': 'Supplier not found',
@@ -307,7 +295,6 @@ const translationsEn = <String, String>{
   'addSuppliersFromMenu': 'Add suppliers from the Suppliers menu',
   'selectSupplier': 'Select Supplier',
 
-  // Purchases
   'purchaseNotFound': 'Purchase not found',
   'deletePurchase': 'Delete Purchase',
   'deletePurchaseConfirm': 'Stock will be reduced by purchased amounts.',
@@ -325,7 +312,6 @@ const translationsEn = <String, String>{
   'allProducts': 'All products',
   'supplierProductsOnly': '{name} only',
 
-  // Cash Register
   'registerOpen': 'Register Open',
   'noRegisterOpen': 'No register open',
   'openRegisterDesc': 'Open a register to start tracking cash flow',
@@ -345,7 +331,6 @@ const translationsEn = <String, String>{
   'noRegisterHistory': 'No register history yet',
   'loading': 'Loading...',
 
-  // Returns
   'returnsAndRefunds': 'Returns & Refunds',
   'createReturnTitle': 'Create Return',
   'selectItems': 'Select Items',
@@ -384,7 +369,6 @@ const translationsEn = <String, String>{
   'approveReturnConfirm': 'Approve this return and mark items as received? Stock will be restored.',
   'returnRejected': 'Return Rejected',
 
-  // Categories
   'addCategory': 'Add Category',
   'editCategory': 'Edit Category',
   'deleteCategory': 'Delete Category',
@@ -392,7 +376,6 @@ const translationsEn = <String, String>{
   'addCategoriesToOrganise': 'Add categories to organise your products',
   'categoryName': 'Category name',
 
-  // Reports
   'totalRevenue': 'Total Revenue',
   'totalProfit': 'Total Profit',
   'totalExpenses': 'Total Expenses',
@@ -402,7 +385,6 @@ const translationsEn = <String, String>{
   'topCustomers': 'Top Customers',
   'salesByCategory': 'Sales by Category',
 
-  // Actions
   'save': 'Save',
   'cancel': 'Cancel',
   'delete': 'Delete',
@@ -424,19 +406,16 @@ const translationsEn = <String, String>{
   'back': 'Back',
   'sort': 'Sort',
 
-  // Delivery
   'delivery': 'Delivery',
   'markDelivered': 'Mark as Delivered',
   'delivered': 'Delivered',
 
-  // Variants
   'variants': 'Variants',
   'addVariant': 'Add Variant',
   'variantName': 'Attribute (e.g. Size)',
   'variantValue': 'Value (e.g. Large)',
   'priceAdjustment': 'Price +/-',
 
-  // Messages
   'deleteConfirmation': 'Are you sure you want to delete this?',
   'clearDataConfirmation':
       'This will permanently delete all your data. This action cannot be undone. Are you sure?',
@@ -452,7 +431,6 @@ const translationsEn = <String, String>{
   'noExpenses': 'No expenses recorded yet',
   'noStockMovements': 'No stock movements recorded',
 
-  // Misc
   'error': 'Error',
   'pay': 'Pay',
   'scanQrBarcode': 'Scan QR / Barcode',
@@ -463,13 +441,11 @@ const translationsEn = <String, String>{
   'rowsSkipped': '{count} row(s) skipped:',
   'andMore': '...and {count} more',
 
-  // Payments / refunds
   'transactionId': 'Transaction ID',
   'transactionIdHint': 'bKash / Nagad / receipt #',
   'refundMethod': 'Refund Method',
   'refundTransactionId': 'Refund Transaction ID',
 
-  // Sidebar customization
   'sidebarOrder': 'Sidebar Order',
   'sidebarOrderDesc': 'Drag to rearrange the sidebar tabs',
   'resetToDefault': 'Reset to Default',
@@ -478,7 +454,6 @@ const translationsEn = <String, String>{
   'left': 'Left',
   'right': 'Right',
 
-  // Display size (Settings → Display)
   'display': 'Display',
   'displaySize': 'Display Size',
   'displaySizeDesc': 'Make everything on screen smaller or larger',
@@ -488,7 +463,6 @@ const translationsEn = <String, String>{
   'phoneTextSize': 'Phone: {value}',
   'preview': 'Preview',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'Color theme',
   'colorThemeDesc': 'The main color of buttons, headers and highlights',
   'phoneColors': 'Phone colors',
@@ -536,18 +510,15 @@ const translationsEn = <String, String>{
   'deleteThemeConfirm': 'Delete the theme “{name}”?',
   'themeLimitReached': 'You can save up to {count} themes',
 
-  // Auth gate (biometric / PIN before destructive actions)
   'createPin': 'Create a 4-digit PIN',
   'confirmPin': 'Confirm your PIN',
   'enterPin': 'Enter your PIN',
   'pinDoesNotMatch': 'PINs do not match. Try again.',
   'incorrectPin': 'Incorrect PIN. Try again.',
 
-  // Auto Drive backup
   'autoBackup': 'Auto Backup to Drive',
   'autoBackupDesc': 'Back up automatically on app start (when signed in)',
 
-  // Security section
   'security': 'Security',
   'securityFingerprint': 'Fingerprint',
   'securityFingerprintDesc': 'Use fingerprint to authorize sensitive actions',
@@ -555,7 +526,7 @@ const translationsEn = <String, String>{
   'securityPinDesc': 'Require a 4-digit PIN for sensitive actions',
   'biometricNotAvailable': 'No fingerprint enrolled on this device',
   'changeSecurity': 'Verify to change security settings',
-  // On an iPhone the biometric row names what it has: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'Use Face ID to authorize sensitive actions',
   'faceIdNotSetUp': 'Face ID is not set up on this device',
@@ -563,7 +534,6 @@ const translationsEn = <String, String>{
   'securityTouchIdDesc': 'Use Touch ID to authorize sensitive actions',
   'touchIdNotSetUp': 'Touch ID is not set up on this device',
 
-  // Background auto-backup status (worker → UI handoff)
   'autoBackupPaused': 'Auto backup paused',
   'autoBackupResumed': 'Auto backup resumed',
   'signInToFix': 'Sign in to fix',
@@ -603,7 +573,6 @@ const translationsEn = <String, String>{
   'shopPhone': 'Shop Phone',
   'productCatalog': 'Product Catalog',
 
-  // Due Book
   'dueBook': 'Due Book',
   'totalReceivable': 'Total Receivable',
   'customersOwing': '{count} customer(s) owe you',
@@ -673,7 +642,6 @@ const translationsEn = <String, String>{
   'duesCollectedThisMonth': 'Dues collected (this month)',
   'overdue60Banner': '{count} customer(s) owe {amount} for 60+ days',
 
-  // Reports
   'profitAndLoss': 'Profit & Loss',
   'item': 'Item',
   'grossSales': 'Gross sales',
@@ -738,7 +706,6 @@ const translationsEn = <String, String>{
   'monthlyNetSales': 'Monthly net sales',
   'dateRangeTo': 'to',
 
-  // Rating prompt
   'rateTitle': 'Enjoying {app}?',
   'rateMessage': 'You\'ve been managing your shop with {app} for a while. A quick rating helps other sellers find it.',
   'rateNow': 'Rate now',
@@ -749,8 +716,6 @@ const translationsEn = <String, String>{
   'rateThisAppSubtitle': 'Help other sellers find {app}',
   'about': 'About',
 
-  // App updates (iPhone, and Android installed from a GitHub APK): the
-  // Dashboard banner and Settings → About → Check for updates
   'updateAvailable': '{app} {version} is available',
   'updateHowToAndroid': 'Download the same type of APK you installed before (universal or arm64-v8a) and install it over this one. Your data stays.',
   'updateHowToIos': 'Install it with the same sideloading tool and Apple ID you used before, so your data stays. Back up first.',
@@ -759,10 +724,8 @@ const translationsEn = <String, String>{
   'upToDate': 'You have the latest version',
   'updateCheckFailed': 'Couldn\'t check for updates. Check your internet connection and try again.',
 
-  // Keypad bar (iOS): above the number and phone pads, which have no return key
   'next': 'Next',
 
-  // Camera (Scanner, QR scanner, product photos)
   'cameraAccessOff': 'Camera access is off',
   'cameraAllowPrompt': '{app} needs the camera to scan codes and take photos.',
   'cameraAllowInSettings': 'To scan codes and take photos, allow camera access for {app} in Settings.',
@@ -775,7 +738,6 @@ const translationsEn = <String, String>{
   'torchOn': 'Turn on flashlight',
   'torchOff': 'Turn off flashlight',
 
-  // Calls: a device that can't call (most iPads) offers to copy the number
   'callNotAvailable': 'Calls aren\'t available on this device',
   'copyNumber': 'Copy number',
   'numberCopied': 'Number copied',

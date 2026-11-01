@@ -8,12 +8,6 @@ import '../../../shared/widgets/app_zoom.dart';
 import '../providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
-/// Lets the user (a) drag-reorder the sidebar tabs and (b) toggle each tab's
-/// visibility with a Cupertino switch. Both persist immediately; the sidebar
-/// rebuilds live since it watches the same provider.
-///
-/// The Settings tab itself can never be hidden — the toggle is shown but
-/// disabled — so the user can't soft-lock themselves out of this screen.
 class SidebarOrderScreen extends ConsumerStatefulWidget {
   const SidebarOrderScreen({super.key});
 
@@ -27,13 +21,11 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
   @override
   void initState() {
     super.initState();
-    // Snapshot once; we drive the local list from gestures and persist on drop.
+
     _order = List<String>.from(
         ref.read(settingsProvider.notifier).sidebarOrder);
   }
 
-  /// The list's `onReorderItem`: [newIndex] is already the row's final index
-  /// (Flutter allows for its removal from [oldIndex]), so don't adjust it.
   Future<void> _onReorder(int oldIndex, int newIndex) async {
     setState(() {
       final item = _order.removeAt(oldIndex);
@@ -47,7 +39,7 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
   Future<void> _resetToDefault() async {
     final notifier = ref.read(settingsProvider.notifier);
     await notifier.resetSidebarOrder();
-    // Also clear all hidden flags on reset.
+
     for (final k in notifier.hiddenSidebarItems.toList()) {
       await notifier.toggleSidebarItemHidden(k, false);
     }
@@ -61,11 +53,9 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    // The Display size. Read out here: inside the ZoomNeutral below it is 1.
+
     final zoom = AppZoomScope.scaleOf(context);
 
-    // Watching settings here lets the toggles reflect the current persisted
-    // state on every build (including immediately after a tap).
     ref.watch(settingsProvider);
     final hidden =
         ref.read(settingsProvider.notifier).hiddenSidebarItems.toSet();
@@ -94,14 +84,10 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
             ),
           ),
           Expanded(
-            // ReorderableListView mixes window and local coordinates (its
-            // drag proxy, its drop slots), and they only agree unscaled. So
-            // the list runs in the window's own dp, with an Overlay of its
-            // own for the proxy, and each row is drawn back at the zoom.
+
             child: ZoomNeutral(
               child: Overlay.wrap(
-                // Unclipped, so the proxy can still pass over the text above,
-                // as it did in the route's overlay.
+
                 clipBehavior: Clip.none,
                 child: ReorderableListView.builder(
                   padding: EdgeInsets.symmetric(horizontal: 12 * zoom),
@@ -121,7 +107,6 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
     );
   }
 
-  /// The [i]th tab's row: icon, name, visibility switch and drag grip.
   Widget _buildRow(int i, Set<String> hidden, ColorScheme cs) {
     final item = sidebarItemByKey(_order[i]);
     final isVisible = !hidden.contains(item.key);
@@ -153,8 +138,7 @@ class _SidebarOrderScreenState extends ConsumerState<SidebarOrderScreen> {
                   ),
                 ),
               ),
-              // Visibility toggle. Disabled for the Settings tab — pinned
-              // visible so the user always has a way back to this screen.
+
               CupertinoSwitch(
                 value: isVisible,
                 activeTrackColor: cs.primary,

@@ -1,5 +1,5 @@
 const translationsVi = <String, String>{
-  // Navigation
+
   'dashboard': 'Bảng điều khiển',
   'products': 'Sản phẩm',
   'orders': 'Đơn hàng',
@@ -22,7 +22,6 @@ const translationsVi = <String, String>{
   'scanAgain': 'Quét lại',
   'pointCameraAtCode': 'Hướng camera vào mã QR hoặc mã vạch',
 
-  // Dashboard
   'todayRevenue': 'Doanh thu hôm nay',
   'monthRevenue': 'Doanh thu tháng',
   'monthProfit': 'Lợi nhuận tháng',
@@ -46,7 +45,6 @@ const translationsVi = <String, String>{
   'thisMonth': 'Tháng này',
   'customRange': 'Tùy chỉnh',
 
-  // Products
   'addProduct': 'Thêm sản phẩm',
   'editProduct': 'Sửa sản phẩm',
   'productName': 'Tên sản phẩm',
@@ -91,7 +89,6 @@ const translationsVi = <String, String>{
   'lastUpdated': 'Cập nhật lần cuối',
   'noVariantsHint': 'Chưa có biến thể. Thêm thuộc tính như Kích cỡ, Màu sắc, v.v.',
 
-  // Orders
   'addOrder': 'Đơn hàng mới',
   'editOrder': 'Sửa đơn hàng',
   'orderNumber': 'Đơn hàng #',
@@ -132,7 +129,6 @@ const translationsVi = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'Hướng dẫn đặc biệt (nếu có)...',
 
-  // Order status
   'pending': 'Chờ xử lý',
   'confirmed': 'Đã xác nhận',
   'shipped': 'Đã gửi hàng',
@@ -141,12 +137,10 @@ const translationsVi = <String, String>{
   'active': 'Đang xử lý',
   'placed': 'Đã đặt',
 
-  // Payment status
   'unpaid': 'Chưa thanh toán',
   'partial': 'Thanh toán một phần',
   'paid': 'Đã thanh toán',
 
-  // Payment methods
   'cash': 'Tiền mặt',
   'card': 'Thẻ',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsVi = <String, String>{
   'bank': 'Ngân hàng',
   'other': 'Khác',
 
-  // Order detail
   'shareViaWhatsApp': 'Chia sẻ qua WhatsApp',
   'sharePdf': 'Chia sẻ PDF',
   'downloadPdf': 'Tải PDF',
@@ -174,7 +167,6 @@ const translationsVi = <String, String>{
   'markAsShipped': 'Đánh dấu đã gửi hàng',
   'markAsCompleted': 'Đánh dấu hoàn thành',
 
-  // Customers
   'addCustomer': 'Thêm khách hàng',
   'editCustomer': 'Sửa khách hàng',
   'customerName': 'Tên',
@@ -190,7 +182,6 @@ const translationsVi = <String, String>{
   'outstanding': 'Còn nợ',
   'memberSince': 'Khách hàng từ',
 
-  // Inventory
   'stockAdjustment': 'Điều chỉnh kho',
   'stockMovements': 'Biến động kho',
   'stockLevels': 'Mức tồn kho',
@@ -215,7 +206,6 @@ const translationsVi = <String, String>{
   'inStockLabel': 'còn hàng',
   'allCategories': 'Tất cả danh mục',
 
-  // Expenses
   'addExpense': 'Thêm chi phí',
   'editExpense': 'Sửa chi phí',
   'expenseTitle': 'Tiêu đề chi phí',
@@ -230,7 +220,6 @@ const translationsVi = <String, String>{
   'marketing': 'Tiếp thị',
   'supplies': 'Vật tư',
 
-  // Settings
   'shopName': 'Tên cửa hàng',
   'currencySymbol': 'Ký hiệu tiền tệ',
   'googleAccount': 'Tài khoản Google',
@@ -284,7 +273,6 @@ const translationsVi = <String, String>{
   'downloads': 'Tải xuống',
   'dangerZone': 'Vùng nguy hiểm',
 
-  // Suppliers
   'addSupplier': 'Thêm nhà cung cấp',
   'editSupplier': 'Sửa nhà cung cấp',
   'supplierNotFound': 'Không tìm thấy nhà cung cấp',
@@ -307,7 +295,6 @@ const translationsVi = <String, String>{
   'addSuppliersFromMenu': 'Thêm nhà cung cấp từ menu Nhà cung cấp',
   'selectSupplier': 'Chọn nhà cung cấp',
 
-  // Purchases
   'purchaseNotFound': 'Không tìm thấy đơn mua',
   'deletePurchase': 'Xóa đơn mua',
   'deletePurchaseConfirm': 'Kho sẽ bị giảm theo số lượng đã mua.',
@@ -325,7 +312,6 @@ const translationsVi = <String, String>{
   'allProducts': 'Tất cả sản phẩm',
   'supplierProductsOnly': 'Chỉ {name}',
 
-  // Cash Register
   'registerOpen': 'Quầy đang mở',
   'noRegisterOpen': 'Không có quầy nào mở',
   'openRegisterDesc': 'Mở quầy để bắt đầu theo dõi dòng tiền',
@@ -345,7 +331,6 @@ const translationsVi = <String, String>{
   'noRegisterHistory': 'Chưa có lịch sử quầy',
   'loading': 'Đang tải...',
 
-  // Returns
   'returnsAndRefunds': 'Trả hàng và Hoàn tiền',
   'createReturnTitle': 'Tạo trả hàng',
   'selectItems': 'Chọn mục',
@@ -384,7 +369,6 @@ const translationsVi = <String, String>{
   'approveReturnConfirm': 'Duyệt yêu cầu trả hàng này và đánh dấu đã nhận hàng? Kho sẽ được khôi phục.',
   'returnRejected': 'Trả hàng bị từ chối',
 
-  // Categories
   'addCategory': 'Thêm danh mục',
   'editCategory': 'Sửa danh mục',
   'deleteCategory': 'Xóa danh mục',
@@ -392,7 +376,6 @@ const translationsVi = <String, String>{
   'addCategoriesToOrganise': 'Thêm danh mục để sắp xếp sản phẩm',
   'categoryName': 'Tên danh mục',
 
-  // Reports
   'totalRevenue': 'Tổng doanh thu',
   'totalProfit': 'Tổng lợi nhuận',
   'totalExpenses': 'Tổng chi phí',
@@ -402,7 +385,6 @@ const translationsVi = <String, String>{
   'topCustomers': 'Khách hàng hàng đầu',
   'salesByCategory': 'Doanh số theo danh mục',
 
-  // Actions
   'save': 'Lưu',
   'cancel': 'Hủy',
   'delete': 'Xóa',
@@ -424,19 +406,16 @@ const translationsVi = <String, String>{
   'back': 'Quay lại',
   'sort': 'Sắp xếp',
 
-  // Delivery
   'delivery': 'Giao hàng',
   'markDelivered': 'Đánh dấu đã giao',
   'delivered': 'Đã giao',
 
-  // Variants
   'variants': 'Biến thể',
   'addVariant': 'Thêm biến thể',
   'variantName': 'Thuộc tính (vd. Kích cỡ)',
   'variantValue': 'Giá trị (vd. Lớn)',
   'priceAdjustment': 'Giá +/-',
 
-  // Messages
   'deleteConfirmation': 'Bạn có chắc chắn muốn xóa mục này không?',
   'clearDataConfirmation':
       'Thao tác này sẽ xóa vĩnh viễn tất cả dữ liệu của bạn. Không thể hoàn tác. Bạn có chắc không?',
@@ -452,7 +431,6 @@ const translationsVi = <String, String>{
   'noExpenses': 'Chưa có chi phí nào được ghi nhận',
   'noStockMovements': 'Chưa có biến động kho nào được ghi nhận',
 
-  // Misc
   'error': 'Lỗi',
   'pay': 'Thanh toán',
   'scanQrBarcode': 'Quét QR / Mã vạch',
@@ -463,13 +441,11 @@ const translationsVi = <String, String>{
   'rowsSkipped': 'Đã bỏ qua {count} hàng:',
   'andMore': '...và thêm {count}',
 
-  // Payments / refunds
   'transactionId': 'Mã giao dịch',
   'transactionIdHint': 'bKash / Nagad / số hóa đơn',
   'refundMethod': 'Phương thức hoàn tiền',
   'refundTransactionId': 'Mã giao dịch hoàn tiền',
 
-  // Sidebar customization
   'sidebarOrder': 'Thứ tự thanh bên',
   'sidebarOrderDesc': 'Kéo để sắp xếp lại các tab thanh bên',
   'resetToDefault': 'Đặt lại mặc định',
@@ -478,7 +454,6 @@ const translationsVi = <String, String>{
   'left': 'Trái',
   'right': 'Phải',
 
-  // Display size (Settings → Display)
   'display': 'Hiển thị',
   'displaySize': 'Kích thước hiển thị',
   'displaySizeDesc': 'Thu nhỏ hoặc phóng to mọi thứ trên màn hình',
@@ -488,7 +463,6 @@ const translationsVi = <String, String>{
   'phoneTextSize': 'Điện thoại: {value}',
   'preview': 'Xem trước',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'Màu giao diện',
   'colorThemeDesc': 'Màu chính của nút, tiêu đề và phần nổi bật',
   'phoneColors': 'Màu của điện thoại',
@@ -536,18 +510,15 @@ const translationsVi = <String, String>{
   'deleteThemeConfirm': 'Xóa chủ đề “{name}”?',
   'themeLimitReached': 'Bạn có thể lưu tối đa {count} chủ đề',
 
-  // Auth gate
   'createPin': 'Tạo mã PIN 4 chữ số',
   'confirmPin': 'Xác nhận mã PIN',
   'enterPin': 'Nhập mã PIN',
   'pinDoesNotMatch': 'Mã PIN không khớp. Thử lại.',
   'incorrectPin': 'Mã PIN không đúng. Thử lại.',
 
-  // Auto Drive backup
   'autoBackup': 'Tự động sao lưu lên Drive',
   'autoBackupDesc': 'Tự động sao lưu khi khởi động (nếu đã đăng nhập)',
 
-  // Security section
   'security': 'Bảo mật',
   'securityFingerprint': 'Vân tay',
   'securityFingerprintDesc': 'Dùng vân tay để xác nhận các thao tác nhạy cảm',
@@ -555,7 +526,7 @@ const translationsVi = <String, String>{
   'securityPinDesc': 'Yêu cầu mã PIN 4 chữ số cho các thao tác nhạy cảm',
   'biometricNotAvailable': 'Chưa có vân tay nào được đăng ký trên thiết bị này',
   'changeSecurity': 'Xác minh để thay đổi cài đặt bảo mật',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'Dùng Face ID để xác nhận các thao tác nhạy cảm',
   'faceIdNotSetUp': 'Face ID chưa được thiết lập trên thiết bị này',
@@ -563,7 +534,6 @@ const translationsVi = <String, String>{
   'securityTouchIdDesc': 'Dùng Touch ID để xác nhận các thao tác nhạy cảm',
   'touchIdNotSetUp': 'Touch ID chưa được thiết lập trên thiết bị này',
 
-  // Background auto-backup status
   'autoBackupPaused': 'Tự động sao lưu đang tạm dừng',
   'autoBackupResumed': 'Tự động sao lưu đã tiếp tục',
   'signInToFix': 'Đăng nhập để khắc phục',
@@ -603,7 +573,6 @@ const translationsVi = <String, String>{
   'shopPhone': 'Điện thoại cửa hàng',
   'productCatalog': 'Danh mục sản phẩm',
 
-  // Due Book
   'dueBook': 'Sổ công nợ',
   'totalReceivable': 'Tổng phải thu',
   'customersOwing': '{count} khách hàng đang nợ',
@@ -673,7 +642,6 @@ const translationsVi = <String, String>{
   'duesCollectedThisMonth': 'Công nợ đã thu (tháng này)',
   'overdue60Banner': '{count} khách hàng nợ {amount} hơn 60 ngày',
 
-  // Reports
   'profitAndLoss': 'Lãi lỗ',
   'item': 'Mặt hàng',
   'grossSales': 'Doanh thu gộp',
@@ -738,7 +706,6 @@ const translationsVi = <String, String>{
   'monthlyNetSales': 'Doanh thu thuần theo tháng',
   'dateRangeTo': 'đến',
 
-  // Rating prompt
   'rateTitle': 'Bạn thích {app} chứ?',
   'rateMessage': 'Bạn đã quản lý cửa hàng bằng {app} một thời gian rồi. Một đánh giá nhanh sẽ giúp những người bán khác tìm thấy ứng dụng.',
   'rateNow': 'Đánh giá ngay',
@@ -749,7 +716,6 @@ const translationsVi = <String, String>{
   'rateThisAppSubtitle': 'Giúp những người bán khác tìm thấy {app}',
   'about': 'Giới thiệu',
 
-  // App updates
   'updateAvailable': '{app} {version} đã có sẵn',
   'updateHowToAndroid': 'Tải xuống loại APK giống bản bạn đã cài trước đó (universal hoặc arm64-v8a) rồi cài đè lên bản hiện tại. Dữ liệu của bạn sẽ được giữ nguyên.',
   'updateHowToIos': 'Cài bản cập nhật bằng đúng công cụ sideload và Apple ID bạn đã dùng trước đó để giữ nguyên dữ liệu. Hãy sao lưu trước.',
@@ -758,10 +724,8 @@ const translationsVi = <String, String>{
   'upToDate': 'Bạn đang dùng phiên bản mới nhất',
   'updateCheckFailed': 'Không thể kiểm tra cập nhật. Kiểm tra kết nối internet của bạn rồi thử lại.',
 
-  // Keypad bar (iOS)
   'next': 'Tiếp',
 
-  // Camera
   'cameraAccessOff': 'Quyền truy cập camera đang tắt',
   'cameraAllowPrompt': '{app} cần dùng camera để quét mã và chụp ảnh.',
   'cameraAllowInSettings': 'Để quét mã và chụp ảnh, hãy cho phép {app} truy cập camera trong Cài đặt.',
@@ -774,7 +738,6 @@ const translationsVi = <String, String>{
   'torchOn': 'Bật đèn pin',
   'torchOff': 'Tắt đèn pin',
 
-  // Calls
   'callNotAvailable': 'Thiết bị này không hỗ trợ gọi điện',
   'copyNumber': 'Sao chép số',
   'numberCopied': 'Đã sao chép số',

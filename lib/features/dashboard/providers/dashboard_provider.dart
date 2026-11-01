@@ -32,21 +32,15 @@ abstract class DashboardStats with _$DashboardStats {
     @Default(0) int pendingOrders,
     @Default([]) List<Product> lowStockProducts,
     @Default([]) List<DailySales> weeklySales,
-    /// Every order (returns included) per status, in order of first
-    /// appearance newest-first — the order-status pie's slices.
+
     @Default(<OrderStatus, int>{}) Map<OrderStatus, int> statusCounts,
   }) = _DashboardStats;
 }
 
-/// Preset filter options for the dashboard date range.
 enum DateRangePreset { today, thisWeek, thisMonth, custom }
 
 typedef DashboardRange = ({DateTime start, DateTime end, DateRangePreset preset});
 
-/// The dates [range] covers as of [now]. Presets are relative to today, but
-/// the notifier keeps the dates from when the preset was picked — stale once
-/// the app stays open past midnight (or into a new month). Custom ranges are
-/// kept as picked.
 ({DateTime start, DateTime end}) resolveDashboardRange(
         DashboardRange range, DateTime now) =>
     range.preset == DateRangePreset.custom
@@ -88,36 +82,27 @@ class DashboardDateRange extends _$DashboardDateRange {
 
 @riverpod
 Future<DashboardStats> dashboardStats(Ref ref) async {
-  // Recompute whenever an order changes — the cards used to stay stale
-  // until a pull-to-refresh. The revision counter only notices the write;
-  // it doesn't reload every order the way watching ordersProvider did.
+
   ref.watch(ordersRevisionProvider);
   final isar = await ref.watch(isarProvider.future);
   final range =
       resolveDashboardRange(ref.watch(dashboardDateRangeProvider), DateTime.now());
 
-  // Loads and arithmetic run on a worker isolate; only the stats come back.
   final stats =
       await runDbJob(isar, dashboardStatsJob(range.start, range.end));
 
-  // Low-stock / unpaid reminders on first load and pull-to-refresh only —
-  // not on every recompute, which now happens whenever an order is saved.
   if (!ref.isReload) {
     NotificationService.checkAndNotify(isar, lowStock: stats.lowStockProducts);
   }
   return stats;
 }
 
-/// The dashboard's numbers for the range `[rangeStart, rangeEnd]`, as a job
-/// for a worker isolate ([runDbJob]). Profit comes from the same loaders and
-/// builder as Reports → Gross profit, so the two screens can't disagree.
 DashboardStats Function(Isar) dashboardStatsJob(
         DateTime rangeStart, DateTime rangeEnd) =>
     (db) => db.txnSync(() => _dashboardStats(db, rangeStart, rangeEnd));
 
 DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) {
-  // One window per card for every number on it, revenue and profit alike:
-  // [start of the first day, start of the day after the last).
+
   final window = reportWindow(rangeStart, rangeEnd);
   final todayStart = DateTime(rangeEnd.year, rangeEnd.month, rangeEnd.day);
   final today = reportWindow(todayStart, todayStart);
@@ -134,10 +119,6 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
   final cancelledIds = loadCancelledOrderIdsSync(db);
   final returns = loadReturnsSync(db);
 
-  // Every order created in the selected range or the last 7 days, loaded
-  // once through the createdAt index (today is inside the week) and put in
-  // id order, so each subset below sums the same orders in the same order as
-  // separate queries did.
   final union = db.orders
       .where()
       .createdAtBetween(
@@ -156,7 +137,7 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
         orders: [...sales(w), ...returns],
         cancelledOrderIds: cancelledIds,
         productsById: productsById,
-        expenses: const [], // gross profit only — expenses have their own card
+        expenses: const [],
         start: w.start,
         end: w.end,
       );
@@ -168,21 +149,18 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
 
   final totalOrders = db.orders.countSync();
 
-  // Today's orders (non-cancelled, created on the range's last day)
   final todayOrders = nonCancelled(today);
   final todayRegular = todayOrders.where((o) => !o.isReturn).toList();
   final todayRefunds = todayOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
   final todayRevenue = todayRegular.fold(0.0, (s, o) => s + o.totalAmount)
       - todayRefunds.fold(0.0, (s, o) => s + o.refundAmount);
 
-  // Range orders (non-cancelled, within the selected date range)
   final rangeOrders = nonCancelled(window);
   final rangeRegular = rangeOrders.where((o) => !o.isReturn).toList();
   final rangeRefunds = rangeOrders.where((o) => o.isReturn && o.returnStatus == ReturnStatus.refunded).toList();
   final totalRefunded = rangeRefunds.fold(0.0, (s, o) => s + o.refundAmount);
   final thisMonthRevenue = rangeRegular.fold(0.0, (s, o) => s + o.totalAmount) - totalRefunded;
 
-  // Pending orders count
   final pendingOrders = db.orders
       .filter()
       .orderStatusEqualTo(OrderStatus.pending)
@@ -190,13 +168,10 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
       .orderStatusEqualTo(OrderStatus.confirmed)
       .countSync();
 
-  // Low stock products
   final lowStockProducts = products
       .where((p) => p.isActive && (p.isLowStock || p.isOutOfStock))
       .toList();
 
-  // Weekly sales — the 7 days ending on the range's last day, bucketed
-  // locally
   final weekOrders = nonCancelled(week);
   final weeklySales = <DailySales>[];
   for (int i = 6; i >= 0; i--) {
@@ -218,8 +193,6 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
         date: dayStart, revenue: revenue, profit: weekProfit[dayStart] ?? 0));
   }
 
-  // Status pie: one status per order, newest first (the order the screen
-  // used to count the full orders list in), without loading the orders.
   final statuses = db.orders
       .where()
       .sortByCreatedAtDesc()

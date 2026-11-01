@@ -48,9 +48,7 @@ class ExpenseCard extends StatelessWidget {
                 color: Colors.black.withOpacity(0.03), blurRadius: 6)
           ],
         ),
-        // The amount keeps its size while it fits in 40% of the card; a
-        // wider one (narrow layout, large text) shrinks, so the title column
-        // keeps room.
+
         child: LayoutBuilder(
           builder: (context, constraints) => Row(
             children: [
@@ -73,8 +71,7 @@ class ExpenseCard extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
-                    // Category and date side by side when they fit, the
-                    // date on its own line when they don't.
+
                     Wrap(
                       spacing: 6,
                       runSpacing: 2,

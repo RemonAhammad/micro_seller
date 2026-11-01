@@ -13,11 +13,6 @@ import '../../../shared/widgets/scanner_camera.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
-/// Scanner screen lives as a sidebar branch. The user scans a QR/barcode and
-/// the screen looks up the matching product (by qrCode, sku or a variant's
-/// sku). If found the match card offers "View product"; otherwise it offers
-/// "Add as new product" which jumps to the product form with the code
-/// pre-filled.
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
 
@@ -26,7 +21,7 @@ class ScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
-  // Started/stopped by the session: the branch stays mounted offstage after a visit.
+
   final _controller = MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates, autoStart: false);
   late final CameraSession _session;
 
@@ -44,7 +39,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // False while another branch is shown or a route covers this one.
+
     _session.setVisible(TickerMode.valuesOf(context).enabled);
   }
 
@@ -57,12 +52,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_paused || _searching) return;
-    // The code as printed: a reader may add spaces or a line break around it.
+
     final value = capture.barcodes
         .map((b) => b.rawValue?.trim())
         .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
     if (value == null) return;
-    if (value == _scannedCode) return; // ignore duplicate
+    if (value == _scannedCode) return;
 
     setState(() {
       _scannedCode = value;
@@ -73,8 +68,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
     try {
       final isar = await ref.read(isarProvider.future);
-      // Its qrCode, sku or a variant's sku — sellers may print any as a
-      // label — in either UPC-A spelling, as iOS and Android read one.
+
       final product = await ProductRepository(isar).findByScannedCode(value);
       if (!mounted) return;
       setState(() {
@@ -111,10 +105,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       ),
       body: Column(
         children: [
-          // Camera view with overlay
+
           Expanded(
-            // The frame and hint over the camera; why it won't run instead
-            // of them.
+
             child: ScannerPreview(
               session: _session,
               onDetect: _onDetect,
@@ -150,7 +143,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             ),
           ),
 
-          // Result panel
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
@@ -167,7 +159,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                       context.push('/products/${p.id}');
                     },
                     onAdd: () {
-                      // Push directly so we leave the scanner branch.
+
                       context.push('/products/add', extra: ScannerPrefill(qrCode: _scannedCode!));
                     },
                   ),
@@ -207,8 +199,6 @@ class _ResultPanel extends StatelessWidget {
         ? Colors.green
         : Colors.orange;
 
-    // At most two thirds of the window, so the camera keeps some room: a long code, or large text on a short
-    // layout, scrolls inside the panel instead of pushing it past the bottom of the screen.
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 2 / 3),
       child: Container(
@@ -225,8 +215,7 @@ class _ResultPanel extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Short of room (a long code, large text on a short layout), the result scrolls and the buttons
-              // stay in view.
+
               Flexible(
                 child: SingleChildScrollView(
                   child: Column(
@@ -280,9 +269,7 @@ class _ResultPanel extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              // Side by side while each label can wrap between its words; one
-              // above the other once large text on a narrow layout would split
-              // a word across lines.
+
               LayoutBuilder(builder: (context, constraints) {
                 final scanAgain = OutlinedButton.icon(
                   onPressed: onScanAgain,
@@ -321,11 +308,7 @@ class _ResultPanel extends StatelessWidget {
                     children: [scanAgain, const SizedBox(height: 10), action],
                   );
                 }
-                // IntrinsicHeight + stretch keeps both buttons the same height
-                // even when one wraps to multiple lines (e.g. "Add as new
-                // product" wraps to 3 lines on narrow phones while "Scan again"
-                // fits in one). Without this they'd render at their own
-                // intrinsic heights and look mismatched.
+
                 return IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -407,9 +390,6 @@ class _ProductPreview extends StatelessWidget {
   }
 }
 
-/// Whether every word of [label] fits on one line of an icon button [width] wide in [style] (its padding, the 18 px
-/// icon and the gap taken off), at the current text size and bold-text setting. A label may wrap between its words; a
-/// word split across lines is what reads as broken.
 bool _wordsFit(BuildContext context, ButtonStyle? style, String label, double width) {
   final padding = style?.padding?.resolve(const {})?.horizontal ?? 48;
   var textStyle = style?.textStyle?.resolve(const {}) ?? Theme.of(context).textTheme.labelLarge;
@@ -426,9 +406,6 @@ bool _wordsFit(BuildContext context, ButtonStyle? style, String label, double wi
   return longestWord <= width - padding - 18 - 8;
 }
 
-/// Public payload type the router uses to forward pre-fill data to the
-/// product form. Defined alongside the screen so both producer and consumer
-/// share one definition.
 class ScannerPrefill {
   final String qrCode;
   final String? sku;

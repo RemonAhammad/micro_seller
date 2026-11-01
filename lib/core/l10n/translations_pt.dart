@@ -1,5 +1,5 @@
 const translationsPt = <String, String>{
-  // Navigation
+
   'dashboard': 'Painel',
   'products': 'Produtos',
   'orders': 'Pedidos',
@@ -22,7 +22,6 @@ const translationsPt = <String, String>{
   'scanAgain': 'Ler novamente',
   'pointCameraAtCode': 'Aponte a câmera para um QR code ou código de barras',
 
-  // Dashboard
   'todayRevenue': 'Receita de hoje',
   'monthRevenue': 'Receita do mês',
   'monthProfit': 'Lucro do mês',
@@ -46,7 +45,6 @@ const translationsPt = <String, String>{
   'thisMonth': 'Este mês',
   'customRange': 'Período personalizado',
 
-  // Products
   'addProduct': 'Adicionar produto',
   'editProduct': 'Editar produto',
   'productName': 'Nome do produto',
@@ -91,7 +89,6 @@ const translationsPt = <String, String>{
   'lastUpdated': 'Última atualização',
   'noVariantsHint': 'Sem variantes. Adicione atributos como Tamanho, Cor etc.',
 
-  // Orders
   'addOrder': 'Novo pedido',
   'editOrder': 'Editar pedido',
   'orderNumber': 'Pedido nº',
@@ -132,7 +129,6 @@ const translationsPt = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'Alguma instrução especial?',
 
-  // Order status
   'pending': 'Pendente',
   'confirmed': 'Confirmado',
   'shipped': 'Enviado',
@@ -141,12 +137,10 @@ const translationsPt = <String, String>{
   'active': 'Em andamento',
   'placed': 'Realizado',
 
-  // Payment status
   'unpaid': 'Não pago',
   'partial': 'Parcial',
   'paid': 'Pago',
 
-  // Payment methods
   'cash': 'Dinheiro',
   'card': 'Cartão',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsPt = <String, String>{
   'bank': 'Banco',
   'other': 'Outro',
 
-  // Order detail
   'shareViaWhatsApp': 'Compartilhar via WhatsApp',
   'sharePdf': 'Compartilhar PDF',
   'downloadPdf': 'Baixar PDF',
@@ -174,7 +167,6 @@ const translationsPt = <String, String>{
   'markAsShipped': 'Marcar como enviado',
   'markAsCompleted': 'Marcar como concluído',
 
-  // Customers
   'addCustomer': 'Adicionar cliente',
   'editCustomer': 'Editar cliente',
   'customerName': 'Nome',
@@ -190,7 +182,6 @@ const translationsPt = <String, String>{
   'outstanding': 'Pendente',
   'memberSince': 'Cliente desde',
 
-  // Inventory
   'stockAdjustment': 'Ajuste de estoque',
   'stockMovements': 'Movimentações de estoque',
   'stockLevels': 'Níveis de estoque',
@@ -215,7 +206,6 @@ const translationsPt = <String, String>{
   'inStockLabel': 'em estoque',
   'allCategories': 'Todas as categorias',
 
-  // Expenses
   'addExpense': 'Adicionar despesa',
   'editExpense': 'Editar despesa',
   'expenseTitle': 'Título da despesa',
@@ -230,7 +220,6 @@ const translationsPt = <String, String>{
   'marketing': 'Marketing',
   'supplies': 'Suprimentos',
 
-  // Settings
   'shopName': 'Nome da loja',
   'currencySymbol': 'Símbolo da moeda',
   'googleAccount': 'Conta Google',
@@ -284,7 +273,6 @@ const translationsPt = <String, String>{
   'downloads': 'Downloads',
   'dangerZone': 'Zona de perigo',
 
-  // Suppliers
   'addSupplier': 'Adicionar fornecedor',
   'editSupplier': 'Editar fornecedor',
   'supplierNotFound': 'Fornecedor não encontrado',
@@ -307,7 +295,6 @@ const translationsPt = <String, String>{
   'addSuppliersFromMenu': 'Adicione fornecedores pelo menu Fornecedores',
   'selectSupplier': 'Selecionar fornecedor',
 
-  // Purchases
   'purchaseNotFound': 'Compra não encontrada',
   'deletePurchase': 'Excluir compra',
   'deletePurchaseConfirm': 'O estoque será reduzido pelas quantidades compradas.',
@@ -325,7 +312,6 @@ const translationsPt = <String, String>{
   'allProducts': 'Todos os produtos',
   'supplierProductsOnly': 'Apenas {name}',
 
-  // Cash Register
   'registerOpen': 'Caixa aberta',
   'noRegisterOpen': 'Nenhuma caixa aberta',
   'openRegisterDesc': 'Abra uma caixa para começar a rastrear o fluxo de caixa',
@@ -345,7 +331,6 @@ const translationsPt = <String, String>{
   'noRegisterHistory': 'Ainda sem histórico de caixa',
   'loading': 'Carregando...',
 
-  // Returns
   'returnsAndRefunds': 'Devoluções e reembolsos',
   'createReturnTitle': 'Criar devolução',
   'selectItems': 'Selecionar itens',
@@ -384,7 +369,6 @@ const translationsPt = <String, String>{
   'approveReturnConfirm': 'Aprovar esta devolução e marcar os itens como recebidos? O estoque será restaurado.',
   'returnRejected': 'Devolução rejeitada',
 
-  // Categories
   'addCategory': 'Adicionar categoria',
   'editCategory': 'Editar categoria',
   'deleteCategory': 'Excluir categoria',
@@ -392,7 +376,6 @@ const translationsPt = <String, String>{
   'addCategoriesToOrganise': 'Adicione categorias para organizar seus produtos',
   'categoryName': 'Nome da categoria',
 
-  // Reports
   'totalRevenue': 'Receita total',
   'totalProfit': 'Lucro total',
   'totalExpenses': 'Despesas totais',
@@ -402,7 +385,6 @@ const translationsPt = <String, String>{
   'topCustomers': 'Melhores clientes',
   'salesByCategory': 'Vendas por categoria',
 
-  // Actions
   'save': 'Salvar',
   'cancel': 'Cancelar',
   'delete': 'Excluir',
@@ -424,19 +406,16 @@ const translationsPt = <String, String>{
   'back': 'Voltar',
   'sort': 'Ordenar',
 
-  // Delivery
   'delivery': 'Entrega',
   'markDelivered': 'Marcar como entregue',
   'delivered': 'Entregue',
 
-  // Variants
   'variants': 'Variantes',
   'addVariant': 'Adicionar variante',
   'variantName': 'Atributo (ex. Tamanho)',
   'variantValue': 'Valor (ex. Grande)',
   'priceAdjustment': 'Preço +/-',
 
-  // Messages
   'deleteConfirmation': 'Tem certeza de que deseja excluir isso?',
   'clearDataConfirmation':
       'Isso excluirá permanentemente todos os seus dados. Esta ação não pode ser desfeita. Tem certeza?',
@@ -452,7 +431,6 @@ const translationsPt = <String, String>{
   'noExpenses': 'Nenhuma despesa registrada',
   'noStockMovements': 'Nenhuma movimentação de estoque registrada',
 
-  // Misc
   'error': 'Erro',
   'pay': 'Pagar',
   'scanQrBarcode': 'Escanear QR / Código de barras',
@@ -463,13 +441,11 @@ const translationsPt = <String, String>{
   'rowsSkipped': '{count} linha(s) ignorada(s):',
   'andMore': '...e mais {count}',
 
-  // Payments / refunds
   'transactionId': 'ID da transação',
   'transactionIdHint': 'bKash / Nagad / N.º do recibo',
   'refundMethod': 'Método de reembolso',
   'refundTransactionId': 'ID da transação do reembolso',
 
-  // Sidebar customization
   'sidebarOrder': 'Ordem da barra lateral',
   'sidebarOrderDesc': 'Arraste para reorganizar as abas da barra lateral',
   'resetToDefault': 'Restaurar padrão',
@@ -478,7 +454,6 @@ const translationsPt = <String, String>{
   'left': 'Esquerda',
   'right': 'Direita',
 
-  // Display size (Settings → Display)
   'display': 'Tela',
   'displaySize': 'Tamanho da exibição',
   'displaySizeDesc': 'Deixe tudo na tela menor ou maior',
@@ -488,7 +463,6 @@ const translationsPt = <String, String>{
   'phoneTextSize': 'Telefone: {value}',
   'preview': 'Pré-visualização',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'Cor do tema',
   'colorThemeDesc': 'A cor principal de botões, cabeçalhos e destaques',
   'phoneColors': 'Cores do telefone',
@@ -536,18 +510,15 @@ const translationsPt = <String, String>{
   'deleteThemeConfirm': 'Excluir o tema “{name}”?',
   'themeLimitReached': 'Você pode salvar até {count} temas',
 
-  // Auth gate
   'createPin': 'Crie um PIN de 4 dígitos',
   'confirmPin': 'Confirme seu PIN',
   'enterPin': 'Digite seu PIN',
   'pinDoesNotMatch': 'Os PINs não coincidem. Tente novamente.',
   'incorrectPin': 'PIN incorreto. Tente novamente.',
 
-  // Auto Drive backup
   'autoBackup': 'Backup automático para o Drive',
   'autoBackupDesc': 'Fazer backup automaticamente ao iniciar (se conectado)',
 
-  // Security section
   'security': 'Segurança',
   'securityFingerprint': 'Impressão digital',
   'securityFingerprintDesc': 'Usar impressão digital para autorizar ações sensíveis',
@@ -555,7 +526,7 @@ const translationsPt = <String, String>{
   'securityPinDesc': 'Exigir um PIN de 4 dígitos para ações sensíveis',
   'biometricNotAvailable': 'Nenhuma impressão digital cadastrada neste dispositivo',
   'changeSecurity': 'Verifique para alterar as configurações de segurança',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'Usar Face ID para autorizar ações sensíveis',
   'faceIdNotSetUp': 'O Face ID não está configurado neste dispositivo',
@@ -563,7 +534,6 @@ const translationsPt = <String, String>{
   'securityTouchIdDesc': 'Usar Touch ID para autorizar ações sensíveis',
   'touchIdNotSetUp': 'O Touch ID não está configurado neste dispositivo',
 
-  // Background auto-backup status
   'autoBackupPaused': 'Backup automático pausado',
   'autoBackupResumed': 'Backup automático retomado',
   'signInToFix': 'Entre para corrigir',
@@ -603,7 +573,6 @@ const translationsPt = <String, String>{
   'shopPhone': 'Telefone da loja',
   'productCatalog': 'Catálogo de produtos',
 
-  // Due Book
   'dueBook': 'Caderno de fiado',
   'totalReceivable': 'Total a receber',
   'customersOwing': '{count} cliente(s) devem a você',
@@ -673,7 +642,6 @@ const translationsPt = <String, String>{
   'duesCollectedThisMonth': 'Dívidas recebidas (este mês)',
   'overdue60Banner': '{count} cliente(s) devem {amount} há mais de 60 dias',
 
-  // Reports
   'profitAndLoss': 'Lucros e perdas',
   'item': 'Item',
   'grossSales': 'Vendas brutas',
@@ -738,7 +706,6 @@ const translationsPt = <String, String>{
   'monthlyNetSales': 'Vendas líquidas mensais',
   'dateRangeTo': 'até',
 
-  // Rating prompt
   'rateTitle': 'Gostando do {app}?',
   'rateMessage': 'Você já gerencia sua loja com o {app} há algum tempo. Uma avaliação rápida ajuda outros vendedores a encontrá-lo.',
   'rateNow': 'Avaliar agora',
@@ -749,7 +716,6 @@ const translationsPt = <String, String>{
   'rateThisAppSubtitle': 'Ajude outros vendedores a encontrar o {app}',
   'about': 'Sobre',
 
-  // App updates
   'updateAvailable': 'O {app} {version} está disponível',
   'updateHowToAndroid': 'Baixe o mesmo tipo de APK que você instalou antes (universal ou arm64-v8a) e instale-o por cima da versão atual. Seus dados serão mantidos.',
   'updateHowToIos': 'Instale a atualização com a mesma ferramenta de sideload e o mesmo Apple ID que você usou antes, para manter seus dados. Faça um backup primeiro.',
@@ -758,10 +724,8 @@ const translationsPt = <String, String>{
   'upToDate': 'Você está com a versão mais recente',
   'updateCheckFailed': 'Não foi possível verificar atualizações. Verifique sua conexão com a internet e tente novamente.',
 
-  // Keypad bar (iOS)
   'next': 'Próximo',
 
-  // Camera
   'cameraAccessOff': 'O acesso à câmera está desativado',
   'cameraAllowPrompt': 'O {app} precisa da câmera para escanear códigos e tirar fotos.',
   'cameraAllowInSettings': 'Para escanear códigos e tirar fotos, permita que o {app} use a câmera nas Configurações.',
@@ -774,7 +738,6 @@ const translationsPt = <String, String>{
   'torchOn': 'Ligar a lanterna',
   'torchOff': 'Desligar a lanterna',
 
-  // Calls
   'callNotAvailable': 'As chamadas não estão disponíveis neste dispositivo',
   'copyNumber': 'Copiar número',
   'numberCopied': 'Número copiado',

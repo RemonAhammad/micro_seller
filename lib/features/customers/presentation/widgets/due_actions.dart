@@ -26,8 +26,6 @@ import '../../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../../core/constants/app_icons.dart';
 
-// ─── Reminder ────────────────────────────────────────────────────────────
-
 String buildDueReminderText(
   BuildContext context,
   Customer customer,
@@ -53,11 +51,6 @@ String buildDueReminderText(
   return sb.toString().trimRight();
 }
 
-/// wa.me needs an international number without '+'. We only strip
-/// formatting — except for the main user base: a Bangladeshi local mobile
-/// (`01XXXXXXXXX`, 11 digits) with the ৳ currency gets the 88 country code,
-/// since sellers there save numbers in local form. Anything else is passed
-/// through as typed; users elsewhere should save numbers with country code.
 String? whatsAppNumber(String phone) {
   var digits = phone.replaceAll(RegExp(r'\D'), '');
   if (digits.isEmpty) return null;
@@ -70,8 +63,6 @@ String? whatsAppNumber(String phone) {
   return digits;
 }
 
-/// [shareOrigin] is the tapped control's rect (`shareOriginOf`): on an iPad
-/// the share sheet, used when WhatsApp doesn't open, points at it.
 Future<void> sendDueReminder(
   BuildContext context,
   WidgetRef ref,
@@ -92,7 +83,7 @@ Future<void> sendDueReminder(
     try {
       if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
     } catch (_) {
-      // Fall through to the share sheet.
+
     }
   } else if (context.mounted) {
     context.showSnackBar(s.noPhoneShareInstead);
@@ -101,10 +92,6 @@ Future<void> sendDueReminder(
       ShareParams(text: text, sharePositionOrigin: shareOrigin));
 }
 
-// ─── Statement ───────────────────────────────────────────────────────────
-
-/// [shareOrigin] is the tapped control's rect (`shareOriginOf`), for an
-/// iPad's share sheet to point at.
 Future<void> shareCustomerStatement(
   BuildContext context,
   WidgetRef ref,
@@ -129,13 +116,10 @@ Future<void> shareCustomerStatement(
   );
 
   try {
-    // Spinner up (and repeat taps blocked) while the statement renders; it
-    // comes down before the share sheet opens.
+
     final file = await runWithProgress(context, () async {
       final isar = await ref.read(isarProvider.future);
-      // Index lookups don't return equal keys in id order. Sort by id — the
-      // order the old filter() query gave — so the running balance is
-      // computed over the rows in exactly the same order as before.
+
       final orders = (await isar.orders
           .where()
           .customerIdEqualTo(customer.id)
@@ -171,8 +155,6 @@ Future<void> shareCustomerStatement(
   }
 }
 
-// ─── Collect ─────────────────────────────────────────────────────────────
-
 Future<void> showCollectPaymentSheet(
   BuildContext context,
   Customer customer,
@@ -197,7 +179,6 @@ class _CollectPaymentForm extends ConsumerStatefulWidget {
   final Customer customer;
   final List<OrderDue> orderDues;
 
-  /// Net of credits; the cap for this collection.
   final double totalDue;
 
   @override
@@ -277,11 +258,10 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
             errorText: tooMuch
                 ? s.amountExceedsDue(CurrencyFormatter.format(_totalDue))
                 : null,
-            // Wraps rather than cutting off the amount it names.
+
             errorMaxLines: 3,
             suffixIcon: TextButton(
-              // Every decimal the shop's currency has (the Kuwaiti Dinar's
-              // 3), so the full due is the whole due.
+
               onPressed: () => setState(() => _amountCtrl.text =
                   _totalDue.toStringAsFixed(NumberInput.moneyDecimals)),
               child: Text(s.fullDue),
@@ -332,11 +312,10 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
     );
   }
 
-  /// Mirrors OrderNotifier.collectFromCustomer's oldest-first allocation.
   List<Widget> _preview(BuildContext context, double amount) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
-    var remaining = amount; // already validated ≤ net total
+    var remaining = amount;
     final rows = <Widget>[];
     for (final d in widget.orderDues) {
       if (remaining <= kDueEpsilon) break;
@@ -354,9 +333,7 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
               color: settled ? AppColors.paymentPaid : AppColors.paymentPartial,
             ),
             const SizedBox(width: 8),
-            // The order number at the start and the amounts at the end, as
-            // a Row with a spacer; the amounts wrap under the order number
-            // (and "left" under the amount) when they don't fit beside it.
+
             Expanded(
               child: Wrap(
                 alignment: WrapAlignment.spaceBetween,
@@ -396,8 +373,6 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
   }
 }
 
-// ─── Payment history tile ────────────────────────────────────────────────
-
 class PaymentHistoryTile extends StatelessWidget {
   const PaymentHistoryTile({super.key, required this.payment, this.onTap});
 
@@ -416,11 +391,6 @@ class PaymentHistoryTile extends StatelessWidget {
       if (payment.transactionId.isNotEmpty) payment.transactionId,
     ].join(' · ');
 
-    // ListTile gives the trailing amount all the width it asks for and the
-    // title what's left: a big amount at a large text size squeezed the
-    // title into a sliver that broke "Payment" mid-word. The amount gets at
-    // most 40% of the row and shrinks beyond that; the title ends in an
-    // ellipsis rather than breaking.
     return LayoutBuilder(
       builder: (context, constraints) => ListTile(
         onTap: onTap,

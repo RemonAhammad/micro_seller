@@ -6,38 +6,17 @@ import '../models/order.dart';
 import '../models/payment.dart';
 import 'db_worker.dart';
 
-/// Amounts below this are treated as settled (floating-point dust).
 const kDueEpsilon = 0.005;
 
-/// What one order still owes.
 class OrderDue {
   const OrderDue(this.order, this.due);
   final Order order;
   final double due;
 }
 
-/// Computes what each order still owes, oldest first, from the orders
-/// themselves — never from `Customer.outstandingBalance`, which is a running
-/// counter that drifts (`updateOrder` doesn't adjust it).
-///
-/// Pass every order that could matter, *including return orders*: a refunded
-/// return lowers the original order's `amountPaid` by the refund but leaves
-/// its `totalAmount` alone, so the original's raw `balanceDue` grows by the
-/// refund. Its effective due is `balanceDue − value of its refunded returns`,
-/// which is exactly what `processRefund` takes off the customer's counter.
 List<OrderDue> computeOrderDues(Iterable<Order> orders) =>
     _effectiveDues(orders).where((d) => d.due > kDueEpsilon).toList();
 
-/// What the customer owes in total: the sum of every order's effective due,
-/// *including credits* (an order whose refunded-return value exceeds what was
-/// left on it goes negative), floored at 0. This is the number the counter,
-/// the statement and a collection cap all agree on — summing only the
-/// positive [computeOrderDues] would overstate it.
-///
-/// Orders within [kDueEpsilon] of settled are left out, as in
-/// [computeOrderDues]: otherwise sub-paisa leftovers on several orders add
-/// up to a "due" that no order shows — which can't be collected, and left
-/// the Due Book with a customer owing money on no order.
 double computeNetDue(Iterable<Order> orders) {
   final net = _effectiveDues(orders)
       .where((d) => d.due.abs() > kDueEpsilon)
@@ -66,21 +45,12 @@ List<OrderDue> _effectiveDues(Iterable<Order> orders) {
   return dues;
 }
 
-// The balance recalculation comes in an async and a sync (worker isolate)
-// variant. Both load through these same queries and compute through
-// [_correctedBalances], so they can't diverge.
-
 Query<Customer> _balanceCustomersQuery(Isar isar) =>
     isar.customers.where().build();
 
-// One id-ordered load grouped in Dart, not one full orders scan per customer.
-// A filter, not an index where-clause: index where-clauses don't return rows
-// in id order, and each customer's group must keep id order so the
-// floating-point sums are always added up the same way.
 Query<Order> _balanceOrdersQuery(Isar isar) =>
     isar.orders.filter().customerIdGreaterThan(0).build();
 
-/// Customers whose counter disagrees with their orders, corrected.
 List<Customer> _correctedBalances(
     List<Customer> customers, List<Order> orders) {
   final byCustomer = <int, List<Order>>{};
@@ -97,8 +67,6 @@ List<Customer> _correctedBalances(
   return updated;
 }
 
-/// Resets every customer's `outstandingBalance` to what their orders actually
-/// owe. Caller owns the transaction. Returns how many changed.
 Future<int> recalculateOutstandingBalancesInTxn(Isar isar) async {
   final updated = _correctedBalances(
     await _balanceCustomersQuery(isar).findAll(),
@@ -108,9 +76,6 @@ Future<int> recalculateOutstandingBalancesInTxn(Isar isar) async {
   return updated.length;
 }
 
-/// Synchronous twin of [recalculateOutstandingBalancesInTxn], for worker
-/// isolate jobs (restore, the Due Book's recalculate). Caller owns the
-/// (sync) write transaction.
 int recalculateOutstandingBalancesInTxnSync(Isar db) {
   final updated = _correctedBalances(
     _balanceCustomersQuery(db).findAllSync(),
@@ -120,21 +85,12 @@ int recalculateOutstandingBalancesInTxnSync(Isar db) {
   return updated.length;
 }
 
-/// The whole recalculation — load, compute, write — in one write transaction,
-/// as a [runDbJob] job.
 int recalculateOutstandingBalancesJob(Isar db) =>
     db.writeTxnSync(() => recalculateOutstandingBalancesInTxnSync(db));
 
-/// [recalculateOutstandingBalancesJob] on a worker isolate, so the UI isolate
-/// stays responsive. Returns how many balances changed.
 Future<int> recalculateOutstandingBalances(Isar isar) =>
     runDbJob(isar, recalculateOutstandingBalancesJob);
 
-/// Money collected on dues in `[start, end)` — payments received on a later
-/// day than their order was created (so pay-at-sale isn't counted as "dues
-/// collected"). Refunds and cancel reversals (negative rows) are ignored: a
-/// refund of a pay-at-sale order was never counted here, so subtracting it
-/// would understate the figure or drive it negative.
 double duesCollectedBetween(
   List<Payment> payments,
   Map<int, Order> ordersById,
@@ -158,11 +114,6 @@ double duesCollectedBetween(
 
 const _balancesMigrationKey = 'outstandingBalancesV1Migrated';
 
-/// One-time repair of counters that drifted before the Due Book existed.
-///
-/// Uses the async variant on purpose: it runs once per install while the
-/// database opens (behind the splash), and opening must not depend on a
-/// worker isolate being able to open the database.
 Future<void> migrateOutstandingBalancesV1(Isar isar) async {
   final prefs = await SharedPreferences.getInstance();
   if (prefs.getBool(_balancesMigrationKey) == true) return;

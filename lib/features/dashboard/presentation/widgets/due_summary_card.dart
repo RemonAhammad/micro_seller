@@ -12,9 +12,6 @@ import '../../../customers/presentation/widgets/due_actions.dart';
 import '../../../customers/providers/dues_provider.dart';
 import 'stat_card.dart' show measureTextWidth;
 
-/// Dashboard view of the Due Book: total receivable, an aging bar, and the
-/// three customers most worth chasing (oldest debt first), each with one-tap
-/// Remind / Collect. Numbers come from [duesProvider], same as the Due Book.
 class DueSummaryCard extends ConsumerWidget {
   const DueSummaryCard({
     super.key,
@@ -37,11 +34,10 @@ class DueSummaryCard extends ConsumerWidget {
         return byAge != 0 ? byAge : b.totalDue.compareTo(a.totalDue);
       });
 
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Shrinks rather than breaking the number over two lines.
+
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: AlignmentDirectional.centerStart,
@@ -98,10 +94,7 @@ class _ChaseRow extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // The amount sits beside the name while it takes under 45% of
-            // the row. A bigger one (narrow screen, large text) goes under
-            // the name, so the name keeps its room, and shrinks if even
-            // that line is too short.
+
             final beside =
                 measureTextWidth(context, amountText, amountStyle) <=
                     constraints.maxWidth * 0.45;
@@ -134,8 +127,7 @@ class _ChaseRow extends ConsumerWidget {
                   ),
                 ),
                 if (beside) amount,
-                // Its own context: an iPad's share sheet (without WhatsApp,
-                // or without a phone number) points at this button.
+
                 Builder(
                   builder: (button) => IconButton(
                     tooltip: s.remind,

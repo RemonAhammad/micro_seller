@@ -14,13 +14,6 @@ import '../providers/trash_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
-/// Deleted records, recoverable for [kTrashRetention].
-///
-/// Phase A covers expenses, categories, customers and products. Orders,
-/// purchases and suppliers still delete permanently — their reversal touches
-/// stock, variant stock, movements and party stats, and is handled
-/// separately. Anything of an unsupported kind is shown greyed out with
-/// restore disabled rather than offering an action that would throw.
 class RecycleBinScreen extends ConsumerWidget {
   const RecycleBinScreen({super.key});
 
@@ -188,8 +181,6 @@ class RecycleBinScreen extends ConsumerWidget {
     await ref.read(trashProvider.notifier).deleteForever(entry.id);
   }
 
-  /// Emptying the bin destroys data irrecoverably, so it goes through the
-  /// same security gate as Clear All Data.
   Future<void> _emptyBin(BuildContext context, WidgetRef ref) async {
     final s = AppStrings.of(context);
     final ok = await ConfirmDialog.show(
@@ -214,8 +205,6 @@ class RecycleBinScreen extends ConsumerWidget {
     await ref.read(trashProvider.notifier).clearAll();
     if (context.mounted) context.showSuccessSnackBar(s.binEmptied);
   }
-
-  // ── presentation helpers ───────────────────────────────────────────────
 
   ThinIconBuilder _kindIcon(TrashKind kind) => switch (kind) {
         TrashKind.expense => tabler.Receipt.new,

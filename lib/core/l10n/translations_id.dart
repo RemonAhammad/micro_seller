@@ -1,5 +1,5 @@
 const translationsId = <String, String>{
-  // Navigation
+
   'dashboard': 'Dasbor',
   'products': 'Produk',
   'orders': 'Pesanan',
@@ -22,7 +22,6 @@ const translationsId = <String, String>{
   'scanAgain': 'Pindai lagi',
   'pointCameraAtCode': 'Arahkan kamera ke kode QR atau barcode',
 
-  // Dashboard
   'todayRevenue': 'Pendapatan Hari Ini',
   'monthRevenue': 'Pendapatan Bulan Ini',
   'monthProfit': 'Laba Bulan Ini',
@@ -46,7 +45,6 @@ const translationsId = <String, String>{
   'thisMonth': 'Bulan Ini',
   'customRange': 'Rentang Kustom',
 
-  // Products
   'addProduct': 'Tambah Produk',
   'editProduct': 'Edit Produk',
   'productName': 'Nama Produk',
@@ -91,7 +89,6 @@ const translationsId = <String, String>{
   'lastUpdated': 'Terakhir Diperbarui',
   'noVariantsHint': 'Tidak ada varian. Tambahkan atribut seperti Ukuran, Warna, dll.',
 
-  // Orders
   'addOrder': 'Pesanan Baru',
   'editOrder': 'Edit Pesanan',
   'orderNumber': 'Pesanan #',
@@ -132,7 +129,6 @@ const translationsId = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'Ada instruksi khusus?',
 
-  // Order status
   'pending': 'Tertunda',
   'confirmed': 'Dikonfirmasi',
   'shipped': 'Dikirim',
@@ -141,12 +137,10 @@ const translationsId = <String, String>{
   'active': 'Aktif',
   'placed': 'Dipesan',
 
-  // Payment status
   'unpaid': 'Belum Dibayar',
   'partial': 'Sebagian',
   'paid': 'Lunas',
 
-  // Payment methods
   'cash': 'Tunai',
   'card': 'Kartu',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsId = <String, String>{
   'bank': 'Bank',
   'other': 'Lainnya',
 
-  // Order detail
   'shareViaWhatsApp': 'Bagikan via WhatsApp',
   'sharePdf': 'Bagikan PDF',
   'downloadPdf': 'Unduh PDF',
@@ -174,7 +167,6 @@ const translationsId = <String, String>{
   'markAsShipped': 'Tandai Dikirim',
   'markAsCompleted': 'Tandai Selesai',
 
-  // Customers
   'addCustomer': 'Tambah Pelanggan',
   'editCustomer': 'Edit Pelanggan',
   'customerName': 'Nama',
@@ -190,7 +182,6 @@ const translationsId = <String, String>{
   'outstanding': 'Tertunggak',
   'memberSince': 'Pelanggan Sejak',
 
-  // Inventory
   'stockAdjustment': 'Penyesuaian Stok',
   'stockMovements': 'Pergerakan Stok',
   'stockLevels': 'Level Stok',
@@ -215,7 +206,6 @@ const translationsId = <String, String>{
   'inStockLabel': 'tersedia',
   'allCategories': 'Semua Kategori',
 
-  // Expenses
   'addExpense': 'Tambah Pengeluaran',
   'editExpense': 'Edit Pengeluaran',
   'expenseTitle': 'Judul Pengeluaran',
@@ -230,7 +220,6 @@ const translationsId = <String, String>{
   'marketing': 'Pemasaran',
   'supplies': 'Perlengkapan',
 
-  // Settings
   'shopName': 'Nama Toko',
   'currencySymbol': 'Simbol Mata Uang',
   'googleAccount': 'Akun Google',
@@ -284,7 +273,6 @@ const translationsId = <String, String>{
   'downloads': 'Unduhan',
   'dangerZone': 'Zona Berbahaya',
 
-  // Suppliers
   'addSupplier': 'Tambah Pemasok',
   'editSupplier': 'Edit Pemasok',
   'supplierNotFound': 'Pemasok tidak ditemukan',
@@ -307,7 +295,6 @@ const translationsId = <String, String>{
   'addSuppliersFromMenu': 'Tambahkan pemasok dari menu Pemasok',
   'selectSupplier': 'Pilih Pemasok',
 
-  // Purchases
   'purchaseNotFound': 'Pembelian tidak ditemukan',
   'deletePurchase': 'Hapus Pembelian',
   'deletePurchaseConfirm': 'Stok akan dikurangi sesuai jumlah yang dibeli.',
@@ -325,7 +312,6 @@ const translationsId = <String, String>{
   'allProducts': 'Semua produk',
   'supplierProductsOnly': 'Hanya {name}',
 
-  // Cash Register
   'registerOpen': 'Kasir Terbuka',
   'noRegisterOpen': 'Tidak ada kasir terbuka',
   'openRegisterDesc': 'Buka kasir untuk mulai melacak arus kas',
@@ -345,7 +331,6 @@ const translationsId = <String, String>{
   'noRegisterHistory': 'Belum ada riwayat kasir',
   'loading': 'Memuat...',
 
-  // Returns
   'returnsAndRefunds': 'Pengembalian & Pengembalian Dana',
   'createReturnTitle': 'Buat Pengembalian',
   'selectItems': 'Pilih Item',
@@ -384,7 +369,6 @@ const translationsId = <String, String>{
   'approveReturnConfirm': 'Setujui pengembalian ini dan tandai item sebagai diterima? Stok akan dipulihkan.',
   'returnRejected': 'Pengembalian Ditolak',
 
-  // Categories
   'addCategory': 'Tambah Kategori',
   'editCategory': 'Edit Kategori',
   'deleteCategory': 'Hapus Kategori',
@@ -392,7 +376,6 @@ const translationsId = <String, String>{
   'addCategoriesToOrganise': 'Tambahkan kategori untuk mengatur produk Anda',
   'categoryName': 'Nama kategori',
 
-  // Reports
   'totalRevenue': 'Total Pendapatan',
   'totalProfit': 'Total Laba',
   'totalExpenses': 'Total Pengeluaran',
@@ -402,7 +385,6 @@ const translationsId = <String, String>{
   'topCustomers': 'Pelanggan Teratas',
   'salesByCategory': 'Penjualan berdasarkan Kategori',
 
-  // Actions
   'save': 'Simpan',
   'cancel': 'Batal',
   'delete': 'Hapus',
@@ -424,19 +406,16 @@ const translationsId = <String, String>{
   'back': 'Kembali',
   'sort': 'Urutkan',
 
-  // Delivery
   'delivery': 'Pengiriman',
   'markDelivered': 'Tandai Terkirim',
   'delivered': 'Terkirim',
 
-  // Variants
   'variants': 'Varian',
   'addVariant': 'Tambah Varian',
   'variantName': 'Atribut (cth. Ukuran)',
   'variantValue': 'Nilai (cth. Besar)',
   'priceAdjustment': 'Harga +/-',
 
-  // Messages
   'deleteConfirmation': 'Apakah Anda yakin ingin menghapus ini?',
   'clearDataConfirmation':
       'Ini akan menghapus semua data Anda secara permanen. Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin?',
@@ -452,7 +431,6 @@ const translationsId = <String, String>{
   'noExpenses': 'Belum ada pengeluaran tercatat',
   'noStockMovements': 'Belum ada pergerakan stok tercatat',
 
-  // Misc
   'error': 'Kesalahan',
   'pay': 'Bayar',
   'scanQrBarcode': 'Pindai QR / Barcode',
@@ -463,13 +441,11 @@ const translationsId = <String, String>{
   'rowsSkipped': '{count} baris dilewati:',
   'andMore': '...dan {count} lagi',
 
-  // Payments / refunds
   'transactionId': 'ID Transaksi',
   'transactionIdHint': 'bKash / Nagad / nomor struk',
   'refundMethod': 'Metode Pengembalian',
   'refundTransactionId': 'ID Transaksi Pengembalian',
 
-  // Sidebar customization
   'sidebarOrder': 'Urutan Sidebar',
   'sidebarOrderDesc': 'Seret untuk mengatur ulang tab sidebar',
   'resetToDefault': 'Atur ulang ke Default',
@@ -478,7 +454,6 @@ const translationsId = <String, String>{
   'left': 'Kiri',
   'right': 'Kanan',
 
-  // Display size (Settings → Display)
   'display': 'Layar',
   'displaySize': 'Ukuran Tampilan',
   'displaySizeDesc': 'Perkecil atau perbesar semua yang ada di layar',
@@ -488,7 +463,6 @@ const translationsId = <String, String>{
   'phoneTextSize': 'Ponsel: {value}',
   'preview': 'Pratinjau',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'Warna tema',
   'colorThemeDesc': 'Warna utama tombol, header, dan sorotan',
   'phoneColors': 'Warna ponsel',
@@ -536,18 +510,15 @@ const translationsId = <String, String>{
   'deleteThemeConfirm': 'Hapus tema “{name}”?',
   'themeLimitReached': 'Anda dapat menyimpan hingga {count} tema',
 
-  // Auth gate
   'createPin': 'Buat PIN 4 digit',
   'confirmPin': 'Konfirmasi PIN',
   'enterPin': 'Masukkan PIN',
   'pinDoesNotMatch': 'PIN tidak cocok. Coba lagi.',
   'incorrectPin': 'PIN salah. Coba lagi.',
 
-  // Auto Drive backup
   'autoBackup': 'Cadangan otomatis ke Drive',
   'autoBackupDesc': 'Cadangkan otomatis saat aplikasi dibuka (jika sudah masuk)',
 
-  // Security section
   'security': 'Keamanan',
   'securityFingerprint': 'Sidik jari',
   'securityFingerprintDesc': 'Gunakan sidik jari untuk mengizinkan tindakan sensitif',
@@ -555,7 +526,7 @@ const translationsId = <String, String>{
   'securityPinDesc': 'Wajibkan PIN 4 digit untuk tindakan sensitif',
   'biometricNotAvailable': 'Tidak ada sidik jari terdaftar di perangkat ini',
   'changeSecurity': 'Verifikasi untuk mengubah pengaturan keamanan',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'Gunakan Face ID untuk mengizinkan tindakan sensitif',
   'faceIdNotSetUp': 'Face ID belum diatur di perangkat ini',
@@ -563,7 +534,6 @@ const translationsId = <String, String>{
   'securityTouchIdDesc': 'Gunakan Touch ID untuk mengizinkan tindakan sensitif',
   'touchIdNotSetUp': 'Touch ID belum diatur di perangkat ini',
 
-  // Background auto-backup status
   'autoBackupPaused': 'Cadangan otomatis dijeda',
   'autoBackupResumed': 'Cadangan otomatis dilanjutkan',
   'signInToFix': 'Masuk untuk memperbaiki',
@@ -603,7 +573,6 @@ const translationsId = <String, String>{
   'shopPhone': 'Telepon Toko',
   'productCatalog': 'Katalog Produk',
 
-  // Due Book
   'dueBook': 'Buku Utang',
   'totalReceivable': 'Total Piutang',
   'customersOwing': '{count} pelanggan berutang',
@@ -673,7 +642,6 @@ const translationsId = <String, String>{
   'duesCollectedThisMonth': 'Piutang tertagih (bulan ini)',
   'overdue60Banner': '{count} pelanggan berutang {amount} selama 60+ hari',
 
-  // Reports
   'profitAndLoss': 'Laba Rugi',
   'item': 'Item',
   'grossSales': 'Penjualan Kotor',
@@ -738,7 +706,6 @@ const translationsId = <String, String>{
   'monthlyNetSales': 'Penjualan Bersih Bulanan',
   'dateRangeTo': 'sampai',
 
-  // Rating prompt
   'rateTitle': 'Suka dengan {app}?',
   'rateMessage': 'Anda sudah cukup lama mengelola toko dengan {app}. Rating singkat membantu penjual lain menemukannya.',
   'rateNow': 'Beri rating sekarang',
@@ -749,7 +716,6 @@ const translationsId = <String, String>{
   'rateThisAppSubtitle': 'Bantu penjual lain menemukan {app}',
   'about': 'Tentang',
 
-  // App updates
   'updateAvailable': '{app} {version} tersedia',
   'updateHowToAndroid': 'Unduh jenis APK yang sama dengan yang Anda pasang sebelumnya (universal atau arm64-v8a), lalu pasang di atas aplikasi ini. Data Anda tetap tersimpan.',
   'updateHowToIos': 'Pasang pembaruan dengan alat sideload dan Apple ID yang sama seperti sebelumnya agar data Anda tetap tersimpan. Buat cadangan terlebih dahulu.',
@@ -758,10 +724,8 @@ const translationsId = <String, String>{
   'upToDate': 'Anda menggunakan versi terbaru',
   'updateCheckFailed': 'Tidak dapat memeriksa pembaruan. Periksa koneksi internet Anda lalu coba lagi.',
 
-  // Keypad bar (iOS)
   'next': 'Berikutnya',
 
-  // Camera
   'cameraAccessOff': 'Akses kamera nonaktif',
   'cameraAllowPrompt': '{app} memerlukan kamera untuk memindai kode dan mengambil foto.',
   'cameraAllowInSettings': 'Untuk memindai kode dan mengambil foto, izinkan akses kamera untuk {app} di Pengaturan.',
@@ -774,7 +738,6 @@ const translationsId = <String, String>{
   'torchOn': 'Nyalakan senter',
   'torchOff': 'Matikan senter',
 
-  // Calls
   'callNotAvailable': 'Panggilan telepon tidak tersedia di perangkat ini',
   'copyNumber': 'Salin nomor',
   'numberCopied': 'Nomor disalin',

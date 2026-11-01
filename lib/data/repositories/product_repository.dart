@@ -34,12 +34,6 @@ class ProductRepository {
   Future<Product?> getBySku(String sku) =>
       _isar.products.filter().skuEqualTo(sku).findFirst();
 
-  /// The product a scanned [raw] code names: its QR code, its SKU or one of
-  /// its variants' SKUs (a variant opens its product), in any letter case,
-  /// the code trimmed. A UPC-A is asked for in both spellings
-  /// ([barcodeLookupForms]): iOS reads it as 13 digits, Android as 12, so a
-  /// code saved from one phone's scan is found by the other's. Products in
-  /// the Recycle Bin (inactive) don't match. Null when none does.
   Future<Product?> findByScannedCode(String raw) async {
     final forms = barcodeLookupForms(raw);
     if (forms.isEmpty) return null;

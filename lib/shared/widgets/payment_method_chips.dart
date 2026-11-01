@@ -13,7 +13,6 @@ String paymentMethodLabel(BuildContext context, PaymentMethod method) {
   };
 }
 
-/// Single-select payment method chips (Cash / Card / MFS / Bank / Other).
 class PaymentMethodChips extends StatelessWidget {
   const PaymentMethodChips({
     super.key,

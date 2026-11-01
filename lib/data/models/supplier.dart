@@ -29,13 +29,10 @@ class Supplier {
   String company;
   String notes;
 
-  /// Number of purchase entries from this supplier
   int totalPurchases;
 
-  /// Total amount paid to this supplier
   double totalPaid;
 
-  /// Total amount still owed to this supplier
   double totalDue;
 
   DateTime? createdAt;

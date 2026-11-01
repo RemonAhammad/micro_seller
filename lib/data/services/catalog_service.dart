@@ -17,9 +17,6 @@ import 'pdf_service.dart';
 import 'product_image_store.dart';
 import 'widget_capture.dart';
 
-/// What to include on each catalog tile. Sellers share these into chat
-/// threads, so the defaults lean toward "customer-facing": photo and price
-/// yes, internal SKU no.
 class CatalogOptions {
   final bool includePhotos;
   final bool includeStock;
@@ -43,19 +40,11 @@ class CatalogOptions {
       );
 }
 
-/// A product paired with its already-decoded photo.
-///
-/// The decoding has to happen *before* the widget is handed to the capture —
-/// see [CatalogService._load].
 class _CatalogItem {
   final Product product;
 
-  /// Decoded at tile size; owned by the generating run, which disposes it.
   final ui.Image? photo;
 
-  /// The product has a photo file but it couldn't be decoded — drawn as a
-  /// plain grey tile (what `Image.memory`'s errorBuilder used to paint),
-  /// not the placeholder icon.
   final bool photoUnreadable;
 
   const _CatalogItem(this.product, {this.photo, this.photoUnreadable = false});
@@ -63,44 +52,24 @@ class _CatalogItem {
   bool get needsPlaceholder => photo == null && !photoUnreadable;
 }
 
-/// Images one catalog run draws with `RawImage`, so no widget on the page
-/// loads anything asynchronously.
 class _CatalogArt {
-  /// Session-cached by [loadPdfWatermarkIcon]; not owned by the run.
+
   final ui.Image? watermarkIcon;
 
-  /// The tile placeholder (Tabler "package"), rasterized once per run.
   final ui.Image? placeholderIcon;
 
   const _CatalogArt({this.watermarkIcon, this.placeholderIcon});
 }
 
-/// Generates a shareable product catalog.
-///
-/// Uses the same widget → PNG → PDF pipeline as `PdfService`: the catalog is
-/// built as a Flutter widget tree and rasterised through Skia, which shapes
-/// Bengali conjuncts, Arabic ligatures and CJK correctly. Native `pw` widgets
-/// do not, and product names hit that problem just as hard as invoice text.
 class CatalogService {
-  /// A4 portrait at 96 DPI — the same logical canvas `PdfService` targets.
+
   static const double _pageWidth = 794;
   static const double _pageHeight = 1123;
 
-  /// Tiles per page (2 columns × 3 rows).
-  ///
-  /// Pagination is not cosmetic: the capture multiplies `targetSize` by
-  /// `pixelRatio` to size its buffer, so the size must be finite and the
-  /// content must fit it. A scrolling/unbounded page silently produces an
-  /// undecodable PNG.
   static const int perPage = 6;
 
-  /// Tile photo / placeholder edge, logical px.
   static const double _photoSize = 84;
 
-  /// Single PNG of the first page — the most shareable form in a chat thread.
-  ///
-  /// If [products] overflows one page the extra items are omitted; callers
-  /// wanting everything should use [generateCatalogPdf].
   Future<Uint8List> generateCatalogImage(
     List<Product> products, {
     required String shopName,
@@ -134,7 +103,6 @@ class CatalogService {
     }
   }
 
-  /// Multi-page PDF — one `pw.Page` per rasterised chunk of [perPage] items.
   Future<Uint8List> generateCatalogPdf(
     List<Product> products, {
     required String shopName,
@@ -158,7 +126,7 @@ class CatalogService {
     final pages = <Uint8List>[];
     try {
       for (var i = 0; i < chunks.length; i++) {
-        // One page's photos at a time: decoded, drawn, then released.
+
         final items = await _load(chunks[i], options);
         try {
           if (!placeholderTried &&
@@ -187,15 +155,13 @@ class CatalogService {
     } finally {
       placeholder?.dispose();
     }
-    // Every page is a fixed full-canvas SizedBox on an opaque white
-    // Material → JPEG.
+
     return assemblePdf(pages, jpegPages: (
       width: (_pageWidth * kPdfCapturePixelRatio).round(),
       height: (_pageHeight * kPdfCapturePixelRatio).round(),
     ));
   }
 
-  /// Plain-text price list, for pasting straight into a chat message.
   String generateCatalogText(
     List<Product> products, {
     required String shopName,
@@ -220,8 +186,6 @@ class CatalogService {
       }
       sb.writeln();
 
-      // Variant rows carry their own price via priceAdjustment, so a flat
-      // list would misquote them.
       if (p.hasVariants) {
         for (final c in p.variantCombinations.where((c) => c.isActive)) {
           final vPrice = CurrencyFormatter.format(
@@ -238,19 +202,6 @@ class CatalogService {
     return sb.toString();
   }
 
-  // ── internals ──────────────────────────────────────────────────────────
-
-  /// Decodes every product photo up front, at the size its tile draws it.
-  ///
-  /// An image widget (`Image.file` / `Image.memory`) decodes asynchronously,
-  /// so the off-screen capture raced it — painting empty tiles, or costing a
-  /// second capture and a long wait — and decoded each photo at full camera
-  /// resolution for an 84 px tile. A `ui.Image` decoded here at tile size ×
-  /// pixelRatio (cover-fit, never upscaled) is drawn synchronously by
-  /// `RawImage`. Decoding is one photo at a time to cap peak memory on
-  /// low-end phones. Missing or unreadable files degrade to a placeholder
-  /// tile rather than failing the whole catalog; the caller disposes the
-  /// photos ([_dispose]).
   Future<List<_CatalogItem>> _load(
     List<Product> products,
     CatalogOptions options,
@@ -293,13 +244,6 @@ class CatalogService {
     }
   }
 
-  /// The placeholder tile's Tabler "package" icon as a bitmap, so the page
-  /// has no async SVG load in it. Drawn the way `ThinIcon` → `SvgPicture`
-  /// draws it: the SVG (stroke [kIconStroke]) fitted (contain) into the box
-  /// and tinted with a srcIn color filter. The box is the full 84 px tile —
-  /// the tile's `Container` passes its tight constraints through
-  /// `ThinIcon`'s 30 px `SizedBox`. Null on failure: the tile then falls
-  /// back to `ThinIcon`, which the capture's retry picks up.
   Future<ui.Image?> _rasterizePlaceholderIcon() async {
     try {
       final svg = const tabler.Package()
@@ -360,17 +304,12 @@ class CatalogService {
       ),
       pixelRatio: kPdfCapturePixelRatio,
       targetSize: const Size(_pageWidth, _pageHeight),
-      // Photos, placeholder and watermark are all pre-decoded bitmaps now, so
-      // nothing on the page loads asynchronously and one capture suffices.
-      // 100 ms (as the other PDFs) still covers the ThinIcon fallback if the
-      // placeholder couldn't be rasterized; it was 300 ms when the tiles
-      // decoded their own photos.
+
       delay: const Duration(milliseconds: 100),
     );
   }
 }
 
-/// One fixed-size A4 catalog page. Rasterised via [captureWidgetPng].
 class _CatalogPageWidget extends StatelessWidget {
   final List<_CatalogItem> items;
   final String shopName;
@@ -392,10 +331,6 @@ class _CatalogPageWidget extends StatelessWidget {
     required this.art,
   });
 
-  /// The header and prices, and the text on the header, from the app's color
-  /// theme. Read when the page is built, so the next catalog follows a theme
-  /// change. Prices are text on the white page: [_brandText], a shade that
-  /// reads there (a light theme color would be all but invisible).
   static Color get _brand => DocumentBrand.color;
   static Color get _onBrand => DocumentBrand.onColor;
   static Color get _brandText => DocumentBrand.textColor;
@@ -405,10 +340,7 @@ class _CatalogPageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Same scaffolding PdfService documents: the capture injects only
-    // Directionality, so MediaQuery / DefaultTextStyle / Material are wired
-    // by hand. MaterialApp cannot be used — it looks for a MediaQuery
-    // ancestor that doesn't exist off-screen.
+
     return MediaQuery(
       data: const MediaQueryData(
         size: Size(CatalogService._pageWidth, CatalogService._pageHeight),
@@ -471,8 +403,7 @@ class _CatalogPageWidget extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     shopPhone!,
-                    // The header text color at 70% (Colors.white70 when the
-                    // text is white).
+
                     style: TextStyle(
                         color: _onBrand.withAlpha(0xB3), fontSize: 12),
                   ),
@@ -495,9 +426,7 @@ class _CatalogPageWidget extends StatelessWidget {
   }
 
   Widget _grid() {
-    // Fixed 2×3 layout built from Rows rather than GridView: the page has a
-    // hard height budget and a scrollable would let content escape the
-    // capture area instead of being laid out inside it.
+
     final rows = <Widget>[];
     for (var i = 0; i < CatalogService.perPage; i += 2) {
       final left = i < items.length ? items[i] : null;
@@ -615,8 +544,7 @@ class _CatalogPageWidget extends StatelessWidget {
           color: _grey100,
           borderRadius: BorderRadius.circular(8),
         ),
-        // Same box as ThinIcon's SizedBox; the bitmap is contain-fitted into
-        // it like the SVG was.
+
         child: icon != null
             ? SizedBox.square(
                 dimension: 30,
@@ -634,8 +562,7 @@ class _CatalogPageWidget extends StatelessWidget {
               height: size,
               fit: BoxFit.cover,
             )
-          // A photo file that couldn't be decoded — what Image.memory's
-          // errorBuilder drew.
+
           : Container(
               width: size,
               height: size,

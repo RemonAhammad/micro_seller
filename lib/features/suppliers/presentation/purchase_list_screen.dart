@@ -97,10 +97,7 @@ class PurchaseListScreen extends ConsumerWidget {
                             fontSize: 10,
                             color: Colors.green,
                             fontWeight: FontWeight.w600);
-                        // The total and its due sit at the end of the row,
-                        // unless that would leave the supplier or the date
-                        // line too narrow for one of its words (large text,
-                        // narrow layout): then they go under them.
+
                         final totalsBelow = box.maxWidth -
                                 math.max(
                                   _textWidth(context, amount, amountStyle),
@@ -192,9 +189,6 @@ class PurchaseListScreen extends ConsumerWidget {
   }
 }
 
-/// How wide [text] in [style] is where [context] lays it out: on one line,
-/// or with [widestWord], its widest word (the narrowest it wraps to without
-/// breaking a word).
 double _textWidth(BuildContext context, String text, TextStyle? style,
     {bool widestWord = false}) {
   var effective = DefaultTextStyle.of(context).style.merge(style);

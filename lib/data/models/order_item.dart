@@ -28,14 +28,11 @@ class OrderItem {
   double costPrice;
   double totalPrice;
 
-  /// @deprecated — kept for backward compat with old flat variants
   String variantName;
   String variantValue;
 
-  /// Canonical combination key: "Color:Red/Size:L"
   String variantCombinationKey;
 
-  /// Human-readable label stored at order time: "Size: L / Color: Red"
   String variantDisplayLabel;
 
   @ignore

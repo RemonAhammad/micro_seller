@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_icons.dart';
 
-/// Height of the fixed slot a [StatCard] fills: the dashboard grid, its
-/// loading skeleton and the Reports KPI grid all use it, so they can't drift.
-///
-/// 110 at the default text size. It grows (or shrinks) by exactly as much as
-/// the card's two text lines do, so a larger font never clips the label and
-/// the card keeps the same space under its icon at every text size.
 double statCardHeight(TextScaler textScaler) =>
     110 +
     StatCard._textHeight(textScaler) -
     StatCard._textHeight(TextScaler.noScaling);
 
-/// How wide [text] is on one line in [style], measured the way a [Text]
-/// draws it here (over the ambient text style, at the current text size and
-/// bold-text setting). Lets a row pick between side by side and stacked
-/// before a long amount or a large font would make it overflow.
 double measureTextWidth(BuildContext context, String text, TextStyle? style) {
   var effective = DefaultTextStyle.of(context).style.merge(style);
   if (MediaQuery.boldTextOf(context)) {
@@ -35,7 +25,7 @@ double measureTextWidth(BuildContext context, String text, TextStyle? style) {
 class StatCard extends StatelessWidget {
   final String label;
   final String value;
-  /// Material icon — or pass [iconBuilder] for a thin Tabler icon instead.
+
   final ThinIconBuilder? icon;
   final ThinIconBuilder? iconBuilder;
   final Color color;
@@ -51,9 +41,6 @@ class StatCard extends StatelessWidget {
     this.onTap,
   }) : assert(icon != null || iconBuilder != null);
 
-  // The two text lines, pinned here so [statCardHeight] measures what the
-  // card draws. The heights are titleLarge's and bodyMedium's (the
-  // surrounding Material's text style), which the lines used before.
   static const double _valueSize = 20, _valueHeight = 1.27;
   static const double _labelSize = 11, _labelHeight = 1.43;
 
@@ -97,8 +84,7 @@ class StatCard extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            // A number that doesn't fit (narrow card, large text) shrinks
-            // instead of being cut off mid-number.
+
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: AlignmentDirectional.centerStart,

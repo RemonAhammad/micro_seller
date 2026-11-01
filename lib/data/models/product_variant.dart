@@ -14,11 +14,11 @@ class ProductVariant {
     this.sku = '',
   });
 
-  String name;    // e.g. "Size", "Color"
-  String value;   // e.g. "Large", "Red"
-  double priceAdjustment; // +/- from base price
+  String name;
+  String value;
+  double priceAdjustment;
   int stockQty;
-  String sku;     // variant-specific SKU
+  String sku;
 
   ProductVariant copyWith({
     String? name,

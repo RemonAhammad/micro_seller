@@ -5,10 +5,6 @@ import '../../data/services/auth_gate_service.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
 
-/// Reads a boolean env flag, defaulting to true if missing/blank/unparseable.
-/// Treats `'false'` / `'0'` / `'no'` / `'off'` (case-insensitive, trimmed)
-/// as false; everything else is true. Defaults to true so a missing `.env`
-/// doesn't silently hide security UI.
 bool _envFlag(String key, {bool defaultValue = true}) {
   final raw = dotenv.env[key]?.trim().toLowerCase();
   if (raw == null || raw.isEmpty) return defaultValue;
@@ -16,19 +12,9 @@ bool _envFlag(String key, {bool defaultValue = true}) {
   return true;
 }
 
-/// `.env` build-time visibility flags. When `false`, the matching toggle is
-/// hidden from Settings → Security entirely (and `runAuthGate` ignores that
-/// path even if the user setting says otherwise).
 bool get isFingerprintFeatureEnabled => _envFlag('ENABLE_FINGERPRINT_GATE');
 bool get isPinFeatureEnabled => _envFlag('ENABLE_PIN_GATE');
 
-/// Gate destructive actions. Returns `true` if the user passes (biometric
-/// OR PIN verified OR fresh PIN set up), `false` if they cancel.
-///
-/// [fingerprintEnabled] and [pinEnabled] are the *user's* preference from
-/// Settings. They're combined with the `.env` build-time flags here so the
-/// caller doesn't have to know about `.env`. Each path is considered
-/// independently — both must be off for the gate to passthrough.
 Future<bool> runAuthGate(
   BuildContext context, {
   required String reason,
@@ -38,23 +24,18 @@ Future<bool> runAuthGate(
 }) async {
   final svc = service ?? AuthGateService();
 
-  // Combine user settings with .env feature flags.
   final fp = fingerprintEnabled && isFingerprintFeatureEnabled;
   final pin = pinEnabled && isPinFeatureEnabled;
 
-  // Both paths off — passthrough.
   if (!fp && !pin) return true;
 
   if (fp && await svc.isBiometricAvailable()) {
     final ok = await svc.authenticateBiometric(reason);
     if (ok) return true;
-    // Biometric was cancelled / failed. Don't auto-fall-through to PIN —
-    // explicit cancel means cancel.
+
     return false;
   }
 
-  // Either biometrics aren't available or fingerprint gate is disabled.
-  // If PIN is also disabled, fail closed.
   if (!pin) return false;
 
   if (!context.mounted) return false;
@@ -76,9 +57,6 @@ Future<bool> runAuthGate(
   return result == true;
 }
 
-/// Forces a fresh PIN setup flow (enter → confirm → store), regardless of
-/// whether a PIN already exists. Returns `true` if a PIN was set, `false`
-/// if the user cancelled.
 Future<bool> runPinSetup(
   BuildContext context, {
   required String reason,
@@ -120,8 +98,6 @@ class _PinSheet extends StatefulWidget {
 class _PinSheetState extends State<_PinSheet> {
   static const _pinLength = 4;
 
-  /// Setup flow has two stages: 'enter' (first PIN) → 'confirm' (re-enter).
-  /// Verify flow only uses 'enter'.
   String _stage = 'enter';
   String _firstPin = '';
   String _input = '';
@@ -166,7 +142,7 @@ class _PinSheetState extends State<_PinSheet> {
         });
         return;
       }
-      // confirm
+
       if (_input == _firstPin) {
         await widget.service.setPin(_input);
         if (mounted) Navigator.of(context).pop(true);
@@ -180,7 +156,7 @@ class _PinSheetState extends State<_PinSheet> {
       }
       return;
     }
-    // verify
+
     final ok = await widget.service.verifyPin(_input);
     if (!mounted) return;
     if (ok) {
@@ -207,8 +183,7 @@ class _PinSheetState extends State<_PinSheet> {
           color: cs.surface,
           borderRadius: BorderRadius.circular(20),
         ),
-        // Scrolls when the sheet can't fit it all (a large text size or a
-        // long reason on a short or zoomed-in screen).
+
         child: SingleChildScrollView(
           primary: false,
           child: Column(
@@ -223,7 +198,7 @@ class _PinSheetState extends State<_PinSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Top row: cancel button + stage title
+
               Row(
                 children: [
                   IconButton(
@@ -238,7 +213,7 @@ class _PinSheetState extends State<_PinSheet> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  // Visual balance with the IconButton.
+
                   const SizedBox(width: 48),
                 ],
               ),
@@ -255,8 +230,7 @@ class _PinSheetState extends State<_PinSheet> {
               _PinDots(
                   filled: _input.length, total: _pinLength, color: cs.primary),
               const SizedBox(height: 8),
-              // Holds the error's line even without one, and grows when the
-              // error needs more (a large text size, two lines).
+
               ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 18),
                 child: _error == null
@@ -272,8 +246,7 @@ class _PinSheetState extends State<_PinSheet> {
                       ),
               ),
               const SizedBox(height: 8),
-              // Full size, unless the sheet is narrower than the pad (the
-              // narrowest Display size layout): then shrunk to fit.
+
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: _Numpad(onDigit: _onDigit, onBackspace: _onBackspace),
@@ -369,7 +342,7 @@ class _Numpad extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(width: 76), // empty slot to keep 0 centered
+            const SizedBox(width: 76),
             key('0'),
             key(
               '⌫',
@@ -383,9 +356,6 @@ class _Numpad extends StatelessWidget {
   }
 }
 
-/// Thin wrapper to let _PinSheet accept either a `_L10nStrings` (returned
-/// from `AppStrings.of(context)`) or a manually-built one — keeps the widget
-/// independent from the private `_L10nStrings` symbol.
 class _L10n {
   final dynamic _s;
   _L10n(this._s);

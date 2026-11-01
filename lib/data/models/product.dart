@@ -43,22 +43,16 @@ class Product {
   String category;
   String qrCode;
   List<String> tags;
-  // Active products by name — the products list's where-clause.
-  // The name part must be a value index (strings default to hash, which
-  // has no order).
+
   @Index(composite: [CompositeIndex('name', type: IndexType.value)])
   bool isActive;
 
-  /// @deprecated — kept for migration from flat variants
   List<ProductVariant> variants;
 
-  /// Hierarchical variant attribute definitions (e.g. Size→[S,M,L], Color→[Red,Blue])
   List<VariantAttribute> variantAttributes;
 
-  /// All sellable combinations with per-combo stock/price/sku
   List<VariantCombination> variantCombinations;
 
-  /// Optional primary supplier id (0 = no supplier linked)
   int supplierId;
 
   DateTime? createdAt;
@@ -82,13 +76,11 @@ class Product {
   @ignore
   bool get hasVariants => variantCombinations.isNotEmpty;
 
-  /// Total stock across all active combinations (if variants exist) or base stockQty
   @ignore
   int get totalStock => hasVariants
       ? variantCombinations.where((c) => c.isActive).fold(0, (s, c) => s + c.stockQty)
       : stockQty;
 
-  /// Find a specific combination by its canonical key
   VariantCombination? findCombination(String key) =>
       variantCombinations.where((c) => c.combinationKey == key).firstOrNull;
 

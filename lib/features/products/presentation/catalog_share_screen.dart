@@ -19,8 +19,6 @@ import '../providers/product_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
-/// Builds a shareable product catalog: pick products, choose what each tile
-/// shows, then push it into a chat as an image, a PDF, or plain text.
 class CatalogShareScreen extends ConsumerStatefulWidget {
   const CatalogShareScreen({super.key});
 
@@ -34,19 +32,15 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
   var _options = const CatalogOptions();
   var _busy = false;
 
-  // The share buttons, which an iPad's share sheet points at. Read when the
-  // catalog is ready, wherever the button is drawn by then.
   final _imageButton = GlobalKey();
   final _pdfButton = GlobalKey();
 
-  /// Only active products — a soft-deleted item shouldn't be advertised.
   List<Product> _visible(List<Product> all) =>
       all.where((p) => p.isActive).toList();
 
   List<Product> _chosen(List<Product> all) {
     final visible = _visible(all);
-    // Preserve list order rather than selection order, so the catalog reads
-    // the same way the seller sees it on screen.
+
     return visible.where((p) => _selected.contains(p.id)).toList();
   }
 
@@ -116,7 +110,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      // An amount is shrunk to fit, never wrapped.
+
                       subtitle: FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: AlignmentDirectional.centerStart,
@@ -153,15 +147,14 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
         child: ThinIcon(tabler.Package.new, size: 18),
       );
     }
-    // Decode at the avatar's pixel size, not the stored photo's.
+
     final width =
         (_thumbRadius * 2 * MediaQuery.devicePixelRatioOf(context) * 1.4)
             .ceil();
     return CircleAvatar(
       radius: _thumbRadius,
       backgroundImage: ResizeImage(FileImage(File(photo)), width: width),
-      // The file is gone (a backup restored on another phone carries no
-      // photos): the plain avatar, without reporting an error.
+
       onBackgroundImageError: (_, _) {},
     );
   }
@@ -207,9 +200,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
               const LinearProgressIndicator(),
               const SizedBox(height: 10),
             ],
-            // Side by side while each label can wrap between its words;
-            // one above the other once large text on a narrow layout would
-            // split a word across lines.
+
             LayoutBuilder(builder: (context, constraints) {
               final image = FilledButton.icon(
                 key: _imageButton,
@@ -258,8 +249,6 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
     );
   }
 
-  // ── actions ────────────────────────────────────────────────────────────
-
   ({String name, String? phone}) get _shop {
     final settings = ref.read(settingsProvider.notifier);
     final phone = settings.shopPhone;
@@ -269,8 +258,7 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
   Future<void> _shareImage(List<Product> all) async {
     final chosen = _chosen(all);
     final s = AppStrings.of(context);
-    // One PNG holds a single page. Say so rather than silently dropping the
-    // overflow — the PDF path is the one that carries everything.
+
     if (chosen.length > CatalogService.perPage) {
       context.showSnackBar(s.catalogImageTruncated(CatalogService.perPage));
     }
@@ -311,8 +299,6 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
     if (mounted) context.showSuccessSnackBar(AppStrings.of(context).priceListCopied);
   }
 
-  /// Shares the catalog file from [button]: an iPad's share sheet points at
-  /// it.
   Future<void> _shareBytes(
       Uint8List bytes, String fileName, GlobalKey button) async {
     final dir = await getTemporaryDirectory();
@@ -325,16 +311,10 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
     ));
   }
 
-  /// Runs a generation task with the progress bar up, surfacing failures as a
-  /// snackbar rather than an unhandled exception — rasterising can fail on
-  /// low-memory devices.
   Future<void> _run(Future<void> Function() task) async {
     setState(() => _busy = true);
     try {
-      // Paint the progress bar before any work (each page capture starts
-      // with a synchronous build/layout on this isolate); after that the
-      // work yields — photo decode, PNG/JPEG encode, PDF assembly on a
-      // background isolate — so the bar keeps animating.
+
       await WidgetsBinding.instance.endOfFrame;
       await task();
     } catch (e) {
@@ -349,10 +329,6 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
   }
 }
 
-/// Whether every word of [label] fits on one line of an icon button [width]
-/// wide in [style] (its padding, the 18 px icon and the gap taken off), at
-/// the current text size and bold-text setting. A label may wrap between its
-/// words; a word split across lines is what reads as broken.
 bool _wordsFit(
     BuildContext context, ButtonStyle? style, String label, double width) {
   final padding = style?.padding?.resolve(const {})?.horizontal ?? 48;

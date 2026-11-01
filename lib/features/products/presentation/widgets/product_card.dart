@@ -42,7 +42,7 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product image
+
             Expanded(
               flex: 3,
               child: ClipRRect(
@@ -63,7 +63,7 @@ class ProductCard extends StatelessWidget {
                     : _ProductImagePlaceholder(product: product),
               ),
             ),
-            // Product info
+
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
               child: Text(
@@ -78,10 +78,7 @@ class ProductCard extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-              // Price at the start, badge at the end, as a row at least as
-              // wide as the tile. When the two don't fit side by side
-              // (narrow tile, large text) the row shrinks as a whole,
-              // instead of pushing the badge out of the tile.
+
               child: LayoutBuilder(
                 builder: (context, constraints) => FittedBox(
                   fit: BoxFit.scaleDown,
@@ -115,8 +112,6 @@ class ProductCard extends StatelessWidget {
   }
 }
 
-/// Decodes the photo near the tile's pixel width instead of its stored size;
-/// the 1.4 headroom covers BoxFit.cover cropping into a taller box.
 int? _decodeWidth(BuildContext context, double maxWidth) {
   if (!maxWidth.isFinite || maxWidth <= 0) return null;
   return (maxWidth * MediaQuery.devicePixelRatioOf(context) * 1.4).ceil();
@@ -132,10 +127,7 @@ class _ProductImagePlaceholder extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       color: theme.colorScheme.primary.withOpacity(0.06),
-      // Large text on a narrow tile leaves the photo area less height than
-      // the icon and category need: shrink them together instead of
-      // overflowing. Laid out at the tile's width, so the category still
-      // wraps where it did.
+
       child: LayoutBuilder(
         builder: (context, constraints) => Center(
           child: FittedBox(

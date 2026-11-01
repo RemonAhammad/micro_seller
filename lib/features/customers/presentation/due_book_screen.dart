@@ -63,14 +63,12 @@ ThinIconBuilder _sortIcon(_DueSort sort) => switch (sort) {
       _DueSort.nameAsc || _DueSort.nameDesc => tabler.SortAscendingLetters.new,
     };
 
-/// Sorts in place. Ties fall back to the larger due, so the list is stable
-/// and the most money is always nearer the top.
 void _sortDues(List<CustomerDue> list, _DueSort sort) {
   int byDue(CustomerDue a, CustomerDue b) => b.totalDue.compareTo(a.totalDue);
   int byName(CustomerDue a, CustomerDue b) => a.customer.name
       .toLowerCase()
       .compareTo(b.customer.name.toLowerCase());
-  // Never-paid customers count as "paid at the dawn of time".
+
   DateTime paidAt(CustomerDue d) => d.lastPaymentAt ?? DateTime(0);
 
   int Function(CustomerDue, CustomerDue) cmp = switch (sort) {
@@ -95,7 +93,6 @@ enum _AgeBucket { under30, from30to60, over60 }
 
 enum _Activity { any, neverPaid, noPaymentIn30Days }
 
-/// Due Book filters. All are AND-ed; an empty set means "don't filter".
 class _DueFilters {
   const _DueFilters({
     this.ages = const {},
@@ -187,13 +184,9 @@ String _activityLabel(BuildContext context, _Activity a) {
   };
 }
 
-/// Due Book ("baki khata"): every customer who owes money, with one-tap
-/// collect / WhatsApp reminder / call. Dues are computed from orders — see
-/// `computeOrderDues` — not from the stored outstandingBalance counter.
 class DueBookScreen extends ConsumerStatefulWidget {
   const DueBookScreen({super.key, this.initialOver60 = false});
 
-  /// Start filtered to the 60+ days bucket (dashboard overdue banner).
   final bool initialOver60;
 
   @override
@@ -220,8 +213,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
     final s = AppStrings.of(context);
     final isar = await ref.read(isarProvider.future);
     if (!mounted) return;
-    // Load, compute and write in one transaction on a worker isolate — with
-    // thousands of orders, doing it here froze the spinner.
+
     final changed = await runWithProgress(
         context, () => recalculateOutstandingBalances(isar));
     if (mounted) context.showSuccessSnackBar(s.balancesRecalculated(changed));
@@ -233,7 +225,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
       title: AppStrings.of(context).filter,
       child: _FilterSheet(
         initial: _filters,
-        // Live: the list behind the sheet updates as chips are toggled.
+
         onChanged: (f) => setState(() => _filters = f),
       ),
     );
@@ -323,7 +315,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              // Totals follow the filters — "how much do my VIPs owe?"
+
               _SummaryCard(dues: visible),
               const SizedBox(height: 12),
               Align(
@@ -383,7 +375,6 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
   }
 }
 
-/// "Sort by: Oldest first ▾" — opens a menu of every sort option.
 class _SortButton extends StatelessWidget {
   const _SortButton({required this.value, required this.onChanged});
 
@@ -417,8 +408,7 @@ class _SortButton extends StatelessWidget {
           children: [
             ThinIcon(_sortIcon(value), size: 18, color: cs.primary),
             const SizedBox(width: 6),
-            // A long sort name, a narrow layout or large text wraps the
-            // label (the pill grows taller) instead of overflowing.
+
             Flexible(
               child: Text(
                 '${s.sortBy}: ${_sortLabel(context, value)}',
@@ -434,7 +424,6 @@ class _SortButton extends StatelessWidget {
   }
 }
 
-/// Deletable chips for each active filter, plus "Clear filters".
 class _ActiveFilterChips extends StatelessWidget {
   const _ActiveFilterChips({required this.filters, required this.onChanged});
 
@@ -493,9 +482,6 @@ class _FilterSheetState extends State<_FilterSheet> {
   late final _minCtrl =
       TextEditingController(text: _amountText(widget.initial.minDue));
 
-  /// [amount] as it was typed: 12.5 stays 12.5 (rounding it to a whole
-  /// number showed 13 while the filter was 12.5), 100 shows as 100. Empty
-  /// for none.
   static String _amountText(double amount) {
     if (amount <= 0) return '';
     final fixed = amount.toStringAsFixed(NumberInput.moneyDecimals);
@@ -590,8 +576,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           onChanged: (v) => _set(_f.copyWith(phoneOnly: v)),
         ),
         const SizedBox(height: 8),
-        // Side by side at equal widths; stacked when a label's word wouldn't
-        // fit its half (a narrow layout, large text).
+
         ButtonPair(
           first: OutlinedButton(
             onPressed: () {
@@ -625,7 +610,7 @@ class _SummaryCard extends StatelessWidget {
             od.order.createdAt != null &&
             DateTime.now().difference(od.order.createdAt!).inDays > 30)
         .fold<double>(0, (sum, od) => sum + od.due);
-    // The theme's main color and its text color (white and white70 on Teal).
+
     final brand = context.brand;
     final onBrand = brand.onPrimary;
     final onBrandSoft = onBrand.withAlpha(0xB3);
@@ -650,7 +635,7 @@ class _SummaryCard extends StatelessWidget {
                   Text(s.totalReceivable,
                       style: TextStyle(color: onBrandSoft, fontSize: 12)),
                   const SizedBox(height: 4),
-                  // Shrinks to fit rather than wrapping mid-number.
+
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: AlignmentDirectional.centerStart,
@@ -670,8 +655,7 @@ class _SummaryCard extends StatelessWidget {
               ),
             ),
             if (overdue > 0)
-              // At most 45% of the card, so the total keeps the room it
-              // needs; its label wraps and its amount shrinks instead.
+
               ConstrainedBox(
                 constraints:
                     BoxConstraints(maxWidth: constraints.maxWidth * 0.45),
@@ -709,12 +693,8 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-/// The least a due card's Collect / Remind pair is scaled to stay on one
-/// line; needing more, Remind wraps under Collect instead.
 const _kActionsMinScale = 0.97;
 
-/// What [text] needs drawn by a [Text] here with [style]: the width of its
-/// longest word, and of the whole text on one line (rounded up).
 ({double word, double line}) _textWidths(
     BuildContext context, String text, TextStyle? style) {
   var effective = DefaultTextStyle.of(context).style.merge(style);
@@ -785,11 +765,7 @@ class _DueCard extends ConsumerWidget {
                   fontWeight: FontWeight.w700,
                   color: ageColor,
                 );
-                // The amount column keeps its own width while the name
-                // column beside it still fits its longest word, as it always
-                // did. Past that (a huge amount, a narrow layout, large text)
-                // it takes at most 45% of the row, so the name keeps room: its
-                // amount shrinks and its age label wraps.
+
                 final amountWidth = math.max(
                         _textWidths(context, amount, amountStyle).line,
                         _textWidths(context, age, ageStyle).line + 16) +
@@ -855,11 +831,7 @@ class _DueCard extends ConsumerWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  // Collect and Remind side by side at their own widths, as
-                  // always. A few pixels short (360 dp at 100% text is under
-                  // 1 px short), the pair scales down a hair; short of more
-                  // (a narrow layout, large text), Remind moves under
-                  // Collect.
+
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) => FittedBox(
@@ -881,8 +853,7 @@ class _DueCard extends ConsumerWidget {
                                     const ThinIcon(tabler.Cash.new, size: 18),
                                 label: Text(s.collect),
                               ),
-                              // Its own context: an iPad's share sheet
-                              // points at the button.
+
                               Builder(
                                 builder: (buttonContext) => TextButton.icon(
                                   onPressed: () => sendDueReminder(context, ref,
@@ -904,7 +875,7 @@ class _DueCard extends ConsumerWidget {
                   if (customer.phone.isNotEmpty)
                     IconButton(
                       tooltip: s.callCustomer,
-                      // A device that can't call shows the number instead.
+
                       onPressed: () => callPhone(context, customer.phone),
                       icon: const ThinIcon(tabler.Phone.new, size: 20),
                     ),

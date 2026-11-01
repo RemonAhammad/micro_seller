@@ -3,20 +3,15 @@ import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_strings.dart';
 
-/// What the user chose in [RateAppDialog].
 enum RateAppChoice {
-  /// Open Google Play's review sheet.
+
   rate,
 
-  /// Ask again after a cooldown.
   later,
 
-  /// Never ask again.
   decline,
 }
 
-/// Gate shown before the store review sheet, so only sellers who say they're
-/// enjoying the app land on the rating form.
 class RateAppDialog extends StatelessWidget {
   const RateAppDialog({super.key});
 
@@ -25,8 +20,7 @@ class RateAppDialog extends StatelessWidget {
     final s = AppStrings.of(context);
     final amber = Colors.amber.shade700;
     return AlertDialog(
-      // The message scrolls when the dialog can't fit it (a large text size
-      // on a short or zoomed-in screen), instead of being cut off.
+
       scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(

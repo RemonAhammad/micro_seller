@@ -7,12 +7,8 @@ class AppStrings {
   static const appName = 'Micro Seller';
   static const tagline = 'Your Complete Business Manager';
 
-  /// Get a localized AppStrings instance.
-  /// Usage: `AppStrings.of(context).products`
-  /// Or keep using the static constants for non-translated strings.
   static _L10nStrings of(BuildContext context) => _L10nStrings(AppLocalizations.of(context));
 
-  // Static fallbacks (used where context is not available, e.g. router)
   static const navDashboard = 'Dashboard';
   static const navProducts = 'Products';
   static const navOrders = 'Orders';
@@ -22,11 +18,9 @@ class AppStrings {
   static const navExpenses = 'Expenses';
   static const navSettings = 'Settings';
 
-  // Non-translatable constants
   static const exportCsv = 'Export CSV';
   static const importCsv = 'Import CSV';
 
-  // ── Legacy static accessors (used by sidebar, kept as-is) ──
   static const todayRevenue = "Today's Revenue";
   static const monthRevenue = 'Month Revenue';
   static const monthProfit = 'Month Profit';
@@ -129,13 +123,10 @@ class AppStrings {
   static const noStockMovements = 'No stock movements recorded';
 }
 
-/// Localized strings — wraps AppLocalizations.tr() for each key.
-/// Every key in translations_en.dart should have a getter here.
 class _L10nStrings {
   final AppLocalizations _l10n;
   _L10nStrings(this._l10n);
 
-  /// Shortcut — use for any key not listed as a getter
   String tr(String key) => _l10n.tr(key);
 
   String get dashboard => _l10n.tr('dashboard');
@@ -291,7 +282,6 @@ class _L10nStrings {
   String get variantValue => _l10n.tr('variantValue');
   String get priceAdjustment => _l10n.tr('priceAdjustment');
 
-  // New keys
   String get suppliers => _l10n.tr('suppliers');
   String get returns => _l10n.tr('returns');
   String get cashRegister => _l10n.tr('cashRegister');
@@ -407,7 +397,7 @@ class _L10nStrings {
   String get googleDriveBackup => _l10n.tr('googleDriveBackup');
   String googleSignInSideloadHint(String app) =>
       _l10n.tr('googleSignInSideloadHint').replaceAll('{app}', app);
-  // Google Drive errors (DriveErrorCode), shown by Settings.
+
   String get driveErrorNotSignedIn => _l10n.tr('driveErrorNotSignedIn');
   String get driveErrorSignInCancelled => _l10n.tr('driveErrorSignInCancelled');
   String get driveErrorSignInFailed => _l10n.tr('driveErrorSignInFailed');
@@ -488,7 +478,6 @@ class _L10nStrings {
   String get bkash => _l10n.tr('bkash');
   String get nagad => _l10n.tr('nagad');
 
-  // Misc
   String get error => _l10n.tr('error');
   String get pay => _l10n.tr('pay');
   String get scanQrBarcode => _l10n.tr('scanQrBarcode');
@@ -501,13 +490,11 @@ class _L10nStrings {
   String rowsSkipped(int count) => _l10n.tr('rowsSkipped').replaceAll('{count}', '$count');
   String andMore(int count) => _l10n.tr('andMore').replaceAll('{count}', '$count');
 
-  // Payments / refunds
   String get transactionId => _l10n.tr('transactionId');
   String get transactionIdHint => _l10n.tr('transactionIdHint');
   String get refundMethod => _l10n.tr('refundMethod');
   String get refundTransactionId => _l10n.tr('refundTransactionId');
 
-  // Sidebar customization
   String get sidebarOrder => _l10n.tr('sidebarOrder');
   String get sidebarOrderDesc => _l10n.tr('sidebarOrderDesc');
   String get resetToDefault => _l10n.tr('resetToDefault');
@@ -516,7 +503,6 @@ class _L10nStrings {
   String get left => _l10n.tr('left');
   String get right => _l10n.tr('right');
 
-  // Display size
   String get display => _l10n.tr('display');
   String get displaySize => _l10n.tr('displaySize');
   String get displaySizeDesc => _l10n.tr('displaySizeDesc');
@@ -559,13 +545,11 @@ class _L10nStrings {
   String get shopPhone => _l10n.tr('shopPhone');
   String get productCatalog => _l10n.tr('productCatalog');
 
-  /// Only the first N products fit into a single shared image.
   String catalogImageTruncated(int count) =>
       _l10n.tr('catalogImageTruncated').replaceAll('{count}', '$count');
 
   String get refund => _l10n.tr('refund');
 
-  // Due Book
   String get dueBook => _l10n.tr('dueBook');
   String get totalReceivable => _l10n.tr('totalReceivable');
   String customersOwing(int count) =>
@@ -650,7 +634,6 @@ class _L10nStrings {
   String get sortNameDesc => _l10n.tr('sortNameDesc');
   String get duesCollectedThisMonth => _l10n.tr('duesCollectedThisMonth');
 
-  // Rating prompt
   String rateTitle(String app) => _l10n.tr('rateTitle').replaceAll('{app}', app);
   String rateMessage(String app) =>
       _l10n.tr('rateMessage').replaceAll('{app}', app);
@@ -675,7 +658,6 @@ class _L10nStrings {
       .replaceAll('{page}', '$page')
       .replaceAll('{total}', '$total');
 
-  // Color themes
   String get colorTheme => _l10n.tr('colorTheme');
   String get colorThemeDesc => _l10n.tr('colorThemeDesc');
   String get phoneColors => _l10n.tr('phoneColors');
@@ -708,9 +690,6 @@ class _L10nStrings {
   String get brightness => _l10n.tr('brightness');
   String get hexColor => _l10n.tr('hexColor');
 
-  /// The name of a preset color theme, by its id in `kPresetColorThemes`
-  /// (`'phone'` gives Phone colors). Any other id comes back unchanged:
-  /// custom themes carry their own name.
   String presetThemeName(String id) => switch (id) {
         'teal' => _l10n.tr('themePresetTeal'),
         'blue' => _l10n.tr('themePresetBlue'),
@@ -732,14 +711,9 @@ class _L10nStrings {
   String themeLimitReached(int count) =>
       _l10n.tr('themeLimitReached').replaceAll('{count}', '$count');
 
-  /// Phone colors is the saved theme, but this phone has none to give (a
-  /// backup restored on an iPhone or an older Android): the app is drawn in
-  /// the theme [name] instead.
   String phoneColorsUnavailable(String name) =>
       _l10n.tr('phoneColorsUnavailable').replaceAll('{name}', name);
 
-  // Security (Settings → Security). The biometric row says what the device
-  // has: Face ID or Touch ID on an iPhone, Fingerprint everywhere else.
   String get securityFingerprint => _l10n.tr('securityFingerprint');
   String get securityFingerprintDesc => _l10n.tr('securityFingerprintDesc');
   String get biometricNotAvailable => _l10n.tr('biometricNotAvailable');
@@ -750,10 +724,6 @@ class _L10nStrings {
   String get securityTouchIdDesc => _l10n.tr('securityTouchIdDesc');
   String get touchIdNotSetUp => _l10n.tr('touchIdNotSetUp');
 
-  // App updates (iPhone, and Android installed from a GitHub APK): the
-  // Dashboard banner and Settings → About → Check for updates.
-
-  /// "Micro Seller 1.0.12 is available", for the new release's [version].
   String updateAvailable(String version) => _l10n
       .tr('updateAvailable')
       .replaceAll('{app}', AppStrings.appName)
@@ -765,12 +735,8 @@ class _L10nStrings {
   String get upToDate => _l10n.tr('upToDate');
   String get updateCheckFailed => _l10n.tr('updateCheckFailed');
 
-  // Keypad bar (iOS) above the number and phone pads; its other button is
-  // [done].
   String get next => _l10n.tr('next');
 
-  // Camera (Scanner, QR scanner, product photos). Like every text that names
-  // the app, two of them keep it as `{app}` in all languages, filled in here.
   String get cameraAccessOff => _l10n.tr('cameraAccessOff');
   String get cameraAllowPrompt =>
       _l10n.tr('cameraAllowPrompt').replaceAll('{app}', AppStrings.appName);
@@ -785,7 +751,6 @@ class _L10nStrings {
   String get torchOn => _l10n.tr('torchOn');
   String get torchOff => _l10n.tr('torchOff');
 
-  // Calls: a device that can't call (most iPads) offers to copy the number.
   String get callNotAvailable => _l10n.tr('callNotAvailable');
   String get copyNumber => _l10n.tr('copyNumber');
   String get numberCopied => _l10n.tr('numberCopied');

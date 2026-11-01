@@ -34,7 +34,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
@@ -191,15 +190,12 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   }
 }
 
-/// Picks the column count at layout time, so a height-only change (the
-/// keyboard animating) relays out the grid without rebuilding its cards.
 class _ProductGridDelegate extends SliverGridDelegate {
   const _ProductGridDelegate();
 
   @override
   SliverGridLayout getLayout(SliverConstraints constraints) {
-    // +32 adds back the grid's 16 px side padding: breakpoints stay at
-    // (body width / 180).
+
     final cols =
         ((constraints.crossAxisExtent + 32) / 180).floor().clamp(2, 6);
     return SliverGridDelegateWithFixedCrossAxisCount(
@@ -219,10 +215,6 @@ class _ProductListTile extends ConsumerWidget {
 
   const _ProductListTile({required this.product});
 
-  /// Narrowest row (inside the tile's padding) that keeps the price and stock
-  /// beside the name, at 100% text; it grows with the text size. A 360 dp
-  /// phone's row (248) keeps them there. Narrower, or with larger text, a big
-  /// price would squeeze the name to a sliver, so they move below it.
   static const _minWidthBeside = 228.0;
 
   @override
@@ -299,7 +291,7 @@ class _ProductListTile extends ConsumerWidget {
                         spacing: 8,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          // An amount is shrunk to fit, never cut.
+
                           FittedBox(fit: BoxFit.scaleDown, child: price),
                           stock,
                         ],

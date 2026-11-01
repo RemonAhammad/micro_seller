@@ -61,15 +61,10 @@ class _OrderDetailBody extends ConsumerStatefulWidget {
 }
 
 class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
-  /// The last receipt PDF rendered on this screen, so Share then Print (or
-  /// Download) reuses it instead of rendering again. Keyed on everything the
-  /// receipt shows: the order (id + last edit — every order write bumps
-  /// `updatedAt`), the shop settings it prints and the color theme's
-  /// document colors it's drawn in. Dropped with the screen.
+
   Object? _receiptKey;
   Uint8List? _receiptPdf;
 
-  /// The actions menu's button, which an iPad's share sheet points at.
   final _menuButton = GlobalKey();
 
   Future<Uint8List> _receipt(
@@ -119,8 +114,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
 
         return Scaffold(
           appBar: AppBar(
-            // The order number, the screen's only mention of it, is drawn
-            // smaller rather than cut short when the bar is too narrow.
+
             title: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: AlignmentDirectional.centerStart,
@@ -200,9 +194,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status row + forward/backward controls. The date sits at
-                // the end of the badges' row, or under them when the row is
-                // too narrow for both.
+
                 OverflowBar(
                   overflowSpacing: 8,
                   alignment: MainAxisAlignment.spaceBetween,
@@ -253,22 +245,20 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                   const SizedBox(height: 12),
                   _StatusStepperBar(order: order, ref: ref),
                 ],
-                // ── Return order 3-step flow ──
+
                 if (order.isReturn) ...[
                   const SizedBox(height: 12),
                   _ReturnFlowCard(order: order, ref: ref),
                 ],
                 const SizedBox(height: 16),
 
-                // Customer info
                 if (order.customerName.isNotEmpty) ...[
                   _InfoCard(children: [
                     _InfoRow(label: s.customer, value: order.customerName),
                     if (order.customerPhone.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
-                        // Number and call button under the label when the
-                        // two don't fit side by side, as in _InfoRow.
+
                         child: OverflowBar(
                           overflowSpacing: 2,
                           alignment: MainAxisAlignment.spaceBetween,
@@ -307,13 +297,12 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                   ]),
                   const SizedBox(height: 12),
                 ],
-                // Delivery tracking
+
                 if (order.deliveryAddress.isNotEmpty || order.estimatedDeliveryDate != null)
                   _DeliveryTrackingCard(order: order, ref: ref),
 
                 const SizedBox(height: 12),
 
-                // Items
                 _SectionLabel(s.orderItems),
                 const SizedBox(height: 8),
                 Container(
@@ -333,7 +322,6 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                 ),
                 const SizedBox(height: 12),
 
-                // Totals
                 _InfoCard(children: [
                   _InfoRow(
                       label: s.subtotal,
@@ -388,12 +376,10 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
 
                 const SizedBox(height: 20),
 
-                // Status actions
                 _StatusActions(order: order),
 
                 const SizedBox(height: 12),
 
-                // Pay button
                 if (order.paymentStatus != PaymentStatus.paid)
                   SizedBox(
                     width: double.infinity,
@@ -425,8 +411,6 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
     };
   }
 
-  /// Runs a menu [action]. [origin] is the menu button's rect, which an
-  /// iPad's share sheet points at.
   Future<void> _handleAction(
       BuildContext context, WidgetRef ref, Order order, String action,
       {Rect? origin}) async {
@@ -458,8 +442,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
         break;
 
       case 'download_pdf':
-        // iOS: no folder to keep (pdfDownloadAsksWhereToSave); the system's
-        // save sheet asks where, each time.
+
         if (pdfDownloadAsksWhereToSave) {
           final bytes = await _receipt(context, order,
               shopName: shopName,
@@ -472,8 +455,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
           );
           break;
         }
-        // Folder first: cancelling the picker shouldn't cost a render.
-        // Get saved download directory or ask user to pick one
+
         var downloadDir = settings.downloadDirectory;
         if (downloadDir.isEmpty) {
           final picked = await FilePicker.getDirectoryPath(
@@ -481,7 +463,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
           );
           if (picked == null || !context.mounted) break;
           downloadDir = picked;
-          // Save for future use
+
           await ref
               .read(settingsProvider.notifier)
               .updateDownloadDirectory(downloadDir);
@@ -561,10 +543,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
         break;
     }
     } catch (e, st) {
-      // The whole action handler used to swallow errors silently — every PDF
-      // failure (WebView crash, file write denied, etc.) just looked like
-      // "nothing happened". Log + show the actual error so future regressions
-      // are visible.
+
       developer.log(
         'Order action "$action" failed',
         name: 'OrderDetail',
@@ -743,9 +722,7 @@ class _InfoRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      // Label at the start, value at the end; the value goes under the label
-      // when the two don't fit side by side (a long name, a large amount at
-      // a large text size).
+
       child: OverflowBar(
         overflowSpacing: 2,
         alignment: MainAxisAlignment.spaceBetween,
@@ -825,7 +802,6 @@ class _DeliveryTrackingCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Progress stepper
           _buildProgressStepper(context, cs),
           const SizedBox(height: 12),
 
@@ -915,16 +891,13 @@ class _DeliveryTrackingCard extends StatelessWidget {
     final steps = [s.tr('placed'), s.confirmed, s.shipped, s.delivered];
     final current = _stepIndex;
 
-    // Each label gets at most an equal share of the row, less a short
-    // connector, and is drawn smaller rather than pushing the row past the
-    // card (narrow layout, large text).
     return LayoutBuilder(builder: (context, constraints) {
       final labelMax = math.max(
           0.0, (constraints.maxWidth - 8 * (steps.length - 1)) / steps.length);
       return Row(
         children: List.generate(steps.length * 2 - 1, (i) {
           if (i.isOdd) {
-            // Connector line
+
             final stepBefore = i ~/ 2;
             final isActive = stepBefore < current;
             return Expanded(
@@ -958,8 +931,7 @@ class _DeliveryTrackingCard extends StatelessWidget {
                 child: isCompleted
                     ? ThinIcon(tabler.Check.new, size: 14, color: cs.onPrimary)
                     : Center(
-                        // Shrinks with a large text size instead of being
-                        // cut off by the circle.
+
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -996,8 +968,6 @@ class _DeliveryTrackingCard extends StatelessWidget {
     });
   }
 }
-
-// ─── Status Stepper with Forward / Backward Buttons ─────────────────────────
 
 class _StatusStepperBar extends StatelessWidget {
   final Order order;
@@ -1047,7 +1017,7 @@ class _StatusStepperBar extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Step indicators
+
           Row(
             children: List.generate(_flow.length, (i) {
               final isActive = i <= _currentIndex;
@@ -1083,8 +1053,7 @@ class _StatusStepperBar extends StatelessWidget {
                                 size: isCurrent ? 12 : 10,
                                 color: brand.onPrimary,
                               )
-                            // Shrinks with a large text size instead of
-                            // being cut off by the circle.
+
                             : FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
@@ -1103,12 +1072,11 @@ class _StatusStepperBar extends StatelessWidget {
             }),
           ),
           const SizedBox(height: 6),
-          // Labels
+
           Row(
             children: _flow.map((status) {
               final isActive = _flow.indexOf(status) <= _currentIndex;
-              // A label wider than its quarter (large text) is drawn
-              // smaller instead of breaking mid-word.
+
               return Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -1129,8 +1097,7 @@ class _StatusStepperBar extends StatelessWidget {
             }).toList(),
           ),
           const SizedBox(height: 10),
-          // Forward / Backward buttons. Half the 24 px side padding the
-          // theme gives a full-width button, so a status name fits a half.
+
           _ButtonPair(
             first: OutlinedButton.icon(
               onPressed: _canGoBack
@@ -1150,8 +1117,7 @@ class _StatusStepperBar extends StatelessWidget {
                   ? () => _changeStatus(context, _flow[_currentIndex + 1])
                   : null,
               style: FilledButton.styleFrom(padding: _halfButtonPadding),
-              // The arrow after the label, and the label (not the arrow)
-              // the part that gives way when space runs out.
+
               iconAlignment: IconAlignment.end,
               icon: const ThinIcon(tabler.ArrowRight.new, size: 16),
               label: Text(
@@ -1167,8 +1133,6 @@ class _StatusStepperBar extends StatelessWidget {
     );
   }
 }
-
-// ─── Return Flow Card (3-step: Requested → Received → Refunded) ─────────────
 
 class _RefundDialogResult {
   final PaymentMethod method;
@@ -1291,8 +1255,7 @@ class _ReturnFlowCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Return info + status. The status goes under the title
-          // when the two don't fit side by side.
+
           OverflowBar(
             overflowSpacing: 6,
             alignment: MainAxisAlignment.spaceBetween,
@@ -1333,7 +1296,6 @@ class _ReturnFlowCard extends StatelessWidget {
             ],
           ),
 
-          // Reason
           const SizedBox(height: 8),
           Text(
             '${s.returnReason}: ${reasonLbls[order.returnReason] ?? order.returnReason.name}',
@@ -1342,7 +1304,6 @@ class _ReturnFlowCard extends StatelessWidget {
             ),
           ),
 
-          // Refund amount
           if (order.refundAmount > 0) ...[
             const SizedBox(height: 4),
             Text(
@@ -1365,11 +1326,9 @@ class _ReturnFlowCard extends StatelessWidget {
             ),
           ],
 
-          // 3-step progress
           const SizedBox(height: 12),
           _ReturnStepIndicator(status: status),
 
-          // Action buttons based on current status
           if (status == ReturnStatus.requested) ...[
             const SizedBox(height: 12),
             _ButtonPair(
@@ -1542,8 +1501,6 @@ class _ReturnStepIndicator extends StatelessWidget {
     final steps = _steps(context);
     final brand = context.brand;
 
-    // A label wider than its step's third of the row (large text) is drawn
-    // smaller instead of overflowing it.
     return LayoutBuilder(builder: (context, constraints) {
       final labelMax = constraints.maxWidth / steps.length;
       return Row(
@@ -1611,20 +1568,14 @@ class _ReturnStepIndicator extends StatelessWidget {
   }
 }
 
-/// Padding for a button half a row wide: the theme's 24 px sides are
-/// meant for a full-width one.
 const _halfButtonPadding = EdgeInsets.symmetric(vertical: 14, horizontal: 12);
 
-/// Two buttons side by side in equal halves, or stacked full width (first
-/// on top) when the row is too narrow for that at the current text size.
 class _ButtonPair extends StatelessWidget {
   final Widget first;
   final Widget second;
 
   const _ButtonPair({required this.first, required this.second});
 
-  /// The narrowest row the halves are kept side by side in at 100% text:
-  /// each then fits an icon and a status name.
   static const double _minRowWidth = 230;
 
   @override

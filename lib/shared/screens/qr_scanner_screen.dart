@@ -5,8 +5,6 @@ import '../../core/constants/app_strings.dart';
 import '../../data/services/device_channel.dart';
 import '../widgets/scanner_camera.dart';
 
-/// Scans one code for the product form's QR / barcode field, and returns it
-/// trimmed (never blank).
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
 
@@ -15,8 +13,7 @@ class QrScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
-  // Started and stopped by the session: only in the foreground, and a
-  // refused camera isn't asked for in a loop.
+
   final _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
     autoStart: false,
@@ -33,7 +30,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // False while a route covers this one.
+
     _session.setVisible(TickerMode.valuesOf(context).enabled);
   }
 
@@ -46,8 +43,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
   void _onDetect(BarcodeCapture capture) {
     if (_scanned) return;
-    // The code as printed: a reader may add spaces or a line break around
-    // it, and a blank one is no code.
+
     final value = capture.barcodes
         .map((b) => b.rawValue?.trim())
         .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
@@ -68,14 +64,13 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
         title: Text(AppStrings.of(context).scanQrBarcode),
         actions: [TorchButton(controller: _controller)],
       ),
-      // The frame and hint over the camera; why it won't run instead of
-      // them.
+
       body: ScannerPreview(
         session: _session,
         onDetect: _onDetect,
         overlay: Stack(
           children: [
-            // Scanning frame overlay
+
             Center(
               child: Container(
                 width: 240,
@@ -87,7 +82,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                 ),
                 child: Stack(
                   children: [
-                    // Corner brackets
+
                     ..._corners(theme.colorScheme.primary),
                   ],
                 ),

@@ -21,13 +21,9 @@ Stream<List<Order>> orders(Ref ref) async* {
       isar.orders.watchLazy(), () => runDbJob(isar, _allOrdersNewestFirst));
 }
 
-/// Every order newest first, read in createdAt-index order (no sort) on a
-/// worker isolate.
 List<Order> _allOrdersNewestFirst(Isar db) =>
     db.orders.where(sort: Sort.desc).anyCreatedAt().findAllSync();
 
-/// Return orders only, newest first — the Returns screen's list, without
-/// loading every order to filter them.
 @riverpod
 Stream<List<Order>> returnOrders(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
@@ -36,12 +32,11 @@ Stream<List<Order>> returnOrders(Ref ref) async* {
   yield* reloadOn(isar.orders.watchLazy(), query.findAll);
 }
 
-/// One order, live — without reloading every order on each write.
 @riverpod
 Stream<Order?> orderById(Ref ref, int id) async* {
   final isar = await ref.watch(isarProvider.future);
   yield isar.orders.getSync(id);
-  // No fireImmediately: the current value was just yielded above.
+
   yield* isar.orders.watchObject(id);
 }
 
@@ -61,12 +56,9 @@ class OrderNotifier extends _$OrderNotifier {
   @override
   FutureOr<void> build() {}
 
-  /// Update variant combination stockQty within a product.
-  /// Returns the updated product (not yet persisted).
   Product _adjustVariantStock(Product product, OrderItem item, int delta) {
     if (!item.hasVariant) return product;
 
-    // Use combinationKey if available (new system), fallback to old name:value
     final key = item.variantCombinationKey.isNotEmpty
         ? item.variantCombinationKey
         : '${item.variantName}:${item.variantValue}';
@@ -80,8 +72,6 @@ class OrderNotifier extends _$OrderNotifier {
     return product.copyWith(variantCombinations: updatedCombinations);
   }
 
-  /// Appends one row to the payment history. Call inside the caller's
-  /// writeTxn so the log and the `amountPaid` change can't diverge.
   Future<void> _logPayment(
     Isar isar, {
     required Order order,
@@ -101,8 +91,6 @@ class OrderNotifier extends _$OrderNotifier {
     ));
   }
 
-  /// The payment-history row [_logPayment] writes, for callers that log
-  /// several in one `putAll`.
   Payment _paymentRow({
     required Order order,
     required double amount,
@@ -125,17 +113,6 @@ class OrderNotifier extends _$OrderNotifier {
     );
   }
 
-  /// Moves each item's qty in or out of stock — `sign` -1 deducts (sale),
-  /// +1 restores — on both the product's base `stockQty` and the item's
-  /// variant combination, with one [StockMovement] per item. Call inside the
-  /// caller's writeTxn.
-  ///
-  /// Batched: the products are read with one `getAll` and written with one
-  /// `putAll`, the movements with another `putAll` — instead of a get + put
-  /// + put per item, each a round trip to Isar's thread. Items are applied
-  /// in order to the in-memory product, so two items of one product (e.g.
-  /// two variants) compose exactly as the sequential get → put did. Items
-  /// whose product no longer exists are skipped, movement included.
   Future<void> _moveStock(
     Isar isar,
     List<OrderItem> items, {
@@ -196,7 +173,6 @@ class OrderNotifier extends _$OrderNotifier {
               transactionId: order.transactionId);
         }
 
-        // Deduct stock and create movements for confirmed orders
         if (order.orderStatus == OrderStatus.confirmed) {
           await _moveStock(isar, order.items,
               sign: -1,
@@ -204,7 +180,6 @@ class OrderNotifier extends _$OrderNotifier {
               reason: 'Order ${order.orderNumber}');
         }
 
-        // Update customer stats
         if (order.customerId > 0) {
           final customer = await isar.customers.get(order.customerId);
           if (customer != null) {
@@ -249,7 +224,6 @@ class OrderNotifier extends _$OrderNotifier {
         final shouldDeductStock =
             status != OrderStatus.pending && status != OrderStatus.cancelled;
 
-        // Restore stock when rolling back to pending/cancelled
         if (wasStockDeducted && !shouldDeductStock) {
           await _moveStock(isar, order.items,
               sign: 1,
@@ -257,7 +231,6 @@ class OrderNotifier extends _$OrderNotifier {
               reason: 'Rollback ${order.orderNumber} → ${status.name}');
         }
 
-        // Deduct stock when moving from pending/cancelled to active status
         if (!wasStockDeducted && shouldDeductStock) {
           await _moveStock(isar, order.items,
               sign: -1,
@@ -265,18 +238,13 @@ class OrderNotifier extends _$OrderNotifier {
               reason: 'Order ${order.orderNumber}');
         }
 
-        // Cancel-into transition: reverse the customer ledger fully and zero
-        // out amountPaid (treats cancel as auto-refund — micro-seller context).
-        // The opposite (un-cancel) is intentionally NOT supported here; the
-        // user would have to recreate the order to re-bill.
         var cancelledOrder = order;
         if (oldStatus != OrderStatus.cancelled &&
             status == OrderStatus.cancelled) {
           if (order.customerId > 0) {
             final customer = await isar.customers.get(order.customerId);
             if (customer != null) {
-              // createOrder added: totalOrders+1, totalSpent+totalAmount,
-              // outstandingBalance + balanceDue. Reverse all three exactly.
+
               await isar.customers.put(customer.copyWith(
                 totalOrders: (customer.totalOrders - 1).clamp(0, 999999),
                 totalSpent: (customer.totalSpent - order.totalAmount)
@@ -326,9 +294,7 @@ class OrderNotifier extends _$OrderNotifier {
           amountPaid: newAmountPaid,
           paymentStatus: paymentStatus,
           paymentMethod: method ?? order.paymentMethod,
-          // Only overwrite transactionId if a new one was supplied — empty
-          // string preserves the previous value. Every payment's own id is
-          // kept in the Payment history row logged below.
+
           transactionId:
               transactionId.isNotEmpty ? transactionId : order.transactionId,
           updatedAt: DateTime.now(),
@@ -339,7 +305,6 @@ class OrderNotifier extends _$OrderNotifier {
             method: method,
             transactionId: transactionId);
 
-        // Update customer balance
         if (order.customerId > 0) {
           final customer = await isar.customers.get(order.customerId);
           if (customer != null) {
@@ -353,13 +318,6 @@ class OrderNotifier extends _$OrderNotifier {
     });
   }
 
-  /// Due Book collection: one payment from a customer, applied to their
-  /// unpaid orders oldest-first. Capped at what they owe (no advance credit).
-  ///
-  /// If [registerId] is given (an open cash register), the applied amount is
-  /// also added to that register's cash-in, in the same transaction.
-  /// Returns the amount actually applied (may be less than [amount] if the
-  /// dues changed since the caller read them).
   Future<double> collectFromCustomer(
     int customerId,
     double amount, {
@@ -372,20 +330,16 @@ class OrderNotifier extends _$OrderNotifier {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
-        // Index lookups don't return equal keys in id order; sort so the
-        // dues are summed and allocated in the same order as the Due Book.
+
         final orders = (await isar.orders
             .where()
             .customerIdEqualTo(customerId)
             .findAll())
           ..sort((a, b) => a.id.compareTo(b.id));
         final groupId = 'col-${DateTime.now().microsecondsSinceEpoch}';
-        // Never collect more than the net due — credits on other orders
-        // (over-valued exchange returns) reduce what's actually owed.
+
         var remaining = amount.clamp(0.0, computeNetDue(orders));
 
-        // Each due order is a distinct row, so the updates and their
-        // payment rows are collected and written with one putAll each.
         final paidOrders = <Order>[];
         final payments = <Payment>[];
         for (final d in computeOrderDues(orders)) {
@@ -394,8 +348,7 @@ class OrderNotifier extends _$OrderNotifier {
           final newPaid = d.order.amountPaid + part;
           paidOrders.add(d.order.copyWith(
             amountPaid: newPaid,
-            // Same rule as recordPayment/processRefund, so status and the
-            // order's displayed balanceDue never disagree.
+
             paymentStatus: newPaid >= d.order.totalAmount - kDueEpsilon
                 ? PaymentStatus.paid
                 : PaymentStatus.partial,
@@ -445,10 +398,6 @@ class OrderNotifier extends _$OrderNotifier {
     return applied;
   }
 
-  // ─── Return Flow (3-step: Request → Approve/Receive → Refund) ─────────
-
-  /// Step 1: Create a return order with selected items, reason, and refund amount.
-  /// Stock is NOT restored here. Original order is marked.
   Future<void> createReturnOrder({
     required Order originalOrder,
     required List<OrderItem> returnItems,
@@ -463,13 +412,9 @@ class OrderNotifier extends _$OrderNotifier {
         final num = (count + 1).toString().padLeft(3, '0');
         final returnOrderNumber = 'RET-$num';
 
-        // The screen's copy may be stale; value and mark the stored order.
         final original =
             await isar.orders.get(originalOrder.id) ?? originalOrder;
 
-        // Valued at what the customer paid for these goods — their share of
-        // the order discount off, their share of the tax on — not list
-        // price. A list-price value credited the customer the discount.
         final value = returnValueFor(original, returnItems);
 
         final returnOrder = Order(
@@ -497,8 +442,6 @@ class OrderNotifier extends _$OrderNotifier {
           updatedAt: DateTime.now(),
         );
 
-        // Save the return and mark the original as having one — one putAll,
-        // in the same order the two puts ran.
         await isar.orders.putAll([
           returnOrder,
           original.copyWith(
@@ -510,7 +453,6 @@ class OrderNotifier extends _$OrderNotifier {
     });
   }
 
-  /// Step 2: Approve return and receive items back → restores stock.
   Future<void> approveReturn(int returnOrderId) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
@@ -519,19 +461,16 @@ class OrderNotifier extends _$OrderNotifier {
         if (returnOrder == null || !returnOrder.isReturn) return;
         if (returnOrder.returnStatus != ReturnStatus.requested) return;
 
-        // Mark as received
         await isar.orders.put(returnOrder.copyWith(
           returnStatus: ReturnStatus.received,
           updatedAt: DateTime.now(),
         ));
 
-        // Restore stock for returned items
         await _moveStock(isar, returnOrder.items,
             sign: 1,
             type: StockMovementType.restock,
             reason: 'Return ${returnOrder.orderNumber}');
 
-        // Update original order
         if (returnOrder.originalOrderId > 0) {
           final original =
               await isar.orders.get(returnOrder.originalOrderId);
@@ -546,7 +485,6 @@ class OrderNotifier extends _$OrderNotifier {
     });
   }
 
-  /// Reject a return request.
   Future<void> rejectReturn(int returnOrderId) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
@@ -560,7 +498,6 @@ class OrderNotifier extends _$OrderNotifier {
           updatedAt: DateTime.now(),
         ));
 
-        // Reset original order's return status
         if (returnOrder.originalOrderId > 0) {
           final original =
               await isar.orders.get(returnOrder.originalOrderId);
@@ -575,12 +512,6 @@ class OrderNotifier extends _$OrderNotifier {
     });
   }
 
-  /// Step 3: Process refund. Considers partial payment on original order.
-  /// refundAmount = min(requested refund, what customer actually paid on original).
-  ///
-  /// [refundMethod] is how the cash is going back to the customer (cash / bKash
-  /// / etc.); stored on the return order's `paymentMethod` field.
-  /// [refundTransactionId] is the receipt/reference for the refund payout.
   Future<void> processRefund(
     int returnOrderId, {
     PaymentMethod? refundMethod,
@@ -593,20 +524,14 @@ class OrderNotifier extends _$OrderNotifier {
         if (returnOrder == null || !returnOrder.isReturn) return;
         if (returnOrder.returnStatus != ReturnStatus.received) return;
 
-        // Get original order to check what was actually paid
         final original = returnOrder.originalOrderId > 0
             ? await isar.orders.get(returnOrder.originalOrderId)
             : null;
 
-        // Actual refund = min(requested refund, original amountPaid)
-        // If original had partial payment, can't refund more than paid
         final maxRefundable = original?.amountPaid ?? returnOrder.refundAmount;
         final actualRefund =
             returnOrder.refundAmount.clamp(0.0, maxRefundable);
 
-        // Mark return as refunded, and update the original order — reduce
-        // amountPaid by refund. Both rows were read above and nothing reads
-        // between the two writes, so one putAll (same order) replaces them.
         final updatedOrders = [
           returnOrder.copyWith(
             refundAmount: actualRefund,
@@ -647,20 +572,6 @@ class OrderNotifier extends _$OrderNotifier {
               note: 'refund ${returnOrder.orderNumber}');
         }
 
-        // Update customer stats.
-        //
-        // - totalSpent decreases by the BILLED value of returned goods
-        //   (returnOrder.totalAmount) — symmetric with createOrder which adds
-        //   `order.totalAmount`. This makes totalSpent stable across exchange
-        //   ($0 refund), partial refund, and full cash refund: all three end
-        //   with totalSpent = lifetime value of goods the customer kept.
-        //
-        // - outstandingBalance decreases by (returnedItemsValue - actualRefund):
-        //   the customer no longer owes for the returned items, but they did
-        //   get back the refund cash, so the net debt reduction is the
-        //   difference. For a 1:1 cash refund this is zero (kept-goods debt
-        //   matches kept-goods value); for an exchange (refund=0) it's the
-        //   full goods value (customer's debt drops by what they returned).
         if (returnOrder.customerId > 0) {
           final customer =
               await isar.customers.get(returnOrder.customerId);
@@ -696,11 +607,6 @@ class OrderNotifier extends _$OrderNotifier {
         .toList();
     if (due.isEmpty) return;
 
-    // One transaction for every due copy (it used to be one each), batched:
-    // the order count is read once and advanced locally — each copy adds
-    // exactly one order, so the numbers match what a fresh count per copy
-    // gave — and a customer with several due orders composes on one map
-    // entry, as the sequential get → put did.
     await isar.writeTxn(() async {
       var count = await isar.orders.count();
       final customers = <int, Customer>{};
@@ -715,7 +621,7 @@ class OrderNotifier extends _$OrderNotifier {
       final writes = <Order>[];
 
       for (final order in due) {
-        // Generate new order number
+
         count++;
         final num = count.toString().padLeft(3, '0');
 
@@ -732,8 +638,6 @@ class OrderNotifier extends _$OrderNotifier {
         );
         writes.add(newOrder);
 
-        // Bill the customer exactly as createOrder would — this path used
-        // to skip it, so the outstandingBalance counter drifted.
         if (newOrder.customerId > 0) {
           final customer = customers[newOrder.customerId];
           if (customer != null) {
@@ -747,7 +651,6 @@ class OrderNotifier extends _$OrderNotifier {
           }
         }
 
-        // Update the original order's next date
         writes.add(order.copyWith(
           nextRecurringDate:
               now.add(Duration(days: order.recurringIntervalDays)),
@@ -769,7 +672,6 @@ class OrderNotifier extends _$OrderNotifier {
         final order = await isar.orders.get(id);
         if (order == null) return;
 
-        // Restore stock if order had stock deducted
         final wasStockDeducted =
             order.orderStatus != OrderStatus.pending &&
             order.orderStatus != OrderStatus.cancelled;
@@ -780,7 +682,6 @@ class OrderNotifier extends _$OrderNotifier {
               reason: 'Deleted order ${order.orderNumber}');
         }
 
-        // Restore customer stats
         if (order.customerId > 0) {
           final customer = await isar.customers.get(order.customerId);
           if (customer != null) {

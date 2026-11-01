@@ -9,27 +9,12 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../providers/dashboard_provider.dart';
 import 'stat_card.dart' show measureTextWidth;
 
-// fl_chart charts are implicitly animated and compare their data with `==`,
-// callbacks included. A closure written inline in `build` is a new object
-// every build, so unchanged data compared unequal and every parent rebuild
-// restarted the animation. The callbacks below are State methods (tear-offs
-// of the same method on the same State compare equal) or static functions,
-// so only a real data change animates.
-
 const _weekdayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-/// Height fl_chart reserves for the labels under a chart: its default 22,
-/// or more once a [fontSize] label below [padding] grows taller with the
-/// text size (fl_chart clips a label to this height). Allows 1.5 × the
-/// scaled font size a line: bodyMedium's 1.43 line height plus rounding.
 double axisTitleReserve(TextScaler textScaler,
         {required double fontSize, required double padding}) =>
     math.max(22, padding + textScaler.scale(fontSize) * 1.5);
 
-/// Hands out one grid-line callback per color. The line is painted, not
-/// built, and the chart only repaints when its data compares unequal — a
-/// single fixed callback would leave the grid in the old color after a theme
-/// switch. A new callback only when the color changes keeps both right.
 class GridLineCallback {
   Color? _color;
   GetDrawingGridLine? _line;
@@ -42,8 +27,6 @@ class GridLineCallback {
     return _line!;
   }
 }
-
-// ─── Weekly Sales Bar Chart ─────────────────────────────────────────────────
 
 class SalesChart extends StatefulWidget {
   final List<DailySales> weeklySales;
@@ -60,14 +43,13 @@ class _SalesChartState extends State<SalesChart> {
 
   final _gridLine = GridLineCallback();
 
-  /// Day-label color, read by [_bottomTitle]; set in [build].
   Color _labelColor = Colors.transparent;
 
   void _onTouch(FlTouchEvent event, BarTouchResponse? response) {
     final index = event.isInterestedForInteractions && response?.spot != null
         ? response!.spot!.touchedBarGroupIndex
         : -1;
-    // Rebuilding on every pointer move restarts the animation.
+
     if (index != _touchedIndex) {
       setState(() => _touchedIndex = index);
     }
@@ -224,8 +206,6 @@ class _SalesChartState extends State<SalesChart> {
   }
 }
 
-// ─── Order Status Pie Chart ─────────────────────────────────────────────────
-
 class OrderStatusChart extends StatefulWidget {
   final Map<String, int> statusCounts;
 
@@ -343,9 +323,7 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // The legend sits beside the pie (4 parts of 7) while its widest row
-        // fits there; with big counts, a narrow screen or a large font it
-        // goes under the pie, full width, instead of overflowing.
+
         final legendRow = entries.fold<double>(0, (widest, e) {
           final row = 8 + 6 + 4 + 4 +
               measureTextWidth(context, e.key, labelStyle) +
@@ -364,7 +342,7 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
         }
         final textScaler = MediaQuery.textScalerOf(context);
         return SizedBox(
-          // 140, or as tall as the legend's rows once the text is larger.
+
           height: math.max(
               140, entries.length * (8 + textScaler.scale(12) * 1.43)),
           child: Row(
@@ -380,11 +358,9 @@ class _OrderStatusChartState extends State<OrderStatusChart> {
   }
 }
 
-// ─── Revenue vs Expense Line Chart ──────────────────────────────────────────
-
 class RevenueExpenseChart extends StatefulWidget {
   final List<DailySales> weeklySales;
-  final Map<int, double> dailyExpenses; // day index → amount
+  final Map<int, double> dailyExpenses;
 
   const RevenueExpenseChart({
     super.key,
@@ -399,7 +375,6 @@ class RevenueExpenseChart extends StatefulWidget {
 class _RevenueExpenseChartState extends State<RevenueExpenseChart> {
   final _gridLine = GridLineCallback();
 
-  /// Day-label color, read by [_bottomTitle]; set in [build].
   Color _labelColor = Colors.transparent;
 
   Widget _bottomTitle(double value, TitleMeta meta) {
@@ -472,7 +447,7 @@ class _RevenueExpenseChartState extends State<RevenueExpenseChart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Legend
+
         Row(
           children: [
             _dot(AppColors.chartRevenue),
@@ -528,7 +503,7 @@ class _RevenueExpenseChartState extends State<RevenueExpenseChart> {
                   ),
                 ),
                 lineBarsData: [
-                  // Revenue line
+
                   LineChartBarData(
                     spots: weeklySales
                         .asMap()
@@ -549,7 +524,7 @@ class _RevenueExpenseChartState extends State<RevenueExpenseChart> {
                     isCurved: true,
                     preventCurveOverShooting: true,
                   ),
-                  // Expense line
+
                   LineChartBarData(
                     spots: List.generate(
                       weeklySales.length,
@@ -582,8 +557,6 @@ class _RevenueExpenseChartState extends State<RevenueExpenseChart> {
             BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
       );
 }
-
-// ─── Toggle chip ────────────────────────────────────────────────────────────
 
 class _ChartToggle extends StatelessWidget {
   final String label;

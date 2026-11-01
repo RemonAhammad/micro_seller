@@ -62,7 +62,6 @@ class Validators {
     return null;
   }
 
-  /// Validates that cost price is not greater than selling price.
   static String? costPriceNotExceedingSelling(
       String? costValue, String? sellingValue) {
     if (costValue == null || costValue.trim().isEmpty) return null;

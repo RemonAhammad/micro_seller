@@ -1,5 +1,5 @@
 const translationsFr = <String, String>{
-  // Navigation
+
   'dashboard': 'Tableau de bord',
   'products': 'Produits',
   'orders': 'Commandes',
@@ -22,7 +22,6 @@ const translationsFr = <String, String>{
   'scanAgain': 'Scanner à nouveau',
   'pointCameraAtCode': 'Pointez la caméra vers un QR code ou un code-barres',
 
-  // Dashboard
   'todayRevenue': "Revenu du jour",
   'monthRevenue': 'Revenu du mois',
   'monthProfit': 'Profit du mois',
@@ -46,7 +45,6 @@ const translationsFr = <String, String>{
   'thisMonth': 'Ce mois',
   'customRange': 'Plage personnalisée',
 
-  // Products
   'addProduct': 'Ajouter un produit',
   'editProduct': 'Modifier le produit',
   'productName': 'Nom du produit',
@@ -91,7 +89,6 @@ const translationsFr = <String, String>{
   'lastUpdated': 'Dernière mise à jour',
   'noVariantsHint': 'Aucune variante. Ajoutez des attributs comme Taille, Couleur, etc.',
 
-  // Orders
   'addOrder': 'Nouvelle commande',
   'editOrder': 'Modifier la commande',
   'orderNumber': 'Commande n°',
@@ -132,7 +129,6 @@ const translationsFr = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'Des instructions particulières ?',
 
-  // Order status
   'pending': 'En attente',
   'confirmed': 'Confirmée',
   'shipped': 'Expédiée',
@@ -141,12 +137,10 @@ const translationsFr = <String, String>{
   'active': 'En cours',
   'placed': 'Commandée',
 
-  // Payment status
   'unpaid': 'Impayé',
   'partial': 'Partiel',
   'paid': 'Payé',
 
-  // Payment methods
   'cash': 'Espèces',
   'card': 'Carte',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsFr = <String, String>{
   'bank': 'Banque',
   'other': 'Autre',
 
-  // Order detail
   'shareViaWhatsApp': 'Partager via WhatsApp',
   'sharePdf': 'Partager PDF',
   'downloadPdf': 'Télécharger PDF',
@@ -174,7 +167,6 @@ const translationsFr = <String, String>{
   'markAsShipped': 'Marquer comme expédiée',
   'markAsCompleted': 'Marquer comme terminée',
 
-  // Customers
   'addCustomer': 'Ajouter un client',
   'editCustomer': 'Modifier le client',
   'customerName': 'Nom',
@@ -190,7 +182,6 @@ const translationsFr = <String, String>{
   'outstanding': 'Impayé',
   'memberSince': 'Client depuis',
 
-  // Inventory
   'stockAdjustment': 'Ajustement de stock',
   'stockMovements': 'Mouvements de stock',
   'stockLevels': 'Niveaux de stock',
@@ -215,7 +206,6 @@ const translationsFr = <String, String>{
   'inStockLabel': 'en stock',
   'allCategories': 'Toutes les catégories',
 
-  // Expenses
   'addExpense': 'Ajouter une dépense',
   'editExpense': 'Modifier la dépense',
   'expenseTitle': 'Titre de la dépense',
@@ -230,7 +220,6 @@ const translationsFr = <String, String>{
   'marketing': 'Marketing',
   'supplies': 'Fournitures',
 
-  // Settings
   'shopName': 'Nom de la boutique',
   'currencySymbol': 'Symbole monétaire',
   'googleAccount': 'Compte Google',
@@ -284,7 +273,6 @@ const translationsFr = <String, String>{
   'downloads': 'Téléchargements',
   'dangerZone': 'Zone de danger',
 
-  // Suppliers
   'addSupplier': 'Ajouter un fournisseur',
   'editSupplier': 'Modifier le fournisseur',
   'supplierNotFound': 'Fournisseur introuvable',
@@ -307,7 +295,6 @@ const translationsFr = <String, String>{
   'addSuppliersFromMenu': 'Ajoutez des fournisseurs depuis le menu Fournisseurs',
   'selectSupplier': 'Sélectionner le fournisseur',
 
-  // Purchases
   'purchaseNotFound': 'Achat introuvable',
   'deletePurchase': 'Supprimer l\'achat',
   'deletePurchaseConfirm': 'Le stock sera réduit des quantités achetées.',
@@ -325,7 +312,6 @@ const translationsFr = <String, String>{
   'allProducts': 'Tous les produits',
   'supplierProductsOnly': '{name} uniquement',
 
-  // Cash Register
   'registerOpen': 'Caisse ouverte',
   'noRegisterOpen': 'Pas de caisse ouverte',
   'openRegisterDesc': 'Ouvrez une caisse pour commencer à suivre les flux de trésorerie',
@@ -345,7 +331,6 @@ const translationsFr = <String, String>{
   'noRegisterHistory': 'Pas encore d\'historique de caisse',
   'loading': 'Chargement...',
 
-  // Returns
   'returnsAndRefunds': 'Retours et remboursements',
   'createReturnTitle': 'Créer un retour',
   'selectItems': 'Sélectionner les articles',
@@ -384,7 +369,6 @@ const translationsFr = <String, String>{
   'approveReturnConfirm': 'Approuver ce retour et marquer les articles comme reçus ? Le stock sera restauré.',
   'returnRejected': 'Retour rejeté',
 
-  // Categories
   'addCategory': 'Ajouter une catégorie',
   'editCategory': 'Modifier la catégorie',
   'deleteCategory': 'Supprimer la catégorie',
@@ -392,7 +376,6 @@ const translationsFr = <String, String>{
   'addCategoriesToOrganise': 'Ajoutez des catégories pour organiser vos produits',
   'categoryName': 'Nom de la catégorie',
 
-  // Reports
   'totalRevenue': 'Revenu total',
   'totalProfit': 'Profit total',
   'totalExpenses': 'Dépenses totales',
@@ -402,7 +385,6 @@ const translationsFr = <String, String>{
   'topCustomers': 'Meilleurs clients',
   'salesByCategory': 'Ventes par catégorie',
 
-  // Actions
   'save': 'Enregistrer',
   'cancel': 'Annuler',
   'delete': 'Supprimer',
@@ -424,19 +406,16 @@ const translationsFr = <String, String>{
   'back': 'Précédent',
   'sort': 'Trier',
 
-  // Delivery
   'delivery': 'Livraison',
   'markDelivered': 'Marquer comme livré',
   'delivered': 'Livré',
 
-  // Variants
   'variants': 'Variantes',
   'addVariant': 'Ajouter une variante',
   'variantName': 'Attribut (ex. Taille)',
   'variantValue': 'Valeur (ex. Grand)',
   'priceAdjustment': 'Prix +/-',
 
-  // Messages
   'deleteConfirmation': 'Êtes-vous sûr de vouloir supprimer ceci ?',
   'clearDataConfirmation':
       'Cela supprimera définitivement toutes vos données. Cette action est irréversible. Êtes-vous sûr ?',
@@ -452,7 +431,6 @@ const translationsFr = <String, String>{
   'noExpenses': 'Aucune dépense enregistrée',
   'noStockMovements': 'Aucun mouvement de stock enregistré',
 
-  // Misc
   'error': 'Erreur',
   'pay': 'Payer',
   'scanQrBarcode': 'Scanner QR / Code-barres',
@@ -463,13 +441,11 @@ const translationsFr = <String, String>{
   'rowsSkipped': '{count} ligne(s) ignorée(s) :',
   'andMore': '...et {count} de plus',
 
-  // Payments / refunds
   'transactionId': 'ID de transaction',
   'transactionIdHint': 'bKash / Nagad / N° de reçu',
   'refundMethod': 'Méthode de remboursement',
   'refundTransactionId': 'ID de transaction du remboursement',
 
-  // Sidebar customization
   'sidebarOrder': 'Ordre de la barre latérale',
   'sidebarOrderDesc': 'Faites glisser pour réorganiser les onglets',
   'resetToDefault': 'Réinitialiser par défaut',
@@ -478,7 +454,6 @@ const translationsFr = <String, String>{
   'left': 'Gauche',
   'right': 'Droite',
 
-  // Display size (Settings → Display)
   'display': 'Affichage',
   'displaySize': 'Taille d\'affichage',
   'displaySizeDesc': 'Réduire ou agrandir tout ce qui s\'affiche à l\'écran',
@@ -488,7 +463,6 @@ const translationsFr = <String, String>{
   'phoneTextSize': 'Téléphone : {value}',
   'preview': 'Aperçu',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'Couleur du thème',
   'colorThemeDesc': 'La couleur principale des boutons, des en-têtes et des éléments en surbrillance',
   'phoneColors': 'Couleurs du téléphone',
@@ -536,18 +510,15 @@ const translationsFr = <String, String>{
   'deleteThemeConfirm': 'Supprimer le thème « {name} » ?',
   'themeLimitReached': 'Vous pouvez enregistrer jusqu\'à {count} thèmes',
 
-  // Auth gate
   'createPin': 'Créer un code PIN à 4 chiffres',
   'confirmPin': 'Confirmer le code PIN',
   'enterPin': 'Entrer le code PIN',
   'pinDoesNotMatch': 'Les codes PIN ne correspondent pas. Réessayez.',
   'incorrectPin': 'Code PIN incorrect. Réessayez.',
 
-  // Auto Drive backup
   'autoBackup': 'Sauvegarde automatique sur Drive',
   'autoBackupDesc': 'Sauvegarder automatiquement au démarrage (si connecté)',
 
-  // Security section
   'security': 'Sécurité',
   'securityFingerprint': 'Empreinte digitale',
   'securityFingerprintDesc': 'Utiliser l’empreinte pour valider les actions sensibles',
@@ -555,7 +526,7 @@ const translationsFr = <String, String>{
   'securityPinDesc': 'Exiger un code à 4 chiffres pour les actions sensibles',
   'biometricNotAvailable': 'Aucune empreinte enregistrée sur cet appareil',
   'changeSecurity': 'Vérifier pour modifier les paramètres de sécurité',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'Utiliser Face ID pour valider les actions sensibles',
   'faceIdNotSetUp': 'Face ID n\'est pas configuré sur cet appareil',
@@ -563,7 +534,6 @@ const translationsFr = <String, String>{
   'securityTouchIdDesc': 'Utiliser Touch ID pour valider les actions sensibles',
   'touchIdNotSetUp': 'Touch ID n\'est pas configuré sur cet appareil',
 
-  // Background auto-backup status
   'autoBackupPaused': 'Sauvegarde automatique suspendue',
   'autoBackupResumed': 'Sauvegarde automatique reprise',
   'signInToFix': 'Se connecter pour corriger',
@@ -603,7 +573,6 @@ const translationsFr = <String, String>{
   'shopPhone': 'Téléphone de la boutique',
   'productCatalog': 'Catalogue produits',
 
-  // Due Book
   'dueBook': 'Carnet de dettes',
   'totalReceivable': 'Total à recevoir',
   'customersOwing': '{count} client(s) vous doivent',
@@ -673,7 +642,6 @@ const translationsFr = <String, String>{
   'duesCollectedThisMonth': 'Dettes encaissées (ce mois-ci)',
   'overdue60Banner': '{count} client(s) doivent {amount} depuis plus de 60 jours',
 
-  // Reports
   'profitAndLoss': 'Pertes et profits',
   'item': 'Article',
   'grossSales': 'Ventes brutes',
@@ -738,7 +706,6 @@ const translationsFr = <String, String>{
   'monthlyNetSales': 'Ventes nettes mensuelles',
   'dateRangeTo': 'au',
 
-  // Rating prompt
   'rateTitle': 'Vous aimez {app} ?',
   'rateMessage': 'Vous gérez votre boutique avec {app} depuis un moment. Une petite note aide d\'autres vendeurs à la découvrir.',
   'rateNow': 'Noter maintenant',
@@ -749,7 +716,6 @@ const translationsFr = <String, String>{
   'rateThisAppSubtitle': 'Aidez d\'autres vendeurs à trouver {app}',
   'about': 'À propos',
 
-  // App updates
   'updateAvailable': '{app} {version} est disponible',
   'updateHowToAndroid': 'Téléchargez le même type d\'APK que celui que vous avez installé auparavant (universal ou arm64-v8a) et installez-le par-dessus la version actuelle. Vos données sont conservées.',
   'updateHowToIos': 'Installez la mise à jour avec le même outil de sideloading et le même Apple ID que précédemment, afin de conserver vos données. Faites d\'abord une sauvegarde.',
@@ -758,10 +724,8 @@ const translationsFr = <String, String>{
   'upToDate': 'Vous avez la dernière version',
   'updateCheckFailed': 'Impossible de rechercher des mises à jour. Vérifiez votre connexion Internet et réessayez.',
 
-  // Keypad bar (iOS)
   'next': 'Suivant',
 
-  // Camera
   'cameraAccessOff': 'L\'accès à la caméra est désactivé',
   'cameraAllowPrompt': '{app} a besoin de la caméra pour scanner des codes et prendre des photos.',
   'cameraAllowInSettings': 'Pour scanner des codes et prendre des photos, autorisez l\'accès à la caméra pour {app} dans les paramètres.',
@@ -774,7 +738,6 @@ const translationsFr = <String, String>{
   'torchOn': 'Allumer la lampe torche',
   'torchOff': 'Éteindre la lampe torche',
 
-  // Calls
   'callNotAvailable': 'Les appels ne sont pas disponibles sur cet appareil',
   'copyNumber': 'Copier le numéro',
   'numberCopied': 'Numéro copié',

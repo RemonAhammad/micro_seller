@@ -11,24 +11,8 @@ import '../../core/utils/currency_formatter.dart';
 import '../../features/customers/providers/dues_provider.dart';
 import 'dues_service.dart';
 
-/// Business reports — pure functions over already-loaded rows (no Isar), so
-/// every number here is unit-testable. Providers in
-/// `features/reports/providers/reports_provider.dart` load the rows for a
-/// date range and call these.
-///
-/// Periods are `[start, end)` — callers pass the start of the first day and
-/// the start of the day *after* the last one.
-
-/// Resolves a translation key (e.g. `AppStrings.of(context).tr`). Reports
-/// take this instead of a BuildContext so they stay pure.
 typedef ReportTr = String Function(String key);
 
-/// One exportable table — the single shape both CSV and PDF render from, so
-/// the two exports always match each other and the screen.
-///
-/// Cells are `String`, `int` (counts) or `double` (money). Keeping money as
-/// numbers lets the CSV be summed/sorted in Excel; the PDF formats them with
-/// [formatCell]. Deductions are negative numbers.
 class ReportTable {
   const ReportTable(this.title, this.headers, this.rows);
   final String title;
@@ -36,7 +20,6 @@ class ReportTable {
   final List<List<Object>> rows;
 }
 
-/// Display form of a [ReportTable] cell (PDF / screen).
 String formatCell(Object c) => switch (c) {
       double v => CurrencyFormatter.format(v),
       int v => '$v',
@@ -46,13 +29,10 @@ String formatCell(Object c) => switch (c) {
 bool _inRange(DateTime? d, DateTime start, DateTime end) =>
     d != null && !d.isBefore(start) && d.isBefore(end);
 
-/// A deduction as a negative cell — but 0 stays 0: `-0.0` exports as "-0".
 double _deduction(double v) => v == 0 ? 0 : -v;
 
-/// When a return "happens" for reporting: when its goods came back.
 DateTime? returnDate(Order r) => r.updatedAt ?? r.createdAt;
 
-/// Returns whose goods are back in the shop (approved/received or refunded).
 bool isCompletedReturn(Order o) =>
     o.isReturn &&
     (o.returnStatus == ReturnStatus.received ||
@@ -62,9 +42,6 @@ Map<K, double> _topN<K>(Map<K, double> m, int n) {
   final e = m.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
   return Map.fromEntries(e.take(n));
 }
-
-
-// ─── Profit & Sales ──────────────────────────────────────────────────────
 
 class SalesReport {
   const SalesReport({
@@ -89,28 +66,18 @@ class SalesReport {
     required this.topCustomers,
   });
 
-  /// Goods sold at list price, before order discounts.
   final double grossSales;
 
-  /// Order discounts given on those sales.
   final double discounts;
 
-  /// Goods that came back, valued at what the customer paid for them
-  /// (after their share of the discount, without tax).
   final double returnsValue;
 
-  /// Cost of goods sold, net of goods returned.
   final double cogs;
 
-  /// Delivery fees billed. Earned on top of the goods, so they count in net
-  /// profit (against courier costs logged as expenses), not gross profit.
   final double deliveryCharges;
 
-  /// Tax billed, less tax on returns. Owed to the government — shown, but
-  /// never counted as sales or profit.
   final double taxCollected;
 
-  /// What customers were billed in total (goods + delivery + tax).
   final double billedSales;
   final double expenses;
   final int orderCount;
@@ -118,19 +85,15 @@ class SalesReport {
   final Map<OrderStatus, int> byStatus;
   final Map<PaymentMethod, double> byPaymentMethod;
 
-  /// Net sales per bucket (day, or month when [seriesByMonth]), in order.
   final List<({DateTime bucket, double value})> series;
 
-  /// Gross profit per bucket, same buckets as [series].
   final List<({DateTime bucket, double value})> profitSeries;
   final bool seriesByMonth;
   final Map<String, double> topProducts;
   final Map<String, double> topProductsByQty;
 
-  /// Keys are category names; the empty string means uncategorized.
   final Map<String, double> byCategory;
 
-  /// Keys are customer names; the empty string means walk-in.
   final Map<String, double> topCustomers;
 
   double get netSales => grossSales - discounts - returnsValue;
@@ -138,8 +101,6 @@ class SalesReport {
   double get netProfit => grossProfit + deliveryCharges - expenses;
   double get avgOrderValue => orderCount == 0 ? 0 : billedSales / orderCount;
 
-  /// 0 when there are no net sales — a ratio over a negative base would
-  /// flip the sign and show a loss as a positive margin.
   double get marginPct => netSales <= 0 ? 0 : netProfit / netSales * 100;
 
   List<ReportTable> toTables(ReportTr tr) => [
@@ -181,11 +142,6 @@ class SalesReport {
 
 String paymentMethodKeyLabel(ReportTr tr, PaymentMethod m) => tr(m.name);
 
-/// [productsById] supplies the category and the cost fallback for old
-/// orders whose items have no frozen `costPrice`.
-///
-/// The Dashboard's profit card and chart come from this too, so the two
-/// screens can't disagree.
 SalesReport buildSalesReport({
   required List<Order> orders,
   Set<int> cancelledOrderIds = const {},
@@ -232,8 +188,7 @@ SalesReport buildSalesReport({
       if (!isCompletedReturn(o) || !_inRange(returnDate(o), start, end)) {
         continue;
       }
-      // Cancelling the original already took its sale out; subtracting the
-      // return too would count it twice.
+
       if (cancelledOrderIds.contains(o.originalOrderId)) continue;
       returnCount++;
       final value = o.netGoods;
@@ -259,7 +214,6 @@ SalesReport buildSalesReport({
     byMethod[o.paymentMethod] = (byMethod[o.paymentMethod] ?? 0) + o.totalAmount;
     customers[o.customerName] = (customers[o.customerName] ?? 0) + o.totalAmount;
 
-    // Item revenue after the item's share of the order discount.
     final factor = o.discountFactor;
     var cost = 0.0;
     for (final i in o.items) {
@@ -303,8 +257,6 @@ SalesReport buildSalesReport({
   );
 }
 
-// ─── Dues & Payments ─────────────────────────────────────────────────────
-
 class DuesReport {
   const DuesReport({
     required this.collectedByMethod,
@@ -315,18 +267,13 @@ class DuesReport {
     required this.topDebtors,
   });
 
-  /// Money received from customers in the period, by method, net of
-  /// cancelled-order reversals.
   final Map<PaymentMethod, double> collectedByMethod;
 
-  /// The part of that received against earlier credit sales.
   final double duesCollected;
 
-  /// Unpaid amount left on orders created in the period.
   final double creditGiven;
   final double refundsPaid;
 
-  /// As of today — not affected by the period.
   final DueSummary summary;
   final List<CustomerDue> topDebtors;
 
@@ -370,15 +317,13 @@ DuesReport buildDuesReport({
     if (p.amount > 0) {
       byMethod[p.method] = (byMethod[p.method] ?? 0) + p.amount;
     } else if (p.note == kCancelledPaymentNote) {
-      // Cancelling a paid order hands the money back — net it out of what
-      // was received, so "Refunds paid" means return refunds on every tab.
+
       byMethod[p.method] = (byMethod[p.method] ?? 0) + p.amount;
     } else {
       refunds += -p.amount;
     }
   }
 
-  // Same-day payments per order, to see what was left on credit at sale.
   bool sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
   final paidAtSale = <int, double>{};
@@ -395,8 +340,7 @@ DuesReport buildDuesReport({
   for (final o in ordersInPeriod) {
     if (o.isReturn || o.orderStatus == OrderStatus.cancelled) continue;
     if (!_inRange(o.createdAt, start, end)) continue;
-    // Orders from before payment history have no rows: their amountPaid is
-    // the best record of what was paid.
+
     final paid = hasRows.contains(o.id) ? (paidAtSale[o.id] ?? 0) : o.amountPaid;
     final left = o.totalAmount - paid;
     if (left > kDueEpsilon) credit += left;
@@ -414,8 +358,6 @@ DuesReport buildDuesReport({
   );
 }
 
-// ─── Inventory & Returns ─────────────────────────────────────────────────
-
 class InventoryReport {
   const InventoryReport({
     required this.stockValueAtCost,
@@ -432,18 +374,15 @@ class InventoryReport {
     required this.returnsByReason,
   });
 
-  /// As of today.
   final double stockValueAtCost;
   final double stockValueAtPrice;
   final int activeProducts;
   final int lowStockCount;
   final int outOfStockCount;
 
-  /// Units moved in the period, per type (absolute quantities).
   final Map<StockMovementType, int> movementQty;
   final Map<String, double> bestSellers;
 
-  /// In stock but not sold at all in the period — name → units on hand.
   final Map<String, double> slowMovers;
   final int returnCount;
   final double returnedValue;
@@ -525,7 +464,7 @@ InventoryReport buildInventoryReport({
       if (!isCompletedReturn(o) || !_inRange(returnDate(o), start, end)) continue;
       if (cancelledOrderIds.contains(o.originalOrderId)) continue;
       returnCount++;
-      returnedValue += o.netGoods; // same value as the P&L's Returns row
+      returnedValue += o.netGoods;
       if (o.returnStatus == ReturnStatus.refunded) refunded += o.refundAmount;
       reasons[o.returnReason] = (reasons[o.returnReason] ?? 0) + 1;
       continue;
@@ -560,8 +499,6 @@ InventoryReport buildInventoryReport({
   );
 }
 
-// ─── Purchases & Expenses ────────────────────────────────────────────────
-
 class PurchasesReport {
   const PurchasesReport({
     required this.purchaseCount,
@@ -580,17 +517,14 @@ class PurchasesReport {
   final double purchased;
   final double paid;
 
-  /// As of today, across all purchases.
   final double owedToSuppliersToday;
 
-  /// Keys are supplier names; the empty string means no supplier linked.
   final Map<String, double> topSuppliers;
   final Map<ExpenseCategory, double> expensesByCategory;
   final int registerSessions;
   final double cashIn;
   final double cashOut;
 
-  /// Sum of (counted − expected) over closed sessions; negative = short.
   final double overShort;
 
   double get unpaid => purchased - paid;
@@ -631,8 +565,7 @@ PurchasesReport buildPurchasesReport({
   var count = 0;
   var purchased = 0.0, paid = 0.0, owedToday = 0.0;
   final bySupplier = <String, double>{};
-  // Direct supplier payments lower `Supplier.totalDue` but not individual
-  // purchases, so the supplier balance is the truth for linked purchases.
+
   for (final sup in suppliers) {
     owedToday += sup.totalDue > 0 ? sup.totalDue : 0;
   }

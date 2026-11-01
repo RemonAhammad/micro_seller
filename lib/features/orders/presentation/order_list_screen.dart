@@ -31,8 +31,6 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     return [s.all, s.pending, s.tr('active'), s.completed, s.cancelled];
   }
 
-  /// Exports every order, not just the loaded pages. [origin] is the export
-  /// button's rect, which an iPad's share sheet points at.
   Future<void> _exportCsv(Rect? origin) async {
     if (_exporting) return;
     setState(() => _exporting = true);
@@ -156,8 +154,6 @@ class _TabLabel extends StatelessWidget {
   }
 }
 
-/// One tab's orders, paged: nearing the end of the loaded rows loads the next
-/// page, with a spinner row below while more exist.
 class _OrderList extends ConsumerStatefulWidget {
   final OrderTab tab;
 
@@ -168,11 +164,10 @@ class _OrderList extends ConsumerStatefulWidget {
 }
 
 class _OrderListState extends ConsumerState<_OrderList> {
-  /// How close to the last loaded row the next page is requested.
+
   static const _loadMoreAhead = 20;
   bool _loadMoreScheduled = false;
 
-  // After the frame: the notifier's state can't change during a build.
   void _loadMoreSoon() {
     if (_loadMoreScheduled) return;
     _loadMoreScheduled = true;

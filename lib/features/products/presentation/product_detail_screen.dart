@@ -26,7 +26,6 @@ class ProductDetailScreen extends ConsumerWidget {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
 
-    // Live, so an edit or a stock adjustment shows on return.
     return ref.watch(productByIdProvider(productId)).when(
       skipLoadingOnReload: true,
       loading: () => const Scaffold(
@@ -70,8 +69,7 @@ class ProductDetailScreen extends ConsumerWidget {
                             .deleteProduct(product.id);
                         if (!context.mounted) return;
                         context.pop();
-                        // After the pop, so the snackbar belongs to the list
-                        // screen rather than the detail screen unwinding.
+
                         if (trashId != null) {
                           context.showUndoSnackBar(
                             '${s.itemDeleted}: ${product.name}',
@@ -89,8 +87,7 @@ class ProductDetailScreen extends ConsumerWidget {
                       ? Image.file(
                           File(photo),
                           fit: BoxFit.cover,
-                          // The file is gone (a backup restored on another
-                          // phone carries no photos): as without a photo.
+
                           errorBuilder: (_, _, _) => _noPhoto(theme),
                         )
                       : _noPhoto(theme),
@@ -102,9 +99,7 @@ class ProductDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // The stock badge sits beside the name, or under it
-                      // once large text on a narrow layout would leave the
-                      // name too little room for its words.
+
                       LayoutBuilder(builder: (context, constraints) {
                         final beside = constraints.maxWidth >=
                             MediaQuery.textScalerOf(context).scale(224);
@@ -156,7 +151,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         ),
                       ],
                       const SizedBox(height: 20),
-                      // Pricing card
+
                       _InfoCard(
                         children: [
                           _InfoRow(
@@ -177,7 +172,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // Stock card
+
                       _InfoCard(
                         children: [
                           _InfoRow(
@@ -217,8 +212,7 @@ class ProductDetailScreen extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // A long SKU wraps in up to 40% of the
-                                    // row instead of pushing the label out.
+
                                     LayoutBuilder(
                                       builder: (context, constraints) => Row(
                                         children: [
@@ -246,8 +240,7 @@ class ProductDetailScreen extends ConsumerWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    // The price adjustment moves to its own
-                                    // line when the two don't fit side by side.
+
                                     Wrap(
                                       spacing: 16,
                                       children: [
@@ -311,7 +304,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      // Adjust stock button
+
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
@@ -331,8 +324,6 @@ class ProductDetailScreen extends ConsumerWidget {
     );
   }
 
-  /// The header of a product without a photo: the main color's gradient
-  /// and a package icon.
   Widget _noPhoto(ThemeData theme) => Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -344,7 +335,7 @@ class ProductDetailScreen extends ConsumerWidget {
             ],
           ),
         ),
-        // The text color on the main color, at white30's alpha.
+
         child: ThinIcon(
           tabler.Package.new,
           size: 80,
@@ -383,7 +374,6 @@ class _InfoRow extends StatelessWidget {
   final Color? valueColor;
   final bool isBold;
 
-  /// Free text such as a scanned code: wraps instead of shrinking to fit.
   final bool wrapValue;
 
   const _InfoRow(this.label, this.value,
@@ -402,9 +392,7 @@ class _InfoRow extends StatelessWidget {
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      // The value keeps its own width up to 60% of the row (an amount past
-      // that is shrunk to fit, never cut; free text wraps in half the row);
-      // the label wraps in the rest.
+
       child: LayoutBuilder(
         builder: (context, constraints) => Row(
           children: [

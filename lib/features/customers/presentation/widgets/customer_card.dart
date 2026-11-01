@@ -44,7 +44,7 @@ class CustomerCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Avatar
+
             Container(
               width: 52,
               height: 52,
@@ -99,8 +99,7 @@ class CustomerCard extends StatelessWidget {
                   ),
                   if (customer.phone.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    // A number: shrunk to fit a narrow card, never broken
-                    // over two lines.
+
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: AlignmentDirectional.centerStart,
@@ -113,8 +112,7 @@ class CustomerCard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  // The stats move onto a second line when they don't fit
-                  // side by side (big amounts, a narrow layout, large text).
+
                   Wrap(
                     spacing: 12,
                     runSpacing: 4,
@@ -162,7 +160,7 @@ class _Stat extends StatelessWidget {
             size: 12,
             color: color ?? theme.colorScheme.onSurface.withOpacity(0.4)),
         const SizedBox(width: 3),
-        // A count or an amount: shrunk to fit, never cut off mid-number.
+
         Flexible(
           child: FittedBox(
             fit: BoxFit.scaleDown,

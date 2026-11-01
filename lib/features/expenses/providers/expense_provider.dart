@@ -37,10 +37,6 @@ class ExpenseNotifier extends _$ExpenseNotifier {
     });
   }
 
-  /// Moves the expense to the trash instead of destroying it. Recoverable for
-  /// [kTrashRetention] via the undo snackbar or Settings → Recycle Bin.
-  /// Returns the trash entry id, for wiring an UNDO action. Null if the
-  /// expense was already gone.
   Future<int?> deleteExpense(int id) async {
     int? trashId;
     state = await AsyncValue.guard(() async {

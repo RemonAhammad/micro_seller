@@ -50,12 +50,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   final _transactionIdCtrl = TextEditingController();
   final _deliveryAddressCtrl = TextEditingController();
   final _taxRateCtrl = TextEditingController();
-  // Held in State: one made in build was swapped on every rebuild (resetting
-  // the cursor) and never disposed.
+
   final _recurringDaysCtrl = TextEditingController(text: '30');
 
-  /// The fields the totals depend on. Only the widgets that show totals listen
-  /// to them, so a keystroke doesn't rebuild the whole form.
   late final Listenable _moneyFields = Listenable.merge([_discountCtrl, _deliveryCtrl, _taxRateCtrl, _amountPaidCtrl]);
 
   Customer? _selectedCustomer;
@@ -77,7 +74,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   }
 
   Future<void> _initForm() async {
-    // Default tax rate from settings
+
     try {
       final settingsTaxRate = ref.read(settingsProvider.notifier).taxRate;
       if (settingsTaxRate > 0) {
@@ -102,13 +99,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _items
       ..clear()
       ..addAll(order.items.map((i) => i.copyWith()));
-    // Every decimal the shop's currency has (the Kuwaiti Dinar's 3), so an
-    // edit saves the amounts as they were.
+
     _discountCtrl.text = order.discountAmount > 0 ? _amountText(order.discountAmount) : '0';
     _deliveryCtrl.text = order.deliveryFee > 0 ? _amountText(order.deliveryFee) : '0';
     _amountPaidCtrl.text = order.amountPaid > 0 ? _amountText(order.amountPaid) : '';
     _transactionIdCtrl.text = order.transactionId;
-    // Back-calculate tax rate from stored taxAmount
+
     if (order.taxAmount > 0) {
       final taxableAmount = order.subtotal - order.discountAmount;
       if (taxableAmount > 0) {
@@ -126,8 +122,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     setState(() {});
   }
 
-  /// [amount] as a money field shows it: whole, or with the currency's
-  /// decimals (2, or the Kuwaiti Dinar's 3).
   static String _amountText(double amount) =>
       amount.toStringAsFixed(amount == amount.roundToDouble() ? 0 : NumberInput.moneyDecimals);
 
@@ -144,8 +138,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     super.dispose();
   }
 
-  /// Parses the money fields and sums the items once. Each place that shows a
-  /// total reads one of these instead of a chain of getters.
   _FormTotals _readTotals() {
     final subtotal = _items.fold(0.0, (sum, item) => sum + item.totalPrice);
     final discount = NumberInput.parseDecimal(_discountCtrl.text) ?? 0;
@@ -163,13 +155,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  /// The interval typed, or 30 days when it's empty or 0.
   int get _recurringDays {
     final days = NumberInput.parseInteger(_recurringDaysCtrl.text);
     return days != null && days >= 1 ? days : 30;
   }
-
-  // ─── Customer ────────────────────────────────────────────────────────
 
   Future<void> _pickCustomer() async {
     final isar = await ref.read(isarProvider.future);
@@ -185,8 +174,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
     if (result != null) setState(() => _selectedCustomer = result);
   }
-
-  // ─── Products ────────────────────────────────────────────────────────
 
   Future<void> _pickProducts() async {
     final isar = await ref.read(isarProvider.future);
@@ -242,8 +229,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   }
 
   void _removeItem(int index) => setState(() => _items.removeAt(index));
-
-  // ─── Submit ──────────────────────────────────────────────────────────
 
   Future<void> _submit() async {
     if (_selectedCustomer == null) {
@@ -363,8 +348,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     }
   }
 
-  // ─── Post-creation invoice actions ───────────────────────────────────
-
   Future<void> _showInvoiceActions(Order order) async {
     final s = AppStrings.of(context);
     final pdfService = PdfService();
@@ -373,9 +356,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final currencySymbol = settings.currencySymbol;
     final taxRate = settings.taxRate;
 
-    // Rendered once per sheet and shared by Share / Download / Print. Dropped
-    // on failure so the next tap retries instead of replaying the error, and
-    // when the color theme's document colors it's drawn in have changed.
     Future<Uint8List>? receipt;
     Object? receiptColors;
     Future<Uint8List> receiptBytes() async {
@@ -404,9 +384,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Each action keeps its own fixed color, as each sidebar tab does:
-          // following the color theme, this one would be Print's very color
-          // under Indigo, and close to Download's under Blue.
+
           _InvoiceActionTile(
             icon: tabler.FileTypePdf.new,
             label: s.sharePdf,
@@ -427,8 +405,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.downloadPdf,
             color: Colors.blue,
             onTap: (origin) async {
-              // iOS: no folder to keep (pdfDownloadAsksWhereToSave); the
-              // system's save sheet asks where, each time.
+
               if (pdfDownloadAsksWhereToSave) {
                 final bytes = await runWithProgress(context, receiptBytes);
                 await savePdfWithSystemSheet(
@@ -438,7 +415,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 );
                 return;
               }
-              // Folder first: cancelling the picker shouldn't cost a render.
+
               var downloadDir = settings.downloadDirectory;
               if (downloadDir.isEmpty) {
                 if (!mounted) return;
@@ -454,7 +431,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 await file.writeAsBytes(await receiptBytes());
                 return file.path;
               });
-              // After the spinner closes: runWithProgress pops the top route.
+
               if (mounted) {
                 await showPdfSavedSheet(
                   context: context,
@@ -491,8 +468,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  // ─── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
@@ -507,28 +482,22 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // ── Customer selector ──
+
                 _buildCustomerSection(theme, cs),
                 const SizedBox(height: 16),
 
-                // ── Items ──
                 _buildItemsSection(theme, cs),
                 const SizedBox(height: 16),
 
-                // ── Pricing fields ──
                 _buildPricingSection(theme, cs),
                 const SizedBox(height: 16),
 
-                // ── Payment: amount paid → rest goes to the Due Book ──
                 _buildPaymentSection(theme, cs),
                 const SizedBox(height: 16),
 
-                // ── Order status ──
                 _buildStatusSection(theme, cs),
                 const SizedBox(height: 16),
 
-
-                // ── Notes ──
                 AppTextField(
                   label: s.notes,
                   controller: _notesCtrl,
@@ -537,7 +506,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   hint: s.tr('anySpecialInstructions'),
                 ),
 
-                // ── Delivery ──
                 const SizedBox(height: 16),
                 Text(
                   s.delivery,
@@ -594,7 +562,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   ),
                 ),
 
-                // ── Recurring ──
                 const SizedBox(height: 12),
                 SwitchListTile(
                   title: Text(s.recurringOrder),
@@ -610,13 +577,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       children: [
                         Flexible(child: Text(s.repeatEvery)),
                         const SizedBox(width: 8),
-                        // Room for three digits at any text size: the
-                        // theme's 16 px side padding left them 20 px.
+
                         SizedBox(
                           width: math.max(60.0, 60 * MediaQuery.textScalerOf(context).scale(16) / 16),
                           child: TextField(
                             keyboardType: TextInputType.number,
-                            // Whole days, up to 999.
+
                             inputFormatters: [const IntegerInputFormatter(), LengthLimitingTextInputFormatter(3)],
                             textAlign: TextAlign.center,
                             decoration: const InputDecoration(
@@ -637,14 +603,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             ),
           ),
 
-          // ── Footer ──
           _buildFooter(theme, cs),
         ],
       ),
     );
   }
-
-  // ─── Customer Section ────────────────────────────────────────────────
 
   Widget _buildCustomerSection(ThemeData theme, ColorScheme cs) {
     return GestureDetector(
@@ -689,8 +652,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ),
     );
   }
-
-  // ─── Items Section ───────────────────────────────────────────────────
 
   Widget _buildItemsSection(ThemeData theme, ColorScheme cs) {
     return Column(
@@ -765,12 +726,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  /// What an item row puts beside the name, less the quantity's digits: the
-  /// quantity box (two 28 px buttons, 20 px around the number, its border)
-  /// and the 12 + 70 px total, 4 px and the 16 px remove icon.
   static const double _itemControlsWidth = 2 + 28 + 20 + 28 + 12 + 70 + 4 + 16;
 
-  /// The narrowest the name gets beside them at 100% text.
   static const double _minItemNameWidth = 48;
 
   Widget _buildItemTile(int index, ThemeData theme, ColorScheme cs) {
@@ -779,7 +736,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final unitPriceStyle = TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5));
     const nameStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 13);
     const qtyStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14);
-    // Product info
+
     final info = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -788,7 +745,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ],
     );
 
-    // Qty controls
     final qty = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
@@ -807,7 +763,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ),
     );
 
-    // Total: shrunk to fit rather than broken over two lines.
     final total = Text(
       CurrencyFormatter.format(item.totalPrice),
       textAlign: TextAlign.right,
@@ -815,7 +770,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       maxLines: 1,
     );
 
-    // Delete
     final remove = GestureDetector(
       onTap: () => _removeItem(index),
       child: ThinIcon(tabler.X.new, size: 16, color: cs.error.withValues(alpha: 0.6)),
@@ -823,10 +777,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      // One row while the name keeps some room (its longest word, and the
-      // unit price, each on a line); otherwise (narrow layout, large text, a
-      // long quantity) the quantity and total go under the name, which keeps
-      // the full width.
+
       child: LayoutBuilder(
         builder: (context, constraints) {
           final nameRoom = constraints.maxWidth - _itemControlsWidth - _lineWidth(context, '${item.qty}', qtyStyle);
@@ -890,8 +841,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  // ─── Pricing ─────────────────────────────────────────────────────────
-
   Widget _buildPricingSection(ThemeData theme, ColorScheme cs) {
     final s = AppStrings.of(context);
     return Column(
@@ -918,7 +867,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        // Rebuilt on its own: the helper text shows the computed tax.
+
         ListenableBuilder(
           listenable: _moneyFields,
           builder: (context, _) {
@@ -936,8 +885,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ],
     );
   }
-
-  // ─── Status ──────────────────────────────────────────────────────────
 
   Widget _buildStatusSection(ThemeData theme, ColorScheme cs) {
     const statuses = [OrderStatus.pending, OrderStatus.confirmed];
@@ -972,10 +919,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  // ─── Payment Method ──────────────────────────────────────────────────
-
-  /// Amount paid (with Pay Full), a live paid / due readout, method, and
-  /// transaction id. Whatever isn't paid here goes to the Due Book.
   Widget _buildPaymentSection(ThemeData theme, ColorScheme cs) {
     final s = AppStrings.of(context);
     const methods = PaymentMethod.values;
@@ -1012,7 +955,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 builder: (context, child) {
                   final total = _readTotals().total;
                   return TextButton(
-                    // Setting the text notifies _moneyFields; no setState needed.
+
                     onPressed: total > 0
                         ? () => _amountPaidCtrl.text = _amountText(total)
                         : null,
@@ -1085,8 +1028,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  // ─── Footer ──────────────────────────────────────────────────────────
-
   Widget _buildFooter(ThemeData theme, ColorScheme cs) {
     final s = AppStrings.of(context);
     return Container(
@@ -1098,7 +1039,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Summary rows — the only part of the footer that follows the money fields.
+
           ListenableBuilder(
             listenable: _moneyFields,
             builder: (context, _) {
@@ -1171,14 +1112,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  /// [amount] at the end of its row, shrunk when it doesn't fit beside its
-  /// label (narrow layout, large text) — never cut off.
   Widget _fitAmount(Widget amount) =>
       FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: amount);
 }
 
-/// One read of the order form's money: items subtotal, the parsed discount /
-/// delivery / tax-rate / amount-paid fields, and [orderTotals]' tax and total.
 class _FormTotals {
   final double subtotal;
   final double discount;
@@ -1198,14 +1135,9 @@ class _FormTotals {
     required this.paid,
   });
 
-  /// What the customer still owes on this order — goes to the Due Book.
   double get due => (total - paid).clamp(0, double.infinity);
   bool get overpaid => paid > total + 0.005;
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Product Picker — stays open, multi-add, shows stock
-// ═══════════════════════════════════════════════════════════════════════════════
 
 class _ProductPickerSheet extends StatefulWidget {
   final Isar isar;
@@ -1220,13 +1152,12 @@ class _ProductPickerSheet extends StatefulWidget {
 
 class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   late final List<OrderItem> _items;
-  // Created once: a new watch() per build restarts the watcher and re-reads every product.
+
   late final Stream<List<Product>> _productsStream;
   final _searchCtrl = TextEditingController();
   String _query = '';
   final Set<int> _expandedProducts = {};
 
-  // Search memo, rebuilt only when the stream emits a new list or the query changes.
   List<Product>? _source;
   List<(String, String)>? _searchKeys;
   String? _filteredQuery;
@@ -1320,7 +1251,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     return StreamBuilder<List<Product>>(
       stream: _productsStream,
       builder: (context, snapshot) {
-        // null until the first emission (spinner); an error still falls back to the empty state.
+
         final loading = !snapshot.hasData && !snapshot.hasError;
         return _buildSheet(context, theme, cs, loading ? null : snapshot.data ?? const []);
       },
@@ -1339,7 +1270,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       expand: false,
       builder: (ctx, ctrl) => Column(
         children: [
-          // Handle
+
           Container(
             width: 36,
             height: 4,
@@ -1347,13 +1278,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
           ),
 
-          // Title row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                // The count wraps under the title when both don't fit
-                // beside Done.
+
                 Expanded(
                   child: Wrap(
                     spacing: 8,
@@ -1384,7 +1313,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             ),
           ),
 
-          // Search
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: TextField(
@@ -1409,7 +1337,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 
           const SizedBox(height: 4),
 
-          // Product list
           Expanded(
             child: allProducts == null
                 ? const Center(child: CircularProgressIndicator())
@@ -1429,18 +1356,18 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                       final p = filtered[i];
 
                       if (p.hasVariants) {
-                        // Only show combinations that are active and have been configured
+
                         final activeCombos = p.variantCombinations
                             .where((c) => c.isActive && (c.stockQty > 0 || c.priceAdjustment != 0 || c.sku.isNotEmpty))
                             .toList();
                         if (activeCombos.isEmpty) {
-                          // No configured combos — skip this product
+
                           return const SizedBox.shrink();
                         }
                         final isExpanded = _expandedProducts.contains(p.id);
                         return Column(
                           children: [
-                            // Parent product row (tap to expand)
+
                             InkWell(
                               onTap: () => setState(() {
                                 if (isExpanded) {
@@ -1477,7 +1404,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 ),
                               ),
                             ),
-                            // Expanded combination rows
+
                             if (isExpanded)
                               ...activeCombos.map((c) {
                                 final comboPrice = p.sellingPrice + c.priceAdjustment;
@@ -1508,9 +1435,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                     color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
                                                   ),
                                                 ),
-                                                // Stock wraps under the price when
-                                                // both don't fit; the price shrinks
-                                                // rather than being cut off.
+
                                                 Wrap(
                                                   crossAxisAlignment: WrapCrossAlignment.center,
                                                   children: [
@@ -1607,7 +1532,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                         );
                       }
 
-                      // Non-variant product (original behavior)
                       final qty = _qtyOf(p.id);
                       final outOfStock = p.stockQty <= 0;
 
@@ -1628,7 +1552,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                         color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
                                       ),
                                     ),
-                                    // As for a combination above.
+
                                     Wrap(
                                       crossAxisAlignment: WrapCrossAlignment.center,
                                       children: [
@@ -1699,9 +1623,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     );
   }
 
-  /// Add (or a disabled Out of stock). It takes at most a bit over half the
-  /// [rowWidth]: with large text its label shrinks rather than squeezing
-  /// the name beside it down to a few letters a line.
   Widget _addButton(double rowWidth, {required bool outOfStock, required VoidCallback onAdd}) {
     final s = AppStrings.of(context);
     return ConstrainedBox(
@@ -1729,10 +1650,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Customer Picker — search, pick, or create via inline form
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _CustomerPickerSheet extends StatefulWidget {
   final List<Customer> customers;
   final Isar isar;
@@ -1747,7 +1664,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   final _searchCtrl = TextEditingController();
   String _query = '';
 
-  // Inline form state
   bool _showForm = false;
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -1763,7 +1679,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
     super.dispose();
   }
 
-  // Rebuilt only when the query changes, not on every read in build.
   late List<Customer> _filtered = widget.customers;
   late final List<String> _lowerNames = [for (final c in widget.customers) c.name.toLowerCase()];
 
@@ -1775,15 +1690,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
           ? customers
           : [
               for (var i = 0; i < customers.length; i++)
-                // A Bengali or Arabic keyboard's digits find a phone too.
+
                 if (_lowerNames[i].contains(query) || NumberInput.phoneMatches(customers[i].phone, query)) customers[i],
             ];
     });
   }
 
   void _openForm() {
-    // Pre-fill from search query: digits (any script's, as the phone field
-    // types them: 0-9) go to the phone, anything else to the name.
+
     final q = _searchCtrl.text.trim();
     final digits = NumberInput.toAsciiDigits(q);
     final isPhone = RegExp(r'^[0-9]{3,}$').hasMatch(digits);
@@ -1803,7 +1717,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
 
     if (name.isEmpty && phone.isEmpty) return;
 
-    // If only phone provided, use phone as name placeholder
     final customerName = name.isNotEmpty ? name : phone;
 
     setState(() => _saving = true);
@@ -1842,7 +1755,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
       expand: false,
       builder: (ctx, ctrl) => Column(
         children: [
-          // Handle
+
           Container(
             width: 36,
             height: 4,
@@ -1850,7 +1763,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
           ),
 
-          // Title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -1876,7 +1788,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
           const SizedBox(height: 8),
 
           if (_showForm)
-            // ── Inline create form ──
+
             Expanded(
               child: ListView(
                 controller: ctrl,
@@ -1921,9 +1833,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                         ? SizedBox(
                             width: 18,
                             height: 18,
-                            // The button's own icon color, like the check it
-                            // replaces: white was all but invisible on the
-                            // disabled button while saving.
+
                             child: Builder(
                               builder: (context) => CircularProgressIndicator(
                                 strokeWidth: 2,
@@ -1939,7 +1849,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
               ),
             )
           else ...[
-            // ── Search ──
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
@@ -1965,7 +1875,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
 
             const SizedBox(height: 6),
 
-            // ── Always-visible create button ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: InkWell(
@@ -1997,7 +1906,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
 
             const SizedBox(height: 2),
 
-            // ── Customer list ──
             Expanded(
               child: _filtered.isEmpty
                   ? Center(
@@ -2045,8 +1953,6 @@ class _InvoiceActionTile extends StatelessWidget {
   final String label;
   final Color color;
 
-  /// Runs the action. [origin] is where the tile is on screen, which an
-  /// iPad's share sheet points at.
   final Future<void> Function(Rect? origin) onTap;
 
   const _InvoiceActionTile({required this.icon, required this.label, required this.color, required this.onTap});
@@ -2064,9 +1970,7 @@ class _InvoiceActionTile extends StatelessWidget {
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          // The chevron gives way when the label's longest word wouldn't fit
-          // beside it (narrow layout, large text): a word broken in two reads
-          // worse than a missing arrow.
+
           child: LayoutBuilder(
             builder: (context, constraints) {
               final style = theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600);
@@ -2100,9 +2004,6 @@ class _InvoiceActionTile extends StatelessWidget {
   }
 }
 
-/// The width [text] takes on one line in [style] as a [Text] draws it here:
-/// over the ambient text style, at the ambient text size, bold if the phone
-/// asks for it (the Bold text setting).
 double _lineWidth(BuildContext context, String text, TextStyle? style) {
   var effective = DefaultTextStyle.of(context).style.merge(style);
   if (MediaQuery.boldTextOf(context)) {

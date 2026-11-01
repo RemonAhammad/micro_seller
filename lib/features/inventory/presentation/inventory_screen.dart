@@ -46,8 +46,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     switch (_sort) {
       case _StockSort.lowStock:
         list.sort((a, b) {
-          // Score: how urgently stock is needed (lower = more urgent)
-          // Out of stock → negative, low stock → small positive, healthy → large
+
           final aDiff = a.stockQty - a.lowStockThreshold;
           final bDiff = b.stockQty - b.lowStockThreshold;
           return aDiff.compareTo(bDiff);
@@ -84,7 +83,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          // ── Stock levels tab ──
+
           productsAsync.when(
             data: (products) {
               if (products.isEmpty) {
@@ -95,7 +94,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 );
               }
 
-              // Collect unique categories from products
               final categoryNames = categoriesAsync.whenOrNull(
                     data: (cats) => cats.map((c) => c.name).toList(),
                   ) ??
@@ -110,13 +108,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
               return Column(
                 children: [
-                  // Filter & sort bar
+
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                     child: Row(
                       children: [
-                        // Category filter and count, in the space the sort
-                        // button leaves: a long category name ellipsizes.
+
                         Expanded(
                           child: Row(
                             children: [
@@ -135,7 +132,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           ),
                         ),
 
-                        // Sort
                         PopupMenuButton<_StockSort>(
                           initialValue: _sort,
                           onSelected: (v) => setState(() => _sort = v),
@@ -172,7 +168,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                     ),
                   ),
 
-                  // Product list
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -192,14 +187,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             error: (e, _) => Center(child: Text('$e')),
           ),
 
-          // ── Movements tab ──
           const _MovementsTab(),
         ],
       ),
     );
   }
 
-  /// The category filter: the selected category (or All) and its menu.
   Widget _categoryFilterButton(List<String> categoryNames, ColorScheme cs) {
     final s = AppStrings.of(context);
     return PopupMenuButton<String?>(
@@ -349,10 +342,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   }
 }
 
-/// The movement history, watched only while this tab is built — at the
-/// screen's root it stayed loaded and reloaded on every stock change while
-/// the Stock Levels tab was showing. Paged: nearing the end of the loaded
-/// rows loads the next page, with a spinner row below while more exist.
 class _MovementsTab extends ConsumerStatefulWidget {
   const _MovementsTab();
 
@@ -361,11 +350,10 @@ class _MovementsTab extends ConsumerStatefulWidget {
 }
 
 class _MovementsTabState extends ConsumerState<_MovementsTab> {
-  /// How close to the last loaded row the next page is requested.
+
   static const _loadMoreAhead = 20;
   bool _loadMoreScheduled = false;
 
-  // After the frame: the notifier's state can't change during a build.
   void _loadMoreSoon() {
     if (_loadMoreScheduled) return;
     _loadMoreScheduled = true;
@@ -418,8 +406,6 @@ class _MovementsTabState extends ConsumerState<_MovementsTab> {
   }
 }
 
-/// What [text] needs drawn by a [Text] here with [style]: the width of its
-/// longest word, and of the whole text on one line (rounded up).
 ({double word, double line}) _textWidths(
     BuildContext context, String text, TextStyle? style) {
   var effective = DefaultTextStyle.of(context).style.merge(style);
@@ -493,12 +479,7 @@ class _StockTile extends StatelessWidget {
                       fontSize: 10,
                       color: cs.onSurface.withValues(alpha: 0.4),
                     );
-                    // The stock column keeps its own width while the name
-                    // column beside it keeps its longest word and 30% of the
-                    // tile, as it always did on a phone at 100%. Past that (a
-                    // huge number, a narrow layout, large text) it takes at
-                    // most 40% of the tile, so the name keeps room: the
-                    // number shrinks and the caption wraps.
+
                     final fits = math.max(
                               _textWidths(context, stock, stockStyle).line,
                               _textWidths(context, caption, captionStyle).line,

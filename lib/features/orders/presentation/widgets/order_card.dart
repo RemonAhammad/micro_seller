@@ -16,18 +16,11 @@ class OrderCard extends StatelessWidget {
 
   const OrderCard({super.key, required this.order, this.onStatusChange});
 
-  /// The narrowest card laid out as one row (number, items, badges, amount):
-  /// the card a 600 dp window used to draw beside the 56 dp rail, less the
-  /// list's 16 dp padding each side. The card's own width decides, not the
-  /// window's: at 600 dp the sidebar is 200 dp wide (and Split View narrows
-  /// the window), which squeezed the row.
   static const double rowLayoutMinWidth = 600.0 - 56 - 2 * 16;
 
   void _showStatusMenu(BuildContext context, Offset globalPosition) {
     final currentStatus = order.orderStatus;
-    // The menu is laid out in the nearest Navigator's overlay (the shell
-    // branch's, beside the sidebar and under the status bar, and scaled by
-    // the Display size), so the press point has to be in its coordinates.
+
     final overlay =
         Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
     final local = overlay.globalToLocal(globalPosition);
@@ -124,7 +117,7 @@ class OrderCard extends StatelessWidget {
             ),
           ],
         ),
-        // The card's content, inside its 16 dp padding each side.
+
         child: LayoutBuilder(
           builder: (context, constraints) =>
               constraints.maxWidth + 2 * 16 >= rowLayoutMinWidth
@@ -139,7 +132,7 @@ class OrderCard extends StatelessWidget {
     final muted = cs.onSurface.withValues(alpha: 0.5);
     return Row(
       children: [
-        // Order number + customer
+
         Expanded(
           flex: 3,
           child: Column(
@@ -163,7 +156,6 @@ class OrderCard extends StatelessWidget {
           ),
         ),
 
-        // Items + date
         Expanded(
           flex: 2,
           child: Column(
@@ -186,8 +178,6 @@ class OrderCard extends StatelessWidget {
           ),
         ),
 
-        // Status badges, whole: the second one wraps under the first when
-        // they don't fit side by side.
         Expanded(
           flex: 3,
           child: Wrap(
@@ -202,7 +192,6 @@ class OrderCard extends StatelessWidget {
           ),
         ),
 
-        // Amount: shrunk to fit its column rather than cut off.
         Flexible(
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -242,11 +231,7 @@ class OrderCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Order number, customer, then item count and date at the end. The
-        // order number is never cut short: the customer's name gives way,
-        // and when even a few letters of it don't fit beside the rest
-        // (narrow layout, large text) the count and date go to a line of
-        // their own.
+
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
@@ -321,9 +306,7 @@ class OrderCard extends StatelessWidget {
           },
         ),
         const SizedBox(height: 10),
-        // Badges at the start, the amount at the end; the amount goes under
-        // the badges when the two don't fit side by side. Neither is cut
-        // short: an amount wider than the whole card shrinks to fit.
+
         OverflowBar(
           spacing: 8,
           overflowSpacing: 6,
@@ -356,9 +339,6 @@ class OrderCard extends StatelessWidget {
   }
 }
 
-/// The width [text] takes on one line in [style] as a [Text] draws it here:
-/// over the ambient text style, at the ambient text size, bold if the phone
-/// asks for it (the Bold text setting).
 double _lineWidth(BuildContext context, String text, TextStyle? style) {
   var effective = DefaultTextStyle.of(context).style.merge(style);
   if (MediaQuery.boldTextOf(context)) {

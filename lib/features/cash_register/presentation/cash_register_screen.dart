@@ -28,9 +28,6 @@ class CashRegisterScreen extends ConsumerWidget {
           final openReg = registers.where((r) => !r.isClosed).firstOrNull;
           final closed = registers.where((r) => r.isClosed).toList();
 
-          // Slivers, so the history (about one session a day) only builds
-          // the sessions on screen — and a cash in/out doesn't rebuild them
-          // all.
           return CustomScrollView(
             slivers: [
               SliverPadding(
@@ -39,7 +36,7 @@ class CashRegisterScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Current register status
+
                       if (openReg != null) ...[
                         _OpenRegisterCard(
                             register: openReg, theme: theme, cs: cs, ref: ref),
@@ -49,7 +46,6 @@ class CashRegisterScreen extends ConsumerWidget {
 
                       const SizedBox(height: 24),
 
-                      // History
                       Text(s.history,
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w700)),
@@ -168,10 +164,6 @@ class CashRegisterScreen extends ConsumerWidget {
   }
 }
 
-/// A label at the start of the row and an amount at its end, laid out as a
-/// plain row while the two fit side by side. When they don't (narrow layout,
-/// large text), the label wraps and the amount shrinks into at most half the
-/// row: never cut off, never pushed out of the card.
 class _AmountRow extends StatelessWidget {
   final Widget label;
   final Widget value;
@@ -198,8 +190,6 @@ class _AmountRow extends StatelessWidget {
     );
   }
 }
-
-// ─── Open Register Card ──────────────────────────────────────────────────────
 
 class _OpenRegisterCard extends StatelessWidget {
   final dynamic register;
@@ -230,8 +220,7 @@ class _OpenRegisterCard extends StatelessWidget {
             children: [
               ThinIcon(tabler.CashRegister.new, color: cs.primary, size: 24),
               const SizedBox(width: 10),
-              // Title at the start and opening time at the end; the time
-              // moves under the title when the two don't fit on one line.
+
               Expanded(
                 child: Wrap(
                   alignment: WrapAlignment.spaceBetween,
@@ -332,8 +321,7 @@ class _OpenRegisterCard extends StatelessWidget {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(s.cancel)),
-          // Enabled once there's an amount: a tap on an empty or zero
-          // amount used to do nothing.
+
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: ctrl,
             builder: (_, value, _) {
@@ -364,9 +352,7 @@ class _OpenRegisterCard extends StatelessWidget {
 
   void _showCloseDialog(BuildContext context) {
     final s = AppStrings.of(context);
-    // The expected cash, to the shop currency's decimals, unless it's
-    // negative (more cash out than in): that can't be a count, and the
-    // field, which takes no sign, wouldn't let it be edited.
+
     final expected = register.expectedClosing;
     final ctrl = TextEditingController(
         text: expected >= 0
@@ -405,8 +391,7 @@ class _OpenRegisterCard extends StatelessWidget {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(s.cancel)),
-          // Enabled while there's an amount (0 included): a tap on an
-          // empty one used to do nothing.
+
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: ctrl,
             builder: (_, value, _) {
@@ -430,8 +415,6 @@ class _OpenRegisterCard extends StatelessWidget {
     );
   }
 }
-
-// ─── Closed State (no open register) ─────────────────────────────────────────
 
 class _ClosedStateCard extends StatelessWidget {
   final ThemeData theme;
@@ -498,7 +481,7 @@ class _ClosedStateCard extends StatelessWidget {
               child: Text(s.cancel)),
           FilledButton(
             onPressed: () async {
-              // Empty opens the register with no cash.
+
               final amount = NumberInput.parseDecimal(ctrl.text) ?? 0;
               await ref
                   .read(cashRegisterProvider.notifier)

@@ -1,5 +1,5 @@
 const translationsTr = <String, String>{
-  // Navigation
+
   'dashboard': 'Gösterge Paneli',
   'products': 'Ürünler',
   'orders': 'Siparişler',
@@ -22,7 +22,6 @@ const translationsTr = <String, String>{
   'scanAgain': 'Tekrar tara',
   'pointCameraAtCode': 'Kamerayı bir QR koda veya barkoda doğrultun',
 
-  // Dashboard
   'todayRevenue': 'Bugünün Geliri',
   'monthRevenue': 'Aylık Gelir',
   'monthProfit': 'Aylık Kâr',
@@ -46,7 +45,6 @@ const translationsTr = <String, String>{
   'thisMonth': 'Bu Ay',
   'customRange': 'Özel Aralık',
 
-  // Products
   'addProduct': 'Ürün Ekle',
   'editProduct': 'Ürünü Düzenle',
   'productName': 'Ürün Adı',
@@ -91,7 +89,6 @@ const translationsTr = <String, String>{
   'lastUpdated': 'Son Güncelleme',
   'noVariantsHint': 'Varyant yok. Beden, Renk gibi özellikler ekleyin.',
 
-  // Orders
   'addOrder': 'Yeni Sipariş',
   'editOrder': 'Siparişi Düzenle',
   'orderNumber': 'Sipariş No',
@@ -132,7 +129,6 @@ const translationsTr = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'Özel bir talimat var mı?',
 
-  // Order status
   'pending': 'Beklemede',
   'confirmed': 'Onaylandı',
   'shipped': 'Kargoya Verildi',
@@ -141,12 +137,10 @@ const translationsTr = <String, String>{
   'active': 'Devam Eden',
   'placed': 'Sipariş Alındı',
 
-  // Payment status
   'unpaid': 'Ödenmedi',
   'partial': 'Kısmi',
   'paid': 'Ödendi',
 
-  // Payment methods
   'cash': 'Nakit',
   'card': 'Kart',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsTr = <String, String>{
   'bank': 'Banka',
   'other': 'Diğer',
 
-  // Order detail
   'shareViaWhatsApp': 'WhatsApp ile Paylaş',
   'sharePdf': 'PDF Paylaş',
   'downloadPdf': 'PDF İndir',
@@ -174,7 +167,6 @@ const translationsTr = <String, String>{
   'markAsShipped': 'Kargoya verildi olarak işaretle',
   'markAsCompleted': 'Tamamlandı olarak işaretle',
 
-  // Customers
   'addCustomer': 'Müşteri Ekle',
   'editCustomer': 'Müşteriyi Düzenle',
   'customerName': 'Ad',
@@ -190,7 +182,6 @@ const translationsTr = <String, String>{
   'outstanding': 'Ödenmemiş',
   'memberSince': 'Kayıt Tarihi',
 
-  // Inventory
   'stockAdjustment': 'Stok Düzeltmesi',
   'stockMovements': 'Stok Hareketleri',
   'stockLevels': 'Stok Seviyeleri',
@@ -215,7 +206,6 @@ const translationsTr = <String, String>{
   'inStockLabel': 'stokta',
   'allCategories': 'Tüm Kategoriler',
 
-  // Expenses
   'addExpense': 'Gider Ekle',
   'editExpense': 'Gideri Düzenle',
   'expenseTitle': 'Gider Başlığı',
@@ -230,7 +220,6 @@ const translationsTr = <String, String>{
   'marketing': 'Pazarlama',
   'supplies': 'Malzemeler',
 
-  // Settings
   'shopName': 'Mağaza Adı',
   'currencySymbol': 'Para Birimi Simgesi',
   'googleAccount': 'Google Hesabı',
@@ -284,7 +273,6 @@ const translationsTr = <String, String>{
   'downloads': 'İndirmeler',
   'dangerZone': 'Tehlikeli Bölge',
 
-  // Suppliers
   'addSupplier': 'Tedarikçi Ekle',
   'editSupplier': 'Tedarikçiyi Düzenle',
   'supplierNotFound': 'Tedarikçi bulunamadı',
@@ -307,7 +295,6 @@ const translationsTr = <String, String>{
   'addSuppliersFromMenu': 'Tedarikçiler menüsünden tedarikçi ekleyin',
   'selectSupplier': 'Tedarikçi Seçin',
 
-  // Purchases
   'purchaseNotFound': 'Satın alma bulunamadı',
   'deletePurchase': 'Satın Almayı Sil',
   'deletePurchaseConfirm': 'Stok, satın alınan miktarlar kadar azaltılacaktır.',
@@ -325,7 +312,6 @@ const translationsTr = <String, String>{
   'allProducts': 'Tüm ürünler',
   'supplierProductsOnly': 'Yalnızca {name}',
 
-  // Cash Register
   'registerOpen': 'Kasa Açık',
   'noRegisterOpen': 'Açık kasa yok',
   'openRegisterDesc': 'Nakit akışını takip etmek için kasa açın',
@@ -345,7 +331,6 @@ const translationsTr = <String, String>{
   'noRegisterHistory': 'Henüz kasa geçmişi yok',
   'loading': 'Yükleniyor...',
 
-  // Returns
   'returnsAndRefunds': 'İadeler ve Geri Ödemeler',
   'createReturnTitle': 'İade Oluştur',
   'selectItems': 'Kalemleri Seç',
@@ -384,7 +369,6 @@ const translationsTr = <String, String>{
   'approveReturnConfirm': 'Bu iade onaylanıp kalemler teslim alındı olarak işaretlensin mi? Stok geri yüklenecek.',
   'returnRejected': 'İade Reddedildi',
 
-  // Categories
   'addCategory': 'Kategori Ekle',
   'editCategory': 'Kategoriyi Düzenle',
   'deleteCategory': 'Kategoriyi Sil',
@@ -392,7 +376,6 @@ const translationsTr = <String, String>{
   'addCategoriesToOrganise': 'Ürünlerinizi düzenlemek için kategori ekleyin',
   'categoryName': 'Kategori adı',
 
-  // Reports
   'totalRevenue': 'Toplam Gelir',
   'totalProfit': 'Toplam Kâr',
   'totalExpenses': 'Toplam Gider',
@@ -402,7 +385,6 @@ const translationsTr = <String, String>{
   'topCustomers': 'En İyi Müşteriler',
   'salesByCategory': 'Kategoriye Göre Satışlar',
 
-  // Actions
   'save': 'Kaydet',
   'cancel': 'İptal',
   'delete': 'Sil',
@@ -424,19 +406,16 @@ const translationsTr = <String, String>{
   'back': 'Geri',
   'sort': 'Sırala',
 
-  // Delivery
   'delivery': 'Teslimat',
   'markDelivered': 'Teslim edildi olarak işaretle',
   'delivered': 'Teslim Edildi',
 
-  // Variants
   'variants': 'Varyantlar',
   'addVariant': 'Varyant Ekle',
   'variantName': 'Özellik (ör. Beden)',
   'variantValue': 'Değer (ör. Büyük)',
   'priceAdjustment': 'Fiyat +/-',
 
-  // Messages
   'deleteConfirmation': 'Bunu silmek istediğinizden emin misiniz?',
   'clearDataConfirmation':
       'Bu işlem tüm verilerinizi kalıcı olarak silecektir. Bu eylem geri alınamaz. Emin misiniz?',
@@ -452,7 +431,6 @@ const translationsTr = <String, String>{
   'noExpenses': 'Henüz gider kaydedilmedi',
   'noStockMovements': 'Henüz stok hareketi kaydedilmedi',
 
-  // Misc
   'error': 'Hata',
   'pay': 'Öde',
   'scanQrBarcode': 'QR / Barkod Tara',
@@ -463,13 +441,11 @@ const translationsTr = <String, String>{
   'rowsSkipped': '{count} satır atlandı:',
   'andMore': '...ve {count} tane daha',
 
-  // Payments / refunds
   'transactionId': 'İşlem Kimliği',
   'transactionIdHint': 'bKash / Nagad / makbuz no',
   'refundMethod': 'İade Yöntemi',
   'refundTransactionId': 'İade İşlem Kimliği',
 
-  // Sidebar customization
   'sidebarOrder': 'Kenar Çubuğu Sırası',
   'sidebarOrderDesc': 'Kenar çubuğu sekmelerini yeniden düzenlemek için sürükleyin',
   'resetToDefault': 'Varsayılana Sıfırla',
@@ -478,7 +454,6 @@ const translationsTr = <String, String>{
   'left': 'Sol',
   'right': 'Sağ',
 
-  // Display size (Settings → Display)
   'display': 'Ekran',
   'displaySize': 'Görüntü Boyutu',
   'displaySizeDesc': 'Ekrandaki her şeyi daha küçük veya daha büyük yapın',
@@ -488,7 +463,6 @@ const translationsTr = <String, String>{
   'phoneTextSize': 'Telefon: {value}',
   'preview': 'Önizleme',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'Tema rengi',
   'colorThemeDesc': 'Düğmelerin, başlıkların ve vurguların ana rengi',
   'phoneColors': 'Telefon renkleri',
@@ -536,18 +510,15 @@ const translationsTr = <String, String>{
   'deleteThemeConfirm': '“{name}” teması silinsin mi?',
   'themeLimitReached': 'En fazla {count} tema kaydedebilirsiniz',
 
-  // Auth gate
   'createPin': '4 haneli PIN oluştur',
   'confirmPin': 'PIN’i onayla',
   'enterPin': 'PIN’i gir',
   'pinDoesNotMatch': 'PIN’ler eşleşmiyor. Tekrar deneyin.',
   'incorrectPin': 'Yanlış PIN. Tekrar deneyin.',
 
-  // Auto Drive backup
   'autoBackup': 'Drive’a otomatik yedekle',
   'autoBackupDesc': 'Uygulama açıldığında otomatik yedekle (oturum açıkken)',
 
-  // Security section
   'security': 'Güvenlik',
   'securityFingerprint': 'Parmak izi',
   'securityFingerprintDesc': 'Hassas işlemleri onaylamak için parmak izi kullan',
@@ -555,7 +526,7 @@ const translationsTr = <String, String>{
   'securityPinDesc': 'Hassas işlemler için 4 haneli PIN iste',
   'biometricNotAvailable': 'Bu cihazda kayıtlı parmak izi yok',
   'changeSecurity': 'Güvenlik ayarlarını değiştirmek için doğrula',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'Hassas işlemleri onaylamak için Face ID kullan',
   'faceIdNotSetUp': 'Bu cihazda Face ID ayarlanmamış',
@@ -563,7 +534,6 @@ const translationsTr = <String, String>{
   'securityTouchIdDesc': 'Hassas işlemleri onaylamak için Touch ID kullan',
   'touchIdNotSetUp': 'Bu cihazda Touch ID ayarlanmamış',
 
-  // Background auto-backup status
   'autoBackupPaused': 'Otomatik yedekleme duraklatıldı',
   'autoBackupResumed': 'Otomatik yedekleme devam ediyor',
   'signInToFix': 'Düzeltmek için oturum aç',
@@ -603,7 +573,6 @@ const translationsTr = <String, String>{
   'shopPhone': 'Mağaza Telefonu',
   'productCatalog': 'Ürün Kataloğu',
 
-  // Due Book
   'dueBook': 'Veresiye Defteri',
   'totalReceivable': 'Toplam Alacak',
   'customersOwing': '{count} müşterinin borcu var',
@@ -673,7 +642,6 @@ const translationsTr = <String, String>{
   'duesCollectedThisMonth': 'Tahsil edilen borçlar (bu ay)',
   'overdue60Banner': '{count} müşteri 60+ gündür {amount} borçlu',
 
-  // Reports
   'profitAndLoss': 'Kâr ve Zarar',
   'item': 'Kalem',
   'grossSales': 'Brüt Satışlar',
@@ -738,7 +706,6 @@ const translationsTr = <String, String>{
   'monthlyNetSales': 'Aylık Net Satışlar',
   'dateRangeTo': '-',
 
-  // Rating prompt
   'rateTitle': '{app} hoşunuza gidiyor mu?',
   'rateMessage': 'Bir süredir mağazanızı {app} ile yönetiyorsunuz. Kısa bir puanlama, diğer satıcıların uygulamayı bulmasına yardımcı olur.',
   'rateNow': 'Şimdi puanla',
@@ -749,7 +716,6 @@ const translationsTr = <String, String>{
   'rateThisAppSubtitle': 'Diğer satıcıların {app} uygulamasını bulmasına yardım edin',
   'about': 'Hakkında',
 
-  // App updates
   'updateAvailable': '{app} {version} sürümü mevcut',
   'updateHowToAndroid': 'Daha önce yüklediğiniz APK türünün aynısını (universal veya arm64-v8a) indirin ve mevcut uygulamanın üzerine yükleyin. Verileriniz korunur.',
   'updateHowToIos': 'Güncellemeyi, daha önce kullandığınız aynı yan yükleme (sideload) aracı ve Apple ID ile yükleyin; böylece verileriniz korunur. Önce yedek alın.',
@@ -758,10 +724,8 @@ const translationsTr = <String, String>{
   'upToDate': 'En son sürümü kullanıyorsunuz',
   'updateCheckFailed': 'Güncellemeler kontrol edilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.',
 
-  // Keypad bar (iOS)
   'next': 'Sonraki',
 
-  // Camera
   'cameraAccessOff': 'Kamera erişimi kapalı',
   'cameraAllowPrompt': '{app}, kod taramak ve fotoğraf çekmek için kameraya ihtiyaç duyar.',
   'cameraAllowInSettings': 'Kod taramak ve fotoğraf çekmek için Ayarlar\'dan {app} uygulamasına kamera erişimi verin.',
@@ -774,7 +738,6 @@ const translationsTr = <String, String>{
   'torchOn': 'El fenerini aç',
   'torchOff': 'El fenerini kapat',
 
-  // Calls
   'callNotAvailable': 'Bu cihazda arama yapılamıyor',
   'copyNumber': 'Numarayı kopyala',
   'numberCopied': 'Numara kopyalandı',

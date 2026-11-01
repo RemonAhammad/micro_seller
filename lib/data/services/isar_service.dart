@@ -18,10 +18,6 @@ import 'product_image_store.dart';
 
 part 'isar_service.g.dart';
 
-/// Every collection in the database. Shared by the app and the background
-/// auto-backup worker ([autoBackupCallbackDispatcher]), which opens the same
-/// file from its own isolate — both must pass the identical list, or the
-/// worker's open would see a schema missing collections the app has written.
 const kIsarSchemas = [
   CategorySchema,
   ProductSchema,
@@ -39,21 +35,19 @@ const kIsarSchemas = [
 @Riverpod(keepAlive: true)
 Future<Isar> isar(Ref ref) async {
   final dir = await getApplicationDocumentsDirectory();
-  // Product photo paths are stored relative to it (ProductImageStore).
+
   ProductImageStore.documentsDirectory = dir.path;
   final db = await Isar.open(
     kIsarSchemas,
     directory: dir.path,
     name: 'sellerbook_db',
-    // Rewrites the file only when it is mostly free space (e.g. after a big
-    // restore or Clear All Data), so reads stay compact; a no-op otherwise.
+
     compactOnLaunch: const CompactCondition(
       minFileSize: 20 * 1024 * 1024,
       minRatio: 2.0,
     ),
   );
 
-  // Run one-time migrations
   await migrateVariantsV2(db);
   await migrateOutstandingBalancesV1(db);
   await migrateProductImagePathsV1(db);

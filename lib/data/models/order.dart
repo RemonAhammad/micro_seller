@@ -71,10 +71,6 @@ class Order {
   @Enumerated(EnumType.name)
   PaymentMethod paymentMethod;
 
-  /// Reference / receipt number for the latest payment or refund transaction.
-  /// On a regular order it stores the customer's payment txn ID (bKash/Nagad
-  /// reference, card auth code, etc.). On a return order (`isReturn = true`)
-  /// it stores the refund txn ID. Free-form, optional.
   String transactionId;
 
   @Enumerated(EnumType.name)
@@ -85,7 +81,6 @@ class Order {
   DateTime? estimatedDeliveryDate;
   DateTime? actualDeliveryDate;
 
-  // Return order fields
   bool isReturn;
   int originalOrderId;
 
@@ -98,7 +93,6 @@ class Order {
   String returnNotes;
   double refundAmount;
 
-  // Recurring order fields
   bool isRecurring;
   int recurringIntervalDays;
   DateTime? nextRecurringDate;
@@ -119,29 +113,21 @@ class Order {
   @ignore
   bool get isRefunded => returnStatus == ReturnStatus.refunded;
 
-  /// Goods at list price (Σ item totals) — before discount, tax and delivery.
   @ignore
   double get goodsTotal => items.fold(0.0, (sum, item) => sum + item.totalPrice);
 
-  /// Goods after the order discount: what the seller actually earns on the
-  /// goods. Tax (owed to the government) and delivery are not part of it.
   @ignore
   double get netGoods {
     final net = goodsTotal - discountAmount;
     return net > 0 ? net : 0;
   }
 
-  /// Share of each item's list price the customer pays once the order
-  /// discount is spread over the items pro rata (1 = no discount).
   @ignore
   double get discountFactor {
     final goods = goodsTotal;
     return goods > 0 ? netGoods / goods : 1;
   }
 
-  /// What the customer was billed for delivery: normally [deliveryFee], less
-  /// when a discount bigger than the goods ate into it (the form clamps the
-  /// total, not the fee). `netGoods + deliveryIncome + taxAmount` is the total.
   @ignore
   double get deliveryIncome {
     final rest = totalAmount - taxAmount - netGoods;
@@ -222,13 +208,8 @@ class Order {
   Map<String, dynamic> toJson() => _$OrderToJson(this);
 }
 
-/// Rounds a money amount to 2 decimals.
 double roundMoney(double v) => (v * 100).roundToDouble() / 100;
 
-/// Tax and total exactly as the order form computes and stores them: tax on
-/// the goods after discount, both rounded to 2 decimals. Unrounded, "Pay
-/// Full" (which types the 2-decimal total) left a half-paisa unpaid — the
-/// order read "Partial" and the dust could add up to a phantom due.
 ({double tax, double total}) orderTotals({
   required double subtotal,
   double discount = 0,
@@ -242,16 +223,6 @@ double roundMoney(double v) => (v * 100).roundToDouble() / 100;
   return (tax: tax, total: total > 0 ? roundMoney(total) : 0.0);
 }
 
-/// What the customer actually paid for [items] — some of [original]'s items,
-/// at the quantities being returned — and so what returning them is worth:
-/// list price, less their pro-rata share of the order discount, plus their
-/// share of the tax. Delivery isn't refunded.
-///
-/// The return order stores this, so the refund suggestion, the Due Book
-/// credit and the reports all value the return the same way. Deliberately
-/// not rounded: partial returns of one order then add up to exactly the
-/// order, where per-return rounding left a paisa owed (or credited) once
-/// everything had come back. Screens format it to 2 decimals.
 ({double subtotal, double discount, double tax, double total}) returnValueFor(
     Order original, List<OrderItem> items) {
   final subtotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);

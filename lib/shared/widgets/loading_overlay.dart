@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Runs [task] behind a modal spinner. The spinner is drawn before [task]
-/// starts (any synchronous work at its start would otherwise freeze the
-/// screen with no feedback), and its barrier blocks repeat taps until done.
 Future<T> runWithProgress<T>(
     BuildContext context, Future<T> Function() task) async {
   final navigator = Navigator.of(context, rootNavigator: true);

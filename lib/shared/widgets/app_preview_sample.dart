@@ -8,13 +8,6 @@ import '../../core/theme/brand_colors.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../features/dashboard/presentation/widgets/stat_card.dart';
 
-// A picture of the app for the settings that change how it looks: Display
-// size and Text size (display_size_sheets.dart) and Color theme
-// (color_theme_screen.dart, color_theme_editor.dart). It draws in the
-// ambient theme, so a `Theme` above it previews another color theme.
-
-/// The soft shadow the app's cards cast (OrderCard, the Dashboard's
-/// sections).
 final previewCardShadow = [
   BoxShadow(
     color: Colors.black.withValues(alpha: 0.04),
@@ -23,21 +16,11 @@ final previewCardShadow = [
   ),
 ];
 
-/// The preview box: the screen's background, rounded, with a hairline
-/// border, and nothing in it reacts to touch, focus or a screen reader.
 class AppPreviewFrame extends StatelessWidget {
   const AppPreviewFrame({super.key, required this.preview, this.sample});
 
-  /// What the box shows.
-  ///
-  /// With a [sample], it is drawn from the top and clipped to the box: a
-  /// larger size runs off the bottom, a smaller one leaves room.
   final Widget preview;
 
-  /// The sample as the app draws it now. Laid out but never shown, it sets
-  /// the box's height, which therefore can't change while a size slider is
-  /// held: the slider below stays under the finger. Without it, the box is
-  /// as tall as [preview].
   final Widget? sample;
 
   @override
@@ -45,8 +28,7 @@ class AppPreviewFrame extends StatelessWidget {
     final theme = Theme.of(context);
     final radius = BorderRadius.circular(14);
     final sample = this.sample;
-    // A picture of the app, not controls: no taps, no keyboard focus (the
-    // sample's button would take a Tab), nothing for a screen reader.
+
     return ExcludeFocus(
       child: ExcludeSemantics(
         child: IgnorePointer(
@@ -56,7 +38,7 @@ class AppPreviewFrame extends StatelessWidget {
               color: theme.scaffoldBackgroundColor,
               borderRadius: radius,
             ),
-            // In front, so a sample running off the bottom doesn't cover it.
+
             foregroundDecoration: BoxDecoration(
               borderRadius: radius,
               border: Border.all(color: theme.colorScheme.outlineVariant),
@@ -64,8 +46,7 @@ class AppPreviewFrame extends StatelessWidget {
             child: sample == null
                 ? preview
                 : Stack(
-                    // The sample gets the box's own width, as the preview
-                    // does.
+
                     fit: StackFit.passthrough,
                     children: [
                       Visibility(
@@ -92,14 +73,9 @@ class AppPreviewFrame extends StatelessWidget {
   }
 }
 
-/// A slice of the app as it is drawn, with sample figures: two Dashboard
-/// cards, an order as the Orders list shows it, and a button. With [header],
-/// the Dashboard's header band too: the theme's gradient with its text color
-/// on it.
 class AppPreviewSample extends StatelessWidget {
   const AppPreviewSample({super.key, this.header = false});
 
-  /// Whether to draw the Dashboard's header band above the cards.
   final bool header;
 
   @override
@@ -155,7 +131,7 @@ class AppPreviewSample extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      // An order number is data: the app never translates it.
+
                       child: Text(
                         'ORD-042',
                         style: orderTitle,
@@ -175,8 +151,7 @@ class AppPreviewSample extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    // All the room the amount leaves, so the badges only
-                    // shorten when it is really tight.
+
                     Expanded(
                       child: Row(
                         children: [
@@ -218,8 +193,6 @@ class AppPreviewSample extends StatelessWidget {
   }
 }
 
-/// The Dashboard's header band: today's revenue in the theme's text color
-/// on its gradient.
 class _HeaderSample extends StatelessWidget {
   const _HeaderSample();
 
@@ -245,7 +218,7 @@ class _HeaderSample extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          // One line: a long amount shrinks instead of wrapping.
+
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
@@ -265,7 +238,6 @@ class _HeaderSample extends StatelessWidget {
   }
 }
 
-/// An order's status pill, as the Orders list draws it.
 class _Badge extends StatelessWidget {
   const _Badge(this.label, this.color);
 

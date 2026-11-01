@@ -27,14 +27,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   late final AnimationController _wave;
   late final AnimationController _particleCtrl;
 
-  /// One particle. There used to be a list of 35, but each was built from a
-  /// fresh `Random(77)`, so all 35 were the same particle stacked on one
-  /// spot; [_buildParticle] draws what that stack composited to.
   late final _Particle _particle;
 
-  // Timeline (fractions of the 2.5 s master), built once in initState: they
-  // used to be built per call, ~17 CurvedAnimations a frame, each leaving a
-  // status listener on _master that was never removed.
   final List<CurvedAnimation> _curves = [];
   late final Animation<double> _logoScale, _logoOp, _logoRot;
   late final Animation<double> _ringFade, _ring1, _ring2, _ring3;
@@ -46,7 +40,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void initState() {
     super.initState();
 
-    // Master: 2.5s total
     _master = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500));
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
     _orbit = AnimationController(vsync: this, duration: const Duration(milliseconds: 10000))..repeat();
@@ -80,8 +73,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     });
   }
 
-  /// [_master] eased over [s, e] of its run. (A 0→1 Tween on top, as this
-  /// used to have, returns its input unchanged.)
   Animation<double> _interval(double s, double e, [Curve c = Curves.linear]) {
     final curved = CurvedAnimation(parent: _master, curve: Interval(s, e, curve: c));
     _curves.add(curved);
@@ -91,8 +82,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void _navigateNext() {
     unawaited(TutorialService.setSplashShown());
     if (!mounted) return;
-    // The repeating controllers would otherwise keep rebuilding the splash
-    // through the route transition.
+
     for (final c in [_pulse, _orbit, _shimmer, _wave, _particleCtrl]) {
       c.stop();
     }
@@ -117,7 +107,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final h = sz.height;
     final dpr = MediaQuery.devicePixelRatioOf(context);
 
-    // Responsive sizes — everything relative to screen
     final logoIcon = (w * 0.22).clamp(80.0, 130.0);
     final orbitR1 = w * 0.32;
     final orbitR2 = w * 0.26;
@@ -134,7 +123,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       body: AnimatedBuilder(
         animation: Listenable.merge([_master, _pulse, _orbit, _shimmer, _wave, _particleCtrl]),
         builder: (context, _) {
-          // ── Timeline (compressed to 2.5s) ──
+
           final logoScale = _logoScale.value;
           final logoOp = _logoOp.value;
           final logoRot = _logoRot.value;
@@ -167,33 +156,27 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             ),
             child: Stack(
               children: [
-                // ── BG: Particle rising ──
+
                 ?particle,
 
-                // (A bottom wave and a top radial glow used to sit here: at
-                // most 0.2 × 0.05 and 0.12 × 0.1 white — 2.6 and 3.1 / 255,
-                // too faint to see — yet each cost an opacity layer every
-                // frame, the glow's about half the screen.)
-
-                // ── Content ──
                 SafeArea(
                   child: Center(
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // ═══ Logo area ═══
+
                           SizedBox(
                             width: ringMaxSize,
                             height: ringMaxSize,
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                // Ring 3 (outermost)
+
                                 _ring(ring3, ringMaxSize, ringFade * 0.05, 0.8),
-                                // Ring 2
+
                                 _ring(ring2, ringMaxSize * 0.75, ringFade * 0.08, 1.0),
-                                // Ring 1 glow
+
                                 Transform.scale(
                                   scale: ring1 * (1 + _pulse.value * 0.04),
                                   child: Container(
@@ -209,7 +192,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                   ),
                                 ),
 
-                                // ── Orbit icons (8) ──
                                 ..._buildOrbit(
                                   ringFade,
                                   ringMaxSize / 2,
@@ -219,10 +201,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                   orbitIconSize,
                                 ),
 
-                                // ── Sparkles (20) ──
                                 ..._buildSparkles(ringFade, ringMaxSize / 2, ringMaxSize * 0.2),
 
-                                // ── Logo icon ──
                                 Opacity(
                                   opacity: logoOp,
                                   child: Transform.scale(
@@ -248,9 +228,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                             ),
                                           ],
                                         ),
-                                        // (A "shine" ShaderMask used to sit over the
-                                        // logo, but srcATop over an empty box draws
-                                        // nothing.)
+
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(logoIcon * 0.24),
                                           child: Image.asset(
@@ -258,7 +236,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                             width: logoIcon,
                                             height: logoIcon,
                                             fit: BoxFit.cover,
-                                            // The asset is 1024 px; decode at display size.
+
                                             cacheWidth: (logoIcon * dpr).round(),
                                           ),
                                         ),
@@ -270,10 +248,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                             ),
                           ),
 
-                          // ═══ Title ═══
-                          // A long shop name (or a large font) wraps: its
-                          // lines stay centered, clear of the screen edges,
-                          // and stop at three.
                           Transform.translate(
                             offset: Offset(0, titleSlide * 25),
                             child: Padding(
@@ -295,8 +269,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                   },
                                   child: Consumer(
                                     builder: (context, ref, _) {
-                                      // Watch settings so the title updates
-                                      // live if the user changes shop name.
+
                                       ref.watch(settingsProvider);
                                       final name = ref
                                               .read(settingsProvider.notifier)
@@ -324,9 +297,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
                           const SizedBox(height: 6),
 
-                          // ═══ Subtitle ═══
-                          // One line, shrunk to the width when a large font
-                          // would wrap it.
                           Opacity(
                             opacity: subOp,
                             child: Transform.translate(
@@ -351,7 +321,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
                           SizedBox(height: h * 0.025),
 
-                          // ═══ Divider ═══
                           Opacity(
                             opacity: pillsOp,
                             child: Container(
@@ -370,7 +339,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
                           SizedBox(height: h * 0.025),
 
-                          // ═══ Feature pills ═══
                           Opacity(
                             opacity: pillsOp,
                             child: Padding(
@@ -390,7 +358,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
                           SizedBox(height: h * 0.04),
 
-                          // ═══ Progress ═══
                           Opacity(
                             opacity: bottomOp,
                             child: Column(
@@ -418,7 +385,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   ),
                 ),
 
-                // ═══ Version ═══
                 Positioned(
                   bottom: 6,
                   left: 0,
@@ -438,18 +404,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         },
       ),
     );
-    // Light status bar icons over the teal, in either theme. Its own region,
-    // nearer the status bar than the app frame's, so it wins while the
-    // splash is drawn, and the app's style is back as soon as it's gone.
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: kSplashSystemUiStyle,
       child: splash,
     );
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // Components
-  // ═══════════════════════════════════════════════════════════════════════════
 
   static const _featureData = [
     (icon: tabler.Category.new, label: 'Categories'),
@@ -616,20 +576,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
   }
 
-  /// How many identical copies of the particle used to be stacked.
   static const _particleCopies = 35;
 
-  /// The particle, drawn as the 35 stacked copies composited, without their
-  /// 35 opacity layers and 35 blurs. Each copy was Opacity([op]) over a white
-  /// dot with a white α 0.35 blurred shadow. The dot: 35 layers at [op] cover
-  /// 1 − (1 − op)^35 of it. The glow: each copy's is so faint (the blur
-  /// spreads a 3 px dot over a σ ≈ 6 px Gaussian, peaking near 0.035 × 0.35
-  /// × op) that 35 of them add up linearly to 35× one — more than one shadow
-  /// can reach at α 1, so it is split over three identical shadows.
   Widget? _buildParticle(Size sz, double fade) {
     final p = _particle;
     final t = (_particleCtrl.value + p.offset) % 1.0;
-    // Each copy's Opacity rounded op to 8 bits and painted nothing at 0.
+
     final alpha = Color.getAlphaFromOpacity(sin(t * pi) * p.alpha * fade);
     if (alpha == 0) return null;
     final op = alpha / 255;

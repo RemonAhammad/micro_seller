@@ -7,10 +7,8 @@ class ConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
 
-  /// Defaults to the localized "Confirm".
   final String? confirmText;
 
-  /// Defaults to the localized "Cancel".
   final String? cancelText;
   final bool isDestructive;
   final ThinIconBuilder? icon;
@@ -53,9 +51,7 @@ class ConfirmDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final s = AppStrings.of(context);
     return AlertDialog(
-      // A long title or message scrolls above the buttons when the dialog
-      // can't fit it (a large text size on a short or zoomed-in screen),
-      // instead of being cut off.
+
       scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -80,7 +76,7 @@ class ConfirmDialog extends StatelessWidget {
         textAlign: TextAlign.center,
       ),
       actions: [
-        // Side by side, or stacked when a label wouldn't fit its half.
+
         ButtonPair(
           first: OutlinedButton(
             onPressed: () => Navigator.of(context).pop(false),

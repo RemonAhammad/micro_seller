@@ -37,8 +37,6 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   PurchasePaymentMethod _paymentMethod = PurchasePaymentMethod.cash;
   bool _isLoading = false;
 
-  /// One unit-cost controller per item, keyed by productId, so typing is
-  /// never overwritten by a rebuild.
   final Map<int, TextEditingController> _costCtrls = {};
   late Listenable _totalsListenable;
 
@@ -51,12 +49,11 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     }
   }
 
-  /// Call whenever items are added to or removed from [_items].
   void _syncCostControllers() {
     final ids = {for (final i in _items) i.productId};
     _costCtrls.removeWhere((id, ctrl) {
       if (ids.contains(id)) return false;
-      // The removed row's field stays mounted until the next frame.
+
       WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
       return true;
     });
@@ -144,7 +141,6 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     );
   }
 
-  // No setState: ListenableBuilders on the cost controllers redraw the totals.
   void _updateItemCost(int index, String value) {
     final cost = NumberInput.parseDecimal(value) ?? 0;
     _items[index] = _items[index].copyWith(
@@ -235,7 +231,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Supplier picker (optional) ─────────────────────────────
+
             Text(s.supplierOptional,
                 style: TextStyle(
                   fontSize: 13,
@@ -297,7 +293,6 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── Items ──────────────────────────────────────────────────
             Row(
               children: [
                 Text(s.items,
@@ -378,7 +373,6 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
 
             const SizedBox(height: 16),
 
-            // ── Payment ────────────────────────────────────────────────
             Text(s.payment,
                 style: TextStyle(
                   fontSize: 13,
@@ -398,8 +392,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
               final payFull = ListenableBuilder(
                 listenable: _totalsListenable,
                 builder: (context, _) => TextButton(
-                  // Every decimal the shop's currency has (the Kuwaiti
-                  // Dinar's 3), so paying in full pays the whole total.
+
                   onPressed: _totalAmount > 0
                       ? () => _amountPaidCtrl.text =
                           _totalAmount.toStringAsFixed(
@@ -410,10 +403,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                   child: Text(s.payFull),
                 ),
               );
-              // Pay Full sits beside the field, unless that would cut off
-              // the field's label (large text, narrow layout): then it goes
-              // under the field. The field's label shares it with 16 of
-              // padding and the 48 paste button.
+
               final payFullWidth = math.max(64.0,
                   _textWidth(context, s.payFull, theme.textTheme.labelLarge) + 24);
               final payFullBelow = box.maxWidth - 8 - payFullWidth - 16 - 48 <
@@ -437,7 +427,6 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             }),
             const SizedBox(height: 12),
 
-            // Payment method chips
             Wrap(
               spacing: 6,
               children: PurchasePaymentMethod.values.map((m) {
@@ -472,7 +461,6 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
 
             const SizedBox(height: 20),
 
-            // ── Summary ────────────────────────────────────────────────
             ListenableBuilder(
               listenable: _totalsListenable,
               builder: (context, _) => Container(
@@ -521,7 +509,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     final item = _items[index];
     final costCtrl = _costCtrls[item.productId]!;
     const qtyStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 13);
-    // The line total, shrunk rather than split when it doesn't fit.
+
     final total = ListenableBuilder(
       listenable: costCtrl,
       builder: (context, _) => FittedBox(
@@ -559,10 +547,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
           ),
           const SizedBox(height: 6),
           LayoutBuilder(builder: (context, box) {
-            // The total sits at the end of the row, unless that would leave
-            // the unit cost field too narrow for its label and 16 of padding
-            // (large text, narrow layout): then it goes under the row. The
-            // qty controls are 70 wide plus the number.
+
             final field = box.maxWidth -
                 (70 + _textWidth(context, '${item.qty}', qtyStyle)) -
                 8 - 8 - 70;
@@ -573,7 +558,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
               children: [
                 Row(
                   children: [
-                    // Qty controls
+
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
@@ -605,7 +590,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Unit cost field
+
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
@@ -613,8 +598,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                           isDense: true,
                           contentPadding:
                               const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                          // 36 tall at the default text size and taller with
-                          // larger text, instead of clipping it.
+
                           constraints: const BoxConstraints(minHeight: 36),
                         ),
                         style: const TextStyle(fontSize: 12),
@@ -627,7 +611,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                     ),
                     if (!totalBelow) ...[
                       const SizedBox(width: 8),
-                      // Total
+
                       SizedBox(width: 70, child: total),
                     ],
                   ],
@@ -661,7 +645,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
               )),
           const SizedBox(width: 12),
-          // An amount too wide for the line shrinks instead of overflowing.
+
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -691,7 +675,6 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   }
 }
 
-/// How wide [text] in [style] is on one line where [context] lays it out.
 double _textWidth(BuildContext context, String text, TextStyle? style) {
   var effective = DefaultTextStyle.of(context).style.merge(style);
   if (MediaQuery.boldTextOf(context)) {
@@ -706,8 +689,6 @@ double _textWidth(BuildContext context, String text, TextStyle? style) {
   painter.dispose();
   return width;
 }
-
-// ─── Supplier Picker Sheet ─────────────────────────────────────────────────
 
 class _SupplierPickerSheet extends StatefulWidget {
   final List<Supplier> suppliers;
@@ -829,8 +810,6 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
   }
 }
 
-// ─── Product Picker Sheet (with cost field) ────────────────────────────────
-
 class _ProductPickerSheet extends StatefulWidget {
   final Isar isar;
   final List<PurchaseItem> currentItems;
@@ -850,8 +829,6 @@ class _ProductPickerSheet extends StatefulWidget {
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
 }
 
-/// A product with its search keys lowercased once per emission rather than
-/// on every keystroke.
 class _PickerProduct {
   _PickerProduct(this.product)
       : name = product.name.toLowerCase(),
@@ -917,10 +894,6 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     widget.onChanged(_items);
   }
 
-  /// The supplier filter chip's label. "{name} only" is one translated
-  /// template, split around the name here: a long name is ellipsized on its
-  /// own while the words around it stay whole, and the Row keeps the
-  /// template's order in right-to-left languages too.
   Widget _filterLabel(BuildContext context) {
     final s = AppStrings.of(context);
     const style = TextStyle(fontSize: 12);
@@ -1028,8 +1001,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
               child: Row(
                 children: [
-                  // Flexible, so a long supplier name is cut short instead
-                  // of pushing the chip off the sheet.
+
                   Flexible(
                     child: FilterChip(
                       label: _filterLabel(context),

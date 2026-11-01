@@ -10,9 +10,6 @@ import '../../../../shared/widgets/loading_overlay.dart';
 import '../../providers/reports_provider.dart';
 import 'report_widgets.dart';
 
-/// The four Reports tabs. Each watches its own provider for the shared
-/// `[from, to]` range picked in the header.
-
 String _m(double v) => CurrencyFormatter.formatCompact(v);
 String _full(double v) => CurrencyFormatter.format(v);
 
@@ -22,8 +19,7 @@ Widget _async<T>(
   Widget Function(T data) data,
 ) {
   final s = AppStrings.of(context);
-  // Reports recompute when orders change; keep the last numbers up
-  // meanwhile instead of flashing the shimmer.
+
   return value.when(
     skipLoadingOnReload: true,
     data: data,
@@ -41,8 +37,6 @@ Widget _async<T>(
 List<Widget> _gap(List<Widget> children) => [
       for (final c in children) ...[c, const SizedBox(height: 14)],
     ];
-
-// ─── Profit & Sales ──────────────────────────────────────────────────────
 
 class SalesReportTab extends ConsumerWidget {
   const SalesReportTab({super.key, required this.from, required this.to});
@@ -171,8 +165,6 @@ class SalesReportTab extends ConsumerWidget {
   }
 }
 
-// ─── Dues & Payments ─────────────────────────────────────────────────────
-
 class DuesReportTab extends ConsumerWidget {
   const DuesReportTab({super.key, required this.from, required this.to});
   final DateTime from, to;
@@ -200,7 +192,7 @@ class DuesReportTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Shrinks rather than breaking the number over two lines.
+
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
@@ -251,8 +243,6 @@ class DuesReportTab extends ConsumerWidget {
     });
   }
 }
-
-// ─── Stock & Returns ─────────────────────────────────────────────────────
 
 class InventoryReportTab extends ConsumerWidget {
   const InventoryReportTab({super.key, required this.from, required this.to});
@@ -338,8 +328,6 @@ class InventoryReportTab extends ConsumerWidget {
     });
   }
 }
-
-// ─── Purchases & Expenses ────────────────────────────────────────────────
 
 class PurchasesReportTab extends ConsumerWidget {
   const PurchasesReportTab({super.key, required this.from, required this.to});

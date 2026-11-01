@@ -3,9 +3,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/currency_formatter.dart';
 
-/// Stacked bar of how long money has been owed (<30 / 30–60 / 60+ days),
-/// with a legend. Used by the dashboard's Due Book card and the Reports
-/// "Dues & Payments" tab.
 class AgingBar extends StatelessWidget {
   const AgingBar({
     super.key,
@@ -47,7 +44,7 @@ class AgingBar extends StatelessWidget {
                 for (final (_, amount, color) in buckets)
                   if (amount > 0)
                     Expanded(
-                      // Flex needs ints; scale so small buckets stay visible.
+
                       flex: (amount / total * 1000).round().clamp(1, 1000),
                       child: Container(color: color),
                     ),
@@ -71,8 +68,7 @@ class AgingBar extends StatelessWidget {
                         BoxDecoration(color: color, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 5),
-                  // Wraps when one entry is wider than the card (a long
-                  // translation, a large text size) instead of overflowing.
+
                   Flexible(
                     child: Text(
                       '$label  ${CurrencyFormatter.formatCompact(amount)}',

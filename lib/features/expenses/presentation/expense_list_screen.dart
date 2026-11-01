@@ -28,7 +28,7 @@ class ExpenseListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(s.expenses),
         actions: [
-          // Its own context: an iPad's share sheet points at the button.
+
           Builder(
             builder: (buttonContext) => IconButton(
               icon: const ThinIcon(tabler.FileDownload.new),
@@ -55,7 +55,6 @@ class ExpenseListScreen extends ConsumerWidget {
             );
           }
 
-          // Monthly total summary
           final thisMonthExpenses = expenses.where((e) =>
               e.date != null && DateFormatter.isThisMonth(e.date!)).toList();
           final monthTotal =
@@ -63,7 +62,7 @@ class ExpenseListScreen extends ConsumerWidget {
 
           return Column(
             children: [
-              // Month summary
+
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
@@ -84,9 +83,7 @@ class ExpenseListScreen extends ConsumerWidget {
                           Text(s.thisMonth,
                               style: TextStyle(
                                   color: Colors.white70, fontSize: 12)),
-                          // A total too wide for the card (narrow layout,
-                          // large text) shrinks instead of pushing the
-                          // entry count off it.
+
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: AlignmentDirectional.centerStart,
@@ -124,7 +121,6 @@ class ExpenseListScreen extends ConsumerWidget {
                 ),
               ),
 
-              // List
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),

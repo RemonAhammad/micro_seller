@@ -9,17 +9,6 @@ import '../../core/utils/date_formatter.dart';
 import 'pdf_assembly.dart';
 import 'widget_capture.dart';
 
-/// Generates the order receipt PDF by:
-///   1. Building the receipt as a Flutter widget tree.
-///   2. Rendering it off-screen to a PNG via Skia ([captureWidgetPng]).
-///      Skia uses HarfBuzz for OpenType shaping, so Bengali conjuncts,
-///      Arabic ligatures, Thai marks, CJK, and emoji all render correctly.
-///   3. Embedding that PNG into a single-page `pw.Document` at A4 size
-///      ([assemblePdf], on a background isolate).
-///
-/// Trade-off vs. native pw widgets: the resulting PDF text is not selectable
-/// (it's a rasterised image). For a receipt that's an acceptable price for
-/// guaranteed Unicode correctness across every script the user might type.
 class PdfService {
   Future<Uint8List> generateOrderReceipt(
     Order order, {
@@ -30,15 +19,6 @@ class PdfService {
     final sym = currencySymbol ?? CurrencyFormatter.symbol;
     final watermarkIcon = await loadPdfWatermarkIcon();
 
-    // Capture the Flutter-rendered receipt to a PNG. We have to pass a
-    // FINITE targetSize — the capture multiplies it by pixelRatio to get the
-    // buffer size, and `infinity * pixelRatio` produces an unrenderable image
-    // (the symptom: a red error placeholder when the PDF tries to decode the
-    // broken PNG bytes).
-    //
-    // 794×1400 logical px ≈ A4 portrait at 96 DPI with extra height for tall
-    // invoices. Anything taller gets clipped — for now this is more than
-    // enough for the receipt layout (header + items table + totals + footer).
     final pngBytes = await captureWidgetPng(
       receiptPage(
         order,
@@ -52,13 +32,9 @@ class PdfService {
       delay: const Duration(milliseconds: 100),
     );
 
-    // Single-page A4 PDF. The receipt is sized to its content (not a full
-    // page), so it stays PNG — see [assemblePdf].
     return assemblePdf([pngBytes]);
   }
 
-  /// The receipt page [generateOrderReceipt] captures. Public so a test can
-  /// pump it and check what it draws.
   @visibleForTesting
   static Widget receiptPage(
     Order order, {
@@ -118,10 +94,6 @@ class PdfService {
   }
 }
 
-/// Pure Flutter receipt — gets rasterised to PNG via [captureWidgetPng].
-/// Looks like the on-screen order detail screen (header in the app's theme
-/// color, bill-to card, items table, totals, payment badge, footer) but in a
-/// fixed A4-friendly width.
 class _ReceiptWidget extends StatelessWidget {
   final Order order;
   final String shopName;
@@ -137,8 +109,6 @@ class _ReceiptWidget extends StatelessWidget {
     required this.watermarkIcon,
   });
 
-  /// The header's color and the text on it, from the app's color theme.
-  /// Read when the page is built, so the next receipt follows a theme change.
   static Color get _brand => DocumentBrand.color;
   static Color get _onBrand => DocumentBrand.onColor;
   static const _grey100 = Color(0xFFF5F5F5);
@@ -171,12 +141,7 @@ class _ReceiptWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The off-screen capture only injects Directionality, not the
-    // MediaQuery / Material context that real Material widgets need. So we
-    // wire those up by hand at the minimum level required for Text/Table/
-    // Container to render. (Using MaterialApp here fails because it tries
-    // to resolve a MediaQuery ancestor that doesn't exist in the off-screen
-    // capture environment.)
+
     return MediaQuery(
       data: const MediaQueryData(size: Size(794, 2000)),
       child: Directionality(
@@ -185,9 +150,7 @@ class _ReceiptWidget extends StatelessWidget {
           style: const TextStyle(color: Colors.black, fontSize: 12),
           child: Material(
             color: Colors.white,
-            // Stack so we can paint the watermark on top of the canvas
-            // anchored to the bottom-right, regardless of how tall the
-            // receipt content is.
+
             child: Stack(
               children: [
                 Padding(
@@ -458,12 +421,8 @@ class _ReceiptWidget extends StatelessWidget {
   }
 }
 
-/// The pixelRatio every PDF page is captured at (2× the 96-DPI A4 canvas).
 const double kPdfCapturePixelRatio = 2.0;
 
-/// The "Micro Seller" wordmark in every document's watermark. The watermark
-/// is the app's own branding, so it stays teal whatever color theme the
-/// seller picked (the rest of the page follows [DocumentBrand]).
 const Color kPdfWatermarkColor = Color(0xFF00897B);
 
 const String _kWatermarkAsset = 'assets/icons/app_icon.png';
@@ -471,10 +430,6 @@ const double _kWatermarkIconSize = 16;
 
 Future<ui.Image?>? _watermarkIcon;
 
-/// The watermark's app icon, decoded once per session at the size it's drawn
-/// (16 px × [kPdfCapturePixelRatio] — a few KB, vs. the 1024 px asset an
-/// `Image.asset` decodes). Drawn with `RawImage`, so a capture doesn't wait
-/// for an async asset load. Null if the asset can't be decoded.
 Future<ui.Image?> loadPdfWatermarkIcon() {
   return _watermarkIcon ??= () async {
     try {
@@ -491,9 +446,6 @@ Future<ui.Image?> loadPdfWatermarkIcon() {
   }();
 }
 
-/// The 16 px app icon in the PDF watermarks. Draws the pre-decoded [icon]
-/// from [loadPdfWatermarkIcon]; without one, falls back to the async
-/// `Image.asset` (which a capture only picks up on its retry).
 class PdfWatermarkIcon extends StatelessWidget {
   const PdfWatermarkIcon({super.key, this.icon});
 
@@ -514,20 +466,15 @@ class PdfWatermarkIcon extends StatelessWidget {
       _kWatermarkAsset,
       width: _kWatermarkIconSize,
       height: _kWatermarkIconSize,
-      // If the asset can't be found at runtime, just skip the icon
-      // rather than painting a broken-image placeholder onto the PDF.
+
       errorBuilder: (_, _, _) => const SizedBox.shrink(),
     );
   }
 }
 
-/// Bottom-right watermark: app icon + "Micro Seller" wordmark. Subtle
-/// (slightly faded) so it reads as branding rather than competing with the
-/// invoice content.
 class PdfWatermark extends StatelessWidget {
   const PdfWatermark({super.key, this.icon});
 
-  /// From [loadPdfWatermarkIcon].
   final ui.Image? icon;
 
   @override

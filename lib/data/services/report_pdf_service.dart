@@ -7,15 +7,10 @@ import 'pdf_service.dart';
 import 'report_service.dart';
 import 'widget_capture.dart';
 
-/// Renders a Reports tab ([ReportTable]s) to a multi-page PDF. Same widget →
-/// PNG → PDF pipeline as the invoice and statement (Skia/HarfBuzz shaping,
-/// so Bengali, Arabic, Thai… render correctly).
 class ReportPdfService {
   static const double _pageWidth = 794;
   static const double _pageHeight = 1123;
 
-  /// Row budget per page. A table title + header costs 2, and the report
-  /// header on the first page costs [_firstPageHeader].
   static const int _rowsPerPage = 34;
   static const int _firstPageHeader = 5;
 
@@ -27,8 +22,7 @@ class ReportPdfService {
     required String Function(int page, int total) pageOf,
     TextDirection textDirection = TextDirection.ltr,
   }) async {
-    // Split tables into page-sized chunks, repeating a table's header when it
-    // continues onto the next page.
+
     final pages = <List<ReportTable>>[[]];
     var budget = _rowsPerPage - _firstPageHeader;
     for (final t in tables.where((t) => t.rows.isNotEmpty)) {
@@ -60,22 +54,18 @@ class ReportPdfService {
           watermarkIcon: watermarkIcon,
         ),
         pixelRatio: kPdfCapturePixelRatio,
-        // Must be finite — see PdfService.generateOrderReceipt.
+
         targetSize: const Size(_pageWidth, _pageHeight),
         delay: const Duration(milliseconds: 100),
       ));
     }
-    // A page with a table spans the full canvas on an opaque white Material
-    // → JPEG. A table-less page is only as wide as its header text and keeps
-    // its PNG (see assemblePdf).
+
     return assemblePdf(images, jpegPages: (
       width: (_pageWidth * kPdfCapturePixelRatio).round(),
       height: (_pageHeight * kPdfCapturePixelRatio).round(),
     ));
   }
 
-  /// One page as [generate] captures it ([showHeader] on the first page
-  /// only). Public so a test can pump it and check what it draws.
   @visibleForTesting
   static Widget reportPage({
     required String shopName,
@@ -120,11 +110,6 @@ class _ReportPage extends StatelessWidget {
   final TextDirection textDirection;
   final ui.Image? watermarkIcon;
 
-  /// The shop name, table titles and header rows, and the text on the header
-  /// rows, from the app's color theme. Read when the page is built, so the
-  /// next report follows a theme change. The shop name and table titles are
-  /// text on the white page: [_brandText], a shade that reads there (a light
-  /// theme color would be all but invisible).
   static Color get _brand => DocumentBrand.color;
   static Color get _onBrand => DocumentBrand.onColor;
   static Color get _brandText => DocumentBrand.textColor;
@@ -134,8 +119,7 @@ class _ReportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Capture environment only provides Directionality — wire the rest by
-    // hand (MaterialApp fails here; see PdfService._ReceiptWidget).
+
     return MediaQuery(
       data: const MediaQueryData(
           size: Size(ReportPdfService._pageWidth, ReportPdfService._pageHeight)),

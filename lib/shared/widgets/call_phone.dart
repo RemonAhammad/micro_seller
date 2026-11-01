@@ -9,9 +9,6 @@ import '../../core/utils/number_input.dart';
 import 'app_button.dart';
 import 'bottom_sheet_handle.dart';
 
-/// The `tel:` link that calls [phone]: its digits (any script's, as 0-9),
-/// `*`, `#`, and a `+` before the first digit; spaces, dashes and
-/// parentheses dropped. Null when [phone] has no digit.
 @visibleForTesting
 Uri? telUri(String phone) {
   final number = StringBuffer();
@@ -21,19 +18,15 @@ Uri? telUri(String phone) {
       hasDigit = true;
       number.writeCharCode(unit);
     } else if (unit == 0x2A || unit == 0x23) {
-      number.writeCharCode(unit); // * and #
+      number.writeCharCode(unit);
     } else if (unit == 0x2B && number.isEmpty) {
-      number.writeCharCode(unit); // +
+      number.writeCharCode(unit);
     }
   }
   if (!hasDigit) return null;
   return Uri(scheme: 'tel', path: number.toString());
 }
 
-/// Calls [phone] in the phone app. A device that can't call (an iPad, an
-/// iPod touch, a tablet without a dialer) says so in a sheet that shows the
-/// number with Copy number: iOS answers false there, Android throws (no app
-/// handles `tel:`).
 Future<void> callPhone(BuildContext context, String phone) async {
   final uri = telUri(phone);
   var called = false;
@@ -73,9 +66,7 @@ class _CallNotAvailable extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Selectable, left to right in every language (an Arabic layout
-        // would put the + after the digits), and on one line that shrinks
-        // rather than breaking the number.
+
         SelectionArea(
           child: FittedBox(
             fit: BoxFit.scaleDown,

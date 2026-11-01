@@ -1,5 +1,5 @@
 const translationsBn = <String, String>{
-  // Navigation
+
   'dashboard': 'ড্যাশবোর্ড',
   'products': 'পণ্য',
   'orders': 'অর্ডার',
@@ -22,7 +22,6 @@ const translationsBn = <String, String>{
   'scanAgain': 'আবার স্ক্যান করুন',
   'pointCameraAtCode': 'QR কোড বা বারকোডের দিকে ক্যামেরা ধরুন',
 
-  // Dashboard
   'todayRevenue': 'আজকের আয়',
   'monthRevenue': 'মাসের আয়',
   'monthProfit': 'মাসের লাভ',
@@ -46,7 +45,6 @@ const translationsBn = <String, String>{
   'thisMonth': 'এই মাস',
   'customRange': 'কাস্টম রেঞ্জ',
 
-  // Products
   'addProduct': 'পণ্য যোগ করুন',
   'editProduct': 'পণ্য সম্পাদনা',
   'productName': 'পণ্যের নাম',
@@ -91,7 +89,6 @@ const translationsBn = <String, String>{
   'lastUpdated': 'সর্বশেষ আপডেট',
   'noVariantsHint': 'কোনো ভ্যারিয়েন্ট নেই। সাইজ, রং ইত্যাদির মতো অ্যাট্রিবিউট যোগ করুন।',
 
-  // Orders
   'addOrder': 'নতুন অর্ডার',
   'editOrder': 'অর্ডার সম্পাদনা',
   'orderNumber': 'অর্ডার #',
@@ -132,7 +129,6 @@ const translationsBn = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'কোনো বিশেষ নির্দেশনা থাকলে লিখুন...',
 
-  // Order status
   'pending': 'পেন্ডিং',
   'confirmed': 'কনফার্মড',
   'shipped': 'শিপড',
@@ -141,12 +137,10 @@ const translationsBn = <String, String>{
   'active': 'চলমান',
   'placed': 'অর্ডার হয়েছে',
 
-  // Payment status
   'unpaid': 'অপরিশোধিত',
   'partial': 'আংশিক',
   'paid': 'পরিশোধিত',
 
-  // Payment methods
   'cash': 'নগদ',
   'card': 'কার্ড',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsBn = <String, String>{
   'bank': 'ব্যাংক',
   'other': 'অন্যান্য',
 
-  // Order detail
   'shareViaWhatsApp': 'WhatsApp এ শেয়ার করুন',
   'sharePdf': 'PDF শেয়ার',
   'downloadPdf': 'PDF ডাউনলোড',
@@ -174,7 +167,6 @@ const translationsBn = <String, String>{
   'markAsShipped': 'শিপড হিসেবে চিহ্নিত করুন',
   'markAsCompleted': 'সম্পন্ন হিসেবে চিহ্নিত করুন',
 
-  // Customers
   'addCustomer': 'গ্রাহক যোগ করুন',
   'editCustomer': 'গ্রাহক সম্পাদনা',
   'customerName': 'নাম',
@@ -190,7 +182,6 @@ const translationsBn = <String, String>{
   'outstanding': 'বকেয়া',
   'memberSince': 'গ্রাহক হওয়ার তারিখ',
 
-  // Inventory
   'stockAdjustment': 'স্টক সমন্বয়',
   'stockMovements': 'স্টক মুভমেন্ট',
   'stockLevels': 'স্টক লেভেল',
@@ -215,7 +206,6 @@ const translationsBn = <String, String>{
   'inStockLabel': 'স্টকে আছে',
   'allCategories': 'সব ক্যাটাগরি',
 
-  // Expenses
   'addExpense': 'খরচ যোগ করুন',
   'editExpense': 'খরচ সম্পাদনা',
   'expenseTitle': 'খরচের শিরোনাম',
@@ -230,7 +220,6 @@ const translationsBn = <String, String>{
   'marketing': 'মার্কেটিং',
   'supplies': 'সাপ্লাইজ',
 
-  // Settings
   'shopName': 'দোকানের নাম',
   'currencySymbol': 'মুদ্রা চিহ্ন',
   'googleAccount': 'গুগল অ্যাকাউন্ট',
@@ -284,7 +273,6 @@ const translationsBn = <String, String>{
   'downloads': 'ডাউনলোডস',
   'dangerZone': 'বিপদ অঞ্চল',
 
-  // Suppliers
   'addSupplier': 'সরবরাহকারী যোগ করুন',
   'editSupplier': 'সরবরাহকারী সম্পাদনা',
   'supplierNotFound': 'সরবরাহকারী পাওয়া যায়নি',
@@ -307,7 +295,6 @@ const translationsBn = <String, String>{
   'addSuppliersFromMenu': 'সরবরাহকারী মেনু থেকে সরবরাহকারী যোগ করুন',
   'selectSupplier': 'সরবরাহকারী নির্বাচন করুন',
 
-  // Purchases
   'purchaseNotFound': 'ক্রয় পাওয়া যায়নি',
   'deletePurchase': 'ক্রয় মুছুন',
   'deletePurchaseConfirm': 'ক্রয়কৃত পরিমাণ অনুসারে স্টক কমানো হবে।',
@@ -325,7 +312,6 @@ const translationsBn = <String, String>{
   'allProducts': 'সব পণ্য',
   'supplierProductsOnly': 'শুধু {name}',
 
-  // Cash Register
   'registerOpen': 'রেজিস্টার খোলা',
   'noRegisterOpen': 'কোনো রেজিস্টার খোলা নেই',
   'openRegisterDesc': 'ক্যাশ ফ্লো ট্র্যাক করতে রেজিস্টার খুলুন',
@@ -345,7 +331,6 @@ const translationsBn = <String, String>{
   'noRegisterHistory': 'এখনো কোনো রেজিস্টার ইতিহাস নেই',
   'loading': 'লোড হচ্ছে...',
 
-  // Returns
   'returnsAndRefunds': 'রিটার্ন ও রিফান্ড',
   'createReturnTitle': 'রিটার্ন তৈরি করুন',
   'selectItems': 'আইটেম নির্বাচন করুন',
@@ -384,7 +369,6 @@ const translationsBn = <String, String>{
   'approveReturnConfirm': 'এই রিটার্ন অনুমোদন করে আইটেমগুলো গৃহীত হিসেবে চিহ্নিত করবেন? স্টক পুনরুদ্ধার করা হবে।',
   'returnRejected': 'রিটার্ন প্রত্যাখ্যাত',
 
-  // Categories
   'addCategory': 'ক্যাটাগরি যোগ করুন',
   'editCategory': 'ক্যাটাগরি সম্পাদনা',
   'deleteCategory': 'ক্যাটাগরি মুছুন',
@@ -392,7 +376,6 @@ const translationsBn = <String, String>{
   'addCategoriesToOrganise': 'পণ্য সাজাতে ক্যাটাগরি যোগ করুন',
   'categoryName': 'ক্যাটাগরির নাম',
 
-  // Reports
   'totalRevenue': 'মোট আয়',
   'totalProfit': 'মোট লাভ',
   'totalExpenses': 'মোট খরচ',
@@ -402,7 +385,6 @@ const translationsBn = <String, String>{
   'topCustomers': 'শীর্ষ গ্রাহক',
   'salesByCategory': 'ক্যাটাগরি অনুসারে বিক্রয়',
 
-  // Actions
   'save': 'সেভ',
   'cancel': 'বাতিল',
   'delete': 'মুছুন',
@@ -424,19 +406,16 @@ const translationsBn = <String, String>{
   'back': 'পিছনে',
   'sort': 'সাজান',
 
-  // Delivery
   'delivery': 'ডেলিভারি',
   'markDelivered': 'ডেলিভারি সম্পন্ন',
   'delivered': 'ডেলিভারি হয়েছে',
 
-  // Variants
   'variants': 'ভ্যারিয়েন্ট',
   'addVariant': 'ভ্যারিয়েন্ট যোগ',
   'variantName': 'অ্যাট্রিবিউট (যেমন সাইজ)',
   'variantValue': 'মান (যেমন বড়)',
   'priceAdjustment': 'মূল্য +/-',
 
-  // Messages
   'deleteConfirmation': 'আপনি কি এটি মুছতে চান?',
   'clearDataConfirmation':
       'এটি আপনার সমস্ত ডাটা স্থায়ীভাবে মুছে ফেলবে। এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না। আপনি কি নিশ্চিত?',
@@ -452,7 +431,6 @@ const translationsBn = <String, String>{
   'noExpenses': 'এখনো কোনো খরচ রেকর্ড করা হয়নি',
   'noStockMovements': 'কোনো স্টক মুভমেন্ট রেকর্ড করা হয়নি',
 
-  // Misc
   'error': 'ত্রুটি',
   'pay': 'পরিশোধ',
   'scanQrBarcode': 'QR / বারকোড স্ক্যান করুন',
@@ -463,13 +441,11 @@ const translationsBn = <String, String>{
   'rowsSkipped': '{count} সারি বাদ দেওয়া হয়েছে:',
   'andMore': '...এবং আরও {count}',
 
-  // Payments / refunds
   'transactionId': 'লেনদেন আইডি',
   'transactionIdHint': 'বিকাশ / নগদ / রসিদ নং',
   'refundMethod': 'ফেরত পদ্ধতি',
   'refundTransactionId': 'ফেরত লেনদেন আইডি',
 
-  // Sidebar customization
   'sidebarOrder': 'সাইডবার ক্রম',
   'sidebarOrderDesc': 'সাইডবারের ট্যাব পুনর্বিন্যাস করতে টেনে আনুন',
   'resetToDefault': 'ডিফল্টে রিসেট করুন',
@@ -478,7 +454,6 @@ const translationsBn = <String, String>{
   'left': 'বামে',
   'right': 'ডানে',
 
-  // Display size (Settings → Display)
   'display': 'ডিসপ্লে',
   'displaySize': 'ডিসপ্লে সাইজ',
   'displaySizeDesc': 'স্ক্রিনের সবকিছু ছোট বা বড় করুন',
@@ -488,7 +463,6 @@ const translationsBn = <String, String>{
   'phoneTextSize': 'ফোন: {value}',
   'preview': 'প্রিভিউ',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'রঙের থিম',
   'colorThemeDesc': 'বাটন, হেডার ও হাইলাইটের প্রধান রং',
   'phoneColors': 'ফোনের রং',
@@ -536,18 +510,15 @@ const translationsBn = <String, String>{
   'deleteThemeConfirm': '“{name}” থিমটি মুছে ফেলবেন?',
   'themeLimitReached': 'আপনি সর্বোচ্চ {count}টি থিম সেভ করতে পারবেন',
 
-  // Auth gate
   'createPin': '৪ অঙ্কের পিন তৈরি করুন',
   'confirmPin': 'পিন নিশ্চিত করুন',
   'enterPin': 'পিন লিখুন',
   'pinDoesNotMatch': 'পিন মিলছে না। আবার চেষ্টা করুন।',
   'incorrectPin': 'ভুল পিন। আবার চেষ্টা করুন।',
 
-  // Auto Drive backup
   'autoBackup': 'ড্রাইভে স্বয়ংক্রিয় ব্যাকআপ',
   'autoBackupDesc': 'অ্যাপ চালু হলে স্বয়ংক্রিয়ভাবে ব্যাকআপ নিন (সাইন-ইন থাকলে)',
 
-  // Security section
   'security': 'নিরাপত্তা',
   'securityFingerprint': 'ফিঙ্গারপ্রিন্ট',
   'securityFingerprintDesc': 'সংবেদনশীল কাজের অনুমতির জন্য ফিঙ্গারপ্রিন্ট ব্যবহার করুন',
@@ -555,7 +526,7 @@ const translationsBn = <String, String>{
   'securityPinDesc': 'সংবেদনশীল কাজের জন্য ৪ অঙ্কের পিন প্রয়োজন',
   'biometricNotAvailable': 'এই ডিভাইসে কোনো ফিঙ্গারপ্রিন্ট সেট করা নেই',
   'changeSecurity': 'নিরাপত্তা সেটিংস বদলাতে যাচাই করুন',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'সংবেদনশীল কাজের অনুমতির জন্য Face ID ব্যবহার করুন',
   'faceIdNotSetUp': 'এই ডিভাইসে Face ID সেট করা নেই',
@@ -563,7 +534,6 @@ const translationsBn = <String, String>{
   'securityTouchIdDesc': 'সংবেদনশীল কাজের অনুমতির জন্য Touch ID ব্যবহার করুন',
   'touchIdNotSetUp': 'এই ডিভাইসে Touch ID সেট করা নেই',
 
-  // Background auto-backup status
   'autoBackupPaused': 'অটো ব্যাকআপ বিরতিতে আছে',
   'autoBackupResumed': 'অটো ব্যাকআপ পুনরায় শুরু হয়েছে',
   'signInToFix': 'সাইন ইন করে ঠিক করুন',
@@ -603,7 +573,6 @@ const translationsBn = <String, String>{
   'shopPhone': 'দোকানের ফোন',
   'productCatalog': 'পণ্য ক্যাটালগ',
 
-  // Due Book
   'dueBook': 'বাকির খাতা',
   'totalReceivable': 'মোট পাওনা',
   'customersOwing': '{count} জন গ্রাহকের কাছে পাওনা',
@@ -673,7 +642,6 @@ const translationsBn = <String, String>{
   'duesCollectedThisMonth': 'বাকি আদায় (এই মাস)',
   'overdue60Banner': '{count} জন গ্রাহকের কাছে ৬০+ দিন ধরে {amount} বাকি',
 
-  // Reports
   'profitAndLoss': 'লাভ-ক্ষতি',
   'item': 'আইটেম',
   'grossSales': 'মোট বিক্রি',
@@ -738,7 +706,6 @@ const translationsBn = <String, String>{
   'monthlyNetSales': 'মাসিক নিট বিক্রি',
   'dateRangeTo': 'থেকে',
 
-  // Rating prompt
   'rateTitle': '{app} কেমন লাগছে?',
   'rateMessage': 'আপনি অনেকদিন ধরে {app} দিয়ে আপনার দোকান পরিচালনা করছেন। একটি রেটিং অন্য বিক্রেতাদের অ্যাপটি খুঁজে পেতে সাহায্য করবে।',
   'rateNow': 'এখনই রেটিং দিন',
@@ -749,7 +716,6 @@ const translationsBn = <String, String>{
   'rateThisAppSubtitle': 'অন্য বিক্রেতাদের {app} খুঁজে পেতে সাহায্য করুন',
   'about': 'সম্পর্কে',
 
-  // App updates
   'updateAvailable': '{app} {version} পাওয়া যাচ্ছে',
   'updateHowToAndroid': 'আগে যে ধরনের APK ইনস্টল করেছিলেন (universal বা arm64-v8a), একই ধরনের APK ডাউনলোড করে বর্তমান অ্যাপের ওপর ইনস্টল করুন। আপনার ডাটা মুছে যাবে না।',
   'updateHowToIos': 'আগে যে সাইডলোডিং টুল ও Apple ID ব্যবহার করেছিলেন, সেগুলো দিয়েই আপডেটটি ইনস্টল করুন, যাতে আপনার ডাটা মুছে না যায়। প্রথমে ব্যাকআপ নিন।',
@@ -758,10 +724,8 @@ const translationsBn = <String, String>{
   'upToDate': 'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন',
   'updateCheckFailed': 'আপডেট পরীক্ষা করা যায়নি। আপনার ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
 
-  // Keypad bar (iOS)
   'next': 'পরবর্তী',
 
-  // Camera
   'cameraAccessOff': 'ক্যামেরা অ্যাক্সেস বন্ধ আছে',
   'cameraAllowPrompt': 'কোড স্ক্যান করতে ও ছবি তুলতে {app}-এর ক্যামেরা ব্যবহারের অনুমতি প্রয়োজন।',
   'cameraAllowInSettings': 'কোড স্ক্যান করতে ও ছবি তুলতে সেটিংসে {app}-কে ক্যামেরা ব্যবহারের অনুমতি দিন।',
@@ -774,7 +738,6 @@ const translationsBn = <String, String>{
   'torchOn': 'টর্চ চালু করুন',
   'torchOff': 'টর্চ বন্ধ করুন',
 
-  // Calls
   'callNotAvailable': 'এই ডিভাইসে কল করা যায় না',
   'copyNumber': 'নম্বর কপি করুন',
   'numberCopied': 'নম্বর কপি হয়েছে',

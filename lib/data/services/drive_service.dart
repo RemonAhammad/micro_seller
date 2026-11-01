@@ -21,15 +21,11 @@ class DriveBackupInfo {
   });
 }
 
-/// Stable error codes for the Drive backup pipeline. UI code switches on these
-/// instead of substring-matching exception messages.
 enum DriveErrorCode {
   notSignedIn,
   signInCancelled,
   signInFailed,
-  /// `DEVELOPER_ERROR` (status 10) from Google Play Services. Means the SHA-1
-  /// of the running APK + package name don't match any Android OAuth client
-  /// in the Cloud project (or Drive API isn't enabled there).
+
   developerError,
   network,
   invalidBackup,
@@ -81,38 +77,13 @@ class DriveService {
   static const _maxBackups = 5;
   static const _backupPrefix = 'sellerbook_backup';
 
-  /// Resumable upload chunk (must be a multiple of 256 KB). Most backups fit
-  /// in one chunk; bigger ones are sent — and retried — 8 MB at a time.
   static const _uploadChunkSize = 8 * 1024 * 1024;
 
   final LocalBackupService _localBackup = LocalBackupService();
 
-  // ── Google Sign-In (google_sign_in 7) ──
-  //
-  // v7 splits *authentication* (who the user is — `authenticate()`, needs UI)
-  // from *authorization* (Drive access token — `authorizationClient`). Drive
-  // only needs authorization, which can be checked without any UI, so the
-  // background worker never risks showing a picker.
-  //
-  // On Android without google-services.json, v7 requires the **web** OAuth
-  // client id as `serverClientId` (GOOGLE_OAUTH_WEB_CLIENT_ID in .env).
-  //
-  // On iOS the app's own iOS OAuth client signs in. No `clientId` is passed
-  // here, so the plugin reads it from `GIDClientID` in ios/Runner/Info.plist,
-  // the file that also registers its reversed id as the URL scheme Google's
-  // sign-in page returns through. Keeping both in one place matters: a
-  // missing GIDClientID, or a client id without its URL scheme, makes the
-  // interactive sign-in raise a native exception Dart can't catch, which
-  // closes the app (test/drive_ios_test.dart checks the pair). With no
-  // `clientId`, iOS ignores `serverClientId`; Drive doesn't need it there.
-  // Back up to Drive and Restore work on iPhone too; Auto Backup isn't
-  // offered there (AutoBackupRunner.isSupported).
-
   static bool _initialized = false;
   static GoogleSignInAccount? _account;
 
-  /// Forgets that Google Sign-In was initialised, so a test can initialise it
-  /// again (as another platform, with another `.env`).
   @visibleForTesting
   static void resetForTesting() {
     _initialized = false;
@@ -125,7 +96,7 @@ class DriveService {
         ? dotenv.maybeGet('GOOGLE_OAUTH_WEB_CLIENT_ID')?.trim()
         : null;
     await GoogleSignIn.instance.initialize(
-      // Never an empty string: unset or blank in .env is no server client.
+
       serverClientId:
           (webClientId?.isNotEmpty ?? false) ? webClientId : null,
     );
@@ -139,7 +110,6 @@ class DriveService {
     _initialized = true;
   }
 
-  /// Maps a v7 sign-in failure onto the app's stable [DriveErrorCode]s.
   DriveBackupException _mapSignInError(Object e, StackTrace st) {
     if (e is GoogleSignInException) {
       switch (e.code) {
@@ -185,9 +155,6 @@ class DriveService {
     }
   }
 
-  /// Drive API client. With [interactive] false (background worker, app
-  /// start) this never shows UI: it only uses an already-granted token and
-  /// throws [DriveErrorCode.notSignedIn] otherwise.
   Future<drive.DriveApi> _getDriveApi({bool interactive = true}) async {
     GoogleSignInClientAuthorization? authz;
     try {
@@ -216,13 +183,12 @@ class DriveService {
     return drive.DriveApi(client);
   }
 
-  /// Interactive sign-in + Drive consent. Returns null if the user cancels.
   Future<GoogleSignInAccount?> signIn() async {
     try {
       await _ensureInitialized();
       final account =
           await GoogleSignIn.instance.authenticate(scopeHint: _scopes);
-      // Grant Drive access now so later (and background) backups don't need UI.
+
       await account.authorizationClient.authorizeScopes(_scopes);
       _account = account;
       return account;
@@ -244,9 +210,6 @@ class DriveService {
     }
   }
 
-  /// The signed-in account, restored without a picker when possible (used to
-  /// show the email in Settings). May be null even when [hasDriveAccess] is
-  /// true — Drive backups only need the latter.
   Future<GoogleSignInAccount?> getCurrentUser() async {
     try {
       await _ensureInitialized();
@@ -260,8 +223,6 @@ class DriveService {
     }
   }
 
-  /// True if a Drive token is available without any UI — the check the
-  /// auto-backup paths use before running.
   Future<bool> hasDriveAccess() async {
     try {
       await _ensureInitialized();
@@ -274,18 +235,6 @@ class DriveService {
     }
   }
 
-  /// [settings] — pass the user's exported preferences map (theme, currency,
-  /// sidebar order, etc.) to include them in the backup. Pass null to back
-  /// up data only.
-  ///
-  /// [interactive] — when false, the call will NOT show a sign-in picker if
-  /// silent sign-in fails (background workers must use `false`). It instead
-  /// throws `DriveBackupException(notSignedIn)` so the caller can mark the
-  /// auto-backup as paused and prompt the user from the UI.
-  ///
-  /// [encodeOnWorker] — read and encode the backup on a worker isolate
-  /// (default), so the UI isolate never freezes. The WorkManager auto-backup
-  /// passes false: it already runs on its own UI-less isolate.
   Future<void> backupToDrive(
     Isar isar, {
     Map<String, dynamic>? settings,
@@ -320,10 +269,7 @@ class DriveService {
       await driveApi.files.create(
         file,
         uploadMedia: drive.Media(Stream.value(bytes), bytes.length),
-        // Resumable rather than the default multipart upload: multipart
-        // base64-encodes the whole backup in one go on this isolate, while
-        // resumable sends the raw bytes in chunks. Same file on Drive (same
-        // metadata, bytes and content type).
+
         uploadOptions:
             drive.ResumableUploadOptions(chunkSize: _uploadChunkSize),
       );
@@ -340,7 +286,7 @@ class DriveService {
     try {
       await _cleanupOldBackups(driveApi);
     } catch (e, st) {
-      // Cleanup failure is non-critical — the backup itself succeeded.
+
       _logError('cleanup', e, st);
     }
   }
@@ -394,11 +340,6 @@ class DriveService {
     }
   }
 
-  /// [currentSettings] — snapshot of the user's current preferences, used
-  /// for the rollback safety backup. Pass via `Settings.exportSettings()`.
-  /// [onSettingsRestored] — called with the imported settings map (if the
-  /// backup contained one) after a successful restore. The caller should
-  /// apply it via `Settings.importSettings`.
   Future<void> restoreFromDrive(
     Isar isar,
     String fileId, {
@@ -414,8 +355,6 @@ class DriveService {
         downloadOptions: drive.DownloadOptions.fullMedia,
       ) as drive.Media;
 
-      // copy: false — keeps the received chunks instead of copying each one
-      // into a growing list, and joins them once.
       final builder = BytesBuilder(copy: false);
       await for (final chunk in response.stream) {
         builder.add(chunk);
@@ -439,14 +378,6 @@ class DriveService {
     );
   }
 
-  /// The part of [restoreFromDrive] after the download: snapshot, restore,
-  /// roll back on failure. Decoding, validation, the restore write and the
-  /// snapshot all run on worker isolates; only [onSettingsRestored] runs
-  /// here.
-  ///
-  /// Errors: [DriveErrorCode.invalidBackup] — not a backup, nothing touched;
-  /// [DriveErrorCode.rolledBack] — the restore failed and the previous data
-  /// is back; [DriveErrorCode.restoreFailed] — the rollback failed too.
   @visibleForTesting
   Future<void> restoreFromBytes(
     Isar isar,
@@ -454,7 +385,7 @@ class DriveService {
     Map<String, dynamic>? currentSettings,
     Future<void> Function(Map<String, dynamic>)? onSettingsRestored,
   }) async {
-    // Snapshot current DB + settings so we can roll back if import fails.
+
     final Uint8List safetyBackup;
     try {
       safetyBackup =
@@ -472,7 +403,7 @@ class DriveService {
     final Object restoreError;
     final StackTrace restoreStack;
     try {
-      // Validated (JSON, `version` + `timestamp`) before anything is written.
+
       final restoredSettings = await _localBackup.restoreBytes(
         isar,
         bytes,
@@ -496,9 +427,6 @@ class DriveService {
       restoreStack = st;
     }
 
-    // Roll back to the safety snapshot. The outcome is thrown outside the
-    // rollback's try, so a successful rollback is reported as rolledBack
-    // (it used to be caught by its own catch and reported as restoreFailed).
     try {
       await _localBackup.restoreBytes(isar, safetyBackup);
     } catch (rollbackErr, rollbackSt) {

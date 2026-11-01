@@ -37,11 +37,8 @@ class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? product;
   final int? productId;
 
-  /// Pre-fill the QR code field when creating a new product (e.g. from the
-  /// scanner screen after a code wasn't matched). Ignored when editing.
   final String? initialQrCode;
 
-  /// Pre-fill the SKU field when creating a new product. Ignored when editing.
   final String? initialSku;
 
   const ProductFormScreen({
@@ -69,20 +66,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _categoryCtrl = TextEditingController();
   final _qrCtrl = TextEditingController();
 
-  /// The photo as `Product.imagePath` stores it: relative to the documents
-  /// directory (ProductImageStore). Shown via [resolveProductImagePath].
   String? _imagePath;
   bool _isCompressing = false;
   bool _isLoading = false;
   Product? _existingProduct;
   Supplier? _selectedSupplier;
 
-  // ── Hierarchical Variant State ──
   final List<_AttributeEntry> _attributes = [];
   List<_CombinationEntry> _combinations = [];
 
-  // Typing an attribute name or option only schedules a regeneration; the
-  // combinations table refreshes once typing pauses. _submit flushes it.
   final _regenDebouncer = Debouncer(delay: const Duration(milliseconds: 300));
   bool _regenPending = false;
 
@@ -103,7 +95,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _populateForm(product);
       }
     } else {
-      // New product — apply optional pre-fills from the scanner flow.
+
       if (widget.initialQrCode != null && widget.initialQrCode!.isNotEmpty) {
         _qrCtrl.text = widget.initialQrCode!;
       }
@@ -127,7 +119,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _categoryCtrl.text = product.category;
     _qrCtrl.text = product.qrCode;
 
-    // Load linked supplier if any
     if (product.supplierId > 0) {
       try {
         final isar = await ref.read(isarProvider.future);
@@ -138,12 +129,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       } catch (_) {}
     }
 
-    // The supplier lookup above is async: the form may have closed since.
     if (!mounted) return;
     setState(() {
       _imagePath = product.imagePath.isNotEmpty ? product.imagePath : null;
 
-      // Populate hierarchical variant data
       for (final a in _attributes) {
         a.dispose();
       }
@@ -159,7 +148,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         ));
       }
 
-      // Populate combinations
       _combinations = product.variantCombinations
           .map(_CombinationEntry.fromCombination)
           .toList();
@@ -187,8 +175,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
     super.dispose();
   }
-
-  // ── Variant helpers ──
 
   void _addAttribute() {
     setState(() {
@@ -220,8 +206,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _regenerateCombinations();
   }
 
-  /// Called on every keystroke in an attribute name / option field. The text
-  /// is already applied; only the (comparatively costly) table rebuild waits.
   void _scheduleRegeneration() {
     _regenPending = true;
     _regenDebouncer.run(() {
@@ -229,14 +213,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     });
   }
 
-  /// Rebuilds the combination list from the current attributes. Entries whose
-  /// key still exists are kept as they are (same controllers, so typed stock /
-  /// price / SKU and the active flag carry over), only their label is updated.
-  /// New keys get fresh entries; entries for keys that are gone are disposed.
   void _regenerateCombinations() {
     _regenPending = false;
 
-    // Build VariantAttribute list from current state
     final attrs = _attributes
         .where((a) =>
             a.nameCtrl.text.trim().isNotEmpty &&
@@ -250,14 +229,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ))
         .toList();
 
-    // Keys, labels and auto-SKUs only — existing values come from the entries.
     final generated = generateCombinations(
       attrs,
       baseSku: _skuCtrl.text.trim(),
     );
 
-    // Old entries by key, in list order. A key can repeat when an attribute
-    // has the same option twice (or two attributes share a name).
     final reusable = <String, List<_CombinationEntry>>{};
     for (final c in _combinations) {
       (reusable[c.key] ??= []).add(c);
@@ -271,8 +247,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (pool != null && pool.isNotEmpty) {
         next.add(pool.removeAt(0)..displayLabel = combo.displayLabel);
       } else if (previous != null) {
-        // Another copy of a repeated key: like before, it starts from the
-        // existing values for that key.
+
         next.add(_CombinationEntry.copyOf(previous, combo.displayLabel));
       } else {
         next.add(_CombinationEntry.fromCombination(combo));
@@ -282,8 +257,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final removed = [for (final pool in reusable.values) ...pool];
     setState(() => _combinations = next);
 
-    // Their rows still hold these controllers until the rebuild unmounts
-    // them, so dispose after the frame.
     if (removed.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         for (final c in removed) {
@@ -293,15 +266,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
   }
 
-  // ── Image ──
-
   Future<void> _pickImage(ImageSource source) async {
     final s = AppStrings.of(context);
     final XFile? picked;
     try {
-      // No imageQuality: it made the picker decode the photo at full size.
-      // The 1600 cap lets it subsample that decode; the compress pass sets
-      // quality.
+
       picked = await ref.read(imagePickerProvider).pickImage(
             source: source,
             maxWidth: 1600,
@@ -334,18 +303,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       );
 
       if (compressed != null && mounted) {
-        // Stored relative to the documents directory, which iOS can move
-        // on an update; resolved against it where the photo is shown.
+
         ProductImageStore.documentsDirectory ??= dir.path;
         setState(() => _imagePath = storedProductImagePath(compressed.path));
       }
     } catch (_) {
-      // The photo couldn't be saved (no room left, an unreadable file).
+
       if (mounted) context.showErrorSnackBar(s.error);
     } finally {
       if (mounted) setState(() => _isCompressing = false);
-      // Only mobile pickers hand back a temp copy; desktop returns the
-      // user's own file.
+
       if (Platform.isAndroid || Platform.isIOS) {
         try {
           await File(picked.path).delete();
@@ -354,12 +321,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
   }
 
-  /// Tells the seller why the picker didn't open ([code], the picker's
-  /// error). A refused camera is explained, with Open Settings, only when the
-  /// phone won't ask again: iOS never asks twice, while Android asks again
-  /// after a first "Deny", which needs no explanation.
   Future<void> _pickFailed(String code) async {
-    // The picker may have been open long enough for the form to close.
+
     if (!mounted) return;
     final s = AppStrings.of(context);
     switch (code) {
@@ -463,15 +426,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
   }
 
-  // ── Submit ──
-
   Future<void> _submit() async {
-    // Apply attribute / option typing still waiting on the debounce, so the
-    // last keystrokes are in _combinations before anything reads it.
+
     if (_regenPending) _regenerateCombinations();
 
     if (!_formKey.currentState!.validate()) {
-      // Scroll to top so user can see validation errors
+
       _scrollCtrl.animateTo(0,
           duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       return;
@@ -489,7 +449,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final isEdit = _existingProduct != null || widget.product != null;
       final existing = _existingProduct ?? widget.product;
 
-      // Build variant attributes
       final variantAttributes = _attributes
           .where((a) =>
               a.nameCtrl.text.trim().isNotEmpty &&
@@ -503,7 +462,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ))
           .toList();
 
-      // Build variant combinations
       final variantCombinations = _combinations.map((c) => VariantCombination(
         combinationKey: c.key,
         displayLabel: c.displayLabel,
@@ -518,9 +476,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         name: _nameCtrl.text.trim(),
         sku: _skuCtrl.text.trim(),
         description: _descCtrl.text.trim(),
-        // Relative, also for a photo an earlier version stored absolute.
+
         imagePath: storedProductImagePath(_imagePath ?? ''),
-        // The selling price and stock passed their validators above.
+
         sellingPrice: NumberInput.parseDecimal(_sellingPriceCtrl.text)!,
         costPrice: NumberInput.parseDecimal(_costPriceCtrl.text) ?? 0.0,
         stockQty: NumberInput.parseInteger(_stockCtrl.text)!,
@@ -542,11 +500,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         await ref.read(productProvider.notifier).addProduct(product);
       }
 
-      // Show success snackbar via the root messenger BEFORE popping —
-      // ScaffoldMessenger.of(context) reads from the local widget tree, which
-      // disappears when we pop. Using rootScaffoldMessengerKey-equivalent
-      // here would be cleaner, but capturing the messenger reference first
-      // works without app-wide setup.
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       final successMsg = isEdit
@@ -557,8 +510,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         SnackBar(content: Text(successMsg), backgroundColor: Colors.green),
       );
     } catch (e, st) {
-      // Log to both the IDE/DevTools (dart:developer) and terminal
-      // (debugPrint) so silent failures stop being silent.
+
       developer.log('Product save failed', name: 'ProductForm', error: e, stackTrace: st);
       if (kDebugMode) {
         debugPrint('[ProductForm] save failed: $e');
@@ -594,10 +546,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       appBar: AppBar(
         title: Text(isEdit ? s.editProduct : s.addProduct),
       ),
-      // Only the combination rows (plain TextFields) are built lazily. Every
-      // FormField stays in the first SliverToBoxAdapter, which is always
-      // mounted: a lazily built FormField that scrolls out of the cache extent
-      // is unmounted, and Form.validate() would silently skip it.
+
       body: Form(
         key: _formKey,
         child: CustomScrollView(
@@ -609,7 +558,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Image picker ───────────────────────────────────────────────
+
                     Center(
                       child: GestureDetector(
                         onTap: _isCompressing ? null : _showImageSourceSheet,
@@ -633,8 +582,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   child: Image.file(
                                     File(photo),
                                     fit: BoxFit.cover,
-                                    // The file is gone (a backup restored on
-                                    // another phone carries no photos).
+
                                     errorBuilder: (_, _, _) => ThinIcon(
                                       tabler.PhotoOff.new,
                                       size: 36,
@@ -665,7 +613,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // ── Basic Info ─────────────────────────────────────────────────
                     const _SectionLabel('Basic Info'),
                     const SizedBox(height: 12),
                     AppTextField(
@@ -677,7 +624,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // ── Category with chips ────────────────────────────────────────
                     AppTextField(
                       label: s.category,
                       controller: _categoryCtrl,
@@ -688,7 +634,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     _CategoryChips(controller: _categoryCtrl),
                     const SizedBox(height: 12),
 
-                    // ── Supplier (optional) ────────────────────────────────────────
                     InkWell(
                       onTap: _pickSupplier,
                       borderRadius: BorderRadius.circular(10),
@@ -754,7 +699,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // ── QR / Barcode ───────────────────────────────────────────────
                     AppTextField(
                       label: s.qrBarcode,
                       controller: _qrCtrl,
@@ -775,7 +719,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // ── Pricing ────────────────────────────────────────────────────
                     const _SectionLabel('Pricing'),
                     const SizedBox(height: 12),
                     _FieldRow(
@@ -806,7 +749,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // ── Inventory ──────────────────────────────────────────────────
                     const _SectionLabel('Inventory'),
                     const SizedBox(height: 12),
                     _FieldRow(
@@ -833,9 +775,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // ── Variant Attributes ─────────────────────────────────────────
-                    // The button moves under the label when the two don't fit
-                    // on one line (large text, a narrow layout).
                     SizedBox(
                       width: double.infinity,
                       child: Wrap(
@@ -922,9 +861,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                           isDense: true,
                                           contentPadding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 8),
-                                          // 36 tall at the default text size
-                                          // and taller with larger text,
-                                          // instead of clipping it.
+
                                           constraints:
                                               const BoxConstraints(minHeight: 36),
                                           suffixIcon: GestureDetector(
@@ -968,7 +905,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       );
                     }),
 
-                    // ── Combinations ───────────────────────────────────────────────
                     if (combinations.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       SizedBox(
@@ -988,7 +924,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // Bulk actions
+
                       Row(
                         children: [
                           Expanded(
@@ -1018,7 +954,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 DecimalInputFormatter.money(signed: true),
                               ],
                               onApply: (val) {
-                                // '-' or '.' alone is no amount.
+
                                 if (NumberInput.parseDecimal(val) == null) {
                                   return false;
                                 }
@@ -1040,14 +976,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
             ),
 
-            // ── Combination rows (lazy) ──────────────────────────────────────
             if (combinations.isNotEmpty)
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: SliverList.builder(
                   itemCount: combinations.length,
-                  // Rows are keyed by their entry, which survives regeneration,
-                  // so a row keeps its element when entries shift around it.
+
                   findChildIndexCallback: (key) {
                     if (key is! ObjectKey) return null;
                     final i = combinations
@@ -1081,10 +1015,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 }
 
-// ─── Combination Row ─────────────────────────────────────────────────────────
-
-/// One combination's checkbox + stock / price adjustment / SKU fields. Owns
-/// its checkbox setState so toggling a row rebuilds only that row.
 class _CombinationRow extends StatefulWidget {
   final _CombinationEntry entry;
 
@@ -1189,10 +1119,6 @@ class _CombinationRowState extends State<_CombinationRow> {
   }
 }
 
-// ─── Category Chips ──────────────────────────────────────────────────────────
-
-/// Existing categories matching what's typed in the category field. Listens
-/// to the field's controller itself, so typing there rebuilds only the chips.
 class _CategoryChips extends ConsumerWidget {
   final TextEditingController controller;
 
@@ -1234,26 +1160,13 @@ class _CategoryChips extends ConsumerWidget {
   }
 }
 
-// ─── Helper Widgets ──────────────────────────────────────────────────────────
-
-/// What an [AppTextField] takes from its width before its label: its start
-/// padding (16), the paste button (48) and the label's gap in the
-/// outline (2 × 4).
 const _kAppFieldChrome = 72.0;
 
-/// The same for a plain dense field: its padding (2 × 16) and the gap.
 const _kDenseFieldChrome = 40.0;
 
-/// Form fields side by side, as before, while each keeps room for about
-/// three letters of its label (3 em of a field's 16 px text, at the current
-/// text size) beside its [chrome]. Fewer fit on a narrow layout or with
-/// large text: the rest wrap onto further rows, instead of every label
-/// shrinking to a letter and an ellipsis.
 class _FieldRow extends StatelessWidget {
   final List<Widget> children;
 
-  /// What a field takes from its width before its label: padding, suffix
-  /// buttons and the label's gap in the outline.
   final double chrome;
   final double spacing;
 
@@ -1319,8 +1232,6 @@ class _BulkSetField extends StatefulWidget {
   final TextInputType keyboardType;
   final List<TextInputFormatter> inputFormatters;
 
-  /// Sets the typed value on every combination: false when it isn't one
-  /// ('', '-', '.'), which leaves it in the field.
   final bool Function(String) onApply;
 
   const _BulkSetField({
@@ -1335,8 +1246,7 @@ class _BulkSetField extends StatefulWidget {
 }
 
 class _BulkSetFieldState extends State<_BulkSetField> {
-  // Owned here: built in build(), it was recreated (and leaked) on every
-  // rebuild of the form, wiping whatever had been typed.
+
   final _ctrl = TextEditingController();
 
   @override
@@ -1378,8 +1288,6 @@ class _BulkSetFieldState extends State<_BulkSetField> {
     );
   }
 }
-
-// ─── State Classes ───────────────────────────────────────────────────────────
 
 class _AttributeEntry {
   final TextEditingController nameCtrl;
@@ -1432,8 +1340,6 @@ class _CombinationEntry {
         isActive: combo.isActive,
       );
 
-  /// A separate entry seeded from [other]'s parsed values — for a key that
-  /// the attributes generate more than once.
   factory _CombinationEntry.copyOf(
           _CombinationEntry other, String displayLabel) =>
       _CombinationEntry.fromCombination(VariantCombination(
@@ -1451,8 +1357,6 @@ class _CombinationEntry {
     skuCtrl.dispose();
   }
 }
-
-// ─── Supplier Picker Sheet ──────────────────────────────────────────────────
 
 class _SupplierPickerSheet extends StatefulWidget {
   final List<Supplier> suppliers;

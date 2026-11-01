@@ -7,8 +7,6 @@ import '../../../data/models/stock_movement.dart';
 import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
 
-
-
 part 'supplier_provider.g.dart';
 
 @riverpod
@@ -63,9 +61,6 @@ class SupplierNotifier extends _$SupplierNotifier {
   @override
   FutureOr<void> build() {}
 
-  /// The products [items] refer to, by id, read with one `getAll` — for the
-  /// loops that update several products in one writeTxn. Missing products
-  /// are left out.
   Future<Map<int, Product>> _productsById(
       Isar isar, List<PurchaseItem> items) async {
     final ids = {for (final item in items) item.productId}.toList();
@@ -102,7 +97,7 @@ class SupplierNotifier extends _$SupplierNotifier {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
-        // Unlink purchases (keep purchase records but clear supplierId)
+
         final purchases = await isar.purchases
             .filter()
             .supplierIdEqualTo(id)
@@ -111,7 +106,7 @@ class SupplierNotifier extends _$SupplierNotifier {
           await isar.purchases.putAll(
               [for (final p in purchases) p.copyWith(supplierId: 0)]);
         }
-        // Unlink products linked to this supplier (set supplierId = 0)
+
         final products = await isar.products
             .filter()
             .supplierIdEqualTo(id)
@@ -125,16 +120,12 @@ class SupplierNotifier extends _$SupplierNotifier {
     });
   }
 
-  /// Create a purchase, update supplier stats (if linked), restock products,
-  /// and update product cost price.
-  /// Supplier is optional — pass supplierId=0 for purchases with no supplier.
   Future<void> createPurchase(Purchase purchase, {bool restockProducts = true, bool updateCostPrice = true}) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
         await isar.purchases.put(purchase.copyWith(createdAt: DateTime.now()));
 
-        // Update supplier stats (only if linked)
         if (purchase.supplierId > 0) {
           final supplier = await isar.suppliers.get(purchase.supplierId);
           if (supplier != null) {
@@ -147,7 +138,6 @@ class SupplierNotifier extends _$SupplierNotifier {
           }
         }
 
-        // Restock products + update cost price
         if (restockProducts) {
           final reason = purchase.supplierName.isNotEmpty
               ? 'Purchase from ${purchase.supplierName}'
@@ -156,10 +146,7 @@ class SupplierNotifier extends _$SupplierNotifier {
             for (final item in purchase.items)
               if (item.productId > 0 && item.qty > 0) item,
           ];
-          // Batched: one getAll, then one putAll each for products and
-          // movements. Items apply in order to the in-memory product, so two
-          // lines of one product compose (stock adds up, the last cost wins)
-          // exactly as the sequential get → put did.
+
           final products = await _productsById(isar, items);
           final changed = <int>{};
           final movements = <StockMovement>[];
@@ -201,7 +188,6 @@ class SupplierNotifier extends _$SupplierNotifier {
         final purchase = await isar.purchases.get(id);
         if (purchase == null) return;
 
-        // Reverse supplier stats
         if (purchase.supplierId > 0) {
           final supplier = await isar.suppliers.get(purchase.supplierId);
           if (supplier != null) {
@@ -214,8 +200,6 @@ class SupplierNotifier extends _$SupplierNotifier {
           }
         }
 
-        // Reverse stock (deduct what was added) — batched like
-        // createPurchase; the 0-clamp applies per item, in order.
         final items = [
           for (final item in purchase.items)
             if (item.productId > 0 && item.qty > 0) item,
@@ -259,7 +243,6 @@ class SupplierNotifier extends _$SupplierNotifier {
         final newAmountPaid = purchase.amountPaid + amount;
         await isar.purchases.put(purchase.copyWith(amountPaid: newAmountPaid));
 
-        // Update supplier stats
         if (purchase.supplierId > 0) {
           final supplier = await isar.suppliers.get(purchase.supplierId);
           if (supplier != null) {
@@ -274,7 +257,6 @@ class SupplierNotifier extends _$SupplierNotifier {
     });
   }
 
-  /// Record a payment to a supplier against their due balance
   Future<void> recordSupplierPayment(int supplierId, double amount) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);

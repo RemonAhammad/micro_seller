@@ -30,7 +30,6 @@ class StockMovement {
   int qty;
   String reason;
 
-  /// Optional supplier id (0 = not linked to any supplier)
   int supplierId;
 
   @Index()

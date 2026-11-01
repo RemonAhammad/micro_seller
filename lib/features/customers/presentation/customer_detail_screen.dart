@@ -32,7 +32,6 @@ class CustomerDetailScreen extends ConsumerWidget {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
 
-    // Live, so collecting a payment from here refreshes the stats below.
     return ref.watch(customerByIdProvider(customerId)).when(
       skipLoadingOnReload: true,
       loading: () =>
@@ -77,8 +76,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                         .deleteCustomer(customer.id);
                     if (!context.mounted) return;
                     context.pop();
-                    // Shown after the pop so the snackbar lands on the list
-                    // screen rather than a detail screen that's unwinding.
+
                     if (trashId != null) {
                       context.showUndoSnackBar(
                         '${s.itemDeleted}: ${customer.name}',
@@ -91,7 +89,7 @@ class CustomerDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          // Slivers, so the purchase history only builds the cards on screen.
+
           body: CustomScrollView(
             slivers: [
               SliverPadding(
@@ -100,7 +98,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Avatar and info header
+
                       Center(
                         child: Column(
                           children: [
@@ -123,8 +121,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            // Centred under the avatar when a long name
-                            // wraps, too.
+
                             Text(
                               customer.name,
                               textAlign: TextAlign.center,
@@ -145,7 +142,6 @@ class CustomerDetailScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Stats
                       Row(
                         children: [
                           Expanded(
@@ -197,12 +193,10 @@ class CustomerDetailScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                       ],
 
-                      // Purchase History Chart
                       _PurchaseChartSection(customerId: customerId),
 
                       _PaymentHistory(customerId: customerId),
 
-                      // Customer orders
                       Text(s.purchaseHistory,
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w700)),
@@ -223,8 +217,6 @@ class CustomerDetailScreen extends ConsumerWidget {
   }
 }
 
-/// The 6-month purchase chart, hidden until loaded and when the customer has
-/// no orders apart from cancelled ones.
 class _PurchaseChartSection extends ConsumerWidget {
   const _PurchaseChartSection({required this.customerId});
 
@@ -242,9 +234,6 @@ class _PurchaseChartSection extends ConsumerWidget {
   }
 }
 
-/// The customer's orders, newest first, as a lazily built sliver. Paged:
-/// nearing the end of the loaded rows loads the next page, with a spinner
-/// row below while more exist.
 class _PurchaseHistoryList extends ConsumerStatefulWidget {
   const _PurchaseHistoryList({required this.customerId});
 
@@ -256,11 +245,10 @@ class _PurchaseHistoryList extends ConsumerStatefulWidget {
 }
 
 class _PurchaseHistoryListState extends ConsumerState<_PurchaseHistoryList> {
-  /// How close to the last loaded row the next page is requested.
+
   static const _loadMoreAhead = 20;
   bool _loadMoreScheduled = false;
 
-  // After the frame: the notifier's state can't change during a build.
   void _loadMoreSoon() {
     if (_loadMoreScheduled) return;
     _loadMoreScheduled = true;
@@ -330,8 +318,6 @@ class _PurchaseHistoryListState extends ConsumerState<_PurchaseHistoryList> {
   }
 }
 
-/// Collect / Remind / Statement. Collect and Remind only when something is
-/// actually owed (computed from orders, not the stored counter).
 class _DueActions extends ConsumerWidget {
   const _DueActions({required this.customer});
 
@@ -360,8 +346,7 @@ class _DueActions extends ConsumerWidget {
               icon: const ThinIcon(tabler.Cash.new, size: 18),
               label: Text(s.collect),
             ),
-            // Remind and Statement each have their own context: an iPad's
-            // share sheet points at the button tapped.
+
             Builder(
               builder: (buttonContext) => OutlinedButton.icon(
                 onPressed: () => sendDueReminder(
@@ -444,8 +429,7 @@ class _StatChip extends StatelessWidget {
         children: [
           ThinIcon(icon, color: color, size: 20),
           const SizedBox(height: 6),
-          // Three chips share a narrow row: the number shrinks to fit rather
-          // than breaking mid-number.
+
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -469,9 +453,6 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-/// A label that wraps between words as a [Text] does, except that a single
-/// word wider than the room (a narrow chip, large text) shrinks the label to
-/// fit on one line instead of breaking mid-word.
 class _WordSafeLabel extends StatelessWidget {
   final String text;
   final TextStyle? style;
@@ -481,7 +462,7 @@ class _WordSafeLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      // The style a Text resolves (ambient style, bold text if asked for).
+
       var effective = style;
       if (style == null || style!.inherit) {
         effective = DefaultTextStyle.of(context).style.merge(style);
@@ -495,7 +476,7 @@ class _WordSafeLabel extends StatelessWidget {
         textDirection: Directionality.of(context),
         textScaler: MediaQuery.textScalerOf(context),
       )..layout();
-      // A paragraph's minimum width is its longest word.
+
       final longestWord = painter.minIntrinsicWidth;
       painter.dispose();
       if (longestWord <= constraints.maxWidth) return Text(text, style: style);
@@ -546,10 +527,7 @@ class _InfoRow extends StatelessWidget {
             theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      // The label in a 110 px column beside the value; above it when that
-      // leaves the value too narrow a column (about 15 characters), as on
-      // a narrow layout or with large text, where an address would run
-      // down the card a word-fragment at a time.
+
       child: LayoutBuilder(
         builder: (context, constraints) =>
             constraints.maxWidth - 110 <
@@ -587,11 +565,7 @@ class _PurchaseHistoryChart extends StatelessWidget {
     final maxY = entries.fold<double>(
         0, (prev, e) => e.value > prev ? e.value : prev);
     final effectiveMaxY = maxY == 0 ? 100.0 : maxY * 1.2;
-    // The axis labels' slots grow with the text size (the coded sizes at
-    // 100%), so a larger font doesn't cut the month names off or wrap the
-    // amounts mid-number. A month name is an 11 px line (in the ambient line
-    // height, which lays out to a whole pixel) under 6 px of padding;
-    // fl_chart's default slot is 22 px.
+
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = DefaultTextStyle.of(context).style.height ?? 1.2;
     final monthTitleHeight = math.max(
@@ -674,7 +648,7 @@ class _PurchaseHistoryChart extends StatelessWidget {
                           if (value == 0) return const SizedBox.shrink();
                           return Padding(
                             padding: const EdgeInsets.only(right: 6),
-                            // Shrunk to fit its slot, never wrapped.
+
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: AlignmentDirectional.centerStart,
@@ -736,8 +710,7 @@ class _PurchaseHistoryChart extends StatelessWidget {
                       barRods: [
                         BarChartRodData(
                           toY: e.value.value,
-                          // A sales series: the fixed revenue color, as on
-                          // the dashboard's chart, whatever the color theme.
+
                           color: AppColors.chartRevenue,
                           width: 20,
                           borderRadius: const BorderRadius.only(

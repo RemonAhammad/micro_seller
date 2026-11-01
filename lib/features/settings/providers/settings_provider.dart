@@ -8,8 +8,6 @@ import '../../../core/utils/currency_formatter.dart';
 
 part 'settings_provider.g.dart';
 
-/// What the first frame needs from the settings: the theme mode and the
-/// color theme, as the state map holds them.
 typedef _PrimedSettings = ({
   String themeMode,
   String colorThemeId,
@@ -33,40 +31,24 @@ class Settings extends _$Settings {
   static const _keyAutoBackup = 'autoBackup';
   static const _keySecurityFingerprint = 'securityFingerprintEnabled';
   static const _keySecurityPin = 'securityPinEnabled';
-  // Set by the background worker (`auto_backup_runner.dart`) when Drive
-  // access is revoked / silent sign-in returns null. Read by the Settings
-  // UI to surface a "Sign in to resume" banner. Always cleared on a
-  // successful backup.
+
   static const _keyAutoBackupError = 'autoBackupError';
 
-  /// The selected color theme's id: a preset, Phone colors or a saved custom
-  /// theme (see app_color_theme.dart). Also its key in the state map.
   static const keyColorThemeId = 'colorThemeId';
 
-  /// The saved custom color themes, as JSON text
-  /// (`encodeCustomColorThemes`). Also its key in the state map, which holds
-  /// the same text, so a `select` on it compares cheaply.
   static const keyCustomColorThemes = 'customColorThemes';
 
-  /// 'left' (default) or 'right'.
   static const sidebarPositionLeft = 'left';
   static const sidebarPositionRight = 'right';
 
   static const _themeModes = {'light', 'dark', 'system'};
   static const _noCustomColorThemes = '[]';
 
-  // The saved theme mode and color theme: read before the first frame by
-  // primeFrom, kept current by every write and load, so build() — and a
-  // rebuilt provider — starts from them instead of the defaults.
   static _PrimedSettings? _primed;
 
-  /// Reads the theme mode and the color theme synchronously (main(), before
-  /// runApp), so the first frame is already in them. Never throws: an
-  /// unusable value falls back to its default.
   static void primeFrom(SharedPreferences prefs) {
     try {
-      // prefs.get + type checks rather than getString: the typed getters
-      // throw on a value of another type.
+
       final customs = decodeCustomColorThemes(prefs.get(keyCustomColorThemes));
       _primed = (
         themeMode: _themeModeFrom(prefs.get(_keyThemeMode)),
@@ -81,12 +63,8 @@ class Settings extends _$Settings {
   @visibleForTesting
   static void debugResetPrimed() => _primed = null;
 
-  /// The primed theme mode: 'light', 'dark' or 'system' (also when nothing
-  /// was primed). main() picks the first frame's status bar with it.
   static String get primedThemeMode => _primed?.themeMode ?? 'system';
 
-  /// The color theme the primed settings select; Teal when nothing was
-  /// primed. main() brands the documents with it before the first frame.
   static AppColorTheme get primedColorTheme {
     final primed = _primed;
     if (primed == null) return kDefaultColorTheme;
@@ -106,13 +84,9 @@ class Settings extends _$Settings {
     );
   }
 
-  /// A stored theme mode: 'light', 'dark' or 'system' (anything else).
   static String _themeModeFrom(Object? raw) =>
       raw is String && _themeModes.contains(raw) ? raw : 'system';
 
-  /// [raw] as a selectable color theme id: a preset, Phone colors or one of
-  /// [customs]. Anything else — a deleted theme, a newer version's preset,
-  /// a value of another type — is Teal.
   static String _colorThemeIdFrom(Object? raw, List<AppColorTheme> customs) =>
       raw is String ? resolveColorTheme(raw, customs).id : kDefaultColorThemeId;
 
@@ -150,12 +124,8 @@ class Settings extends _$Settings {
     state = loaded;
   }
 
-  /// Every setting as [build] holds it, read from [prefs]: what
-  /// [_loadFromDisk] loads and what [exportFromPrefs] backs up. Never throws:
-  /// a missing or unusable value is its default.
   static Map<String, dynamic> _readState(SharedPreferences prefs) {
-    // prefs.get + type checks: the typed getters throw on a value of another
-    // type.
+
     String text(String key, String fallback) {
       final value = prefs.get(key);
       return value is String ? value : fallback;
@@ -166,7 +136,6 @@ class Settings extends _$Settings {
       return value is bool ? value : fallback;
     }
 
-    // Sidebar order: stored as JSON-encoded list of keys.
     final orderRaw = prefs.get(_keySidebarOrder);
     List<String> order = List<String>.from(defaultSidebarOrder);
     if (orderRaw is String && orderRaw.isNotEmpty) {
@@ -176,13 +145,10 @@ class Settings extends _$Settings {
           order = reconcileSidebarOrder(decoded.map((e) => e.toString()).toList());
         }
       } catch (_) {
-        // Corrupt entry — fall back to default.
+
       }
     }
 
-    // Hidden sidebar items: JSON-encoded list of keys. The user can never
-    // hide the Settings tab — that would be a soft-lockout — so we always
-    // strip it from the hidden list before storing or returning.
     final hiddenRaw = prefs.get(_keyHiddenSidebarItems);
     List<String> hidden = const [];
     if (hiddenRaw is String && hiddenRaw.isNotEmpty) {
@@ -194,7 +160,7 @@ class Settings extends _$Settings {
               .where((k) => k != 'settings')
               .toList();
         }
-      } catch (_) {/* fall back to empty */}
+      } catch (_) {}
     }
 
     final threshold = prefs.get(_keyThreshold);
@@ -235,7 +201,6 @@ class Settings extends _$Settings {
     await prefs.setString(_keyShopName, name);
   }
 
-  /// Contact number printed on the shared product catalog. Optional.
   Future<void> updateShopPhone(String phone) async {
     state = {...state, 'shopPhone': phone};
     final prefs = await SharedPreferences.getInstance();
@@ -268,8 +233,6 @@ class Settings extends _$Settings {
     await prefs.setString(_keyThemeMode, mode);
   }
 
-  /// Selects the color theme [id]: a preset, Phone colors or a saved custom
-  /// theme (save it first). Any other id selects Teal.
   Future<void> updateColorTheme(String id) async {
     final selected = _colorThemeIdFrom(id, customColorThemes);
     state = {...state, keyColorThemeId: selected};
@@ -278,13 +241,8 @@ class Settings extends _$Settings {
     await prefs.setString(keyColorThemeId, selected);
   }
 
-  /// Saves the custom theme [theme], in place of the saved one with its id or
-  /// after the others. It isn't selected: call [updateColorTheme] for that.
-  ///
-  /// Throws an [ArgumentError] for a theme that isn't a custom one, and a
-  /// [StateError] when adding one to [kMaxCustomColorThemes] saved themes.
   Future<void> saveCustomColorTheme(AppColorTheme theme) async {
-    // As the next load will read it back (opaque colors, a trimmed name).
+
     final saved = AppColorTheme.fromJson(theme.toJson());
     if (saved == null || !saved.isCustom) {
       throw ArgumentError.value(theme.id, 'theme', 'Not a custom color theme');
@@ -306,8 +264,6 @@ class Settings extends _$Settings {
     await prefs.setString(keyCustomColorThemes, json);
   }
 
-  /// Deletes the saved custom theme [id]. Teal is selected instead when it
-  /// was the selected theme.
   Future<void> deleteCustomColorTheme(String id) async {
     final themes = customColorThemes.where((t) => t.id != id).toList();
     if (themes.length == customColorThemes.length) return;
@@ -352,9 +308,6 @@ class Settings extends _$Settings {
     await prefs.setString(_keySidebarPosition, normalised);
   }
 
-  /// Toggle whether [key] is hidden from the sidebar. Settings tab is always
-  /// visible (calling this with 'settings' is a no-op) so the user can never
-  /// lock themselves out of the configuration UI.
   Future<void> toggleSidebarItemHidden(String key, bool hidden) async {
     if (key == 'settings') return;
     final current = List<String>.from(state['hiddenSidebarItems'] as List? ?? const []);
@@ -392,12 +345,9 @@ class Settings extends _$Settings {
       state['securityPinEnabled'] as bool? ?? true;
   String? get autoBackupError => state['autoBackupError'] as String?;
 
-  /// The selected color theme's id: always a preset, Phone colors or one of
-  /// [customColorThemes].
   String get colorThemeId =>
       state[keyColorThemeId] as String? ?? kDefaultColorThemeId;
 
-  /// The saved custom color themes, in the order they were first saved.
   List<AppColorTheme> get customColorThemes {
     final json =
         state[keyCustomColorThemes] as String? ?? _noCustomColorThemes;
@@ -408,24 +358,18 @@ class Settings extends _$Settings {
     return _customThemes;
   }
 
-  // customColorThemes, decoded once per JSON text.
   String? _customThemesJson;
   List<AppColorTheme> _customThemes = const [];
 
-  /// The selected color theme.
   AppColorTheme get activeColorTheme =>
       resolveColorTheme(colorThemeId, customColorThemes);
 
-  /// Re-read [_keyAutoBackupError] from disk into state. The key is written
-  /// from the background isolate by `auto_backup_runner.dart`, so the
-  /// foreground provider's in-memory state can be stale until we sync.
   Future<void> refreshAutoBackupError() async {
     final prefs = await SharedPreferences.getInstance();
-    // The worker's isolate has its own prefs cache; without a reload this
-    // isolate's cache never sees its write.
+
     await prefs.reload();
     final error = prefs.getString(_keyAutoBackupError);
-    // Called on every app resume — don't rebuild watchers for no change.
+
     if (error != autoBackupError) {
       state = {...state, 'autoBackupError': error};
     }
@@ -469,21 +413,11 @@ class Settings extends _$Settings {
     await prefs.setString(_keyDownloadDir, path);
   }
 
-  /// Serialise every persisted setting into a JSON-friendly map. Used by
-  /// LocalBackupService / DriveService when building a backup. Excludes
-  /// `lastBackupTime` (per-device, not portable) and the live in-memory
-  /// only snapshot — only stable user preferences are exported. Display size
-  /// and text size are per-device too: they live in `displayScaleProvider`
-  /// and are not exported.
   Map<String, dynamic> exportSettings() => _export(state);
 
-  /// [exportSettings] for the settings stored in [prefs], where there is no
-  /// provider: the auto-backup worker's isolate. The same reader and encoder
-  /// as the app's, so the two backups can't drift apart.
   static Map<String, dynamic> exportFromPrefs(SharedPreferences prefs) =>
       _export(_readState(prefs));
 
-  /// The backup's settings, from a state map as [build] holds it.
   static Map<String, dynamic> _export(Map<String, dynamic> settings) {
     return {
       'shopName': settings['shopName'] as String? ?? 'My Shop',
@@ -506,7 +440,7 @@ class Settings extends _$Settings {
       'securityPinEnabled': settings['securityPinEnabled'] as bool? ?? true,
       keyColorThemeId:
           settings[keyColorThemeId] as String? ?? kDefaultColorThemeId,
-      // A list of maps, like the rest of the backup's JSON.
+
       keyCustomColorThemes: [
         for (final theme
             in decodeCustomColorThemes(settings[keyCustomColorThemes]))
@@ -515,12 +449,6 @@ class Settings extends _$Settings {
     };
   }
 
-  /// Apply a previously-exported settings map (from a backup). Unknown keys
-  /// are ignored; missing keys keep their current values. Each known key is
-  /// validated and only applied if it parses correctly.
-  ///
-  /// Persists every key, then assigns state once — each assignment rebuilds
-  /// every settings watcher.
   Future<void> importSettings(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
     final changes = <String, dynamic>{};
@@ -597,8 +525,7 @@ class Settings extends _$Settings {
     }
     final hidden = data['hiddenSidebarItems'];
     if (hidden is List) {
-      // Replaces the current hidden set. Settings can never be hidden
-      // (soft-lockout), same as toggleSidebarItemHidden.
+
       final list = hidden
           .map((e) => e.toString())
           .where((k) => k.isNotEmpty && k != 'settings')
@@ -607,10 +534,7 @@ class Settings extends _$Settings {
       changes['hiddenSidebarItems'] = list;
       writes.add(prefs.setString(_keyHiddenSidebarItems, jsonEncode(list)));
     }
-    // Color themes: the custom themes first (only the valid ones), then the
-    // selected id, checked against them — a theme the backup doesn't carry
-    // selects Teal. A backup from before color themes has neither key and
-    // changes nothing.
+
     final customThemes =
         _importedCustomColorThemes(data[keyCustomColorThemes]);
     final themeId = data[keyColorThemeId];
@@ -635,8 +559,6 @@ class Settings extends _$Settings {
     }
   }
 
-  /// The custom color themes in a backup's [raw] value — a list, or its JSON
-  /// text — keeping only the valid ones; null when it isn't a list at all.
   static List<AppColorTheme>? _importedCustomColorThemes(Object? raw) {
     var data = raw;
     if (data is String) {

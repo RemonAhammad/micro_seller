@@ -50,23 +50,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     });
   }
 
-  /// Play's own in-app update, on a Play install only ([channel]). The
-  /// iPhone app and APKs from GitHub get the update notice under the date
-  /// bar instead (updateNoticeProvider).
   Future<void> _checkForStoreUpdate(Future<UpdateChannel> channel) async =>
       UpdateService.checkForUpdate(channel: await channel);
 
-  /// Ported from the Fuel Cost app: ask happy, regular sellers for a store
-  /// rating. See [ReviewService] for the eligibility and back-off rules.
-  /// [channel] is how this install updates: only a Play install gets Play's
-  /// review sheet.
   Future<void> _maybeAskForReview(Future<UpdateChannel> channel) async {
-    // The showcase tour runs on first launch — a dialog on top of its
-    // spotlight overlay would trap the user, so let the tour finish first.
+
     if (!await TutorialService.isTourCompleted()) return;
-    // Never ask and then do nothing: no listing to rate (the sideloaded
-    // iPhone app, desktop), or an APK from GitHub, which Play never shows
-    // its review sheet to. Checked first, as it needs no database.
+
     final updates = await channel;
     if (!await ReviewService.canPrompt(channel: updates)) return;
     if (!mounted) return;
@@ -74,7 +64,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (!await ReviewService.isEligible(isar)) return;
     if (!mounted) return;
 
-    // Let the entrance animations settle before interrupting.
     await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
@@ -92,7 +81,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         if (mounted) {
           context.showSnackBar(AppStrings.of(context).thanksFeedback);
         }
-      // "Later", or dismissed by tapping outside — ask again after a cooldown.
+
       case RateAppChoice.later:
       case null:
         await ReviewService.markSnoozed();
@@ -107,8 +96,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: () async => ref.refresh(dashboardStatsProvider),
-        // The shell resizes on every keyboard frame, even while this tab is
-        // offstage; an identical const child lets Flutter skip the content.
+
         child: LayoutBuilder(
           builder: (context, constraints) => constraints.maxWidth >= 700
               ? const _DashboardContent(isWide: true)
@@ -119,17 +107,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
-// ─── Dashboard Content ──────────────────────────────────────────────────────
-
-/// The header's expanded height: 160 at the default text size.
-///
-/// Under the toolbar it holds three lines of text: the date pill (10 px of
-/// padding make it taller than the greeting beside it), then today's revenue
-/// label and amount. The header grows with them, so a larger font never
-/// clips the stats.
 @visibleForTesting
 double dashboardHeaderHeight(TextScaler textScaler) {
-  // Line heights are bodyMedium's 1.43, inherited from the app bar.
+
   double lines(TextScaler s) => (2 * s.scale(11) + s.scale(24)) * 1.43;
   return 160 + lines(textScaler) - lines(TextScaler.noScaling);
 }
@@ -148,8 +128,7 @@ class _DashboardContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
     final statsAsync = ref.watch(dashboardStatsProvider);
-    // Due info comes from the Due Book's own providers, so the dashboard and
-    // the Due Book can never disagree.
+
     final dues = ref.watch(duesProvider).value ?? const <CustomerDue>[];
     final dueSummary = ref.watch(dueSummaryProvider) ?? const DueSummary();
     final collectedThisMonth =
@@ -157,18 +136,16 @@ class _DashboardContent extends ConsumerWidget {
     final expensesAsync = ref.watch(expensesProvider);
     final dateRange = resolveDashboardRange(
         ref.watch(dashboardDateRangeProvider), DateTime.now());
-    // Amounts read CurrencyFormatter's static symbol, so redraw on a change.
+
     ref.watch(settingsProvider.select((m) => m['currencySymbol']));
-    // A newer release on GitHub, for the iPhone app and APKs from GitHub
-    // (null on a Play install, which Play updates).
+
     final update = ref.watch(updateNoticeProvider).value;
 
     return CustomScrollView(
       slivers: [
-        // ── Header ──
+
         _buildHeader(context, statsAsync),
 
-        // ── Date Range Filter ──
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -176,7 +153,6 @@ class _DashboardContent extends ConsumerWidget {
           ),
         ),
 
-        // ── 60+ days overdue alert ──
         if (dueSummary.over60Count > 0)
           SliverToBoxAdapter(
             child: Padding(
@@ -185,7 +161,6 @@ class _DashboardContent extends ConsumerWidget {
             ),
           ),
 
-        // ── A newer release to install ──
         if (update != null)
           SliverToBoxAdapter(
             child: Padding(
@@ -198,22 +173,17 @@ class _DashboardContent extends ConsumerWidget {
             ),
           ),
 
-        // ── Body ──
         SliverToBoxAdapter(
-          // Keep showing the last numbers while stats recompute
-          // after an order change, instead of flashing a skeleton.
+
           child: statsAsync.when(
             skipLoadingOnReload: true,
             data: (stats) {
-              // Order status counts come counted from the provider, in the
-              // order each status first appears newest-first.
+
               final statusCounts = <String, int>{
                 for (final e in stats.statusCounts.entries)
                   _statusLabels[e.key.index]: e.value,
               };
 
-              // Compute daily expenses for the last 7 days and the range
-              // total in one pass
               final weeklySales = stats.weeklySales;
               final dayIndex = <DateTime, int>{
                 for (int i = 0; i < weeklySales.length; i++)
@@ -255,7 +225,6 @@ class _DashboardContent extends ConsumerWidget {
           ),
         ),
 
-        // ── Bottom sections ──
         SliverToBoxAdapter(
           child: statsAsync.whenOrNull(
                 skipLoadingOnReload: true,
@@ -347,7 +316,7 @@ class _DashboardContent extends ConsumerWidget {
   SliverAppBar _buildHeader(
       BuildContext context, AsyncValue<DashboardStats> statsAsync) {
     final s = AppStrings.of(context);
-    // The theme's main color and its text color (white and white70 on Teal).
+
     final brand = context.brand;
     final onBrand = brand.onPrimary;
     final onBrandSoft = onBrand.withAlpha(0xB3);
@@ -360,7 +329,7 @@ class _DashboardContent extends ConsumerWidget {
       centerTitle: false,
       title: Consumer(
         builder: (context, ref, _) {
-          // Only a shop-name change rebuilds this title.
+
           ref.watch(settingsProvider.select((m) => m['shopName']));
           final shopName = ref.read(settingsProvider.notifier).shopName;
           return Text(
@@ -418,8 +387,7 @@ class _DashboardContent extends ConsumerWidget {
                     skipLoadingOnReload: true,
                     data: (stats) => Row(
                       children: [
-                        // Takes what the order count leaves; a revenue too
-                        // wide for it (narrow screen, large text) shrinks.
+
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,8 +461,6 @@ class _DashboardContent extends ConsumerWidget {
   }
 }
 
-// ─── Dashboard Body ─────────────────────────────────────────────────────────
-
 class _DashboardBody extends StatelessWidget {
   final DashboardStats stats;
   final Map<String, int> statusCounts;
@@ -522,11 +488,10 @@ class _DashboardBody extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         children: [
-          // ── Stat cards ──
+
           _buildStatCards(context),
           const SizedBox(height: 14),
 
-          // ── Charts ──
           if (isWide)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,7 +541,6 @@ class _DashboardBody extends StatelessWidget {
             if (statusCounts.isNotEmpty) const SizedBox(height: 14),
           ],
 
-          // Revenue vs Expenses
           if (stats.weeklySales.isNotEmpty) ...[
             if (!isWide) ...[
               _SectionCard(
@@ -609,7 +573,7 @@ class _DashboardBody extends StatelessWidget {
 
   Widget _buildStatCards(BuildContext context) {
     final s = AppStrings.of(context);
-    // `route` makes a card tappable (null = not tappable).
+
     final items = <({String label, String value, ThinIconBuilder icon, Color color, String? route})>[
       (
         label: s.monthRevenue,
@@ -664,7 +628,7 @@ class _DashboardBody extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Each card wants ~160px min, grows to fill
+
         final availableWidth = constraints.maxWidth;
         final cols = (availableWidth / 170).floor().clamp(2, 6);
         const spacing = 10.0;
@@ -700,8 +664,6 @@ class _DashboardBody extends StatelessWidget {
   }
 }
 
-// ─── 60+ days overdue banner ───────────────────────────────────────────────
-
 class _OverdueBanner extends StatelessWidget {
   const _OverdueBanner({required this.summary});
 
@@ -721,7 +683,7 @@ class _OverdueBanner extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        // Opens the Due Book pre-filtered to the 60+ days bucket.
+
         onTap: () => context.go('/dues?age=60'),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
@@ -730,9 +692,7 @@ class _OverdueBanner extends StatelessWidget {
               const ThinIcon(AppIcons.alert, color: color, size: 22),
               const SizedBox(width: 10),
               Expanded(
-                // The amount is one unbreakable piece of the sentence: on a
-                // line too short for it (narrow screen, large text) it
-                // shrinks instead of being split across two lines.
+
                 child: at < 0
                     ? Text(message, style: style)
                     : Text.rich(
@@ -747,7 +707,7 @@ class _OverdueBanner extends StatelessWidget {
                                 amount,
                                 style: style,
                                 maxLines: 1,
-                                // The span already scales it with the text.
+
                                 textScaler: TextScaler.noScaling,
                               ),
                             ),
@@ -770,13 +730,10 @@ class _OverdueBanner extends StatelessWidget {
   }
 }
 
-// ─── Section Card ───────────────────────────────────────────────────────────
-
 class _SectionCard extends StatelessWidget {
   final String title;
   final ThinIconBuilder icon;
 
-  /// Thin Tabler icon; when set it's drawn instead of [icon].
   final ThinIconBuilder? iconBuilder;
   final Color iconColor;
   final Widget? action;
@@ -846,8 +803,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ─── Date Range Bar ────────────────────────────────────────────────────────
-
 class _DateRangeBar extends ConsumerWidget {
   static final _chipDateFormat = DateFormat('dd MMM');
 
@@ -859,7 +814,7 @@ class _DateRangeBar extends ConsumerWidget {
     final theme = Theme.of(context);
     final brand = context.brand;
     final activePreset = range.preset;
-    // The dates the stats use: a preset picked yesterday means today now.
+
     final dateRange = resolveDashboardRange(range, DateTime.now());
 
     final rangeLabel =
@@ -870,8 +825,7 @@ class _DateRangeBar extends ConsumerWidget {
       children: [
         Row(
           children: [
-            // The chips scroll sideways when they don't fit (narrow screen,
-            // large text); the custom-range button stays at the end.
+
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -921,10 +875,7 @@ class _DateRangeBar extends ConsumerWidget {
                     end: dateRange.end,
                   ),
                   builder: (context, child) {
-                    // The scheme's own pair, except that Teal's dark mode
-                    // keeps its brand teal here (its scheme's #4DB6AC is
-                    // for buttons); every other theme's brand primary is
-                    // the scheme's.
+
                     return Theme(
                       data: theme.copyWith(
                         colorScheme: theme.colorScheme.copyWith(
@@ -998,8 +949,6 @@ class _DateRangeBar extends ConsumerWidget {
   }
 }
 
-// ─── Skeleton ───────────────────────────────────────────────────────────────
-
 class _DashboardSkeleton extends StatelessWidget {
   final bool isWide;
   const _DashboardSkeleton({required this.isWide});
@@ -1034,8 +983,6 @@ class _DashboardSkeleton extends StatelessWidget {
     );
   }
 }
-
-// ─── Error ──────────────────────────────────────────────────────────────────
 
 class _ErrorBody extends StatelessWidget {
   final String error;

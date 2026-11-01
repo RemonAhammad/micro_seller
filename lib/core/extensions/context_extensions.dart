@@ -63,14 +63,6 @@ extension ContextExtensions on BuildContext {
     );
   }
 
-  /// Snackbar with an UNDO action, for deletes that went to the trash.
-  ///
-  /// The 10s window is a convenience, not the safety net — the item stays
-  /// recoverable in Settings → Recycle Bin for 30 days either way. That
-  /// matters on MIUI/Xiaomi, where SnackBar timers are known to stall (the
-  /// same quirk that made `pdf_saved_sheet.dart` own its own Timer). Here a
-  /// stalled timer is harmless: the bar lingers, and the record is safe
-  /// regardless of whether the action is ever tapped.
   void showUndoSnackBar(
     String message, {
     required VoidCallback onUndo,
@@ -78,8 +70,7 @@ extension ContextExtensions on BuildContext {
   }) {
     final messenger = ScaffoldMessenger.of(this);
     const background = Color(0xFF323232);
-    // Drop any in-flight bar so rapid deletes don't queue up behind each
-    // other — the last one is the one the user is reacting to.
+
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
@@ -129,9 +120,6 @@ extension ContextExtensions on BuildContext {
   }
 }
 
-/// [color] when it reads easily (4.5:1) on [background], else [color] mixed
-/// toward white just enough to. Teal's #4DB6AC on the snackbar's dark grey
-/// is used as is; a dark theme color is lightened.
 Color _readableOn(Color color, Color background) {
   if (contrastRatio(color, background) >= kReadableContrast) return color;
   for (var step = 1; step < 20; step++) {

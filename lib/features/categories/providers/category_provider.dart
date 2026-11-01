@@ -33,10 +33,6 @@ class CategoryNotifier extends _$CategoryNotifier {
     });
   }
 
-  /// Moves the category to the trash instead of destroying it. Recoverable
-  /// for [kTrashRetention] via the undo snackbar or Settings → Recycle Bin.
-  /// Returns the trash entry id, for wiring an UNDO action. Null if the
-  /// category was already gone.
   Future<int?> deleteCategory(int id) async {
     int? trashId;
     state = await AsyncValue.guard(() async {
@@ -57,7 +53,6 @@ class CategoryNotifier extends _$CategoryNotifier {
     return trashId;
   }
 
-  /// Ensures the named category exists; creates it if not.
   Future<void> ensureExists(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;

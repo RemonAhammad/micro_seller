@@ -22,7 +22,7 @@ class CustomerRepository {
       .filter()
       .nameContains(query, caseSensitive: false)
       .or()
-      // Phones are saved with 0-9: a Bengali keyboard's digits find them.
+
       .phoneContains(NumberInput.toAsciiDigits(query))
       .findAll();
 

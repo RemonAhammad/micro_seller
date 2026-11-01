@@ -1,5 +1,5 @@
 const translationsAr = <String, String>{
-  // Navigation
+
   'dashboard': 'لوحة التحكم',
   'products': 'المنتجات',
   'orders': 'الطلبات',
@@ -22,7 +22,6 @@ const translationsAr = <String, String>{
   'scanAgain': 'امسح مرة أخرى',
   'pointCameraAtCode': 'وجّه الكاميرا نحو رمز QR أو باركود',
 
-  // Dashboard
   'todayRevenue': 'إيراد اليوم',
   'monthRevenue': 'إيراد الشهر',
   'monthProfit': 'ربح الشهر',
@@ -46,7 +45,6 @@ const translationsAr = <String, String>{
   'thisMonth': 'هذا الشهر',
   'customRange': 'نطاق مخصص',
 
-  // Products
   'addProduct': 'إضافة منتج',
   'editProduct': 'تعديل المنتج',
   'productName': 'اسم المنتج',
@@ -91,7 +89,6 @@ const translationsAr = <String, String>{
   'lastUpdated': 'آخر تحديث',
   'noVariantsHint': 'لا توجد متغيرات. أضف خصائص مثل المقاس واللون وغيرها.',
 
-  // Orders
   'addOrder': 'طلب جديد',
   'editOrder': 'تعديل الطلب',
   'orderNumber': 'رقم الطلب',
@@ -132,7 +129,6 @@ const translationsAr = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'أي تعليمات خاصة...',
 
-  // Order status
   'pending': 'معلق',
   'confirmed': 'مؤكد',
   'shipped': 'تم الشحن',
@@ -141,12 +137,10 @@ const translationsAr = <String, String>{
   'active': 'قيد التنفيذ',
   'placed': 'تم الطلب',
 
-  // Payment status
   'unpaid': 'غير مدفوع',
   'partial': 'جزئي',
   'paid': 'مدفوع',
 
-  // Payment methods
   'cash': 'نقدي',
   'card': 'بطاقة',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsAr = <String, String>{
   'bank': 'بنك',
   'other': 'أخرى',
 
-  // Order detail
   'shareViaWhatsApp': 'مشاركة عبر WhatsApp',
   'sharePdf': 'مشاركة PDF',
   'downloadPdf': 'تحميل PDF',
@@ -174,7 +167,6 @@ const translationsAr = <String, String>{
   'markAsShipped': 'تحديد كمشحون',
   'markAsCompleted': 'تحديد كمكتمل',
 
-  // Customers
   'addCustomer': 'إضافة عميل',
   'editCustomer': 'تعديل العميل',
   'customerName': 'الاسم',
@@ -190,7 +182,6 @@ const translationsAr = <String, String>{
   'outstanding': 'مستحق',
   'memberSince': 'عميل منذ',
 
-  // Inventory
   'stockAdjustment': 'تعديل المخزون',
   'stockMovements': 'حركات المخزون',
   'stockLevels': 'مستويات المخزون',
@@ -215,7 +206,6 @@ const translationsAr = <String, String>{
   'inStockLabel': 'متوفر',
   'allCategories': 'جميع الفئات',
 
-  // Expenses
   'addExpense': 'إضافة مصروف',
   'editExpense': 'تعديل المصروف',
   'expenseTitle': 'عنوان المصروف',
@@ -230,7 +220,6 @@ const translationsAr = <String, String>{
   'marketing': 'تسويق',
   'supplies': 'مستلزمات',
 
-  // Settings
   'shopName': 'اسم المتجر',
   'currencySymbol': 'رمز العملة',
   'googleAccount': 'حساب Google',
@@ -284,7 +273,6 @@ const translationsAr = <String, String>{
   'downloads': 'التنزيلات',
   'dangerZone': 'منطقة الخطر',
 
-  // Suppliers
   'addSupplier': 'إضافة مورد',
   'editSupplier': 'تعديل المورد',
   'supplierNotFound': 'المورد غير موجود',
@@ -307,7 +295,6 @@ const translationsAr = <String, String>{
   'addSuppliersFromMenu': 'أضف موردين من قائمة الموردين',
   'selectSupplier': 'اختر المورد',
 
-  // Purchases
   'purchaseNotFound': 'الشراء غير موجود',
   'deletePurchase': 'حذف الشراء',
   'deletePurchaseConfirm': 'سيتم تقليل المخزون بالكميات المشتراة.',
@@ -325,7 +312,6 @@ const translationsAr = <String, String>{
   'allProducts': 'جميع المنتجات',
   'supplierProductsOnly': '{name} فقط',
 
-  // Cash Register
   'registerOpen': 'الصندوق مفتوح',
   'noRegisterOpen': 'لا يوجد صندوق مفتوح',
   'openRegisterDesc': 'افتح الصندوق لبدء تتبع التدفق النقدي',
@@ -345,7 +331,6 @@ const translationsAr = <String, String>{
   'noRegisterHistory': 'لا يوجد سجل للصندوق بعد',
   'loading': 'جاري التحميل...',
 
-  // Returns
   'returnsAndRefunds': 'المرتجعات والمبالغ المستردة',
   'createReturnTitle': 'إنشاء مرتجع',
   'selectItems': 'اختر العناصر',
@@ -384,7 +369,6 @@ const translationsAr = <String, String>{
   'approveReturnConfirm': 'الموافقة على هذا الإرجاع وتحديد العناصر كمستلمة؟ سيتم استعادة المخزون.',
   'returnRejected': 'تم رفض الإرجاع',
 
-  // Categories
   'addCategory': 'إضافة فئة',
   'editCategory': 'تعديل الفئة',
   'deleteCategory': 'حذف الفئة',
@@ -392,7 +376,6 @@ const translationsAr = <String, String>{
   'addCategoriesToOrganise': 'أضف فئات لتنظيم منتجاتك',
   'categoryName': 'اسم الفئة',
 
-  // Reports
   'totalRevenue': 'إجمالي الإيرادات',
   'totalProfit': 'إجمالي الربح',
   'totalExpenses': 'إجمالي المصروفات',
@@ -402,7 +385,6 @@ const translationsAr = <String, String>{
   'topCustomers': 'أفضل العملاء',
   'salesByCategory': 'المبيعات حسب الفئة',
 
-  // Actions
   'save': 'حفظ',
   'cancel': 'إلغاء',
   'delete': 'حذف',
@@ -424,19 +406,16 @@ const translationsAr = <String, String>{
   'back': 'رجوع',
   'sort': 'ترتيب',
 
-  // Delivery
   'delivery': 'التوصيل',
   'markDelivered': 'تحديد كمُوصَّل',
   'delivered': 'تم التوصيل',
 
-  // Variants
   'variants': 'المتغيرات',
   'addVariant': 'إضافة متغير',
   'variantName': 'الخاصية (مثل المقاس)',
   'variantValue': 'القيمة (مثل كبير)',
   'priceAdjustment': 'تعديل السعر +/-',
 
-  // Messages
   'deleteConfirmation': 'هل أنت متأكد من الحذف؟',
   'clearDataConfirmation': 'سيتم حذف جميع بياناتك نهائياً. لا يمكن التراجع. هل أنت متأكد؟',
   'savedSuccessfully': 'تم الحفظ بنجاح',
@@ -451,7 +430,6 @@ const translationsAr = <String, String>{
   'noExpenses': 'لم يتم تسجيل مصروفات بعد',
   'noStockMovements': 'لم يتم تسجيل حركات مخزون',
 
-  // Misc
   'error': 'خطأ',
   'pay': 'دفع',
   'scanQrBarcode': 'مسح QR / الباركود',
@@ -462,13 +440,11 @@ const translationsAr = <String, String>{
   'rowsSkipped': 'تم تخطي {count} صف:',
   'andMore': '...و{count} آخر',
 
-  // Payments / refunds
   'transactionId': 'رقم المعاملة',
   'transactionIdHint': 'bKash / Nagad / رقم الإيصال',
   'refundMethod': 'طريقة الاسترداد',
   'refundTransactionId': 'رقم معاملة الاسترداد',
 
-  // Sidebar customization
   'sidebarOrder': 'ترتيب الشريط الجانبي',
   'sidebarOrderDesc': 'اسحب لإعادة ترتيب علامات تبويب الشريط الجانبي',
   'resetToDefault': 'إعادة التعيين إلى الافتراضي',
@@ -477,7 +453,6 @@ const translationsAr = <String, String>{
   'left': 'يسار',
   'right': 'يمين',
 
-  // Display size (Settings → Display)
   'display': 'الشاشة',
   'displaySize': 'حجم شاشة العرض',
   'displaySizeDesc': 'تكبير كل شيء على الشاشة أو تصغيره',
@@ -487,7 +462,6 @@ const translationsAr = <String, String>{
   'phoneTextSize': 'الهاتف: {value}',
   'preview': 'معاينة',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'لون المظهر',
   'colorThemeDesc': 'اللون الرئيسي للأزرار والعناوين والعناصر البارزة',
   'phoneColors': 'ألوان الهاتف',
@@ -535,18 +509,15 @@ const translationsAr = <String, String>{
   'deleteThemeConfirm': 'حذف المظهر «{name}»؟',
   'themeLimitReached': 'يمكنك حفظ ما يصل إلى {count} من المظاهر',
 
-  // Auth gate
   'createPin': 'أنشئ رمز PIN من 4 أرقام',
   'confirmPin': 'أكد رمز PIN',
   'enterPin': 'أدخل رمز PIN',
   'pinDoesNotMatch': 'رموز PIN غير متطابقة. حاول مرة أخرى.',
   'incorrectPin': 'رمز PIN غير صحيح. حاول مرة أخرى.',
 
-  // Auto Drive backup
   'autoBackup': 'نسخ احتياطي تلقائي إلى Drive',
   'autoBackupDesc': 'نسخ احتياطي تلقائي عند بدء التطبيق (عند تسجيل الدخول)',
 
-  // Security section
   'security': 'الأمان',
   'securityFingerprint': 'بصمة الإصبع',
   'securityFingerprintDesc': 'استخدم بصمة الإصبع للتحقق من الإجراءات الحساسة',
@@ -554,7 +525,7 @@ const translationsAr = <String, String>{
   'securityPinDesc': 'طلب رمز PIN مكوّن من 4 أرقام للإجراءات الحساسة',
   'biometricNotAvailable': 'لا توجد بصمة مسجلة على هذا الجهاز',
   'changeSecurity': 'تحقق لتغيير إعدادات الأمان',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'بصمة الوجه',
   'securityFaceIdDesc': 'استخدم بصمة الوجه للتحقق من الإجراءات الحساسة',
   'faceIdNotSetUp': 'لم يتم إعداد بصمة الوجه على هذا الجهاز',
@@ -562,7 +533,6 @@ const translationsAr = <String, String>{
   'securityTouchIdDesc': 'استخدم بصمة الإصبع للتحقق من الإجراءات الحساسة',
   'touchIdNotSetUp': 'لم يتم إعداد بصمة الإصبع على هذا الجهاز',
 
-  // Background auto-backup status
   'autoBackupPaused': 'تم إيقاف النسخ الاحتياطي التلقائي مؤقتًا',
   'autoBackupResumed': 'تم استئناف النسخ الاحتياطي التلقائي',
   'signInToFix': 'سجّل الدخول للإصلاح',
@@ -602,7 +572,6 @@ const translationsAr = <String, String>{
   'shopPhone': 'هاتف المتجر',
   'productCatalog': 'كتالوج المنتجات',
 
-  // Due Book
   'dueBook': 'دفتر الديون',
   'totalReceivable': 'إجمالي المستحقات',
   'customersOwing': '{count} عميل عليهم مستحقات',
@@ -672,7 +641,6 @@ const translationsAr = <String, String>{
   'duesCollectedThisMonth': 'الديون المحصّلة (هذا الشهر)',
   'overdue60Banner': '{count} عميل مدينون بمبلغ {amount} منذ أكثر من 60 يومًا',
 
-  // Reports
   'profitAndLoss': 'الأرباح والخسائر',
   'item': 'الصنف',
   'grossSales': 'إجمالي المبيعات',
@@ -737,7 +705,6 @@ const translationsAr = <String, String>{
   'monthlyNetSales': 'صافي المبيعات الشهري',
   'dateRangeTo': 'إلى',
 
-  // Rating prompt
   'rateTitle': 'هل يعجبك {app}؟',
   'rateMessage': 'تدير متجرك باستخدام {app} منذ فترة. تقييم سريع يساعد البائعين الآخرين على اكتشافه.',
   'rateNow': 'قيّم الآن',
@@ -748,7 +715,6 @@ const translationsAr = <String, String>{
   'rateThisAppSubtitle': 'ساعد البائعين الآخرين في العثور على {app}',
   'about': 'حول',
 
-  // App updates
   'updateAvailable': 'الإصدار {version} من {app} متاح',
   'updateHowToAndroid': 'نزّل نفس نوع ملف APK الذي قمت بتثبيته سابقًا (universal أو arm64-v8a) وثبّته فوق النسخة الحالية. ستبقى بياناتك كما هي.',
   'updateHowToIos': 'ثبّت التحديث بنفس أداة التثبيت الجانبي ونفس Apple ID اللذين استخدمتهما سابقًا لتبقى بياناتك كما هي. أنشئ نسخة احتياطية أولًا.',
@@ -757,10 +723,8 @@ const translationsAr = <String, String>{
   'upToDate': 'لديك أحدث إصدار',
   'updateCheckFailed': 'تعذّر التحقق من وجود تحديثات. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.',
 
-  // Keypad bar (iOS)
   'next': 'التالي',
 
-  // Camera
   'cameraAccessOff': 'الوصول إلى الكاميرا معطّل',
   'cameraAllowPrompt': 'يحتاج تطبيق {app} إلى استخدام الكاميرا لمسح الرموز والتقاط الصور.',
   'cameraAllowInSettings': 'لمسح الرموز والتقاط الصور، اسمح لتطبيق {app} بالوصول إلى الكاميرا من الإعدادات.',
@@ -773,7 +737,6 @@ const translationsAr = <String, String>{
   'torchOn': 'تشغيل المصباح',
   'torchOff': 'إيقاف المصباح',
 
-  // Calls
   'callNotAvailable': 'المكالمات غير متاحة على هذا الجهاز',
   'copyNumber': 'نسخ الرقم',
   'numberCopied': 'تم نسخ الرقم',

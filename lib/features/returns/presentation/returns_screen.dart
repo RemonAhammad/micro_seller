@@ -64,7 +64,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    // Only the return orders, newest first — not every order filtered here.
+
     final returnsAsync = ref.watch(returnOrdersProvider);
     final tabs = _tabLabels(context);
 
@@ -132,8 +132,6 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
   }
 }
 
-// ─── Tab label with count badge ──────────────────────────────────────────────
-
 class _TabLabel extends StatelessWidget {
   final String label;
   final int count;
@@ -169,8 +167,6 @@ class _TabLabel extends StatelessWidget {
   }
 }
 
-// ─── Return list ─────────────────────────────────────────────────────────────
-
 class _ReturnList extends StatelessWidget {
   final List<Order> orders;
   const _ReturnList({required this.orders});
@@ -197,10 +193,6 @@ class _ReturnList extends StatelessWidget {
   }
 }
 
-// ─── Return card ─────────────────────────────────────────────────────────────
-
-/// The width [text] takes on one line as a [Text] with [style] draws it here:
-/// in the ambient text style and text size, bold if the phone asks for it.
 double _textWidth(BuildContext context, String text, TextStyle? style) {
   var effective = style;
   if (style == null || style.inherit) {
@@ -282,14 +274,11 @@ class _ReturnCard extends StatelessWidget {
             ),
           ],
         ),
-        // Each row keeps to one line, its text truncated only for want of
-        // room, with the date and the status at the far end. Where a row's
-        // fixed parts don't fit side by side (a narrow layout, large text,
-        // long numbers), it breaks onto two lines instead of overflowing.
+
         child: LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            // Everything in row 1 whole, the date at least 8 px away.
+
             final linkWidth = order.originalOrderId > 0
                 ? 24 + _textWidth(context, original, originalStyle)
                 : 0.0;
@@ -299,8 +288,7 @@ class _ReturnCard extends StatelessWidget {
                         8 +
                         _textWidth(context, date, dateStyle) <=
                     width;
-            // Both pills whole, and room for at least the first few letters
-            // of the customer.
+
             final nameWidth = order.customerName.isEmpty
                 ? 0.0
                 : 24 +
@@ -317,7 +305,7 @@ class _ReturnCard extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Row 1: order numbers + date
+
                 if (row1Fits)
                   Row(
                     children: [
@@ -331,9 +319,7 @@ class _ReturnCard extends StatelessWidget {
                     ],
                   )
                 else ...[
-                  // The numbers shrink to fit rather than ending in an
-                  // ellipsis, which would hide the digits that tell them
-                  // apart.
+
                   Row(
                     children: [
                       Flexible(
@@ -357,7 +343,7 @@ class _ReturnCard extends StatelessWidget {
                   Text(date, style: dateStyle),
                 ],
                 const SizedBox(height: 8),
-                // Row 2: customer + reason chip + status badge
+
                 if (row2Fits)
                   Row(
                     children: [
@@ -391,8 +377,7 @@ class _ReturnCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 8),
-                // Row 3: items count + refund amount, which shrinks to fit
-                // rather than overflowing.
+
                 Row(
                   children: [
                     Text(
@@ -426,8 +411,6 @@ class _ReturnCard extends StatelessWidget {
   }
 }
 
-// ─── Reason chip and status badge ────────────────────────────────────────────
-
 (String, Color) _reasonLabel(BuildContext context, ReturnReason reason) {
   final s = AppStrings.of(context);
   return switch (reason) {
@@ -452,8 +435,6 @@ class _ReturnCard extends StatelessWidget {
   };
 }
 
-/// A coloured label pill: the reason chip, or the status badge (with 3 px of
-/// vertical padding rather than 2).
 class _Pill extends StatelessWidget {
   final String label;
   final Color color;
@@ -462,7 +443,6 @@ class _Pill extends StatelessWidget {
 
   static const _style = TextStyle(fontSize: 11, fontWeight: FontWeight.w600);
 
-  /// The width the pill takes on one line.
   static double widthOf(BuildContext context, String label) =>
       _textWidth(context, label, _style) + 16;
 
@@ -474,7 +454,7 @@ class _Pill extends StatelessWidget {
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
-      // Stays one line when the card is too narrow for it.
+
       child: Text(
         label,
         style: _style.copyWith(color: color),

@@ -12,7 +12,7 @@ part 'customer_provider.g.dart';
 @riverpod
 Stream<List<Customer>> customers(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  // The name index returns them in name order — no sort per reload.
+
   final query = isar.customers.where().anyName();
   yield* reloadOn(isar.customers.watchLazy(), query.findAll);
 }
@@ -38,11 +38,6 @@ class CustomerNotifier extends _$CustomerNotifier {
     });
   }
 
-  /// Moves the customer to the trash instead of destroying them. Their orders
-  /// are unlinked (not deleted) exactly as before; the unlinked order ids go
-  /// into the trash sidecar so a restore can re-link them.
-  /// Returns the trash entry id, for wiring an UNDO action. Null if the
-  /// customer was already gone.
   Future<int?> deleteCustomer(int id) async {
     int? trashId;
     state = await AsyncValue.guard(() async {
@@ -52,7 +47,6 @@ class CustomerNotifier extends _$CustomerNotifier {
         final customer = await isar.customers.get(id);
         if (customer == null) return;
 
-        // Clear customerId on related orders (keep orders, unlink customer)
         final orders = await isar.orders.where().customerIdEqualTo(id).findAll();
         for (final order in orders) {
           await isar.orders.put(order.copyWith(

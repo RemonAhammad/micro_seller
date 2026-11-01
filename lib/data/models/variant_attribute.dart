@@ -11,8 +11,8 @@ class VariantAttribute {
     this.options = const [],
   });
 
-  String name; // e.g. "Size", "Color"
-  List<String> options; // e.g. ["S", "M", "L", "XL"]
+  String name;
+  List<String> options;
 
   VariantAttribute copyWith({
     String? name,

@@ -91,7 +91,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
       final expense = Expense(
         id: existing?.id ?? Isar.autoIncrement,
         title: _titleCtrl.text.trim(),
-        // The validator has read it already.
+
         amount: NumberInput.parseDecimal(_amountCtrl.text)!,
         category: _category,
         date: _date,
@@ -165,7 +165,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Date picker
               GestureDetector(
                 onTap: _pickDate,
                 child: Container(
@@ -207,7 +206,6 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Category
               Text(s.expenseCategory,
                   style: TextStyle(
                     fontSize: 13,

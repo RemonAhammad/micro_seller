@@ -1,5 +1,5 @@
 const translationsTh = <String, String>{
-  // Navigation
+
   'dashboard': 'แดชบอร์ด',
   'products': 'สินค้า',
   'orders': 'คำสั่งซื้อ',
@@ -22,7 +22,6 @@ const translationsTh = <String, String>{
   'scanAgain': 'สแกนอีกครั้ง',
   'pointCameraAtCode': 'หันกล้องไปที่ QR โค้ดหรือบาร์โค้ด',
 
-  // Dashboard
   'todayRevenue': 'รายได้วันนี้',
   'monthRevenue': 'รายได้เดือนนี้',
   'monthProfit': 'กำไรเดือนนี้',
@@ -46,7 +45,6 @@ const translationsTh = <String, String>{
   'thisMonth': 'เดือนนี้',
   'customRange': 'ช่วงเวลาที่กำหนด',
 
-  // Products
   'addProduct': 'เพิ่มสินค้า',
   'editProduct': 'แก้ไขสินค้า',
   'productName': 'ชื่อสินค้า',
@@ -91,7 +89,6 @@ const translationsTh = <String, String>{
   'lastUpdated': 'อัปเดตล่าสุด',
   'noVariantsHint': 'ไม่มีตัวเลือก เพิ่มคุณสมบัติ เช่น ขนาด สี เป็นต้น',
 
-  // Orders
   'addOrder': 'คำสั่งซื้อใหม่',
   'editOrder': 'แก้ไขคำสั่งซื้อ',
   'orderNumber': 'คำสั่งซื้อ #',
@@ -132,7 +129,6 @@ const translationsTh = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'คำแนะนำพิเศษ (ถ้ามี)...',
 
-  // Order status
   'pending': 'รอดำเนินการ',
   'confirmed': 'ยืนยันแล้ว',
   'shipped': 'จัดส่งแล้ว',
@@ -141,12 +137,10 @@ const translationsTh = <String, String>{
   'active': 'กำลังดำเนินการ',
   'placed': 'สั่งซื้อแล้ว',
 
-  // Payment status
   'unpaid': 'ยังไม่ชำระ',
   'partial': 'ชำระบางส่วน',
   'paid': 'ชำระแล้ว',
 
-  // Payment methods
   'cash': 'เงินสด',
   'card': 'บัตร',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsTh = <String, String>{
   'bank': 'ธนาคาร',
   'other': 'อื่นๆ',
 
-  // Order detail
   'shareViaWhatsApp': 'แชร์ผ่าน WhatsApp',
   'sharePdf': 'แชร์ PDF',
   'downloadPdf': 'ดาวน์โหลด PDF',
@@ -174,7 +167,6 @@ const translationsTh = <String, String>{
   'markAsShipped': 'ทำเครื่องหมายว่าส่งสินค้าแล้ว',
   'markAsCompleted': 'ทำเครื่องหมายว่าเสร็จสิ้น',
 
-  // Customers
   'addCustomer': 'เพิ่มลูกค้า',
   'editCustomer': 'แก้ไขลูกค้า',
   'customerName': 'ชื่อ',
@@ -190,7 +182,6 @@ const translationsTh = <String, String>{
   'outstanding': 'ค้างชำระ',
   'memberSince': 'เป็นลูกค้าตั้งแต่',
 
-  // Inventory
   'stockAdjustment': 'ปรับปรุงสต็อก',
   'stockMovements': 'ความเคลื่อนไหวสต็อก',
   'stockLevels': 'ระดับสต็อก',
@@ -215,7 +206,6 @@ const translationsTh = <String, String>{
   'inStockLabel': 'มีสินค้า',
   'allCategories': 'ทุกหมวดหมู่',
 
-  // Expenses
   'addExpense': 'เพิ่มค่าใช้จ่าย',
   'editExpense': 'แก้ไขค่าใช้จ่าย',
   'expenseTitle': 'ชื่อค่าใช้จ่าย',
@@ -230,7 +220,6 @@ const translationsTh = <String, String>{
   'marketing': 'การตลาด',
   'supplies': 'วัสดุสิ้นเปลือง',
 
-  // Settings
   'shopName': 'ชื่อร้านค้า',
   'currencySymbol': 'สัญลักษณ์สกุลเงิน',
   'googleAccount': 'บัญชี Google',
@@ -284,7 +273,6 @@ const translationsTh = <String, String>{
   'downloads': 'ดาวน์โหลด',
   'dangerZone': 'โซนอันตราย',
 
-  // Suppliers
   'addSupplier': 'เพิ่มผู้จัดจำหน่าย',
   'editSupplier': 'แก้ไขผู้จัดจำหน่าย',
   'supplierNotFound': 'ไม่พบผู้จัดจำหน่าย',
@@ -307,7 +295,6 @@ const translationsTh = <String, String>{
   'addSuppliersFromMenu': 'เพิ่มผู้จัดจำหน่ายจากเมนูผู้จัดจำหน่าย',
   'selectSupplier': 'เลือกผู้จัดจำหน่าย',
 
-  // Purchases
   'purchaseNotFound': 'ไม่พบการสั่งซื้อ',
   'deletePurchase': 'ลบการสั่งซื้อ',
   'deletePurchaseConfirm': 'สต็อกจะถูกลดตามจำนวนที่ซื้อ',
@@ -325,7 +312,6 @@ const translationsTh = <String, String>{
   'allProducts': 'สินค้าทั้งหมด',
   'supplierProductsOnly': 'เฉพาะ {name}',
 
-  // Cash Register
   'registerOpen': 'ลิ้นชักเปิดอยู่',
   'noRegisterOpen': 'ไม่มีลิ้นชักเปิด',
   'openRegisterDesc': 'เปิดลิ้นชักเพื่อเริ่มติดตามกระแสเงินสด',
@@ -345,7 +331,6 @@ const translationsTh = <String, String>{
   'noRegisterHistory': 'ยังไม่มีประวัติลิ้นชักเงินสด',
   'loading': 'กำลังโหลด...',
 
-  // Returns
   'returnsAndRefunds': 'การคืนสินค้าและการคืนเงิน',
   'createReturnTitle': 'สร้างการคืนสินค้า',
   'selectItems': 'เลือกรายการ',
@@ -384,7 +369,6 @@ const translationsTh = <String, String>{
   'approveReturnConfirm': 'อนุมัติการคืนสินค้านี้และทำเครื่องหมายว่าได้รับสินค้าแล้ว? สินค้าจะถูกคืนเข้าสต็อก',
   'returnRejected': 'การคืนสินค้าถูกปฏิเสธ',
 
-  // Categories
   'addCategory': 'เพิ่มหมวดหมู่',
   'editCategory': 'แก้ไขหมวดหมู่',
   'deleteCategory': 'ลบหมวดหมู่',
@@ -392,7 +376,6 @@ const translationsTh = <String, String>{
   'addCategoriesToOrganise': 'เพิ่มหมวดหมู่เพื่อจัดระเบียบสินค้าของคุณ',
   'categoryName': 'ชื่อหมวดหมู่',
 
-  // Reports
   'totalRevenue': 'รายได้ทั้งหมด',
   'totalProfit': 'กำไรทั้งหมด',
   'totalExpenses': 'ค่าใช้จ่ายทั้งหมด',
@@ -402,7 +385,6 @@ const translationsTh = <String, String>{
   'topCustomers': 'ลูกค้าอันดับต้น',
   'salesByCategory': 'ยอดขายตามหมวดหมู่',
 
-  // Actions
   'save': 'บันทึก',
   'cancel': 'ยกเลิก',
   'delete': 'ลบ',
@@ -424,19 +406,16 @@ const translationsTh = <String, String>{
   'back': 'ย้อนกลับ',
   'sort': 'เรียงลำดับ',
 
-  // Delivery
   'delivery': 'การจัดส่ง',
   'markDelivered': 'ทำเครื่องหมายว่าจัดส่งแล้ว',
   'delivered': 'จัดส่งแล้ว',
 
-  // Variants
   'variants': 'ตัวเลือก',
   'addVariant': 'เพิ่มตัวเลือก',
   'variantName': 'คุณสมบัติ (เช่น ขนาด)',
   'variantValue': 'ค่า (เช่น ใหญ่)',
   'priceAdjustment': 'ราคา +/-',
 
-  // Messages
   'deleteConfirmation': 'คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?',
   'clearDataConfirmation':
       'การดำเนินการนี้จะลบข้อมูลทั้งหมดของคุณอย่างถาวร ไม่สามารถยกเลิกได้ คุณแน่ใจหรือไม่?',
@@ -452,7 +431,6 @@ const translationsTh = <String, String>{
   'noExpenses': 'ยังไม่มีค่าใช้จ่ายที่บันทึกไว้',
   'noStockMovements': 'ยังไม่มีความเคลื่อนไหวสต็อกที่บันทึกไว้',
 
-  // Misc
   'error': 'ข้อผิดพลาด',
   'pay': 'ชำระ',
   'scanQrBarcode': 'สแกน QR / บาร์โค้ด',
@@ -463,13 +441,11 @@ const translationsTh = <String, String>{
   'rowsSkipped': 'ข้าม {count} แถว:',
   'andMore': '...และอีก {count}',
 
-  // Payments / refunds
   'transactionId': 'รหัสธุรกรรม',
   'transactionIdHint': 'bKash / Nagad / เลขที่ใบเสร็จ',
   'refundMethod': 'วิธีคืนเงิน',
   'refundTransactionId': 'รหัสธุรกรรมการคืนเงิน',
 
-  // Sidebar customization
   'sidebarOrder': 'ลำดับแถบด้านข้าง',
   'sidebarOrderDesc': 'ลากเพื่อจัดเรียงแท็บแถบด้านข้างใหม่',
   'resetToDefault': 'รีเซ็ตเป็นค่าเริ่มต้น',
@@ -478,7 +454,6 @@ const translationsTh = <String, String>{
   'left': 'ซ้าย',
   'right': 'ขวา',
 
-  // Display size (Settings → Display)
   'display': 'การแสดงผล',
   'displaySize': 'ขนาดการแสดงผล',
   'displaySizeDesc': 'ทำให้ทุกอย่างบนหน้าจอเล็กลงหรือใหญ่ขึ้น',
@@ -488,7 +463,6 @@ const translationsTh = <String, String>{
   'phoneTextSize': 'โทรศัพท์: {value}',
   'preview': 'ตัวอย่าง',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'สีธีม',
   'colorThemeDesc': 'สีหลักของปุ่ม ส่วนหัว และส่วนที่ไฮไลต์',
   'phoneColors': 'สีของโทรศัพท์',
@@ -536,18 +510,15 @@ const translationsTh = <String, String>{
   'deleteThemeConfirm': 'ลบธีม “{name}” หรือไม่?',
   'themeLimitReached': 'คุณบันทึกธีมได้สูงสุด {count} ธีม',
 
-  // Auth gate
   'createPin': 'สร้าง PIN 4 หลัก',
   'confirmPin': 'ยืนยัน PIN',
   'enterPin': 'ใส่ PIN',
   'pinDoesNotMatch': 'PIN ไม่ตรงกัน ลองอีกครั้ง',
   'incorrectPin': 'PIN ไม่ถูกต้อง ลองอีกครั้ง',
 
-  // Auto Drive backup
   'autoBackup': 'สำรองข้อมูลอัตโนมัติไปยัง Drive',
   'autoBackupDesc': 'สำรองข้อมูลอัตโนมัติเมื่อเปิดแอป (เมื่อเข้าสู่ระบบแล้ว)',
 
-  // Security section
   'security': 'ความปลอดภัย',
   'securityFingerprint': 'ลายนิ้วมือ',
   'securityFingerprintDesc': 'ใช้ลายนิ้วมือเพื่อยืนยันการดำเนินการที่สำคัญ',
@@ -555,7 +526,7 @@ const translationsTh = <String, String>{
   'securityPinDesc': 'ต้องใช้ PIN 4 หลักสำหรับการดำเนินการที่สำคัญ',
   'biometricNotAvailable': 'ยังไม่มีการลงทะเบียนลายนิ้วมือบนอุปกรณ์นี้',
   'changeSecurity': 'ยืนยันตัวตนเพื่อเปลี่ยนการตั้งค่าความปลอดภัย',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'ใช้ Face ID เพื่อยืนยันการดำเนินการที่สำคัญ',
   'faceIdNotSetUp': 'ยังไม่ได้ตั้งค่า Face ID บนอุปกรณ์นี้',
@@ -563,7 +534,6 @@ const translationsTh = <String, String>{
   'securityTouchIdDesc': 'ใช้ Touch ID เพื่อยืนยันการดำเนินการที่สำคัญ',
   'touchIdNotSetUp': 'ยังไม่ได้ตั้งค่า Touch ID บนอุปกรณ์นี้',
 
-  // Background auto-backup status
   'autoBackupPaused': 'การสำรองข้อมูลอัตโนมัติถูกระงับ',
   'autoBackupResumed': 'การสำรองข้อมูลอัตโนมัติทำงานต่อแล้ว',
   'signInToFix': 'ลงชื่อเข้าใช้เพื่อแก้ไข',
@@ -603,7 +573,6 @@ const translationsTh = <String, String>{
   'shopPhone': 'โทรศัพท์ร้าน',
   'productCatalog': 'แคตตาล็อกสินค้า',
 
-  // Due Book
   'dueBook': 'สมุดลูกหนี้',
   'totalReceivable': 'ยอดค้างรับทั้งหมด',
   'customersOwing': 'ลูกค้า {count} รายค้างชำระ',
@@ -673,7 +642,6 @@ const translationsTh = <String, String>{
   'duesCollectedThisMonth': 'ยอดค้างชำระที่เก็บได้ (เดือนนี้)',
   'overdue60Banner': 'ลูกค้า {count} ราย ค้างชำระ {amount} เกิน 60 วัน',
 
-  // Reports
   'profitAndLoss': 'กำไรขาดทุน',
   'item': 'รายการ',
   'grossSales': 'ยอดขายรวม',
@@ -738,7 +706,6 @@ const translationsTh = <String, String>{
   'monthlyNetSales': 'ยอดขายสุทธิรายเดือน',
   'dateRangeTo': 'ถึง',
 
-  // Rating prompt
   'rateTitle': 'ชอบ {app} ไหม?',
   'rateMessage': 'คุณใช้ {app} บริหารร้านมาสักพักแล้ว การให้คะแนนสั้นๆ ช่วยให้ผู้ขายคนอื่นพบแอปนี้ได้ง่ายขึ้น',
   'rateNow': 'ให้คะแนนเลย',
@@ -749,7 +716,6 @@ const translationsTh = <String, String>{
   'rateThisAppSubtitle': 'ช่วยให้ผู้ขายคนอื่นค้นพบ {app}',
   'about': 'เกี่ยวกับ',
 
-  // App updates
   'updateAvailable': '{app} {version} พร้อมให้ใช้งานแล้ว',
   'updateHowToAndroid': 'ดาวน์โหลดไฟล์ APK ประเภทเดียวกับที่เคยติดตั้งไว้ (universal หรือ arm64-v8a) แล้วติดตั้งทับแอปนี้ ข้อมูลของคุณจะไม่หาย',
   'updateHowToIos': 'ติดตั้งอัปเดตด้วยเครื่องมือไซด์โหลดและ Apple ID เดียวกับที่เคยใช้ เพื่อให้ข้อมูลของคุณไม่หาย ควรสำรองข้อมูลก่อน',
@@ -758,10 +724,8 @@ const translationsTh = <String, String>{
   'upToDate': 'คุณใช้เวอร์ชันล่าสุดแล้ว',
   'updateCheckFailed': 'ตรวจสอบอัปเดตไม่สำเร็จ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณแล้วลองอีกครั้ง',
 
-  // Keypad bar (iOS)
   'next': 'ถัดไป',
 
-  // Camera
   'cameraAccessOff': 'การเข้าถึงกล้องปิดอยู่',
   'cameraAllowPrompt': '{app} ต้องใช้กล้องเพื่อสแกนโค้ดและถ่ายรูป',
   'cameraAllowInSettings': 'หากต้องการสแกนโค้ดและถ่ายรูป ให้อนุญาตการเข้าถึงกล้องสำหรับ {app} ในการตั้งค่า',
@@ -774,7 +738,6 @@ const translationsTh = <String, String>{
   'torchOn': 'เปิดไฟฉาย',
   'torchOff': 'ปิดไฟฉาย',
 
-  // Calls
   'callNotAvailable': 'อุปกรณ์นี้ไม่รองรับการโทร',
   'copyNumber': 'คัดลอกหมายเลข',
   'numberCopied': 'คัดลอกหมายเลขแล้ว',

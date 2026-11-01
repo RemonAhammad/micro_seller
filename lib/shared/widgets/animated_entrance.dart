@@ -2,40 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// Fades + slides a child upward on mount. Use with `index` for staggered
-/// list/grid entrances:
-///
-/// ```dart
-/// ListView.builder(
-///   itemBuilder: (_, i) => AnimatedEntrance(
-///     index: i,
-///     child: MyCard(...),
-///   ),
-/// )
-/// ```
-///
-/// Tuned for POS feel: short total duration, small offset. Only a list's
-/// first screenful animates: an item mounted while its [Scrollable] is
-/// scrolled away from the top, or with an index past `3 * maxStaggerIndex`,
-/// shows its child immediately — so a fling never reveals blank, still-waiting
-/// rows. That choice is made once, when the item mounts.
 class AnimatedEntrance extends StatefulWidget {
   final Widget child;
 
-  /// Item index in a list/grid. Used to stagger the animation start.
   final int index;
 
-  /// Per-item stagger delay. Default 40ms feels snappy without dragging.
   final Duration stagger;
 
-  /// Animation duration. Default 350ms.
   final Duration duration;
 
-  /// Maximum index to stagger. Items beyond this all share the cap delay,
-  /// so a list of 500 doesn't take 20 seconds to fully appear.
   final int maxStaggerIndex;
 
-  /// Vertical offset to slide from, in logical pixels. Default 16.
   final double offset;
 
   const AnimatedEntrance({
@@ -60,7 +37,6 @@ class _AnimatedEntranceState extends State<AnimatedEntrance>
   late final Animation<Offset> _slide;
   Timer? _startTimer;
 
-  // Not initState: the scroll position is an inherited lookup.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -77,7 +53,7 @@ class _AnimatedEntranceState extends State<AnimatedEntrance>
     _controller = controller;
     _fade = CurvedAnimation(parent: controller, curve: Curves.easeOut);
     _slide = Tween<Offset>(
-      begin: Offset(0, widget.offset / 100), // FractionalOffset; 16/100 ~ 16% of own height
+      begin: Offset(0, widget.offset / 100),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
 

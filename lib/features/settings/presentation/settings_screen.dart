@@ -39,13 +39,9 @@ import '../../updates/providers/update_notice_provider.dart';
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key, this.driveService, this.localBackupService});
 
-  /// Replaces the Google Drive service, so a test can list backups without
-  /// signing in. The app passes none.
   @visibleForTesting
   final DriveService? driveService;
 
-  /// Replaces the local backup service, so a test can export without a
-  /// database. The app passes none.
   @visibleForTesting
   final LocalBackupService? localBackupService;
 
@@ -64,13 +60,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   bool _isLocalImporting = false;
   String? _googleAccountEmail;
 
-  /// The device's biometrics, which the Security row names (Face ID or
-  /// Touch ID on an iPhone or iPad). Asked once, not on every rebuild, and
-  /// again when the app comes back to the front: the seller may have set
-  /// up Face ID in the system's Settings meanwhile.
   Future<({bool available, BiometricKind kind})>? _biometrics;
 
-  /// Local Backup's Export row.
   final _exportBackupRow = GlobalKey();
 
   @override
@@ -78,9 +69,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadAccount();
-    // The auto-backup worker writes `autoBackupError` to SharedPreferences
-    // from a separate isolate, so the in-memory provider state can be stale
-    // when this screen builds. Pull it once on entry.
+
     ref.read(settingsProvider.notifier).refreshAutoBackupError();
   }
 
@@ -92,11 +81,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Returning to the app after the worker fired in the background should
-    // surface the banner without requiring a navigation away and back.
+
     if (state == AppLifecycleState.resumed) {
       ref.read(settingsProvider.notifier).refreshAutoBackupError();
-      // Biometrics may have been set up (or removed) meanwhile.
+
       setState(() => _biometrics = null);
     }
   }
@@ -108,8 +96,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     }
   }
 
-  /// [e] in the app's language. The exception's own message is English
-  /// detail for the log (_logFailure), never shown.
   String _driveErrorMessage(DriveBackupException e) {
     final s = AppStrings.of(context);
     switch (e.code) {
@@ -138,11 +124,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     }
   }
 
-  /// Shows [e] as a red snackbar: [_driveErrorMessage], and on iOS, when
-  /// Google sign-in failed, a hint that a sideloaded install may not be able
-  /// to sign in. AltStore, SideStore or Sideloadly can re-sign the app under
-  /// another app ID, which the app's iOS OAuth client doesn't know; Local
-  /// Backup works there.
   void _showDriveError(DriveBackupException e) {
     final message = _driveErrorMessage(e);
     final signInFailed = e.code == DriveErrorCode.signInFailed ||
@@ -157,7 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           : SnackBar(
               content: Text('$message\n$hint'),
               backgroundColor: Colors.red,
-              // Two messages to read.
+
               duration: const Duration(seconds: 8),
             ),
     );
@@ -258,9 +239,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     }
   }
 
-  /// Verifies fingerprint only. Used when the user toggles the fingerprint
-  /// switch — separate from PIN. Returns true if there's nothing to verify
-  /// against (fingerprint isn't currently active) or biometric succeeds.
   Future<bool> _verifyFingerprint(String reason) async {
     final settings = ref.read(settingsProvider.notifier);
     if (!settings.securityFingerprintEnabled) return true;
@@ -276,8 +254,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
   }
 
-  /// Verifies PIN only. Used when the user toggles the PIN switch — separate
-  /// from fingerprint. Returns true if there's no stored PIN to verify.
   Future<bool> _verifyPin(String reason) async {
     final settings = ref.read(settingsProvider.notifier);
     if (!settings.securityPinEnabled) return true;
@@ -308,7 +284,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     if (!passed || !mounted) return;
     final svc = ref.read(authGateServiceProvider);
     if (target) {
-      // Enable: force a fresh PIN setup so we know one exists going forward.
+
       final ok = await runPinSetup(
         context,
         reason: s.tr('createPin'),
@@ -317,7 +293,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       if (!ok || !mounted) return;
       await ref.read(settingsProvider.notifier).updateSecurityPinEnabled(true);
     } else {
-      // Disable: clear the stored PIN so re-enabling forces a fresh setup.
+
       await svc.clearPin();
       await ref.read(settingsProvider.notifier).updateSecurityPinEnabled(false);
     }
@@ -334,8 +310,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
     if (ok != true || !mounted) return;
 
-    // Security gate: biometric prompt if available, otherwise a 4-digit PIN
-    // (set up on first use). User must pass before any data is wiped.
     final settings = ref.read(settingsProvider.notifier);
     final passed = await runAuthGate(
       context,
@@ -347,10 +321,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     if (!passed || !mounted) return;
 
     final isar = await ref.read(isarProvider.future);
-    // "Clear all" has to mean all: every collection, the recycle bin
-    // included (leaving it would both retain data the user asked to wipe and
-    // leave entries pointing at ids that no longer exist). The same clear as
-    // a restore, in one transaction on a worker isolate.
+
     await _localBackupService.clearAll(isar);
 
     if (mounted) {
@@ -364,8 +335,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     ref.watch(settingsProvider);
     final theme = Theme.of(context);
     final brand = context.brand;
-    // How this install updates. Only the channel: opening Settings never
-    // asks GitHub; Check for updates does.
+
     final updateChannel = ref.watch(updateChannelProvider).value;
 
     return Scaffold(
@@ -373,7 +343,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Theme: Light / Dark / System, and the color theme.
+
           _SectionHeader(s.theme),
           _SettingsCard(
             children: [
@@ -387,8 +357,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Display — Display size (whole-app zoom) and Text size. Per
-          // device, so never part of a backup (displayScaleProvider).
           _SectionHeader(s.display),
           _SettingsCard(
             children: [
@@ -429,7 +397,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Language
           _SectionHeader(s.language),
           _SettingsCard(
             children: [
@@ -468,7 +435,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Sidebar customization
           _SectionHeader(s.sidebar),
           _SettingsCard(
             children: [
@@ -530,7 +496,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Shop
           _SectionHeader(s.shop),
           _SettingsCard(
             children: [
@@ -541,8 +506,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 onEdit: (val) => ref.read(settingsProvider.notifier).updateShopName(val),
               ),
               const Divider(height: 1),
-              // Printed on the shared product catalog so buyers know where to
-              // order from. Optional — blank simply omits the line.
+
               _EditableTile(
                 icon: tabler.Phone.new,
                 label: s.shopPhone,
@@ -614,8 +578,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Downloads. Not on iOS, where Download PDF asks where to save
-          // each time (pdfDownloadAsksWhereToSave).
           if (!pdfDownloadAsksWhereToSave) ...[
             _SectionHeader(s.downloads),
             _SettingsCard(
@@ -659,7 +621,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             const SizedBox(height: 16),
           ],
 
-          // Recycle Bin — deleted records, recoverable for 30 days.
           _SectionHeader(s.recycleBin),
           _SettingsCard(
             children: [
@@ -690,12 +651,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Local Backup
           _SectionHeader(s.localBackup),
           _SettingsCard(
             children: [
               ListTile(
-                // An iPad's share sheet points at this row.
+
                 key: _exportBackupRow,
                 leading: Container(
                   width: 40,
@@ -770,8 +730,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         try {
                           final isar = await ref.read(isarProvider.future);
                           final restoredSettings = await _localBackupService.importBackup(isar);
-                          // null = user cancelled the picker; non-null map (even
-                          // empty) = backup was decoded successfully.
+
                           final success = restoredSettings != null;
                           if (success) {
                             await ref.read(settingsProvider.notifier).importSettings(restoredSettings);
@@ -801,8 +760,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Google Drive. iOS has no Auto Backup, so no paused banner and no
-          // switch there (AutoBackupRunner.isSupported).
           _SectionHeader(s.googleDriveBackup),
           if (AutoBackupRunner.isSupported &&
               ref.watch(settingsProvider)['autoBackupError'] != null)
@@ -813,13 +770,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   '',
               onSignIn: () async {
                 try {
-                  // Interactive sign-in — re-issues the OAuth grant.
+
                   final user = await _driveService.signIn();
-                  if (user == null) return; // user cancelled
+                  if (user == null) return;
                   await ref
                       .read(settingsProvider.notifier)
                       .clearAutoBackupError();
-                  // Re-schedule so the next backup attempt runs soon.
+
                   await AutoBackupRunner.scheduleAutoBackup();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -875,7 +832,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         if (!mounted) return;
                         setState(() => _googleAccountEmail = account?.email);
                       } on DriveBackupException catch (e, st) {
-                        // A failure used to escape the button unseen.
+
                         _logFailure('signIn', e, st);
                         if (mounted) _showDriveError(e);
                       }
@@ -925,12 +882,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: _isRestoring ? null : _restore,
               ),
-              // Not on iOS (AutoBackupRunner.isSupported).
+
               if (AutoBackupRunner.isSupported) ...[
                 const Divider(height: 1),
-                // Auto-backup switch — when enabled and the user is signed
-                // into Drive, AutoBackupRunner kicks off a backup on app
-                // startup (throttled to ≥12h between runs).
+
                 _SwitchRow(
                   leading: Container(
                     width: 40,
@@ -957,15 +912,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     await ref
                         .read(settingsProvider.notifier)
                         .updateAutoBackup(v);
-                    // Schedule / cancel the WorkManager periodic worker so
-                    // background backups follow the toggle. No-op on
-                    // desktop — the helpers already early-return there.
+
                     if (v) {
                       await AutoBackupRunner.scheduleAutoBackup();
                     } else {
                       await AutoBackupRunner.cancelAutoBackup();
-                      // Clearing the error too: with auto-backup off the
-                      // banner is meaningless.
+
                       await ref
                           .read(settingsProvider.notifier)
                           .clearAutoBackupError();
@@ -977,12 +929,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // About
           _SectionHeader(s.about),
           _SettingsCard(
             children: [
-              // Only where the app has a store listing to rate: not the
-              // sideloaded iPhone app (ReviewService.hasStoreListing).
+
               if (ReviewService.hasStoreListing()) ...[
                 ListTile(
                   leading: Container(
@@ -998,10 +948,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   title: Text(s.rateThisApp),
                   subtitle: Text(s.rateThisAppSubtitle(AppStrings.appName)),
                   trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
-                  // The tap is already an opt-in, so skip the gate dialog.
-                  // It opens the store page rather than Play's in-app
-                  // sheet: Play may skip that sheet without telling the app,
-                  // and then the tap did nothing.
+
                   onTap: () async {
                     await ReviewService.openReviewPage();
                     await ReviewService.markRated();
@@ -1009,8 +956,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 ),
                 const Divider(height: 1, indent: 56),
               ],
-              // Installs Play doesn't update: the iPhone app and APKs from
-              // GitHub.
+
               if (updateChannel == UpdateChannel.github) ...[
                 const _CheckForUpdatesTile(),
                 const Divider(height: 1, indent: 56),
@@ -1029,7 +975,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                   title: Text(s.appVersion),
                 ),
-                // Was a hardcoded '1.0.0' — read the real version + build.
+
                 control: FutureBuilder<PackageInfo>(
                   future: PackageInfo.fromPlatform(),
                   builder: (context, snap) => Text(
@@ -1045,10 +991,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          // Security — each row is visibility-gated by its `.env` flag.
-          // ENABLE_FINGERPRINT_GATE / ENABLE_PIN_GATE control whether the
-          // toggle is shown at all; user setting controls whether that path
-          // is active. Section is hidden entirely when both .env flags off.
           if (isFingerprintFeatureEnabled || isPinFeatureEnabled) ...[
             _SectionHeader(s.tr('security')),
             _SettingsCard(
@@ -1059,10 +1001,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         ref.read(authGateServiceProvider).biometrics(),
                     builder: (context, snapshot) {
                       final available = snapshot.data?.available ?? false;
-                      // Named as the device names it: Face ID or Touch ID
-                      // on an iPhone or iPad; Android can't tell a face
-                      // from a fingerprint. The saved setting stays
-                      // securityFingerprintEnabled, as backups carry it.
+
                       final (
                         ThinIconBuilder icon,
                         String title,
@@ -1158,7 +1097,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             const SizedBox(height: 16),
           ],
 
-          // Danger zone
           _SectionHeader(s.dangerZone),
           _SettingsCard(
             children: [
@@ -1186,11 +1124,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 }
 
-/// Compact two-icon segmented toggle for picking sidebar Left vs Right.
-/// Each side is a 36×32 rounded square; the active one fills with the
-/// primary colour, the other ghosts to onSurface-medium. Tapping the
-/// inactive side flips. Designed to fit at the end of a Settings row
-/// ([_EndControl]) without pushing the title onto a second line.
 class _SidebarPositionToggle extends StatelessWidget {
   final bool isLeft;
   final ValueChanged<bool> onChanged;
@@ -1223,7 +1156,7 @@ class _SidebarPositionToggle extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 30,
-          // Centered: the box's tight size would stretch the icon to fill it.
+
           child: Center(
             child: ThinIcon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
           ),
@@ -1233,10 +1166,6 @@ class _SidebarPositionToggle extends StatelessWidget {
   }
 }
 
-/// Settings → Display size's value: the size in effect, which a narrow
-/// window can hold below the saved one. A widget of its own because
-/// AppZoomScope also changes with the window's MediaQuery (on every keyboard
-/// frame), and only this text needs to rebuild then.
 class _DisplaySizeValue extends ConsumerWidget {
   const _DisplaySizeValue();
 
@@ -1248,9 +1177,6 @@ class _DisplaySizeValue extends ConsumerWidget {
   }
 }
 
-/// Settings → Text size's value: the custom size, or the phone's font size
-/// while following it. Its own widget for the same reason as
-/// [_DisplaySizeValue].
 class _TextSizeValue extends ConsumerWidget {
   const _TextSizeValue();
 
@@ -1264,10 +1190,6 @@ class _TextSizeValue extends ConsumerWidget {
   }
 }
 
-/// About → Check for updates, on installs Play doesn't update (the iPhone
-/// app, APKs from GitHub): asks GitHub now, whatever the daily throttle and
-/// a dismissed notice, and says what it found. While it asks, a spinner, and
-/// taps are ignored.
 class _CheckForUpdatesTile extends ConsumerStatefulWidget {
   const _CheckForUpdatesTile();
 
@@ -1326,10 +1248,6 @@ class _CheckForUpdatesTileState extends ConsumerState<_CheckForUpdatesTile> {
   }
 }
 
-/// Amber warning card surfaced under the "Google Drive" section header
-/// when the background worker has detected revoked / failed Drive access.
-/// Tapping the primary button re-runs interactive sign-in; tapping the X
-/// dismisses the banner without fixing it.
 class _AutoBackupErrorBanner extends StatelessWidget {
   final String message;
   final VoidCallback onSignIn;
@@ -1437,9 +1355,7 @@ class _SettingsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)],
       ),
-      // The rows' own Material: a ListTile paints its ink (tap ripple,
-      // highlight) on the nearest Material, which was the screen's, under
-      // this card's colour. Transparent, and clipped to the card's corners.
+
       child: Material(
         type: MaterialType.transparency,
         borderRadius: BorderRadius.circular(16),
@@ -1450,24 +1366,10 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-/// A Settings row with a control at its end (a button, a toggle, a value),
-/// where `ListTile.trailing` would put it. ListTile gives its title only the
-/// width the icon box and the trailing leave, and breaks a longer word across
-/// lines: down to a letter a line beside a wide button, in a long
-/// translation, at a large text size or in a narrow layout. So when a word of
-/// the row's title or subtitle wouldn't fit beside [control], the control
-/// goes under them instead, in line with the title.
-///
-/// [tile] is the row's ListTile, without a trailing widget or a padding of
-/// its own. Beside it, the control sits exactly where ListTile's trailing
-/// would, in the light theme and the dark one.
 class _EndControl extends MultiChildRenderObjectWidget {
   _EndControl({required Widget tile, required Widget control})
       : super(children: [tile, control]);
 
-  /// Where a ListTile ends its trailing: its end padding, from the ListTile
-  /// theme or Material's default (16 in the light theme, which sets one;
-  /// Material 3's 24 in the dark theme, which doesn't).
   static double _endPadding(BuildContext context) {
     final direction = Directionality.of(context);
     final padding = (ListTileTheme.of(context).contentPadding ??
@@ -1498,15 +1400,10 @@ class _RenderEndControl extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox, _EndControlParentData> {
   _RenderEndControl(this._textDirection, this._endPadding);
 
-  /// ListTile's title gap: between the texts and the control.
   static const double _gap = 16;
 
-  /// Where the ListTile's texts start: its padding, the 40 dp icon box and
-  /// the title gap.
   static const double _textStart = 72;
 
-  /// How far a control under the texts reaches into the ListTile's bottom
-  /// padding, and the space left under it.
   static const double _tuck = 4;
   static const double _below = 8;
 
@@ -1518,7 +1415,6 @@ class _RenderEndControl extends RenderBox
     markNeedsLayout();
   }
 
-  /// The ListTile's end padding, after the control.
   double get endPadding => _endPadding;
   double _endPadding;
   set endPadding(double value) {
@@ -1537,17 +1433,12 @@ class _RenderEndControl extends RenderBox
     }
   }
 
-  /// Whether the control fits beside the texts in [width]. A ListTile's
-  /// minimum intrinsic width is its padding and icon box plus the longest
-  /// word of its title and subtitle.
   bool _beside(double width) =>
       _tile.getMinIntrinsicWidth(double.infinity) +
           _gap +
           _control.getMaxIntrinsicWidth(double.infinity) <=
       width;
 
-  /// Sizes the children with [layoutChild]: the row's size and where each
-  /// child goes.
   ({Size size, Offset tile, Offset control}) _arrange(
     BoxConstraints constraints,
     ChildLayouter layoutChild,
@@ -1555,9 +1446,7 @@ class _RenderEndControl extends RenderBox
     final width = constraints.maxWidth;
     final rtl = textDirection == TextDirection.rtl;
     if (_beside(width)) {
-      // As ListTile lays out its trailing: centered across the row, the
-      // title gap from the texts. The tile's own end padding runs under the
-      // control where it is wider than the gap (in the dark theme).
+
       final control = layoutChild(_control, BoxConstraints(maxWidth: width));
       final tile = layoutChild(
         _tile,
@@ -1646,12 +1535,6 @@ class _RenderEndControl extends RenderBox
       defaultPaint(context, offset);
 }
 
-/// A Settings row with a switch at its end, laid out as a [SwitchListTile]
-/// lays it out, except that the switch goes under the texts when a word of
-/// them wouldn't fit beside it ([_EndControl]): a SwitchListTile broke a
-/// long word across lines, down to a few letters a line, in a narrow layout
-/// at a large text size. A tap anywhere on the row flips the switch; without
-/// [onChanged] the row is disabled.
 class _SwitchRow extends StatelessWidget {
   const _SwitchRow({
     required this.leading,
@@ -1670,7 +1553,7 @@ class _SwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    // One node for a screen reader, as a SwitchListTile is.
+
     return MergeSemantics(
       child: _EndControl(
         tile: ListTile(
@@ -1680,8 +1563,7 @@ class _SwitchRow extends StatelessWidget {
           subtitle: subtitle,
           onTap: onChanged == null ? null : () => onChanged(!value),
         ),
-        // SwitchListTile's switch: no tap-target padding (the row is the
-        // target), and the row, not the switch, takes the focus.
+
         control: ExcludeFocus(
           child: Switch(
             value: value,
@@ -1826,8 +1708,6 @@ class _ThemeModeSelector extends StatelessWidget {
   }
 }
 
-/// Settings → Color theme: the active theme's swatch (its main color with
-/// its text color on it) and name. Opens the Color theme screen.
 class _ColorThemeTile extends ConsumerWidget {
   const _ColorThemeTile();
 
@@ -1835,12 +1715,11 @@ class _ColorThemeTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
     final cs = Theme.of(context).colorScheme;
-    // Plain values: only a change of theme or of the saved ones rebuilds.
+
     ref.watch(settingsProvider.select((m) => m['colorThemeId']));
     ref.watch(settingsProvider.select((m) => m['customColorThemes']));
     final active = ref.read(settingsProvider.notifier).activeColorTheme;
-    // Phone colors saved (e.g. from another phone's backup) on a phone that
-    // has none: the app is drawn in Teal, so name what is actually shown.
+
     final phoneState = ref.watch(dynamicColorAvailableProvider);
     final shown = active.isPhone &&
             phoneState.hasValue &&
@@ -1892,8 +1771,7 @@ class _BackupPickerSheet extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
           ),
         ),
-        // Flexible: more backups than the sheet's height holds scroll,
-        // instead of running off its bottom.
+
         Flexible(
           child: ListView.builder(
             shrinkWrap: true,
@@ -1914,8 +1792,6 @@ class _BackupPickerSheet extends StatelessWidget {
     );
   }
 }
-
-// ─── Currency Picker Sheet ──────────────────────────────────────────────────
 
 class _CurrencyPickerSheet extends StatefulWidget {
   final String currentSymbol;
@@ -2022,7 +1898,7 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: AppStrings.of(context).searchCurrency,
-                // Centered: the field's 48 dp icon slot would stretch it.
+
                 prefixIcon: const Center(
                   widthFactor: 1,
                   heightFactor: 1,
@@ -2062,8 +1938,7 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      // A long symbol (KSh) at a large text size shrinks to
-                      // the box instead of wrapping and being cut off.
+
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
@@ -2097,8 +1972,6 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
     );
   }
 }
-
-// ─── Language Picker Sheet ──────────────────────────────────────────────────
 
 class _LanguagePickerSheet extends StatelessWidget {
   final String currentCode;

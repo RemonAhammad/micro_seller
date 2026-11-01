@@ -21,17 +21,10 @@ import '../../../core/constants/app_icons.dart';
 
 enum _Range { today, thisWeek, thisMonth, lastMonth, thisYear, custom }
 
-// The header under the toolbar, top to bottom: 4 px, the range chips, 6 px,
-// the date line, 4 px, then the TabBar. Both text rows grow with the text
-// size, and the header with them, so nothing clips or slides under the tabs.
-
-/// Height of the range-chip row: 36 at the default text size. The chips are
-/// 8 px of padding around a 12 px label (bodyMedium's 1.43 line height).
 @visibleForTesting
 double reportsChipRowHeight(TextScaler textScaler) =>
     36 + (textScaler.scale(12) - 12) * 1.43;
 
-/// The header's expanded height for a TabBar [tabBarHeight] tall.
 @visibleForTesting
 double reportsHeaderHeight(TextScaler textScaler, double tabBarHeight) =>
     kToolbarHeight +
@@ -42,9 +35,6 @@ double reportsHeaderHeight(TextScaler textScaler, double tabBarHeight) =>
     4 +
     tabBarHeight;
 
-/// Business reports: one date range, four tabs (Profit & Sales, Dues &
-/// Payments, Stock & Returns, Purchases & Expenses), each exportable as PDF
-/// or CSV. All numbers come from `report_service.dart`.
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
 
@@ -60,8 +50,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   late DateTime _to;
   bool _exporting = false;
 
-  /// The app bar's export slot (the button, or its spinner while
-  /// exporting): an iPad's share sheet points at it.
   final _exportSlot = GlobalKey();
 
   static const _tabKeys = [
@@ -92,7 +80,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _Range.thisMonth => (DateTime(now.year, now.month), today),
       _Range.lastMonth => (
           DateTime(now.year, now.month - 1),
-          DateTime(now.year, now.month, 0), // last day of previous month
+          DateTime(now.year, now.month, 0),
         ),
       _Range.thisYear => (DateTime(now.year), today),
       _Range.custom => (_from, _to),
@@ -129,8 +117,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       };
   }
 
-  // ─── Export ──
-
   Future<List<ReportTable>> _currentTables(ReportTr tr) async {
     return switch (_tabs.index) {
       0 => (await ref.read(salesReportProvider(_from, _to).future)).toTables(tr),
@@ -153,10 +139,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     setState(() => _exporting = true);
     try {
-      // Paint the spinner before any work: each page capture starts with a
-      // synchronous build/layout on this isolate. After that the work yields
-      // (PNG encode, PDF assembly on a background isolate), so it keeps
-      // animating until the share sheet opens.
+
       await WidgetsBinding.instance.endOfFrame;
       final tables = await _currentTables(s.tr);
       final origin = shareOriginOf(_exportSlot.currentContext);
@@ -223,14 +206,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
-  // ─── UI ──
-
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final textScaler = MediaQuery.textScalerOf(context);
-    // The theme's main color and its text color (white and white70 on Teal).
+
     final brand = context.brand;
     final onBrand = brand.onPrimary;
     final onBrandSoft = onBrand.withAlpha(0xB3);
@@ -314,8 +295,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-                          // One line, shrunk rather than wrapped: the header
-                          // has room for exactly one above the tabs.
+
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: AlignmentDirectional.centerStart,
@@ -358,8 +338,7 @@ class _RangeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // On the header: the selected chip swaps the main color and its text
-    // color (white on Teal).
+
     final brand = context.brand;
     return Material(
       color: selected

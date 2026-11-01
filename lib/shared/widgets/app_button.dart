@@ -28,11 +28,7 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // A loading button is disabled, so every variant, filled and destructive
-    // too, draws its spinner in the disabled button's own text color, as its
-    // label would be. A white one was all but invisible: a disabled filled
-    // button has Material's pale grey fill, not its main color, and an
-    // outlined or text button has none.
+
     final spinner = Builder(
       builder: (context) => SizedBox(
         width: 20,
@@ -51,8 +47,7 @@ class AppButton extends StatelessWidget {
                 children: [
                   ThinIcon(icon!, size: 18),
                   const SizedBox(width: 8),
-                  // A label longer than the button (a long translation, a
-                  // large text size) wraps instead of overflowing.
+
                   Flexible(
                     child: Text(label, textAlign: TextAlign.center),
                   ),
@@ -108,11 +103,6 @@ class AppButton extends StatelessWidget {
   }
 }
 
-/// Two buttons side by side at equal widths, [gap] apart, as a `Row` of two
-/// `Expanded` buttons lays them out. When a label's longest word wouldn't fit
-/// in its half (a long translation, a large text size, a narrow layout), the
-/// two are stacked full width instead, [first] on top, so no word is ever
-/// broken across lines.
 class ButtonPair extends MultiChildRenderObjectWidget {
   ButtonPair({
     super.key,
@@ -122,10 +112,8 @@ class ButtonPair extends MultiChildRenderObjectWidget {
     this.stackedGap = 8,
   }) : super(children: [first, second]);
 
-  /// Space between the buttons side by side.
   final double gap;
 
-  /// Space between the buttons when stacked.
   final double stackedGap;
 
   @override
@@ -196,12 +184,8 @@ class _RenderButtonPair extends RenderBox
 
   double get _gaps => gap * math.max(0, childCount - 1);
 
-  /// Each child's share of [width] side by side.
   double _share(double width) => (width - _gaps) / math.max(1, childCount);
 
-  /// Whether every child fits its share of [width] without breaking a word.
-  /// A button's minimum intrinsic width is its padding plus the widest word
-  /// of its label.
   bool _sideBySide(double width) =>
       !width.isFinite ||
       _children.every((child) =>
@@ -213,9 +197,7 @@ class _RenderButtonPair extends RenderBox
 
   @override
   double computeMaxIntrinsicWidth(double height) {
-    // What the Row of Expanded children reported: as wide as the widest
-    // child, times the number of children, plus the gaps. Dialogs size
-    // themselves from this.
+
     final widest = _children.fold(
         0.0, (w, child) => math.max(w, child.getMaxIntrinsicWidth(height)));
     return widest * childCount + _gaps;
@@ -277,8 +259,6 @@ class _RenderButtonPair extends RenderBox
     }
   }
 
-  /// Sizes the children with [layoutChild]: the pair's size, the constraints
-  /// each child gets and where each one goes.
   ({Size size, BoxConstraints childConstraints, List<Offset> offsets})
       _arrange(BoxConstraints constraints, ChildLayouter layoutChild) {
     final children = _children;
@@ -292,7 +272,7 @@ class _RenderButtonPair extends RenderBox
     }
 
     if (_sideBySide(width)) {
-      // As a Row of Expanded children, centered across.
+
       final childConstraints = width.isFinite
           ? BoxConstraints.tightFor(width: _share(width))
               .copyWith(maxHeight: constraints.maxHeight)
@@ -322,7 +302,6 @@ class _RenderButtonPair extends RenderBox
       );
     }
 
-    // Stacked, each as wide as the pair.
     final childConstraints = BoxConstraints.tightFor(width: width);
     final offsets = <Offset>[];
     var y = 0.0;

@@ -7,8 +7,6 @@ class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static Future<void>? _initFuture;
 
-  /// Memoized, so concurrent callers share one init (main starts it without
-  /// awaiting on most platforms; checkAndNotify waits for it).
   static Future<void> init() => _initFuture ??= _initialize();
 
   static Future<void> _initialize() async {
@@ -74,11 +72,6 @@ class NotificationService {
     );
   }
 
-  /// Fired by the background WorkManager worker when Drive access is no
-  /// longer usable (silent sign-in returned null, account revoked the
-  /// scope, or Play Services raised DEVELOPER_ERROR). Tapping the
-  /// notification opens the app, where Settings → Drive shows a banner
-  /// with a "Sign in" button to restore the connection.
   static Future<void> showAutoBackupPaused() async {
     await _plugin.show(
       id: 3,
@@ -98,13 +91,9 @@ class NotificationService {
     );
   }
 
-  /// Check and trigger notifications based on current data. Pass [lowStock]
-  /// (active products at or below threshold) to skip the product query.
   static Future<void> checkAndNotify(Isar isar,
       {List<Product>? lowStock}) async {
-    // The Dashboard fires this without awaiting it, possibly while main's
-    // init() is still running. If init never started or failed
-    // (unsupported platform, tests) showing would throw unhandled.
+
     final init = _initFuture;
     if (init == null) return;
     try {
@@ -113,7 +102,6 @@ class NotificationService {
       return;
     }
 
-    // Low stock check
     final lowStockProducts = lowStock ??
         (await isar.products.filter().isActiveEqualTo(true).findAll())
             .where((p) => p.isLowStock || p.isOutOfStock)
@@ -122,8 +110,6 @@ class NotificationService {
       await showLowStockAlert(lowStockProducts);
     }
 
-    // Unpaid orders check — the reminder text only needs how many, so count
-    // natively instead of loading every unpaid order.
     final unpaidCount = await isar.orders
         .filter()
         .not()

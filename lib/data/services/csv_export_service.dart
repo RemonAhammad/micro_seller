@@ -10,10 +10,8 @@ import '../models/product.dart';
 import '../models/expense.dart';
 import 'report_service.dart';
 
-/// Every export takes an optional `shareOrigin`: the rect of the control
-/// that was tapped (`shareOriginOf`), for an iPad's share sheet to point at.
 class CsvExportService {
-  /// Export orders to CSV and share via system share sheet.
+
   Future<void> exportOrders(List<Order> orders, {Rect? shareOrigin}) async {
     final rows = [
       [
@@ -54,7 +52,6 @@ class CsvExportService {
     await _shareAsCsv(rows, 'orders_export', shareOrigin: shareOrigin);
   }
 
-  /// Export products to CSV and share via system share sheet.
   Future<void> exportProducts(
     List<Product> products, {
     Rect? shareOrigin,
@@ -86,7 +83,6 @@ class CsvExportService {
     await _shareAsCsv(rows, 'products_export', shareOrigin: shareOrigin);
   }
 
-  /// Export expenses to CSV and share via system share sheet.
   Future<void> exportExpenses(
     List<Expense> expenses, {
     Rect? shareOrigin,
@@ -104,8 +100,6 @@ class CsvExportService {
     await _shareAsCsv(rows, 'expenses_export', shareOrigin: shareOrigin);
   }
 
-  /// Export one Reports tab: a header (shop, report, period), then each
-  /// [ReportTable] as its own block separated by a blank row.
   Future<void> exportReport({
     required String shopName,
     required String reportTitle,
@@ -126,13 +120,10 @@ class CsvExportService {
         [],
       ],
     ];
-    // BOM so Excel opens Bengali / Arabic text as UTF-8.
+
     await _shareAsCsv(rows, fileName, bom: true, shareOrigin: shareOrigin);
   }
 
-  /// Numbers stay numbers (summable in Excel). Text that a spreadsheet would
-  /// run as a formula (=, +, -, @ — e.g. a product named "=SUM(...)") gets a
-  /// leading apostrophe.
   static Object _safeCell(Object c) {
     if (c is num) return c;
     final s = c.toString();
@@ -141,8 +132,7 @@ class CsvExportService {
 
   Future<void> _shareAsCsv(List<List<dynamic>> rows, String fileName,
       {bool bom = false, Rect? shareOrigin}) async {
-    // CSV + UTF-8 encoding of a big export would freeze the UI isolate. The
-    // rows hold only plain values (String / num), so they cross as they are.
+
     final bytes = await compute(_encodeCsv, (rows, bom));
     final dir = await getTemporaryDirectory();
     final file = File(
@@ -157,8 +147,6 @@ class CsvExportService {
   }
 }
 
-/// The exact bytes `File.writeAsString(bom ? '\uFEFF$text' : text)` wrote
-/// (UTF-8), for a worker isolate.
 Uint8List _encodeCsv((List<List<dynamic>>, bool) args) {
   final (rows, bom) = args;
   final text = csv.encode(rows);

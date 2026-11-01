@@ -1,5 +1,5 @@
 const translationsUr = <String, String>{
-  // Navigation
+
   'dashboard': 'ڈیش بورڈ',
   'products': 'مصنوعات',
   'orders': 'آرڈرز',
@@ -22,7 +22,6 @@ const translationsUr = <String, String>{
   'scanAgain': 'دوبارہ اسکین کریں',
   'pointCameraAtCode': 'کیمرا QR کوڈ یا بارکوڈ کی طرف کریں',
 
-  // Dashboard
   'todayRevenue': 'آج کی آمدنی',
   'monthRevenue': 'ماہانہ آمدنی',
   'monthProfit': 'ماہانہ منافع',
@@ -46,7 +45,6 @@ const translationsUr = <String, String>{
   'thisMonth': 'اس ماہ',
   'customRange': 'حسب ضرورت مدت',
 
-  // Products
   'addProduct': 'مصنوع شامل کریں',
   'editProduct': 'مصنوع میں ترمیم',
   'productName': 'مصنوع کا نام',
@@ -91,7 +89,6 @@ const translationsUr = <String, String>{
   'lastUpdated': 'آخری اپ ڈیٹ',
   'noVariantsHint': 'کوئی ویریئنٹ نہیں۔ سائز، رنگ وغیرہ جیسی خصوصیات شامل کریں۔',
 
-  // Orders
   'addOrder': 'نیا آرڈر',
   'editOrder': 'آرڈر میں ترمیم',
   'orderNumber': 'آرڈر نمبر',
@@ -132,7 +129,6 @@ const translationsUr = <String, String>{
   'onlyXInStock': 'Only \$stock in stock for \$name',
   'anySpecialInstructions': 'کوئی خاص ہدایات...',
 
-  // Order status
   'pending': 'زیر التوا',
   'confirmed': 'تصدیق شدہ',
   'shipped': 'بھیج دیا گیا',
@@ -141,12 +137,10 @@ const translationsUr = <String, String>{
   'active': 'جاری',
   'placed': 'آرڈر دیا گیا',
 
-  // Payment status
   'unpaid': 'غیر ادا شدہ',
   'partial': 'جزوی',
   'paid': 'ادا شدہ',
 
-  // Payment methods
   'cash': 'نقد',
   'card': 'کارڈ',
   'mfs': 'MFS',
@@ -155,7 +149,6 @@ const translationsUr = <String, String>{
   'bank': 'بینک',
   'other': 'دیگر',
 
-  // Order detail
   'shareViaWhatsApp': 'WhatsApp کے ذریعے شیئر کریں',
   'sharePdf': 'PDF شیئر کریں',
   'downloadPdf': 'PDF ڈاؤنلوڈ کریں',
@@ -174,7 +167,6 @@ const translationsUr = <String, String>{
   'markAsShipped': 'روانہ شدہ نشان زد کریں',
   'markAsCompleted': 'مکمل شدہ نشان زد کریں',
 
-  // Customers
   'addCustomer': 'گاہک شامل کریں',
   'editCustomer': 'گاہک میں ترمیم',
   'customerName': 'نام',
@@ -190,7 +182,6 @@ const translationsUr = <String, String>{
   'outstanding': 'واجب الادا',
   'memberSince': 'گاہک بننے کی تاریخ',
 
-  // Inventory
   'stockAdjustment': 'اسٹاک ایڈجسٹمنٹ',
   'stockMovements': 'اسٹاک کی نقل و حرکت',
   'stockLevels': 'اسٹاک کی سطح',
@@ -215,7 +206,6 @@ const translationsUr = <String, String>{
   'inStockLabel': 'دستیاب',
   'allCategories': 'تمام زمرے',
 
-  // Expenses
   'addExpense': 'خرچ شامل کریں',
   'editExpense': 'خرچ میں ترمیم',
   'expenseTitle': 'خرچ کا عنوان',
@@ -230,7 +220,6 @@ const translationsUr = <String, String>{
   'marketing': 'مارکیٹنگ',
   'supplies': 'سامان',
 
-  // Settings
   'shopName': 'دکان کا نام',
   'currencySymbol': 'کرنسی کی علامت',
   'googleAccount': 'Google اکاؤنٹ',
@@ -284,7 +273,6 @@ const translationsUr = <String, String>{
   'downloads': 'ڈاؤنلوڈز',
   'dangerZone': 'خطرناک زون',
 
-  // Suppliers
   'addSupplier': 'سپلائر شامل کریں',
   'editSupplier': 'سپلائر میں ترمیم',
   'supplierNotFound': 'سپلائر نہیں ملا',
@@ -307,7 +295,6 @@ const translationsUr = <String, String>{
   'addSuppliersFromMenu': 'سپلائرز مینو سے سپلائر شامل کریں',
   'selectSupplier': 'سپلائر منتخب کریں',
 
-  // Purchases
   'purchaseNotFound': 'خریداری نہیں ملی',
   'deletePurchase': 'خریداری حذف کریں',
   'deletePurchaseConfirm': 'خریدی گئی مقدار کے مطابق اسٹاک کم ہو جائے گا۔',
@@ -325,7 +312,6 @@ const translationsUr = <String, String>{
   'allProducts': 'تمام مصنوعات',
   'supplierProductsOnly': 'صرف {name}',
 
-  // Cash Register
   'registerOpen': 'رجسٹر کھلا',
   'noRegisterOpen': 'کوئی رجسٹر نہیں کھلا',
   'openRegisterDesc': 'نقد بہاؤ ٹریک کرنے کے لیے رجسٹر کھولیں',
@@ -345,7 +331,6 @@ const translationsUr = <String, String>{
   'noRegisterHistory': 'ابھی تک کوئی رجسٹر تاریخچہ نہیں',
   'loading': 'لوڈ ہو رہا ہے...',
 
-  // Returns
   'returnsAndRefunds': 'واپسیاں اور رقم کی واپسی',
   'createReturnTitle': 'واپسی بنائیں',
   'selectItems': 'اشیاء منتخب کریں',
@@ -384,7 +369,6 @@ const translationsUr = <String, String>{
   'approveReturnConfirm': 'یہ واپسی منظور کر کے اشیاء کو وصول شدہ نشان زد کریں؟ اسٹاک بحال ہو جائے گا۔',
   'returnRejected': 'واپسی مسترد کر دی گئی',
 
-  // Categories
   'addCategory': 'زمرہ شامل کریں',
   'editCategory': 'زمرے میں ترمیم',
   'deleteCategory': 'زمرہ حذف کریں',
@@ -392,7 +376,6 @@ const translationsUr = <String, String>{
   'addCategoriesToOrganise': 'مصنوعات کو ترتیب دینے کے لیے زمرے شامل کریں',
   'categoryName': 'زمرے کا نام',
 
-  // Reports
   'totalRevenue': 'کل آمدنی',
   'totalProfit': 'کل منافع',
   'totalExpenses': 'کل اخراجات',
@@ -402,7 +385,6 @@ const translationsUr = <String, String>{
   'topCustomers': 'بہترین گاہک',
   'salesByCategory': 'زمرے کے لحاظ سے فروخت',
 
-  // Actions
   'save': 'محفوظ کریں',
   'cancel': 'منسوخ کریں',
   'delete': 'حذف کریں',
@@ -424,19 +406,16 @@ const translationsUr = <String, String>{
   'back': 'پیچھے',
   'sort': 'ترتیب دیں',
 
-  // Delivery
   'delivery': 'ترسیل',
   'markDelivered': 'ترسیل شدہ نشان زد کریں',
   'delivered': 'ترسیل شدہ',
 
-  // Variants
   'variants': 'ویریئنٹس',
   'addVariant': 'ویریئنٹ شامل کریں',
   'variantName': 'خصوصیت (مثلاً سائز)',
   'variantValue': 'قدر (مثلاً بڑا)',
   'priceAdjustment': 'قیمت +/-',
 
-  // Messages
   'deleteConfirmation': 'کیا آپ واقعی اسے حذف کرنا چاہتے ہیں؟',
   'clearDataConfirmation':
       'یہ آپ کا تمام ڈیٹا مستقل طور پر حذف کر دے گا۔ یہ عمل واپس نہیں ہو سکتا۔ کیا آپ کو یقین ہے؟',
@@ -452,7 +431,6 @@ const translationsUr = <String, String>{
   'noExpenses': 'ابھی تک کوئی خرچ ریکارڈ نہیں ہوا',
   'noStockMovements': 'ابھی تک کوئی اسٹاک کی نقل و حرکت ریکارڈ نہیں ہوئی',
 
-  // Misc
   'error': 'خرابی',
   'pay': 'ادا کریں',
   'scanQrBarcode': 'QR / بارکوڈ اسکین کریں',
@@ -463,13 +441,11 @@ const translationsUr = <String, String>{
   'rowsSkipped': '{count} قطار(یں) چھوڑ دی گئیں:',
   'andMore': '...اور {count} مزید',
 
-  // Payments / refunds
   'transactionId': 'لین دین آئی ڈی',
   'transactionIdHint': 'bKash / Nagad / رسید نمبر',
   'refundMethod': 'واپسی کا طریقہ',
   'refundTransactionId': 'واپسی لین دین آئی ڈی',
 
-  // Sidebar customization
   'sidebarOrder': 'سائڈبار کی ترتیب',
   'sidebarOrderDesc': 'سائڈبار ٹیبز کو دوبارہ ترتیب دینے کے لیے گھسیٹیں',
   'resetToDefault': 'پہلے سے طے شدہ پر ری سیٹ کریں',
@@ -478,7 +454,6 @@ const translationsUr = <String, String>{
   'left': 'بائیں',
   'right': 'دائیں',
 
-  // Display size (Settings → Display)
   'display': 'ڈسپلے',
   'displaySize': 'ڈسپلے کا سائز',
   'displaySizeDesc': 'اسکرین پر موجود ہر چیز کو چھوٹا یا بڑا کریں',
@@ -488,7 +463,6 @@ const translationsUr = <String, String>{
   'phoneTextSize': 'فون: {value}',
   'preview': 'پیش منظر',
 
-  // Color themes (Settings → Color theme)
   'colorTheme': 'تھیم کا رنگ',
   'colorThemeDesc': 'بٹنوں، ہیڈرز اور نمایاں حصوں کا مرکزی رنگ',
   'phoneColors': 'فون کے رنگ',
@@ -536,18 +510,15 @@ const translationsUr = <String, String>{
   'deleteThemeConfirm': 'تھیم «{name}» حذف کریں؟',
   'themeLimitReached': 'آپ زیادہ سے زیادہ {count} تھیمز محفوظ کر سکتے ہیں',
 
-  // Auth gate
   'createPin': '4 ہندسوں کا PIN بنائیں',
   'confirmPin': 'PIN کی تصدیق کریں',
   'enterPin': 'PIN درج کریں',
   'pinDoesNotMatch': 'PIN مماثل نہیں ہے۔ دوبارہ کوشش کریں۔',
   'incorrectPin': 'غلط PIN۔ دوبارہ کوشش کریں۔',
 
-  // Auto Drive backup
   'autoBackup': 'ڈرائیو پر خودکار بیک اپ',
   'autoBackupDesc': 'ایپ شروع ہونے پر خودکار بیک اپ (سائن ان ہونے پر)',
 
-  // Security section
   'security': 'سیکیورٹی',
   'securityFingerprint': 'فنگر پرنٹ',
   'securityFingerprintDesc': 'حساس کاروائیوں کی منظوری کے لیے فنگر پرنٹ استعمال کریں',
@@ -555,7 +526,7 @@ const translationsUr = <String, String>{
   'securityPinDesc': 'حساس کاروائیوں کے لیے 4 ہندسوں کا PIN درکار',
   'biometricNotAvailable': 'اس ڈیوائس پر کوئی فنگر پرنٹ رجسٹرڈ نہیں',
   'changeSecurity': 'سیکیورٹی ترتیبات بدلنے کے لیے تصدیق کریں',
-  // iPhone biometrics: Face ID or Touch ID
+
   'securityFaceId': 'Face ID',
   'securityFaceIdDesc': 'حساس کاروائیوں کی منظوری کے لیے Face ID استعمال کریں',
   'faceIdNotSetUp': 'اس ڈیوائس پر Face ID سیٹ اپ نہیں ہے',
@@ -563,7 +534,6 @@ const translationsUr = <String, String>{
   'securityTouchIdDesc': 'حساس کاروائیوں کی منظوری کے لیے Touch ID استعمال کریں',
   'touchIdNotSetUp': 'اس ڈیوائس پر Touch ID سیٹ اپ نہیں ہے',
 
-  // Background auto-backup status
   'autoBackupPaused': 'خودکار بیک اپ روک دیا گیا',
   'autoBackupResumed': 'خودکار بیک اپ دوبارہ شروع',
   'signInToFix': 'ٹھیک کرنے کے لیے سائن ان کریں',
@@ -603,7 +573,6 @@ const translationsUr = <String, String>{
   'shopPhone': 'دکان کا فون',
   'productCatalog': 'پروڈکٹ کیٹلاگ',
 
-  // Due Book
   'dueBook': 'ادھار کھاتہ',
   'totalReceivable': 'کل وصولی',
   'customersOwing': '{count} گاہکوں کے ذمے رقم ہے',
@@ -673,7 +642,6 @@ const translationsUr = <String, String>{
   'duesCollectedThisMonth': 'وصول شدہ بقایا (اس ماہ)',
   'overdue60Banner': '{count} گاہک 60+ دنوں سے {amount} کے مقروض ہیں',
 
-  // Reports
   'profitAndLoss': 'نفع و نقصان',
   'item': 'آئٹم',
   'grossSales': 'کل فروخت',
@@ -738,7 +706,6 @@ const translationsUr = <String, String>{
   'monthlyNetSales': 'ماہانہ خالص فروخت',
   'dateRangeTo': 'سے',
 
-  // Rating prompt
   'rateTitle': 'کیا آپ کو {app} پسند آ رہا ہے؟',
   'rateMessage': 'آپ کچھ عرصے سے {app} کے ساتھ اپنی دکان چلا رہے ہیں۔ ایک مختصر ریٹنگ دوسرے فروخت کنندگان کو اسے تلاش کرنے میں مدد دیتی ہے۔',
   'rateNow': 'ابھی ریٹ کریں',
@@ -749,7 +716,6 @@ const translationsUr = <String, String>{
   'rateThisAppSubtitle': 'دوسرے فروخت کنندگان کو {app} تلاش کرنے میں مدد کریں',
   'about': 'متعلق',
 
-  // App updates
   'updateAvailable': '{app} {version} دستیاب ہے',
   'updateHowToAndroid': 'پہلے آپ نے جس قسم کی APK فائل انسٹال کی تھی (universal یا arm64-v8a) وہی ڈاؤنلوڈ کریں اور اسے موجودہ ایپ کے اوپر انسٹال کر دیں۔ آپ کا ڈیٹا محفوظ رہے گا۔',
   'updateHowToIos': 'اپ ڈیٹ کو اسی سائیڈ لوڈنگ ٹول اور اسی Apple ID سے انسٹال کریں جو آپ نے پہلے استعمال کیے تھے، تاکہ آپ کا ڈیٹا محفوظ رہے۔ پہلے بیک اپ لے لیں۔',
@@ -758,10 +724,8 @@ const translationsUr = <String, String>{
   'upToDate': 'آپ کے پاس تازہ ترین ورژن ہے',
   'updateCheckFailed': 'اپ ڈیٹس چیک نہیں ہو سکیں۔ اپنا انٹرنیٹ کنکشن چیک کر کے دوبارہ کوشش کریں۔',
 
-  // Keypad bar (iOS)
   'next': 'اگلا',
 
-  // Camera
   'cameraAccessOff': 'کیمرے تک رسائی بند ہے',
   'cameraAllowPrompt': '{app} کو کوڈ اسکین کرنے اور تصویر لینے کے لیے کیمرے کی ضرورت ہے۔',
   'cameraAllowInSettings': 'کوڈ اسکین کرنے اور تصویر لینے کے لیے ترتیبات میں {app} کو کیمرے تک رسائی کی اجازت دیں۔',
@@ -774,7 +738,6 @@ const translationsUr = <String, String>{
   'torchOn': 'ٹارچ آن کریں',
   'torchOff': 'ٹارچ آف کریں',
 
-  // Calls
   'callNotAvailable': 'اس ڈیوائس پر کالز دستیاب نہیں',
   'copyNumber': 'نمبر کاپی کریں',
   'numberCopied': 'نمبر کاپی ہو گیا',

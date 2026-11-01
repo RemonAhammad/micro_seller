@@ -50,19 +50,13 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
             ),
       ];
 
-  /// What the selected goods cost the customer (after their share of the
-  /// discount, with their share of the tax) — the same value the return
-  /// order stores, so the suggested refund matches the Due Book credit.
   double get _returnTotal =>
       returnValueFor(widget.originalOrder, _returnItems).total;
 
   double get _maxRefundable => widget.originalOrder.amountPaid;
 
-  /// The pre-filled refund at full precision; the field shows it rounded.
   double _suggestedRefund = 0;
 
-  /// The suggested refund as the field shows it: rounded to the currency's
-  /// decimals (2, or the Kuwaiti Dinar's 3).
   String get _suggestedText =>
       _suggestedRefund.toStringAsFixed(NumberInput.moneyDecimals);
 
@@ -78,9 +72,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
       );
       return;
     }
-    // Left as suggested → refund the exact value, so it cancels the return's
-    // credit to the paisa. The field rounds it, and can round up past
-    // `amountPaid`; allow that half-paisa (processRefund caps at amountPaid).
+
     final typed = _refundCtrl.text.trim();
     final refund = typed == _suggestedText
         ? _suggestedRefund
@@ -296,8 +288,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
         setState(() => _returnQtys[idx] = value - 1);
         _updateRefundAmount();
       }),
-      // A 4-digit quantity or a large text size shrinks to fit the slot
-      // rather than wrapping mid-number.
+
       SizedBox(
         width: 32,
         child: Center(

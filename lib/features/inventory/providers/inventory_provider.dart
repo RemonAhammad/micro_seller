@@ -9,7 +9,6 @@ import '../../../data/services/isar_service.dart';
 
 part 'inventory_provider.g.dart';
 
-/// Every movement newest first, read in createdAt-index order on a worker.
 @riverpod
 Stream<List<StockMovement>> stockMovements(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
@@ -22,11 +21,8 @@ Stream<List<StockMovement>> stockMovements(Ref ref) async* {
 List<StockMovement> _allMovementsNewestFirst(Isar db) =>
     db.stockMovements.where(sort: Sort.desc).anyCreatedAt().findAllSync();
 
-/// Rows per page of the movement history; [StockMovementPages.loadMore] adds
-/// this many.
 const kMovementPageSize = 100;
 
-/// The first [movements] of the history, newest first, and whether more exist.
 class StockMovementPage {
   const StockMovementPage(this.movements, {required this.hasMore});
 
@@ -35,7 +31,7 @@ class StockMovementPage {
 }
 
 StockMovementPage Function(Isar) _movementPageJob(int limit) => (db) {
-  // One extra row tells whether more exist.
+
   final rows = db.stockMovements
       .where(sort: Sort.desc)
       .anyCreatedAt()
@@ -48,8 +44,6 @@ StockMovementPage Function(Isar) _movementPageJob(int limit) => (db) {
   );
 };
 
-/// The movement history, paged: the newest [kMovementPageSize] movements,
-/// more on [loadMore].
 @riverpod
 class StockMovementPages extends _$StockMovementPages {
   int _limit = kMovementPageSize;
@@ -67,8 +61,6 @@ class StockMovementPages extends _$StockMovementPages {
     );
   }
 
-  /// Extends the page by [kMovementPageSize]. Ignored until the previous
-  /// extension has loaded, so repeated calls from a scrolling list are safe.
   void loadMore() {
     final page = state.value;
     if (page == null || !page.hasMore || page.movements.length < _limit) {

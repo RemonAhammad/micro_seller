@@ -10,7 +10,6 @@ import '../../../data/services/isar_service.dart';
 
 part 'dues_provider.g.dart';
 
-/// One Due Book row: a customer and everything they still owe.
 class CustomerDue {
   const CustomerDue({
     required this.customer,
@@ -21,11 +20,9 @@ class CustomerDue {
 
   final Customer customer;
 
-  /// Oldest first.
   final List<OrderDue> orderDues;
   final DateTime? lastPaymentAt;
 
-  /// Net of credits — may be less than the sum of [orderDues].
   final double totalDue;
 
   DateTime? get oldestDueDate =>
@@ -38,12 +35,8 @@ class CustomerDue {
   }
 }
 
-/// Every customer who owes money, computed from orders — a synchronous job
-/// for a worker isolate ([runDbJob]), shared by the Due Book and the Dues
-/// report so the two can't disagree.
 List<CustomerDue> loadDuesSync(Isar db) => db.txnSync(() {
-      // A filter (not an index where-clause) keeps id order, so each
-      // customer's orders, their sums and the final tie order are stable.
+
       final orders = db.orders.filter().customerIdGreaterThan(0).findAllSync();
       final byCustomer = <int, List<Order>>{};
       for (final o in orders) {
@@ -59,9 +52,7 @@ List<CustomerDue> loadDuesSync(Isar db) => db.txnSync(() {
 
       final ids = debts.keys.toList();
       final customers = db.customers.getAllSync(ids);
-      // Latest non-null paidAt of a positive payment per debtor — what
-      // sortByPaidAtDesc().findFirst() returned (nulls sort last). Two
-      // property reads instead of loading payments or one lookup per debtor.
+
       final positive = db.payments.filter().amountGreaterThan(0);
       final payer = positive.customerIdProperty().findAllSync();
       final paidAt = positive.paidAtProperty().findAllSync();
@@ -88,23 +79,16 @@ List<CustomerDue> loadDuesSync(Isar db) => db.txnSync(() {
       return result;
     });
 
-/// Every customer who owes money, live. Re-emits whenever orders or
-/// customers change; computed on a worker isolate.
 @riverpod
 Stream<List<CustomerDue>> dues(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
-  // Payments only change alongside orders, but customers can be renamed or
-  // deleted independently — watch both. One order save writes both
-  // collections; reloadOn turns that (and any burst) into a single reload.
+
   yield* reloadOn(
     mergeChanges([isar.orders.watchLazy(), isar.customers.watchLazy()]),
     () => runDbJob(isar, loadDuesSync),
   );
 }
 
-/// Dashboard roll-up of [dues]. Aging is per customer by their oldest unpaid
-/// order — the same rule as the Due Book's "How long unpaid" filter — so the
-/// three buckets always sum to [total].
 class DueSummary {
   const DueSummary({
     this.total = 0,
@@ -154,7 +138,6 @@ DueSummary? dueSummary(Ref ref) {
   return dues == null ? null : summarizeDues(dues);
 }
 
-/// Dues collected since the 1st of this month (see [duesCollectedBetween]).
 @riverpod
 Stream<double> duesCollectedThisMonth(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
@@ -163,7 +146,7 @@ Stream<double> duesCollectedThisMonth(Ref ref) async* {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month);
     final end = DateTime(now.year, now.month + 1);
-    // paidAt index, then id order — the order the sum always added them in.
+
     final payments = (await isar.payments
         .where()
         .paidAtBetween(start, end)
@@ -181,14 +164,12 @@ Stream<double> duesCollectedThisMonth(Ref ref) async* {
   yield* reloadOn(isar.payments.watchLazy(), load);
 }
 
-/// A customer's payment history, newest first.
 @riverpod
 Stream<List<Payment>> customerPayments(Ref ref, int customerId) async* {
   final isar = await ref.watch(isarProvider.future);
   final query =
       isar.payments.where().customerIdEqualTo(customerId).sortByPaidAtDesc()
-          // Index lookups don't return equal keys in id order; tie-break
-          // explicitly, as the old id-ordered filter scan did.
+
           .thenById();
   yield* reloadOn(isar.payments.watchLazy(), query.findAll);
 }

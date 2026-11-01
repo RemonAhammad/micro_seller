@@ -10,12 +10,6 @@ import 'isar_service.dart';
 
 part 'isar_revisions.g.dart';
 
-// Change counters for providers that recompute from their own queries
-// (dashboard stats, reports). Watching one of these instead of a list
-// provider means nothing deserializes a whole collection just to notice a
-// write. keepAlive and never paused, so writes made while the Dashboard or
-// Reports is offstage collapse into a single recompute when it is shown.
-
 void _bump(
     Ref ref, Stream<void> Function(Isar) changes, void Function() bump) {
   final isar = ref.watch(isarProvider).value;

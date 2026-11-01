@@ -10,8 +10,7 @@ class CsvImportResult {
 }
 
 class CsvImportService {
-  /// Pick a CSV file and parse products from it.
-  /// Expected CSV columns: Name, SKU, Category, Selling Price, Cost Price, Stock, Low Stock Threshold
+
   Future<CsvImportResult?> importProducts() async {
     final picked = await FilePicker.pickFile(
       type: FileType.custom,
@@ -19,7 +18,6 @@ class CsvImportService {
     );
     if (picked == null) return null;
 
-    // Content URIs (Android SAF) have no local path — read bytes instead.
     final csvString = utf8.decode(await picked.readAsBytes());
     final rows = csv.decode(csvString);
 
@@ -27,7 +25,6 @@ class CsvImportService {
       return CsvImportResult(products: [], errors: ['CSV file is empty']);
     }
 
-    // Skip header row
     final dataRows = rows.length > 1 ? rows.sublist(1) : rows;
     final products = <Product>[];
     final errors = <String>[];

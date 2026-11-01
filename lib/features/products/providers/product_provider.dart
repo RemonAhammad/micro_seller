@@ -26,8 +26,6 @@ Stream<List<Product>> products(Ref ref) async* {
       isar.products.watchLazy(), () => runDbJob(isar, _activeProductsByName));
 }
 
-/// Active products by name, straight from the (isActive, name) index — no
-/// filter scan or sort — on a worker isolate (products carry their variants).
 List<Product> _activeProductsByName(Isar db) =>
     db.products.where().isActiveEqualToAnyName(true).findAllSync();
 
@@ -42,11 +40,6 @@ Stream<List<Product>> lowStockProducts(Ref ref) async* {
       .map((list) => list.where((p) => p.isLowStock || p.isOutOfStock).toList());
 }
 
-// keepAlive: a CRUD notifier whose methods do `state = ...` after async writes
-// must outlive the call site, otherwise `ref.read(...notifier).method()` from
-// a screen disposes the provider during the await and the post-await
-// `state = ...` throws UnmountedRefException. Same pattern applied to every
-// other CRUD notifier in this project.
 @Riverpod(keepAlive: true)
 class ProductNotifier extends _$ProductNotifier {
   @override
@@ -69,25 +62,18 @@ class ProductNotifier extends _$ProductNotifier {
     });
   }
 
-  /// Both delete branches are now recoverable. The sidecar records which
-  /// branch ran, because undoing a soft-delete means flipping `isActive` back
-  /// whereas undoing a hard-delete also has to restore the stock movements
-  /// that were wiped alongside the product.
-  /// Returns the trash entry id, for wiring an UNDO action. Null if the
-  /// product was already gone.
   Future<int?> deleteProduct(int id) async {
     int? trashId;
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       final trash = TrashService(isar);
 
-      // Check if product is referenced in any orders
       final inUse = await isar.orders
           .filter()
           .itemsElement((q) => q.productIdEqualTo(id))
           .isNotEmpty();
       if (inUse) {
-        // Soft-delete: mark inactive instead of removing
+
         final product = await isar.products.get(id);
         if (product != null) {
           await isar.writeTxn(() async {
@@ -111,8 +97,6 @@ class ProductNotifier extends _$ProductNotifier {
         final product = await isar.products.get(id);
         if (product == null) return;
 
-        // Also clean up stock movements — captured first so a restore can
-        // put them back.
         final movements = await isar.stockMovements
             .filter()
             .productIdEqualTo(id)
@@ -173,7 +157,6 @@ class ProductNotifier extends _$ProductNotifier {
               : '${product.name} ($combinationKey)';
         }
 
-        // Compose reason with supplier prefix if provided
         String fullReason = reason;
         if (supplierName.isNotEmpty) {
           final prefix = 'From: $supplierName';

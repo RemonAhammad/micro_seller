@@ -43,16 +43,11 @@ class OrderRepository {
     return 'ORD-$num';
   }
 
-  /// Creates an order and performs all related side-effects in one transaction:
-  /// - Deducts stock from products
-  /// - Creates StockMovement records
-  /// - Updates customer stats
   Future<void> createOrder(Order order) async {
     await _isar.writeTxn(() async {
-      // Save the order
+
       await _isar.orders.put(order);
 
-      // Deduct stock & create stock movements
       for (final item in order.items) {
         final product = await _isar.products.get(item.productId);
         if (product != null && order.orderStatus == OrderStatus.confirmed) {
@@ -72,7 +67,6 @@ class OrderRepository {
         }
       }
 
-      // Update customer stats
       if (order.customerId > 0) {
         final customer = await _isar.customers.get(order.customerId);
         if (customer != null) {
@@ -110,7 +104,6 @@ class OrderRepository {
       );
       await _isar.orders.put(updated);
 
-      // Update customer balance
       if (order.customerId > 0) {
         final customer = await _isar.customers.get(order.customerId);
         if (customer != null) {

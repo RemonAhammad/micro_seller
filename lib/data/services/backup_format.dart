@@ -9,17 +9,8 @@ import '../models/purchase.dart';
 import '../models/stock_movement.dart';
 import '../models/supplier.dart';
 
-/// Bumped to v3 when the `settings` payload was added, v4 for `payments`.
-/// Older backups still restore — every collection and `settings` are optional
-/// on decode.
 const kBackupVersion = 4;
 
-/// The backup JSON envelope: all 10 backed-up collections (trash is
-/// deliberately excluded) plus optional settings. The single source of truth
-/// for the shape — [LocalBackupService.encodeAll] and the dev-only
-/// `tool/gen_perf_backup.dart` both build through it.
-///
-/// Pure Dart (no Flutter, no Isar instance), so a `dart run` script can use it.
 Map<String, Object?> buildBackupMap({
   required List<Product> products,
   required List<Order> orders,

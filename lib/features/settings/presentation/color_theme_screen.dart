@@ -15,20 +15,13 @@ import '../../dashboard/presentation/widgets/stat_card.dart';
 import '../providers/settings_provider.dart';
 import 'widgets/color_theme_editor.dart';
 
-// Settings → Color theme (/settings/color-theme): a preview of the app in
-// the active theme, Phone colors (Android 12+), the twelve presets and the
-// seller's own themes. Tapping a theme applies it at once. A preset can be
-// customized into a new theme of the seller's (the button under the
-// preview, or a long press on it); a saved theme can be edited or deleted.
-
-/// Settings → Color theme.
 class ColorThemeScreen extends ConsumerWidget {
   const ColorThemeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
-    // Plain values: only a change of theme or of the saved ones rebuilds.
+
     ref.watch(settingsProvider.select((m) => m['colorThemeId']));
     ref.watch(settingsProvider.select((m) => m['customColorThemes']));
     final settings = ref.read(settingsProvider.notifier);
@@ -36,9 +29,7 @@ class ColorThemeScreen extends ConsumerWidget {
     final customs = settings.customColorThemes;
     final phoneState = ref.watch(dynamicColorAvailableProvider);
     final phone = phoneState.value ?? false;
-    // Saved (a backup from another phone), but this phone has none: the app
-    // is drawn in Teal. Only once the phone has answered, so a phone that
-    // does have them never flashes the note.
+
     final phoneMissing = active.isPhone && phoneState.hasValue && !phone;
     final full = customs.length >= kMaxCustomColorThemes;
 
@@ -74,8 +65,6 @@ class ColorThemeScreen extends ConsumerWidget {
       await settings.deleteCustomColorTheme(theme.id);
     }
 
-    // A new theme starts from the active theme's main color, with the text
-    // color that reads better on it.
     void create() => ColorThemeEditor.open(
       context,
       ColorThemeEditor.create(
@@ -95,7 +84,7 @@ class ColorThemeScreen extends ConsumerWidget {
           _Description(s.colorThemeDesc),
           const SizedBox(height: 16),
           ColorThemeSectionHeader(s.preview),
-          // The app in the active theme: the screen's own theme is it.
+
           const AppPreviewFrame(preview: AppPreviewSample(header: true)),
           const SizedBox(height: 12),
           _ActiveTheme(
@@ -106,9 +95,7 @@ class ColorThemeScreen extends ConsumerWidget {
             onEdit: active.isCustom ? () => edit(active) : null,
           ),
           const SizedBox(height: 20),
-          // Shown while active too, should the phone not offer it (a backup
-          // restored on an iPhone or an older Android): the app then looks
-          // like Teal, and the tile says why.
+
           if (phone || active.isPhone) ...[
             ColorThemeSectionHeader(s.phoneColors),
             ColorThemeCard(
@@ -173,14 +160,11 @@ class ColorThemeScreen extends ConsumerWidget {
   }
 }
 
-/// [theme]'s name: a preset's or Phone colors' in the app's language, a
-/// saved theme's own.
 String colorThemeName(BuildContext context, AppColorTheme theme) =>
     theme.isCustom
     ? theme.name ?? ''
     : AppStrings.of(context).presetThemeName(theme.id);
 
-/// A muted line of text.
 class _Description extends StatelessWidget {
   const _Description(this.text, {this.textAlign});
 
@@ -200,8 +184,6 @@ class _Description extends StatelessWidget {
   }
 }
 
-/// The active theme's name, and what can be done with it: a preset can be
-/// customized, a saved theme edited.
 class _ActiveTheme extends StatelessWidget {
   const _ActiveTheme({required this.theme, this.onCustomize, this.onEdit});
 
@@ -226,7 +208,7 @@ class _ActiveTheme extends StatelessWidget {
       ),
       _ => null,
     };
-    // The button beside the name, or under it when both don't fit.
+
     return Wrap(
       alignment: WrapAlignment.spaceBetween,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -243,8 +225,6 @@ class _ActiveTheme extends StatelessWidget {
   }
 }
 
-/// A theme's color: a circle in its main color with its text color on it,
-/// ringed and checked when it is the active theme.
 class _Swatch extends StatelessWidget {
   const _Swatch({
     required this.color,
@@ -260,11 +240,8 @@ class _Swatch extends StatelessWidget {
   final bool selected;
   final double size;
 
-  /// Painted instead of [color].
   final Gradient? gradient;
 
-  /// What an inactive swatch shows in [onColor]; the active one shows a
-  /// check.
   final ThinIconBuilder icon;
 
   @override
@@ -287,7 +264,7 @@ class _Swatch extends StatelessWidget {
           shape: BoxShape.circle,
           color: gradient == null ? color : null,
           gradient: gradient,
-          // Keeps a swatch like the background (white, near black) visible.
+
           border: Border.all(color: cs.outlineVariant),
         ),
         child: ThinIcon(
@@ -301,7 +278,6 @@ class _Swatch extends StatelessWidget {
   }
 }
 
-/// Phone colors: the wallpaper's colors (Material You), a row of its own.
 class _PhoneColorsTile extends StatelessWidget {
   const _PhoneColorsTile({
     required this.selected,
@@ -311,8 +287,6 @@ class _PhoneColorsTile extends StatelessWidget {
 
   final bool selected;
 
-  /// The line under the name: what Phone colors is, or that this phone
-  /// can't give them.
   final String description;
   final VoidCallback onTap;
 
@@ -329,8 +303,7 @@ class _PhoneColorsTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Active, the app's colors are the phone's: show them. Until
-              // then they aren't known here, so a color wheel stands in.
+
               _Swatch(
                 color: cs.primary,
                 onColor: selected ? cs.onPrimary : const Color(0xFF1A1A2E),
@@ -382,8 +355,6 @@ class _PhoneColorsTile extends StatelessWidget {
   }
 }
 
-/// The presets, in as many columns as fit with every name's longest word
-/// whole on its line (two at least).
 class _PresetGrid extends StatelessWidget {
   const _PresetGrid({
     required this.activeId,
@@ -398,10 +369,8 @@ class _PresetGrid extends StatelessWidget {
   static const double _gap = 8;
   static const double _minTile = 72;
 
-  /// The tile's padding on each side of its name.
   static const double _inset = 4;
 
-  /// A tile's name: bold, bolder for the active theme.
   static TextStyle? labelStyle(BuildContext context, {required bool active}) =>
       Theme.of(context).textTheme.bodySmall?.copyWith(
         fontWeight: active ? FontWeight.w800 : FontWeight.w600,
@@ -410,7 +379,7 @@ class _PresetGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    // A line may break between words and after a hyphen.
+
     final words = RegExp(r'\s+|(?<=-)');
     var widest = 0.0;
     final style = labelStyle(context, active: true);
@@ -446,8 +415,6 @@ class _PresetGrid extends StatelessWidget {
   }
 }
 
-/// A preset: its swatch, in the current mode's colors, and its name. A tap
-/// applies it, a long press customizes it.
 class _PresetTile extends StatelessWidget {
   const _PresetTile({
     required this.preset,
@@ -500,8 +467,6 @@ class _PresetTile extends StatelessWidget {
 
 enum _CustomAction { edit, delete }
 
-/// A saved theme: its swatch and name. A tap applies it; its menu edits or
-/// deletes it.
 class _CustomThemeTile extends StatelessWidget {
   const _CustomThemeTile({
     super.key,

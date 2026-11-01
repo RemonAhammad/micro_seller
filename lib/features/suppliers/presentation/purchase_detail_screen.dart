@@ -114,7 +114,7 @@ class _BodyState extends ConsumerState<_Body> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
+
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -138,7 +138,6 @@ class _BodyState extends ConsumerState<_Body> {
 
                 const SizedBox(height: 16),
 
-                // Items
                 Text(s.items,
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
@@ -174,10 +173,7 @@ class _BodyState extends ConsumerState<_Body> {
                           Padding(
                             padding: const EdgeInsets.all(12),
                             child: LayoutBuilder(builder: (context, box) {
-                              // The line total sits at the end of the row,
-                              // unless that would leave the name or the unit
-                              // price too narrow for one of its words (large
-                              // text, narrow layout): then it goes under them.
+
                               final totalBelow = box.maxWidth - badge - 12 -
                                       _textWidth(context, total, totalStyle) <
                                   math.max(
@@ -190,9 +186,7 @@ class _BodyState extends ConsumerState<_Body> {
                               return Row(
                                 children: [
                                   Container(
-                                    // 36 square at the default text size,
-                                    // growing with the text; a quantity too
-                                    // long for it shrinks instead of wrapping.
+
                                     width: badge,
                                     height: badge,
                                     decoration: BoxDecoration(
@@ -247,7 +241,6 @@ class _BodyState extends ConsumerState<_Body> {
 
                 const SizedBox(height: 16),
 
-                // Totals
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -314,11 +307,6 @@ class _BodyState extends ConsumerState<_Body> {
     );
   }
 
-  /// [label] at the start of a line and [value] at its end. A long label
-  /// wraps within half the line (or its longest word, when that's wider)
-  /// and a long value wraps under itself, or goes under the label when a
-  /// word of it wouldn't fit beside it. With [keepWhole] (an amount) the
-  /// value shrinks to fit instead, so it is never split.
   Widget _row(ThemeData theme, String label, String value,
       {bool isBold = false, Color? valueColor, bool keepWhole = false}) {
     final labelStyle = theme.textTheme.bodyMedium?.copyWith(
@@ -397,8 +385,7 @@ class _BodyState extends ConsumerState<_Body> {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(s.cancel)),
-          // Enabled once there's an amount to pay, as the Due Book's
-          // Collect is: a tap on an empty or zero amount used to do nothing.
+
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: ctrl,
             builder: (_, value, _) {
@@ -422,9 +409,6 @@ class _BodyState extends ConsumerState<_Body> {
   }
 }
 
-/// How wide [text] in [style] is where [context] lays it out: on one line,
-/// or with [widestWord], its widest word (the narrowest it wraps to without
-/// breaking a word).
 double _textWidth(BuildContext context, String text, TextStyle? style,
     {bool widestWord = false}) {
   var effective = DefaultTextStyle.of(context).style.merge(style);

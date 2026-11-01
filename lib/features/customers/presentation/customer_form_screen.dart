@@ -205,9 +205,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                                   : theme.colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
-                          // A third of a narrow row: a large text size
-                          // shrinks the label to fit rather than breaking
-                          // the word.
+
                           child: Center(
                             child: FittedBox(
                               fit: BoxFit.scaleDown,

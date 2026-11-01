@@ -6,55 +6,42 @@ import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_color_theme.dart';
 
-/// The picker's ready-made colors: Material's deep shades around the color
-/// wheel, then the greys, black and white.
 const kColorPickerPalette = <Color>[
-  Color(0xFFD32F2F), // red
-  Color(0xFFC2185B), // pink
-  Color(0xFF7B1FA2), // purple
-  Color(0xFF512DA8), // deep purple
-  Color(0xFF303F9F), // indigo
-  Color(0xFF1976D2), // blue
-  Color(0xFF0288D1), // light blue
-  Color(0xFF0097A7), // cyan
-  Color(0xFF00796B), // teal
-  Color(0xFF388E3C), // green
-  Color(0xFF689F38), // light green
-  Color(0xFFFBC02D), // yellow
-  Color(0xFFFFA000), // amber
-  Color(0xFFF57C00), // orange
-  Color(0xFFE64A19), // deep orange
-  Color(0xFF5D4037), // brown
-  Color(0xFF455A64), // blue grey
-  Color(0xFF9E9E9E), // grey
-  Color(0xFF000000), // black
-  Color(0xFFFFFFFF), // white
+  Color(0xFFD32F2F),
+  Color(0xFFC2185B),
+  Color(0xFF7B1FA2),
+  Color(0xFF512DA8),
+  Color(0xFF303F9F),
+  Color(0xFF1976D2),
+  Color(0xFF0288D1),
+  Color(0xFF0097A7),
+  Color(0xFF00796B),
+  Color(0xFF388E3C),
+  Color(0xFF689F38),
+  Color(0xFFFBC02D),
+  Color(0xFFFFA000),
+  Color(0xFFF57C00),
+  Color(0xFFE64A19),
+  Color(0xFF5D4037),
+  Color(0xFF455A64),
+  Color(0xFF9E9E9E),
+  Color(0xFF000000),
+  Color(0xFFFFFFFF),
 ];
 
-/// [color] as `RRGGBB`, upper case, without the `#`.
 String colorHex(Color color) => (color.toARGB32() & 0xFFFFFF)
     .toRadixString(16)
     .padLeft(6, '0')
     .toUpperCase();
 
-/// The opaque color a hex code names (`RRGGBB`, with or without `#`), or
-/// null when it isn't one.
 Color? parseColorHex(String text) {
   final hex = text.trim().replaceFirst('#', '');
   if (!RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(hex)) return null;
   return Color(0xFF000000 + int.parse(hex, radix: 16));
 }
 
-/// [color] made opaque and rounded to 8 bits a channel, as a theme stores
-/// it.
 Color _opaque(Color color) => Color(0xFF000000 + (color.toARGB32() & 0xFFFFFF));
 
-/// A color picker: ready-made swatches, Hue / Saturation / Brightness
-/// sliders, and a hex code field. The colors it gives are always opaque.
-///
-/// It keeps the hue and saturation it was set to, so dragging Brightness to
-/// black and back (or Saturation to grey and back) returns to the same
-/// color, which a color alone can't remember.
 class ColorPicker extends StatefulWidget {
   const ColorPicker({
     super.key,
@@ -63,13 +50,10 @@ class ColorPicker extends StatefulWidget {
     this.palette = kColorPickerPalette,
   });
 
-  /// The color picked.
   final Color color;
 
-  /// A new color was picked.
   final ValueChanged<Color> onChanged;
 
-  /// The ready-made swatches.
   final List<Color> palette;
 
   @override
@@ -81,7 +65,6 @@ class _ColorPickerState extends State<ColorPicker> {
   late final TextEditingController _hex;
   final _hexFocus = FocusNode();
 
-  /// The color the sliders are at.
   Color get _color => _opaque(_hsv.toColor());
 
   @override
@@ -96,9 +79,7 @@ class _ColorPickerState extends State<ColorPicker> {
   @override
   void didUpdateWidget(ColorPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Only a color set from outside moves the sliders and rewrites the hex
-    // code: one this picker gave is already what they show, and rewriting
-    // the field would drop a code being typed.
+
     final color = _opaque(widget.color);
     if (color != _color) {
       _hsv = HSVColor.fromColor(color);
@@ -122,7 +103,6 @@ class _ColorPickerState extends State<ColorPicker> {
     );
   }
 
-  /// Leaving the field shows the code in effect, dropping one half typed.
   void _handleHexFocus() {
     if (!_hexFocus.hasFocus) _showHex(_color);
   }
@@ -200,7 +180,7 @@ class _ColorPickerState extends State<ColorPicker> {
         const SizedBox(height: 4),
         Row(
           children: [
-            // The color picked, beside its code.
+
             ExcludeSemantics(
               child: Container(
                 width: 48,
@@ -246,7 +226,6 @@ class _ColorPickerState extends State<ColorPicker> {
 
 String _percent(double value) => '${(value * 100).round()}%';
 
-/// Upper-cases what is typed, so a code reads as the picker writes it.
 class _UpperCaseFormatter extends TextInputFormatter {
   const _UpperCaseFormatter();
 
@@ -257,8 +236,6 @@ class _UpperCaseFormatter extends TextInputFormatter {
   ) => newValue.copyWith(text: newValue.text.toUpperCase());
 }
 
-/// One of the palette's colors: a circle, checked when it is the color
-/// picked.
 class _Swatch extends StatelessWidget {
   const _Swatch({
     required this.color,
@@ -272,7 +249,6 @@ class _Swatch extends StatelessWidget {
 
   static const double _size = 36;
 
-  /// The square a tap lands in, larger than the circle.
   static const double _target = 44;
 
   @override
@@ -297,8 +273,7 @@ class _Swatch extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
-                // A ring around the color picked; a hairline keeps white
-                // (and a color like the background) visible.
+
                 border: selected
                     ? Border.all(color: cs.onSurface, width: 2)
                     : Border.all(color: cs.outlineVariant),
@@ -318,8 +293,6 @@ class _Swatch extends StatelessWidget {
   }
 }
 
-/// A slider over a gradient of what it picks, with its name and value above
-/// it.
 class _GradientSlider extends StatelessWidget {
   const _GradientSlider({
     required this.label,
@@ -336,10 +309,8 @@ class _GradientSlider extends StatelessWidget {
   final double max;
   final String Function(double value) valueText;
 
-  /// The track's gradient, from 0 to [max].
   final List<Color> colors;
 
-  /// The color the thumb shows: the color picked.
   final Color thumbColor;
   final ValueChanged<double> onChanged;
 
@@ -351,7 +322,7 @@ class _GradientSlider extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 4),
-        // The slider below reads both out, with its own adjust actions.
+
         ExcludeSemantics(
           child: Padding(
             padding: const EdgeInsetsDirectional.symmetric(horizontal: 4),
@@ -383,7 +354,7 @@ class _GradientSlider extends StatelessWidget {
             overlayColor: theme.colorScheme.onSurface.withValues(alpha: 0.08),
             showValueIndicator: ShowValueIndicator.never,
           ),
-          // One node: the setting's name, its value and the adjust actions.
+
           child: MergeSemantics(
             child: Semantics(
               label: label,
@@ -401,9 +372,6 @@ class _GradientSlider extends StatelessWidget {
   }
 }
 
-/// The slider's track: [colors] as a gradient from its start to its end
-/// (right to left in a right-to-left layout, as the slider runs), with a
-/// hairline [border] so a white or background-colored end stays visible.
 class _GradientTrackShape extends RoundedRectSliderTrackShape {
   const _GradientTrackShape(this.colors, this.border);
 
@@ -454,8 +422,6 @@ class _GradientTrackShape extends RoundedRectSliderTrackShape {
   }
 }
 
-/// The slider's thumb: a white ring around the color picked, outlined so it
-/// shows on any part of the gradient.
 class _RingThumbShape extends SliderComponentShape {
   const _RingThumbShape();
 

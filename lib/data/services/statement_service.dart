@@ -12,8 +12,6 @@ import 'pdf_assembly.dart';
 import 'pdf_service.dart';
 import 'widget_capture.dart';
 
-/// Localized labels for the statement. The service has no BuildContext, so
-/// the caller resolves these from `AppStrings.of(context)`.
 class StatementLabels {
   const StatementLabels({
     required this.title,
@@ -58,21 +56,11 @@ class StatementRow {
   final double balance;
 }
 
-/// Customer statement — a running ledger of what was billed (orders) and
-/// what came back (payments, refunded returns). Same widget → PNG → PDF
-/// pipeline as [PdfService] and the catalog, for full Unicode shaping.
 class StatementService {
   static const double _pageWidth = 794;
   static const double _pageHeight = 1123;
   static const int rowsPerPage = 26;
 
-  /// Builds ledger rows oldest-first with a running balance.
-  ///
-  /// [orders] must be all of the customer's orders *including returns*;
-  /// [payments] all of their Payment rows. Payments made before the history
-  /// existed have no rows, so each order's unlogged remainder
-  /// (`amountPaid − Σ logged`) is added as a payment on the order's date —
-  /// that keeps the closing balance equal to what the orders say.
   List<StatementRow> buildRows(
     List<Order> orders,
     List<Payment> payments, {
@@ -89,7 +77,7 @@ class StatementService {
       if (o.orderStatus == OrderStatus.cancelled) continue;
       if (o.isReturn) {
         final original = byId[o.originalOrderId];
-        // Matches computeOrderDues: a return only offsets a live original.
+
         if (o.returnStatus == ReturnStatus.refunded &&
             original != null &&
             original.orderStatus != OrderStatus.cancelled) {
@@ -120,7 +108,7 @@ class StatementService {
     }
     for (final p in payments) {
       final order = byId[p.orderId];
-      // Payments on cancelled orders net to zero with their cancel refund.
+
       if (order == null || order.orderStatus == OrderStatus.cancelled) {
         continue;
       }
@@ -183,21 +171,18 @@ class StatementService {
           watermarkIcon: watermarkIcon,
         ),
         pixelRatio: kPdfCapturePixelRatio,
-        // Must be finite — see PdfService.generateOrderReceipt.
+
         targetSize: const Size(_pageWidth, _pageHeight),
         delay: const Duration(milliseconds: 100),
       ));
     }
-    // Every page fills the full canvas on an opaque white Material → JPEG.
+
     return assemblePdf(pages, jpegPages: (
       width: (_pageWidth * kPdfCapturePixelRatio).round(),
       height: (_pageHeight * kPdfCapturePixelRatio).round(),
     ));
   }
 
-  /// One page as [generateStatementPdf] captures it ([rows] are the page's
-  /// rows, [closing] the whole statement's closing balance, shown on the
-  /// last page). Public so a test can pump it and check what it draws.
   @visibleForTesting
   static Widget statementPage({
     required Customer customer,
@@ -254,12 +239,6 @@ class _StatementPage extends StatelessWidget {
   final TextDirection textDirection;
   final ui.Image? watermarkIcon;
 
-  /// The shop name, table header, credits and a settled balance, and the
-  /// text on the table header, from the app's color theme. Read when the page
-  /// is built, so the next statement follows a theme change. Text on the
-  /// white page (the shop name, credits, a settled balance) is [_brandText],
-  /// a shade that reads there (a light theme color would be all but
-  /// invisible).
   static Color get _brand => DocumentBrand.color;
   static Color get _onBrand => DocumentBrand.onColor;
   static Color get _brandText => DocumentBrand.textColor;
@@ -272,8 +251,7 @@ class _StatementPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Capture environment only provides Directionality — wire the rest by
-    // hand (MaterialApp fails here; see PdfService._ReceiptWidget).
+
     return MediaQuery(
       data: const MediaQueryData(
           size: Size(StatementService._pageWidth, StatementService._pageHeight)),

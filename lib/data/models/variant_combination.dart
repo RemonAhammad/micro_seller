@@ -15,10 +15,8 @@ class VariantCombination {
     this.isActive = true,
   });
 
-  /// Canonical sorted key: "Color:Red/Size:L"
   String combinationKey;
 
-  /// Human-readable: "Size: L / Color: Red"
   String displayLabel;
 
   double priceAdjustment;

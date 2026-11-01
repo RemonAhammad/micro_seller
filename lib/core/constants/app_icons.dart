@@ -3,16 +3,9 @@ import 'package:flutter/rendering.dart' show RenderPositionedBox;
 import 'package:flutter_svg/flutter_svg.dart' show SvgStringLoader;
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
-/// Stroke widths for the thin Tabler outline icons (Tabler's own default is
-/// 2.0). The sidebar bumps the selected tab to [kIconStrokeSelected] so the
-/// active screen still reads clearly while the rail stays light.
 const double kIconStroke = 1.25;
 const double kIconStrokeSelected = 1.75;
 
-/// One thin icon: a Tabler widget constructor tear-off such as
-/// `tabler.Box.new`. Tabler icons are SVG widgets (not font `IconData`);
-/// constructor tear-offs are compile-time constants, so they work in `const`
-/// lists and `const ThinIcon(...)`. Any Tabler class fits this type.
 typedef ThinIconBuilder = Widget Function({
   Key? key,
   double? strokeWidth,
@@ -21,10 +14,8 @@ typedef ThinIconBuilder = Widget Function({
   Color? color,
 });
 
-/// Named icons shared across screens (sidebar, dashboard, reports). One-off
-/// icons elsewhere use a Tabler class directly: `ThinIcon(tabler.Plus.new)`.
 abstract final class AppIcons {
-  // ── Sidebar ──
+
   static const ThinIconBuilder dashboard = tabler.LayoutDashboard.new;
   static const ThinIconBuilder products = tabler.Box.new;
   static const ThinIconBuilder orders = tabler.Receipt.new;
@@ -40,7 +31,6 @@ abstract final class AppIcons {
   static const ThinIconBuilder scanner = tabler.Barcode.new;
   static const ThinIconBuilder settings = tabler.Settings.new;
 
-  // ── Dashboard ──
   static const ThinIconBuilder revenue = tabler.TrendingUp.new;
   static const ThinIconBuilder profit = tabler.ReportMoney.new;
   static const ThinIconBuilder pending = tabler.HourglassHigh.new;
@@ -49,27 +39,13 @@ abstract final class AppIcons {
   static const ThinIconBuilder alert = tabler.AlertTriangle.new;
   static const ThinIconBuilder whatsapp = tabler.BrandWhatsapp.new;
 
-  // ── Updates: the Dashboard's update notice and Settings → Check for
-  // updates ──
   static const ThinIconBuilder update = tabler.CloudDownload.new;
 
-  // ── Warmed into the SVG cache after the first frame (main.dart); the
-  // sidebar's icons come from sidebarItems so the two can't drift apart ──
   static const List<ThinIconBuilder> dashboardSet = [
     revenue, profit, pending, collected, lowStock, alert, whatsapp,
   ];
 }
 
-/// Parses [icons] at [strokeWidth] into flutter_svg's cache, one at a time,
-/// so a screen that shows them later draws them in its first frame instead
-/// of a frame late, after an isolate parse.
-///
-/// The cache key has to match what a [ThinIcon] asks for. Tabler's `Icon`
-/// hands `SvgPicture.string` its `svgTemplate` with the `<STROKE_WIDTH>`
-/// placeholder replaced by `strokeWidth.toString()` and no theme;
-/// flutter_svg keys that on the string, the theme (the default `SvgTheme()`,
-/// since the app sets no `DefaultSvgTheme`) and the color mapper (none).
-/// Size and color aren't in the key: the color is a paint-time `ColorFilter`.
 Future<void> warmThinIcons(
   Iterable<ThinIconBuilder> icons, {
   double strokeWidth = kIconStroke,
@@ -83,14 +59,6 @@ Future<void> warmThinIcons(
   }
 }
 
-/// Drop-in for Material's `Icon`, drawing a thin Tabler icon. [color] and
-/// [size] default to the ambient `IconTheme`, exactly like `Icon` (so icons
-/// inside `IconButton`, `AppBar`, `ListTile`… inherit correctly). Tabler's own
-/// fallback color is black, which is why the color is always resolved here.
-///
-/// Like `Icon`, it is drawn at [size], centered in whatever box its parent
-/// forces on it (see `_CenteredIcon`), so no call site needs a `Center` or an
-/// alignment to keep a 20 dp icon at 20.
 class ThinIcon extends StatelessWidget {
   const ThinIcon(
     this.builder, {
@@ -119,16 +87,6 @@ class ThinIcon extends StatelessWidget {
   }
 }
 
-/// Lays the icon out at its own size and centers it in the box its parent
-/// forces, as `Icon` centers its glyph. The SVG fills whatever box it gets,
-/// so a tight or minimum constraint bigger than the icon used to draw it
-/// that big: an InputDecoration prefix icon's 48 dp slot drew a 20 dp icon at
-/// 48, a 40 × 40 Container without an alignment at 40. Under loose
-/// constraints the box is the icon's size, as before; under forced ones it
-/// is the forced size, as before. Only the drawing changed.
-///
-/// The whole box still takes hits, as the stretched icon did, so a
-/// GestureDetector around an icon in a bigger box keeps its tap area.
 class _CenteredIcon extends SingleChildRenderObjectWidget {
   const _CenteredIcon({required super.child});
 

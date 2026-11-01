@@ -11,22 +11,9 @@ import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
 import 'app_button.dart';
 
-/// Whether "Download PDF" asks where to save each time, in the system's save
-/// sheet ([savePdfWithSystemSheet]), instead of writing into the folder picked
-/// once (Settings → PDF download folder, which is then hidden). True on iOS:
-/// a folder picked there can't be written to (the picker hands back a bare
-/// path, without the security-scoped access writing needs), and no picked
-/// folder is reachable on a later launch.
 bool get pdfDownloadAsksWhereToSave =>
     !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
-/// "Download PDF" where [pdfDownloadAsksWhereToSave]: offers [bytes] as
-/// [fileName] in the system's save sheet (on iOS, Files: On My iPhone,
-/// iCloud Drive, …), which is its own confirmation. When that sheet can't
-/// open, the share sheet instead, which has Save to Files too, pointing on
-/// an iPad at [shareOrigin], the rect of the control that was tapped
-/// (`shareOriginOf`). Returns whether the PDF was saved or shared (false
-/// when the user cancels).
 Future<bool> savePdfWithSystemSheet({
   required String fileName,
   required Uint8List bytes,
@@ -47,8 +34,7 @@ Future<bool> savePdfWithSystemSheet({
       stackTrace: st,
     );
   }
-  // A folder of its own in the system temp folder (the app's tmp/ on iOS),
-  // so the shared file keeps [fileName], as local backups do.
+
   final dir = await Directory.systemTemp.createTemp('microseller_pdf');
   final file = File('${dir.path}/$fileName');
   await file.writeAsBytes(bytes);
@@ -61,14 +47,6 @@ Future<bool> savePdfWithSystemSheet({
   return result.status == ShareResultStatus.success;
 }
 
-/// Shows a modal bottom sheet confirming a PDF was saved, with an "Open"
-/// action and an automatic 5-second dismiss.
-///
-/// Replaces the SnackBar previously used here — Material's SnackBar duration
-/// turned out to be unreliable on some Android skins (notably MIUI), where
-/// the dismiss timer can be paused indefinitely. A modal sheet with our own
-/// `Timer` cancels and pops the route after exactly 5 seconds, no matter
-/// what the OS does.
 Future<void> showPdfSavedSheet({
   required BuildContext context,
   required String filePath,
@@ -105,8 +83,7 @@ class _PdfSavedSheetState extends State<_PdfSavedSheet> {
 
   @override
   void dispose() {
-    // Cancel the timer if the user dismissed the sheet themselves (drag,
-    // tap-outside, Open button) so we don't try to pop a closed route.
+
     _autoCloseTimer?.cancel();
     super.dispose();
   }
@@ -130,7 +107,7 @@ class _PdfSavedSheetState extends State<_PdfSavedSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag handle
+
             Container(
               width: 36,
               height: 4,
@@ -170,7 +147,7 @@ class _PdfSavedSheetState extends State<_PdfSavedSheet> {
               ],
             ),
             const SizedBox(height: 16),
-            // Side by side, or stacked when a label wouldn't fit its half.
+
             ButtonPair(
               first: OutlinedButton(onPressed: () => Navigator.of(context).maybePop(), child: Text(s.close)),
               second: FilledButton.icon(

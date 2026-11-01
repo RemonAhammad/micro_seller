@@ -5,37 +5,13 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_strings.dart';
 
-/// Whether [type]'s iOS keyboard has no return key: the number and decimal
-/// pads and the phone pad. A signed number keyboard is iOS's numbers and
-/// punctuation keyboard, which has one.
 bool hasNoReturnKey(TextInputType type) =>
     (type.index == TextInputType.number.index && type.signed != true) ||
     type.index == TextInputType.phone.index;
 
-/// The keyboard bar's height in [textScaler]'s text: 44 dp, the height of
-/// iOS's own keyboard bars and its smallest tap target, taller for a large
-/// font.
 double keyboardAccessoryBarHeight(TextScaler textScaler) =>
     math.max(44, textScaler.scale(16) * 1.4 + 12);
 
-/// iOS's number, decimal and phone pads have no return key, so nothing on
-/// them closes the keyboard or moves to the next field. While one of them is
-/// up, this shows a bar on top of it with **Done** (closes the keyboard) and,
-/// when the field's action is [TextInputAction.next], **Next** (what the
-/// return key would do).
-///
-/// It sits in the app frame inside the zoom, around the router, so the bar
-/// is drawn above every screen, dialog and sheet at the Display size. Its
-/// height is added to the keyboard inset below it, so Scaffolds shrink above
-/// it, the focused field scrolls clear of it, and dialogs and sheets lift
-/// over it. It is part of the text fields' tap region group
-/// (`TextFieldTapRegion`), so tapping it never counts as a tap outside the
-/// field (`tap_outside_unfocus.dart`), and takes no focus.
-///
-/// Not on other platforms (decided once, when mounted): there it returns
-/// [child] as it is and listens to nothing. Not on the web either, where
-/// Safari shows its own bar. The widget tree is the same whether the bar
-/// shows or not, so it never remounts the router.
 class KeyboardAccessoryHost extends StatefulWidget {
   const KeyboardAccessoryHost({super.key, required this.child});
 
@@ -49,15 +25,10 @@ class _KeyboardAccessoryHostState extends State<KeyboardAccessoryHost> {
   late final bool _enabled =
       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
-  /// The focused text field; null when the focus is anywhere else.
   EditableTextState? _field;
 
-  /// The bar was up when the focus left its field: it stays, its buttons
-  /// off, and slides down with the closing keyboard.
   bool _closing = false;
 
-  /// Whether the bar shows Next, as it did for its field while the keyboard
-  /// closes.
   bool _next = false;
 
   @override
@@ -74,7 +45,6 @@ class _KeyboardAccessoryHostState extends State<KeyboardAccessoryHost> {
     super.dispose();
   }
 
-  /// The text field that has the primary focus, if one does.
   EditableTextState? _focusedField() {
     final node = FocusManager.instance.primaryFocus;
     final context = node?.context;
@@ -93,8 +63,7 @@ class _KeyboardAccessoryHostState extends State<KeyboardAccessoryHost> {
     final field = _focusedField();
     if (field == _field) return;
     setState(() {
-      // Focus that leaves for no text field closes the keyboard; focus that
-      // moves to another field shows that field's bar, or none.
+
       _closing = field == null && (_closing || _wantsBar(_field));
       _field = field;
     });
@@ -155,9 +124,6 @@ class _KeyboardAccessoryHostState extends State<KeyboardAccessoryHost> {
   }
 }
 
-/// The bar itself: Next at the start (when the field has a next action),
-/// Done at the end. A label that wouldn't fit shrinks rather than wrap. No
-/// tooltips: nothing above the router has an Overlay.
 class _AccessoryBar extends StatelessWidget {
   const _AccessoryBar({
     required this.showNext,
@@ -167,7 +133,6 @@ class _AccessoryBar extends StatelessWidget {
 
   final bool showNext;
 
-  /// Null disables the button (the keyboard is closing).
   final VoidCallback? onNext;
   final VoidCallback? onDone;
 
@@ -175,8 +140,7 @@ class _AccessoryBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
-    // The theme's text button colors (the color scheme's primary, readable
-    // on the bar in both modes); the size iOS gives its own bar's buttons.
+
     final style = TextButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       minimumSize: const Size(48, 0),
@@ -201,7 +165,7 @@ class _AccessoryBar extends StatelessWidget {
         ),
       ),
     );
-    // Opaque: a tap on the bar's background stays on the bar.
+
     return Listener(
       behavior: HitTestBehavior.opaque,
       child: Material(

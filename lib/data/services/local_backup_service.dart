@@ -20,28 +20,10 @@ import '../models/cash_register.dart';
 import '../models/trash_entry.dart';
 import 'backup_format.dart';
 
-/// The bytes aren't a usable backup: not UTF-8 JSON, not an object, missing
-/// the metadata a Drive backup must carry, or missing both products and
-/// orders. Always thrown before anything is written.
 class InvalidBackupException extends FormatException {
   const InvalidBackupException(super.message);
 }
 
-// ── Synchronous core ──
-//
-// Backup encode and restore are synchronous so they can run on a worker
-// isolate ([runDbJob]): with thousands of orders, reading the collections,
-// toJson/fromJson, JSON encoding and Isar's put serialization each freeze
-// whichever isolate does them. Jobs are built by top-level functions that
-// capture only plain values (bytes, a settings map), so they can cross
-// isolates.
-
-/// Reads all 10 backed-up collections in one read transaction (a consistent
-/// snapshot) and encodes the backup JSON ([buildBackupMap]) straight to UTF-8
-/// bytes — the same bytes as `utf8.encode(await encodeAll(...))`.
-///
-/// Synchronous: for a worker isolate ([backupBytesJob]), or an isolate with
-/// no UI (the WorkManager auto-backup).
 Uint8List encodeBackupBytesSync(Isar db, {Map<String, dynamic>? settings}) {
   final map = db.txnSync(() => buildBackupMap(
         products: db.products.where().findAllSync(),
@@ -60,22 +42,17 @@ Uint8List encodeBackupBytesSync(Isar db, {Map<String, dynamic>? settings}) {
   return bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
 }
 
-/// [encodeBackupBytesSync] as a [runDbJob] job.
 Uint8List Function(Isar) backupBytesJob(Map<String, dynamic>? settings) =>
     (db) => encodeBackupBytesSync(db, settings: settings);
 
-/// Decodes and validates backup bytes. [requireMetadata] — also require the
-/// `version` / `timestamp` envelope (Drive restores check it; local imports
-/// never did). Throws [InvalidBackupException].
 Map<String, dynamic> parseBackupBytes(Uint8List bytes,
     {bool requireMetadata = false}) {
   final Object? data;
   try {
-    // Fused: parses the UTF-8 directly, without an intermediate String.
+
     data = const Utf8Decoder().fuse(const JsonDecoder()).convert(bytes);
   } on FormatException catch (e) {
-    // Not rethrown as-is: its `source` is the whole file, which would be
-    // copied back from a worker isolate.
+
     throw InvalidBackupException(
         'Backup file is corrupted or unreadable: ${e.message}');
   }
@@ -86,7 +63,6 @@ Map<String, dynamic> parseBackupBytes(Uint8List bytes,
   return validateBackupMap(data, requireMetadata: requireMetadata);
 }
 
-/// Throws [InvalidBackupException] if [data] isn't a restorable backup.
 Map<String, dynamic> validateBackupMap(Map<String, dynamic> data,
     {bool requireMetadata = false}) {
   if (requireMetadata &&
@@ -101,9 +77,6 @@ Map<String, dynamic> validateBackupMap(Map<String, dynamic> data,
   return data;
 }
 
-/// Clears every collection — the 10 backed-up ones *and* the trash. Shared by
-/// restore and Clear All Data, so the two can't drift apart. Caller owns the
-/// write transaction.
 void clearAllCollectionsInTxnSync(Isar db) {
   db.products.clearSync();
   db.orders.clearSync();
@@ -115,29 +88,15 @@ void clearAllCollectionsInTxnSync(Isar db) {
   db.purchases.clearSync();
   db.cashRegisters.clearSync();
   db.payments.clearSync();
-  // Trash is deliberately NOT part of the backup payload, but it must be
-  // cleared anyway: its entries reference ids from the dataset being
-  // replaced (or wiped), so restoring one afterwards would write stale rows
-  // over unrelated records.
+
   db.trashEntries.clearSync();
 }
 
-/// Clear All Data as a [runDbJob] job: one write transaction.
 void clearAllDataJob(Isar db) =>
     db.writeTxnSync(() => clearAllCollectionsInTxnSync(db));
 
-/// Replaces the database with a validated backup [data] in ONE write
-/// transaction: clear every collection (trash included), import the 10
-/// backed-up ones, recalculate customer balances. Returns the embedded
-/// `settings` map, or null if the backup has none.
-///
-/// Rows are parsed before the transaction opens, so a malformed row fails
-/// with nothing written, and the write lock is held only for the writes.
-/// Synchronous: run it through [restoreBackupJob] from the UI isolate.
 Map<String, dynamic>? restoreBackupSync(Isar db, Map<String, dynamic> data) {
-  // Every collection is optional on decode: `payments` is absent in v2/v3
-  // backups (before payment history existed) — those restore with an empty
-  // history; order.amountPaid still carries the totals.
+
   List<T> rows<T>(String key, T Function(Map<String, dynamic>) fromJson) => [
         for (final e in (data[key] as List?) ?? const [])
           fromJson(e as Map<String, dynamic>),
@@ -165,8 +124,7 @@ Map<String, dynamic>? restoreBackupSync(Isar db, Map<String, dynamic> data) {
     db.purchases.putAllSync(purchases);
     db.cashRegisters.putAllSync(cashRegisters);
     db.payments.putAllSync(payments);
-    // Older backups carry counters that drifted before dues were computed
-    // from orders; the one-time migration flag won't re-run for them.
+
     recalculateOutstandingBalancesInTxnSync(db);
   });
 
@@ -174,22 +132,13 @@ Map<String, dynamic>? restoreBackupSync(Isar db, Map<String, dynamic> data) {
   return settings is Map<String, dynamic> ? settings : null;
 }
 
-/// Parse + validate + [restoreBackupSync] of backup [bytes] as a [runDbJob]
-/// job — nothing of the restore runs on the calling isolate. Only the
-/// settings map comes back.
 Map<String, dynamic>? Function(Isar) restoreBackupJob(Uint8List bytes,
         {bool requireMetadata = false}) =>
     (db) => restoreBackupSync(
         db, parseBackupBytes(bytes, requireMetadata: requireMetadata));
 
 class LocalBackupService {
-  /// Serialize all 10 collections + (optionally) the user's settings to a
-  /// JSON string, on the calling isolate. Pass `settings` from
-  /// `Settings.exportSettings()` to include preferences (theme, currency,
-  /// sidebar order, etc.) in the backup.
-  ///
-  /// The app's backups use [encodeAllBytes] (worker isolate) instead; this
-  /// is kept for callers that need a String.
+
   Future<String> encodeAll(Isar isar, {Map<String, dynamic>? settings}) async {
     return jsonEncode(buildBackupMap(
       products: await isar.products.where().findAll(),
@@ -206,42 +155,23 @@ class LocalBackupService {
     ));
   }
 
-  /// The backup as UTF-8 JSON bytes, read and encoded on a worker isolate.
   Future<Uint8List> encodeAllBytes(Isar isar,
           {Map<String, dynamic>? settings}) =>
       runDbJob(isar, backupBytesJob(settings));
 
-  /// Validate + restore backup [bytes] on a worker isolate (see
-  /// [restoreBackupSync]). Returns the embedded `settings` map, if any —
-  /// the caller applies it via `Settings.importSettings`. Throws
-  /// [InvalidBackupException] (nothing written) for a file that isn't a
-  /// backup.
   Future<Map<String, dynamic>?> restoreBytes(Isar isar, Uint8List bytes,
           {bool requireMetadata = false}) =>
       runDbJob(isar, restoreBackupJob(bytes, requireMetadata: requireMetadata));
 
-  /// Validate + clear + import all 10 collections from a JSON string, on the
-  /// calling isolate (tests and tools; the app restores through
-  /// [restoreBytes]). Returns the embedded `settings` map if the backup
-  /// contained one (caller is responsible for applying it via
-  /// `Settings.importSettings`), otherwise null. Kept decoupled from the
-  /// Riverpod settings provider so LocalBackupService stays a leaf-level
-  /// service.
   Future<Map<String, dynamic>?> decodeAll(Isar isar, String jsonStr) async =>
       decodeAllFromMap(isar, jsonDecode(jsonStr) as Map<String, dynamic>);
 
-  /// [decodeAll] for an already-parsed backup map.
   Future<Map<String, dynamic>?> decodeAllFromMap(
           Isar isar, Map<String, dynamic> data) async =>
       restoreBackupSync(isar, validateBackupMap(data));
 
-  /// Clear All Data: every collection, trash included, in one write
-  /// transaction on a worker isolate.
   Future<void> clearAll(Isar isar) => runDbJob(isar, clearAllDataJob);
 
-  /// Export all data as a JSON file and share it. [shareOrigin] is the
-  /// tapped control's rect (`shareOriginOf`), for an iPad's share sheet to
-  /// point at.
   Future<String?> exportBackup(Isar isar,
       {Map<String, dynamic>? settings, Rect? shareOrigin}) async {
     final bytes = await encodeAllBytes(isar, settings: settings);
@@ -260,7 +190,6 @@ class LocalBackupService {
     return file.path;
   }
 
-  /// Export to a specific directory (no share sheet).
   Future<String?> exportToDirectory(Isar isar, String directoryPath,
       {Map<String, dynamic>? settings}) async {
     final bytes = await encodeAllBytes(isar, settings: settings);
@@ -270,10 +199,6 @@ class LocalBackupService {
     return file.path;
   }
 
-  /// Pick a JSON backup file and restore data from it.
-  /// Returns the embedded settings map (if any) on success so the caller can
-  /// apply preferences via `Settings.importSettings`. Returns null when the
-  /// user cancels the file picker.
   Future<Map<String, dynamic>?> importBackup(Isar isar) async {
     final picked = await FilePicker.pickFile(
       type: FileType.custom,
@@ -281,11 +206,8 @@ class LocalBackupService {
     );
     if (picked == null) return null;
 
-    // Content URIs (Android SAF) have no local path — read bytes instead.
-    // Decode and restore run on a worker isolate.
     final settings = await restoreBytes(isar, await picked.readAsBytes());
-    // A backup without a settings payload (v2) still restored: non-null
-    // tells the caller it succeeded.
+
     return settings ?? <String, dynamic>{};
   }
 }
