@@ -105,7 +105,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     final countsAsync = ref.watch(orderTabCountsProvider);
     final tabs = _tabLabels(context);
     final currentTabOrdersCount =
-        countsAsync.valueOrNull?[_tabController.index] ?? 0;
+        countsAsync.value?[_tabController.index] ?? 0;
 
     return Scaffold(
       appBar: AppBar(

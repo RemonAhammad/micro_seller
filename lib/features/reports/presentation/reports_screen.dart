@@ -126,15 +126,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   bool _tabHasData() {
     switch (_tabs.index) {
       case 0:
-        return (ref.read(salesReportProvider(_from, _to)).valueOrNull?.orderCount ?? 0) > 0;
+        return (ref.read(salesReportProvider(_from, _to)).value?.orderCount ?? 0) > 0;
       case 1:
-        final dues = ref.read(duesReportProvider(_from, _to)).valueOrNull;
+        final dues = ref.read(duesReportProvider(_from, _to)).value;
         return dues != null && (dues.duesCollected > 0 || dues.summary.total > 0);
       case 2:
-        final inv = ref.read(inventoryReportProvider(_from, _to)).valueOrNull;
+        final inv = ref.read(inventoryReportProvider(_from, _to)).value;
         return inv != null && inv.activeProducts > 0;
       default:
-        final p = ref.read(purchasesReportProvider(_from, _to)).valueOrNull;
+        final p = ref.read(purchasesReportProvider(_from, _to)).value;
         return p != null && (p.purchaseCount > 0 || p.purchased > 0);
     }
   }
