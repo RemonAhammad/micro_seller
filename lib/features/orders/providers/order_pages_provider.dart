@@ -91,8 +91,8 @@ Stream<List<int>> orderTabCounts(Ref ref) async* {
   );
 }
 
-Future<List<Order>> loadAllOrdersNewestFirst(Isar isar) =>
-    runDbJob(isar, _allOrdersNewestFirst);
+Future<List<Order>> loadAllOrdersNewestFirst(Isar isar, [OrderTab tab = OrderTab.all]) =>
+    runDbJob(isar, (db) => _allOrdersNewestFirst(db, tab));
 
-List<Order> _allOrdersNewestFirst(Isar db) =>
-    db.orders.where(sort: Sort.desc).anyCreatedAt().findAllSync();
+List<Order> _allOrdersNewestFirst(Isar db, [OrderTab tab = OrderTab.all]) =>
+    _ofTab(db.orders.where(sort: Sort.desc).anyCreatedAt().filter(), tab).findAllSync();

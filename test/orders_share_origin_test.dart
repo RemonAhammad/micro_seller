@@ -333,6 +333,9 @@ void main() {
       final button = tester.getRect(find.byType(IconButton));
 
       await tester.tap(find.byType(IconButton));
+      await _pumpUntil(tester, () => find.text('Share (1)').evaluate().isNotEmpty, 'the selection sheet');
+      await _settle(tester);
+      await tester.tap(find.text('Share (1)'));
       await _pumpUntil(tester, () => shared.isNotEmpty, 'the export');
       await _settle(tester);
       expect(_originOf(shared.single), button);
