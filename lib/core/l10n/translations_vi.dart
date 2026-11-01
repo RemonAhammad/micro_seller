@@ -702,6 +702,7 @@ const translationsVi = <String, String>{
   'shareAsCsv': 'Chia sẻ dạng CSV',
   'asOfToday': 'tính đến hôm nay',
   'noDataForPeriod': 'Không có dữ liệu cho kỳ này',
+  'nothingToExport': 'Không có dữ liệu để xuất trong khoảng thời gian này',
   'dailyNetSales': 'Doanh thu thuần theo ngày',
   'monthlyNetSales': 'Doanh thu thuần theo tháng',
   'dateRangeTo': 'đến',

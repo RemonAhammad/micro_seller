@@ -702,6 +702,7 @@ const translationsMs = <String, String>{
   'shareAsCsv': 'Kongsi sebagai CSV',
   'asOfToday': 'setakat hari ini',
   'noDataForPeriod': 'Tiada data untuk tempoh ini',
+  'nothingToExport': 'Tiada data untuk dieksport bagi tempoh ini',
   'dailyNetSales': 'Jualan Bersih Harian',
   'monthlyNetSales': 'Jualan Bersih Bulanan',
   'dateRangeTo': 'hingga',

@@ -702,6 +702,7 @@ const translationsId = <String, String>{
   'shareAsCsv': 'Bagikan sebagai CSV',
   'asOfToday': 'per hari ini',
   'noDataForPeriod': 'Tidak ada data untuk periode ini',
+  'nothingToExport': 'Tidak ada data untuk diekspor pada periode ini',
   'dailyNetSales': 'Penjualan Bersih Harian',
   'monthlyNetSales': 'Penjualan Bersih Bulanan',
   'dateRangeTo': 'sampai',

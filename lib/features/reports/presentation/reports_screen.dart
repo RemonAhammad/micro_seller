@@ -63,10 +63,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   void initState() {
     super.initState();
     _applyRange(_Range.thisMonth);
+    _tabs.addListener(_onTabChange);
+  }
+
+  void _onTabChange() {
+    if (_tabs.indexIsChanging) setState(() {});
   }
 
   @override
   void dispose() {
+    _tabs.removeListener(_onTabChange);
     _tabs.dispose();
     super.dispose();
   }
@@ -117,6 +123,22 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       };
   }
 
+  bool _tabHasData() {
+    switch (_tabs.index) {
+      case 0:
+        return (ref.read(salesReportProvider(_from, _to)).valueOrNull?.orderCount ?? 0) > 0;
+      case 1:
+        final dues = ref.read(duesReportProvider(_from, _to)).valueOrNull;
+        return dues != null && (dues.duesCollected > 0 || dues.summary.total > 0);
+      case 2:
+        final inv = ref.read(inventoryReportProvider(_from, _to)).valueOrNull;
+        return inv != null && inv.activeProducts > 0;
+      default:
+        final p = ref.read(purchasesReportProvider(_from, _to)).valueOrNull;
+        return p != null && (p.purchaseCount > 0 || p.purchased > 0);
+    }
+  }
+
   Future<List<ReportTable>> _currentTables(ReportTr tr) async {
     return switch (_tabs.index) {
       0 => (await ref.read(salesReportProvider(_from, _to).future)).toTables(tr),
@@ -128,6 +150,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _export({required bool pdf}) async {
     final s = AppStrings.of(context);
+
+    if (!_tabHasData()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.tr('nothingToExport'))),
+      );
+      return;
+    }
+
     final settings = ref.read(settingsProvider.notifier);
     final title = s.tr(_tabKeys[_tabs.index]);
     final period =
@@ -258,9 +288,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         ),
                       )
                     : IconButton(
-                        tooltip: s.tr('export'),
-                        icon: const ThinIcon(tabler.Share.new),
-                        onPressed: _openExportSheet,
+                        tooltip: _tabHasData() ? s.tr('export') : s.tr('nothingToExport'),
+                        icon: ThinIcon(
+                          tabler.Share.new,
+                          color: _tabHasData() ? null : onBrand.withValues(alpha: 0.4),
+                        ),
+                        onPressed: _tabHasData() ? _openExportSheet : null,
                       ),
               ),
             ],

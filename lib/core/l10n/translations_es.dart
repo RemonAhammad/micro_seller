@@ -701,6 +701,7 @@ const translationsEs = <String, String>{
   'shareAsCsv': 'Compartir como CSV',
   'asOfToday': 'a hoy',
   'noDataForPeriod': 'Sin datos para este período',
+  'nothingToExport': 'No hay datos para exportar en este período',
   'dailyNetSales': 'Ventas netas diarias',
   'monthlyNetSales': 'Ventas netas mensuales',
   'dateRangeTo': 'a',

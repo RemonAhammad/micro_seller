@@ -702,6 +702,7 @@ const translationsUr = <String, String>{
   'shareAsCsv': 'CSV کے طور پر شیئر کریں',
   'asOfToday': 'آج تک',
   'noDataForPeriod': 'اس مدت کا کوئی ڈیٹا نہیں',
+  'nothingToExport': 'اس مدت کے لیے برآمد کرنے کے لیے کوئی ڈیٹا نہیں',
   'dailyNetSales': 'روزانہ خالص فروخت',
   'monthlyNetSales': 'ماہانہ خالص فروخت',
   'dateRangeTo': 'سے',

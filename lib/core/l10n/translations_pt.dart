@@ -702,6 +702,7 @@ const translationsPt = <String, String>{
   'shareAsCsv': 'Compartilhar como CSV',
   'asOfToday': 'até hoje',
   'noDataForPeriod': 'Sem dados para este período',
+  'nothingToExport': 'Nenhum dado para exportar neste período',
   'dailyNetSales': 'Vendas líquidas diárias',
   'monthlyNetSales': 'Vendas líquidas mensais',
   'dateRangeTo': 'até',

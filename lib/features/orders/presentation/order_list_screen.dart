@@ -37,7 +37,14 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     try {
       final isar = await ref.read(isarProvider.future);
       final orders = await loadAllOrdersNewestFirst(isar);
-      if (orders.isEmpty) return;
+      if (orders.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.of(context).tr('nothingToExport'))),
+          );
+        }
+        return;
+      }
       await CsvExportService().exportOrders(orders, shareOrigin: origin);
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -61,6 +68,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     final s = AppStrings.of(context);
     final countsAsync = ref.watch(orderTabCountsProvider);
     final tabs = _tabLabels(context);
+    final totalOrders = countsAsync.valueOrNull?.firstOrNull ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -69,9 +77,10 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
           Builder(
             builder: (button) => IconButton(
               icon: const ThinIcon(tabler.FileDownload.new),
-              tooltip: s.exportCsv,
-              onPressed:
-                  _exporting ? null : () => _exportCsv(shareOriginOf(button)),
+              tooltip: totalOrders == 0 ? s.tr('nothingToExport') : s.exportCsv,
+              onPressed: (_exporting || totalOrders == 0)
+                  ? null
+                  : () => _exportCsv(shareOriginOf(button)),
             ),
           ),
         ],

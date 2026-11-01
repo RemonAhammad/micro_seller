@@ -702,6 +702,7 @@ const translationsBn = <String, String>{
   'shareAsCsv': 'CSV হিসেবে শেয়ার করুন',
   'asOfToday': 'আজ পর্যন্ত',
   'noDataForPeriod': 'এই সময়ের জন্য কোনো তথ্য নেই',
+  'nothingToExport': 'এই সময়ের জন্য রপ্তানি করার কোনো ডেটা নেই',
   'dailyNetSales': 'দৈনিক নিট বিক্রি',
   'monthlyNetSales': 'মাসিক নিট বিক্রি',
   'dateRangeTo': 'থেকে',

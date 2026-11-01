@@ -701,6 +701,7 @@ const translationsAr = <String, String>{
   'shareAsCsv': 'مشاركة كملف CSV',
   'asOfToday': 'حتى اليوم',
   'noDataForPeriod': 'لا توجد بيانات لهذه الفترة',
+  'nothingToExport': 'لا توجد بيانات للتصدير لهذه الفترة',
   'dailyNetSales': 'صافي المبيعات اليومي',
   'monthlyNetSales': 'صافي المبيعات الشهري',
   'dateRangeTo': 'إلى',

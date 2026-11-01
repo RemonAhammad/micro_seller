@@ -702,6 +702,7 @@ const translationsTr = <String, String>{
   'shareAsCsv': 'CSV Olarak Paylaş',
   'asOfToday': 'bugün itibarıyla',
   'noDataForPeriod': 'Bu dönem için veri yok',
+  'nothingToExport': 'Bu dönem için dışa aktarılacak veri yok',
   'dailyNetSales': 'Günlük Net Satışlar',
   'monthlyNetSales': 'Aylık Net Satışlar',
   'dateRangeTo': '-',
