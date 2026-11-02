@@ -49,10 +49,12 @@ class ProductDetailScreen extends ConsumerWidget {
                 pinned: true,
                 actions: [
                   IconButton(
+                    tooltip: AppStrings.of(context).edit,
                     icon: const ThinIcon(tabler.Pencil.new),
                     onPressed: () => context.push('/products/$productId/edit'),
                   ),
                   IconButton(
+                    tooltip: AppStrings.of(context).delete,
                     icon: const ThinIcon(tabler.Trash.new),
                     onPressed: () async {
                       final ok = await ConfirmDialog.show(

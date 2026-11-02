@@ -161,7 +161,9 @@ Stream<double> duesCollectedThisMonth(Ref ref) async* {
     return duesCollectedBetween(payments, byId, start, end);
   }
 
-  yield* reloadOn(isar.payments.watchLazy(), load);
+  yield* reloadOn(
+      mergeChanges([isar.payments.watchLazy(), isar.orders.watchLazy()]),
+      load);
 }
 
 @riverpod

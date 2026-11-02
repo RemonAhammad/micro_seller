@@ -18,6 +18,7 @@ import '../../../../data/services/dues_service.dart';
 import '../../../../data/services/isar_service.dart';
 import '../../../../data/services/statement_service.dart';
 import '../../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../../shared/widgets/entry_date_field.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
 import '../../../../shared/widgets/payment_method_chips.dart';
 import '../../../cash_register/providers/cash_register_provider.dart';
@@ -25,6 +26,7 @@ import '../../../orders/providers/order_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../../core/constants/app_icons.dart';
+import '../../../../shared/widgets/action_feedback.dart';
 
 String buildDueReminderText(
   BuildContext context,
@@ -148,8 +150,9 @@ Future<void> shareCustomerStatement(
       await file.writeAsBytes(bytes);
       return file;
     });
-    await SharePlus.instance.share(ShareParams(
+    final result = await SharePlus.instance.share(ShareParams(
         files: [XFile(file.path)], sharePositionOrigin: shareOrigin));
+    if (context.mounted) confirmShared(context, result);
   } catch (e) {
     if (context.mounted) context.showErrorSnackBar(s.error);
   }
@@ -192,8 +195,25 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
   PaymentMethod _method = PaymentMethod.cash;
   bool _addToRegister = true;
   bool _saving = false;
+  DateTime? _paidAt;
 
-  double get _totalDue => widget.totalDue;
+  List<OrderDue> get _openDues => duesOpenAt(widget.orderDues, _paidAt);
+
+  DateTime? get _oldestDue {
+    DateTime? oldest;
+    for (final d in widget.orderDues) {
+      final at = d.order.createdAt;
+      if (at != null && (oldest == null || at.isBefore(oldest))) oldest = at;
+    }
+    return oldest;
+  }
+
+  double get _totalDue {
+    if (_paidAt == null) return widget.totalDue;
+    final open = _openDues.fold<double>(0, (s, d) => s + d.due);
+    if (open <= 0) return 0;
+    return open < widget.totalDue ? open : widget.totalDue;
+  }
   double get _amount => NumberInput.parseDecimal(_amountCtrl.text) ?? 0;
 
   @override
@@ -217,6 +237,7 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
             registerId: _addToRegister && _method == PaymentMethod.cash
                 ? registerId
                 : null,
+            paidAt: _paidAt,
           );
       ref.invalidate(openRegisterProvider);
       if (!mounted) return;
@@ -236,7 +257,11 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
     final theme = Theme.of(context);
     final amount = _amount;
     final tooMuch = amount > _totalDue + kDueEpsilon;
-    final register = ref.watch(openRegisterProvider).value;
+    final openRegister = ref.watch(openRegisterProvider).value;
+    final register =
+        openRegister != null && openRegister.takesCashAt(_paidAt)
+            ? openRegister
+            : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -281,6 +306,15 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
             hintText: s.transactionIdHint,
           ),
         ),
+        const SizedBox(height: 12),
+        EntryDateField(
+          label: s.paymentDate,
+          value: _paidAt,
+          first: _oldestDue,
+          hint: s.entryDateHint,
+          onChanged: (d) => setState(() => _paidAt = d),
+          onReset: () => setState(() => _paidAt = null),
+        ),
         if (register != null && _method == PaymentMethod.cash)
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
@@ -317,7 +351,7 @@ class _CollectPaymentFormState extends ConsumerState<_CollectPaymentForm> {
     final theme = Theme.of(context);
     var remaining = amount;
     final rows = <Widget>[];
-    for (final d in widget.orderDues) {
+    for (final d in _openDues) {
       if (remaining <= kDueEpsilon) break;
       final part = remaining < d.due ? remaining : d.due;
       remaining -= part;

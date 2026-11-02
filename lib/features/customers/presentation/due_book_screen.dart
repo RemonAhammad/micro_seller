@@ -25,6 +25,7 @@ import '../providers/dues_provider.dart';
 import 'widgets/due_actions.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 enum _DueSort {
   oldest,
@@ -262,6 +263,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
               child: const ThinIcon(tabler.Filter.new),
             ),
           ),
+          const SectionHelpButton('dues'),
           PopupMenuButton<String>(
             onSelected: (_) => _recalculate(),
             itemBuilder: (_) => [
@@ -285,6 +287,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
                 prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
+                        tooltip: AppStrings.of(context).clearSearch,
                         icon: const ThinIcon(tabler.X.new),
                         onPressed: () {
                           _searchCtrl.clear();

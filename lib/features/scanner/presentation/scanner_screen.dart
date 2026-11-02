@@ -12,6 +12,7 @@ import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/scanner_camera.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
@@ -101,7 +102,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         title: Text(s.scanQrBarcode),
-        actions: [TorchButton(controller: _controller)],
+        actions: [
+          TorchButton(controller: _controller),
+          const SectionHelpButton('scanner'),
+        ],
       ),
       body: Column(
         children: [

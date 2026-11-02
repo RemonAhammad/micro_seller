@@ -13,6 +13,7 @@ import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/stock_movement_tile.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 enum _StockSort { lowStock, name, stockAsc, stockDesc }
 
@@ -72,6 +73,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(s.inventory),
+        actions: const [SectionHelpButton('inventory')],
         bottom: TabBar(
           controller: _tabController,
           tabs: [
@@ -536,6 +538,7 @@ class _StockTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
+                  tooltip: AppStrings.of(context).adjustStock,
                   icon: const ThinIcon(tabler.AdjustmentsHorizontal.new),
                   onPressed: () =>
                       context.push('/inventory/adjust/${product.id}'),

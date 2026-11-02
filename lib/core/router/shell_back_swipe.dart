@@ -231,7 +231,7 @@ class _ShellEdgeBackSwipeState extends State<ShellEdgeBackSwipe> {
   }
 
   static AnimationController _transitionOf(PageRoute<dynamic> route) =>
-
+      // ignore: invalid_use_of_protected_member
       route.controller!;
 
   double _logical(double value) => switch (Directionality.of(context)) {

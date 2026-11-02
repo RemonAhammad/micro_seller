@@ -48,14 +48,8 @@ final class OrdersProvider
 
 String _$ordersHash() => r'0e44b9b5af0225e773bc6182e96be19629488d08';
 
-/// Return orders only, newest first — the Returns screen's list, without
-/// loading every order to filter them.
-
 @ProviderFor(returnOrders)
 final returnOrdersProvider = ReturnOrdersProvider._();
-
-/// Return orders only, newest first — the Returns screen's list, without
-/// loading every order to filter them.
 
 final class ReturnOrdersProvider
     extends
@@ -65,8 +59,6 @@ final class ReturnOrdersProvider
           Stream<List<Order>>
         >
     with $FutureModifier<List<Order>>, $StreamProvider<List<Order>> {
-  /// Return orders only, newest first — the Returns screen's list, without
-  /// loading every order to filter them.
   ReturnOrdersProvider._()
     : super(
         from: null,
@@ -95,17 +87,12 @@ final class ReturnOrdersProvider
 
 String _$returnOrdersHash() => r'60908a7288cff1fbc561ec32db8fe1d50e600d96';
 
-/// One order, live — without reloading every order on each write.
-
 @ProviderFor(orderById)
 final orderByIdProvider = OrderByIdFamily._();
-
-/// One order, live — without reloading every order on each write.
 
 final class OrderByIdProvider
     extends $FunctionalProvider<AsyncValue<Order?>, Order?, Stream<Order?>>
     with $FutureModifier<Order?>, $StreamProvider<Order?> {
-  /// One order, live — without reloading every order on each write.
   OrderByIdProvider._({
     required OrderByIdFamily super.from,
     required int super.argument,
@@ -151,8 +138,6 @@ final class OrderByIdProvider
 
 String _$orderByIdHash() => r'd7f7648feeaea342f7f3532c7b5079d2969fb3cf';
 
-/// One order, live — without reloading every order on each write.
-
 final class OrderByIdFamily extends $Family
     with $FunctionalFamilyOverride<Stream<Order?>, int> {
   OrderByIdFamily._()
@@ -163,8 +148,6 @@ final class OrderByIdFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
-
-  /// One order, live — without reloading every order on each write.
 
   OrderByIdProvider call(int id) =>
       OrderByIdProvider._(argument: id, from: this);
@@ -236,7 +219,7 @@ final class OrderNotifierProvider
   OrderNotifier create() => OrderNotifier();
 }
 
-String _$orderNotifierHash() => r'b0f4f264b4343233b8365f329272f5ffc23412d6';
+String _$orderNotifierHash() => r'ddd256afeec51bd148b729c46d22e1b8a60bdcc9';
 
 abstract class _$OrderNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

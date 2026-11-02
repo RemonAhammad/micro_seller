@@ -121,11 +121,15 @@ class StatementService {
       ));
     }
 
-    entries.sort((a, b) =>
-        (a.date ?? DateTime(0)).compareTo(b.date ?? DateTime(0)));
+    final sequence = List<int>.generate(entries.length, (i) => i)
+      ..sort((a, b) {
+        final byDate = (entries[a].date ?? DateTime(0))
+            .compareTo(entries[b].date ?? DateTime(0));
+        return byDate != 0 ? byDate : a.compareTo(b);
+      });
     var running = 0.0;
     return [
-      for (final e in entries)
+      for (final e in sequence.map((i) => entries[i]))
         StatementRow(
           date: e.date,
           reference: e.ref,

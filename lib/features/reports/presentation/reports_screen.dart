@@ -18,6 +18,8 @@ import '../providers/reports_provider.dart';
 import 'widgets/report_tabs.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
+import '../../../shared/widgets/action_feedback.dart';
 
 enum _Range { today, thisWeek, thisMonth, lastMonth, thisYear, custom }
 
@@ -185,11 +187,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         final dir = await getTemporaryDirectory();
         final file = File('${dir.path}/$fileName.pdf');
         await file.writeAsBytes(bytes);
-        await SharePlus.instance.share(ShareParams(
+        final result = await SharePlus.instance.share(ShareParams(
           files: [XFile(file.path)],
           subject: title,
           sharePositionOrigin: origin,
         ));
+        if (mounted) confirmShared(context, result);
       } else {
         await CsvExportService().exportReport(
           shopName: settings.shopName,
@@ -296,6 +299,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         onPressed: _tabHasData() ? _openExportSheet : null,
                       ),
               ),
+              SectionHelpButton('reports', color: onBrand),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(

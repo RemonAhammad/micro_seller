@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/order.dart';
 import '../../../../core/constants/app_colors.dart';
-import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import 'order_feedback.dart';
 
 class OrderStatusBadge extends StatelessWidget {
   final OrderStatus status;
@@ -10,12 +10,13 @@ class OrderStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, label, icon) = switch (status) {
-      OrderStatus.pending => (AppColors.statusPending, 'Pending', tabler.HourglassHigh.new),
-      OrderStatus.confirmed => (AppColors.statusConfirmed, 'Confirmed', tabler.CircleCheck.new),
-      OrderStatus.shipped => (AppColors.statusShipped, 'Shipped', tabler.TruckDelivery.new),
-      OrderStatus.completed => (AppColors.statusCompleted, 'Completed', tabler.CircleCheck.new),
-      OrderStatus.cancelled => (AppColors.statusCancelled, 'Cancelled', tabler.CircleX.new),
+    final label = orderStatusLabel(context, status);
+    final color = switch (status) {
+      OrderStatus.pending => AppColors.statusPending,
+      OrderStatus.confirmed => AppColors.statusConfirmed,
+      OrderStatus.shipped => AppColors.statusShipped,
+      OrderStatus.completed => AppColors.statusCompleted,
+      OrderStatus.cancelled => AppColors.statusCancelled,
     };
 
     return Container(

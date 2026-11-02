@@ -159,12 +159,24 @@ void main() {
     );
   });
 
-  test('the CSV export loads every order, newest first', () async {
+  test('the CSV export loads every order of its tab, newest first, '
+      'returns left out like the list', () async {
     if (coreLibrary == null) return markTestSkipped('no Isar core library');
     container.listen(ordersProvider, (_, _) {});
     final all = await container.read(ordersProvider.future);
+    final regular = all.where((o) => !o.isReturn).toList();
+    expect(regular.length, lessThan(all.length), reason: 'the data has returns');
+
     final exported = await loadAllOrdersNewestFirst(isar);
-    expect(exported.map((o) => o.id), all.map((o) => o.id));
+    expect(exported.map((o) => o.id), regular.map((o) => o.id));
+
+    final pending = await loadAllOrdersNewestFirst(isar, OrderTab.pending);
+    expect(
+      pending.map((o) => o.id),
+      regular
+          .where((o) => OrderTab.pending.statuses!.contains(o.orderStatus))
+          .map((o) => o.id),
+    );
   });
 
   test('a new order shows on top of its tabs and in the counts', () async {

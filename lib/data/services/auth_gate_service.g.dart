@@ -8,18 +8,14 @@ part of 'auth_gate_service.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The security gate's service, overridden with a fake in tests.
 
 @ProviderFor(authGateService)
 final authGateServiceProvider = AuthGateServiceProvider._();
-
-/// The security gate's service, overridden with a fake in tests.
 
 final class AuthGateServiceProvider
     extends
         $FunctionalProvider<AuthGateService, AuthGateService, AuthGateService>
     with $Provider<AuthGateService> {
-  /// The security gate's service, overridden with a fake in tests.
   AuthGateServiceProvider._()
     : super(
         from: null,

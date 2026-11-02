@@ -29,6 +29,7 @@ import 'widgets/sales_chart.dart';
 import 'widgets/low_stock_list.dart';
 import 'widgets/due_summary_card.dart';
 import '../../customers/providers/dues_provider.dart';
+import '../../../shared/widgets/section_help.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -327,6 +328,7 @@ class _DashboardContent extends ConsumerWidget {
       backgroundColor: brand.primary,
       foregroundColor: onBrand,
       centerTitle: false,
+      actions: [SectionHelpButton('dashboard', color: onBrand)],
       title: Consumer(
         builder: (context, ref, _) {
 

@@ -90,6 +90,11 @@ void _foreground(WidgetTester tester) {
   }
 }
 
+/// The flashlight's button in the app bar; the ? beside it is another
+/// IconButton.
+final _torchButton = find.descendant(
+    of: find.byType(TorchButton), matching: find.byType(IconButton));
+
 void main() {
   late FakeCamera camera;
   late FakeDeviceChannel device;
@@ -143,7 +148,7 @@ void main() {
       expect(_icon(tabler.CameraOff.new), findsOneWidget);
       // No scanning frame or hint over it, and no flashlight.
       expect(find.text(s.pointCameraAtCode), findsNothing);
-      expect(find.byType(IconButton), findsNothing);
+      expect(_torchButton, findsNothing);
 
       await tester.tap(find.text(s.openSettings));
       await tester.pump();
@@ -386,7 +391,7 @@ void main() {
       await pumpScanner(tester);
       expect(camera.starts, 1);
       expect(find.text(_englishHint), findsOneWidget);
-      expect(find.byType(IconButton), findsNothing);
+      expect(_torchButton, findsNothing);
     });
 
     testWidgets('its button follows the camera', (tester) async {

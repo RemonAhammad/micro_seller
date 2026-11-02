@@ -8,27 +8,14 @@ part of 'supplier_detail_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// One supplier, live, for their detail screen. A provider rather than a
-/// stream created in build(): go_router rebuilds pages on every push/pop in
-/// the branch, and each rebuild used to resubscribe. Null once the supplier
-/// doesn't exist.
 
 @ProviderFor(supplierById)
 final supplierByIdProvider = SupplierByIdFamily._();
-
-/// One supplier, live, for their detail screen. A provider rather than a
-/// stream created in build(): go_router rebuilds pages on every push/pop in
-/// the branch, and each rebuild used to resubscribe. Null once the supplier
-/// doesn't exist.
 
 final class SupplierByIdProvider
     extends
         $FunctionalProvider<AsyncValue<Supplier?>, Supplier?, Stream<Supplier?>>
     with $FutureModifier<Supplier?>, $StreamProvider<Supplier?> {
-  /// One supplier, live, for their detail screen. A provider rather than a
-  /// stream created in build(): go_router rebuilds pages on every push/pop in
-  /// the branch, and each rebuild used to resubscribe. Null once the supplier
-  /// doesn't exist.
   SupplierByIdProvider._({
     required SupplierByIdFamily super.from,
     required int super.argument,
@@ -74,11 +61,6 @@ final class SupplierByIdProvider
 
 String _$supplierByIdHash() => r'544975c71a6b9f1edf53365dd614561011a06de0';
 
-/// One supplier, live, for their detail screen. A provider rather than a
-/// stream created in build(): go_router rebuilds pages on every push/pop in
-/// the branch, and each rebuild used to resubscribe. Null once the supplier
-/// doesn't exist.
-
 final class SupplierByIdFamily extends $Family
     with $FunctionalFamilyOverride<Stream<Supplier?>, int> {
   SupplierByIdFamily._()
@@ -89,11 +71,6 @@ final class SupplierByIdFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
-
-  /// One supplier, live, for their detail screen. A provider rather than a
-  /// stream created in build(): go_router rebuilds pages on every push/pop in
-  /// the branch, and each rebuild used to resubscribe. Null once the supplier
-  /// doesn't exist.
 
   SupplierByIdProvider call(int id) =>
       SupplierByIdProvider._(argument: id, from: this);

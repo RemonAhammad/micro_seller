@@ -14,6 +14,7 @@ import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/customer.dart';
 import '../providers/order_provider.dart';
+import 'widgets/order_feedback.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -26,6 +27,7 @@ import '../../../core/theme/document_brand.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../shared/widgets/entry_date_field.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
@@ -59,6 +61,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   final List<OrderItem> _items = [];
   OrderStatus _orderStatus = OrderStatus.pending;
   PaymentMethod _paymentMethod = PaymentMethod.cash;
+  DateTime? _orderDate;
   DateTime? _estimatedDeliveryDate;
   bool _isRecurring = false;
   bool _isLoading = false;
@@ -66,6 +69,17 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   Order? _existingOrder;
 
   bool get _isEditing => _existingOrder != null;
+
+  bool get _canSetOrderDate {
+    final existing = _existingOrder;
+    return existing == null ||
+        (!existing.isReturn && existing.orderStatus != OrderStatus.cancelled);
+  }
+
+  DateTime? get _firstOrderDate {
+    final stored = _existingOrder?.createdAt;
+    return stored != null && stored.isBefore(kFirstEntryDate) ? stored : null;
+  }
 
   @override
   void initState() {
@@ -114,6 +128,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     }
     _notesCtrl.text = order.notes;
     _deliveryAddressCtrl.text = order.deliveryAddress;
+    _orderDate = order.createdAt;
     _estimatedDeliveryDate = order.estimatedDeliveryDate;
     _isRecurring = order.isRecurring;
     _recurringDaysCtrl.text = '${order.recurringIntervalDays > 0 ? order.recurringIntervalDays : 30}';
@@ -282,6 +297,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           isRecurring: _isRecurring,
           recurringIntervalDays: _isRecurring ? recurringDays : 0,
           nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: recurringDays)) : null,
+          createdAt: _orderDate,
           updatedAt: DateTime.now(),
         );
 
@@ -318,7 +334,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           isRecurring: _isRecurring,
           recurringIntervalDays: _isRecurring ? recurringDays : 0,
           nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: recurringDays)) : null,
-          createdAt: DateTime.now(),
+          createdAt: _orderDate ?? DateTime.now(),
           updatedAt: DateTime.now(),
         );
 
@@ -336,6 +352,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           await _showInvoiceActions(saved);
           if (mounted) context.pop();
         }
+      }
+    } on OrderDateTooLate catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.of(context).orderDateTooLate(formatEntryDateTime(context, e.latest))),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -390,12 +415,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.sharePdf,
             color: Colors.teal,
             onTap: (origin) async {
-              await runWithProgress(context, () async {
+              return runWithProgress(context, () async {
                 final bytes = await receiptBytes();
                 final dir = await getTemporaryDirectory();
                 final file = File('${dir.path}/${order.orderNumber}.pdf');
                 await file.writeAsBytes(bytes);
-                await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], sharePositionOrigin: origin));
+                final result = await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], sharePositionOrigin: origin));
+                return result.status == ShareResultStatus.success;
               });
             },
           ),
@@ -408,23 +434,22 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
               if (pdfDownloadAsksWhereToSave) {
                 final bytes = await runWithProgress(context, receiptBytes);
-                await savePdfWithSystemSheet(
+                return savePdfWithSystemSheet(
                   fileName: '${order.orderNumber}_invoice.pdf',
                   bytes: bytes,
                   shareOrigin: origin,
                 );
-                return;
               }
 
               var downloadDir = settings.downloadDirectory;
               if (downloadDir.isEmpty) {
-                if (!mounted) return;
+                if (!mounted) return false;
                 final picked = await FilePicker.getDirectoryPath(dialogTitle: 'Choose download folder');
-                if (picked == null) return;
+                if (picked == null) return false;
                 downloadDir = picked;
                 await ref.read(settingsProvider.notifier).updateDownloadDirectory(downloadDir);
               }
-              if (!mounted) return;
+              if (!mounted) return false;
 
               final path = await runWithProgress(context, () async {
                 final file = File('$downloadDir/${order.orderNumber}_invoice.pdf');
@@ -439,6 +464,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   savedToDirectory: downloadDir,
                 );
               }
+              return true;
             },
           ),
           const SizedBox(height: 8),
@@ -448,7 +474,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             color: Colors.indigo,
             onTap: (_) async {
               final bytes = await runWithProgress(context, receiptBytes);
-              await Printing.layoutPdf(onLayout: (_) async => bytes);
+              return Printing.layoutPdf(onLayout: (_) async => bytes);
             },
           ),
           const SizedBox(height: 8),
@@ -458,7 +484,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             color: Colors.green,
             onTap: (origin) async {
               final text = pdfService.generateWhatsAppText(order, currencySymbol: currencySymbol);
-              await SharePlus.instance.share(ShareParams(text: text, sharePositionOrigin: origin));
+              final result = await SharePlus.instance.share(ShareParams(text: text, sharePositionOrigin: origin));
+              return result.status == ShareResultStatus.success;
             },
           ),
           const SizedBox(height: 16),
@@ -484,7 +511,19 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               children: [
 
                 _buildCustomerSection(theme, cs),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+
+                if (_canSetOrderDate) ...[
+                  EntryDateField(
+                    label: s.orderDate,
+                    value: _orderDate,
+                    first: _firstOrderDate,
+                    hint: s.entryDateHint,
+                    onChanged: (d) => setState(() => _orderDate = d),
+                    onReset: _isEditing ? null : () => setState(() => _orderDate = null),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 _buildItemsSection(theme, cs),
                 const SizedBox(height: 16),
@@ -522,11 +561,18 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () async {
+                    final now = DateTime.now();
+                    final from = _orderDate != null && _orderDate!.isBefore(now) ? _orderDate! : now;
+                    final first = DateTime(from.year, from.month, from.day);
+                    final last = now.add(const Duration(days: 365));
+                    var initial = _estimatedDeliveryDate ?? now.add(const Duration(days: 3));
+                    if (initial.isBefore(first)) initial = first;
+                    if (initial.isAfter(last)) initial = last;
                     final picked = await showDatePicker(
                       context: context,
-                      initialDate: _estimatedDeliveryDate ?? DateTime.now().add(const Duration(days: 3)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDate: initial,
+                      firstDate: first,
+                      lastDate: last,
                     );
                     if (picked != null) setState(() => _estimatedDeliveryDate = picked);
                   },
@@ -899,7 +945,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         Wrap(
           children: statuses.map((s) {
             final selected = _orderStatus == s;
-            final label = s.name[0].toUpperCase() + s.name.substring(1);
+            final label = orderStatusLabel(context, s);
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
@@ -915,6 +961,24 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             );
           }).toList(),
         ),
+        if (statuses.contains(_orderStatus)) ...[
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ThinIcon(tabler.InfoCircle.new, size: 16, color: cs.onSurface.withValues(alpha: 0.6)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _orderStatus == OrderStatus.pending
+                      ? AppStrings.of(context).statusPendingHint
+                      : AppStrings.of(context).statusConfirmedHint,
+                  style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -1323,6 +1387,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                 prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
+                        tooltip: AppStrings.of(context).clearSearch,
                         icon: const ThinIcon(tabler.X.new, size: 18),
                         onPressed: () {
                           _searchCtrl.clear();
@@ -1861,6 +1926,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                   suffixIcon: _query.isNotEmpty
                       ? IconButton(
+                          tooltip: AppStrings.of(context).clearSearch,
                           icon: const ThinIcon(tabler.X.new, size: 18),
                           onPressed: () {
                             _searchCtrl.clear();
@@ -1948,25 +2014,35 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   }
 }
 
-class _InvoiceActionTile extends StatelessWidget {
+class _InvoiceActionTile extends StatefulWidget {
   final ThinIconBuilder icon;
   final String label;
   final Color color;
 
-  final Future<void> Function(Rect? origin) onTap;
+  final Future<bool> Function(Rect? origin) onTap;
 
   const _InvoiceActionTile({required this.icon, required this.label, required this.color, required this.onTap});
 
   @override
+  State<_InvoiceActionTile> createState() => _InvoiceActionTileState();
+}
+
+class _InvoiceActionTileState extends State<_InvoiceActionTile> {
+  bool _done = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final label = widget.label;
+    final color = _done ? AppColors.paymentPaid : widget.color;
     return Material(
       color: color.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          await onTap(shareOriginOf(context));
+          final done = await widget.onTap(shareOriginOf(context));
+          if (done && mounted) setState(() => _done = true);
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -1988,7 +2064,7 @@ class _InvoiceActionTile extends StatelessWidget {
                       color: color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: ThinIcon(icon, color: color, size: 20),
+                    child: ThinIcon(_done ? tabler.CircleCheck.new : widget.icon, color: color, size: 20),
                   ),
                   const SizedBox(width: 14),
                   Expanded(child: Text(label, style: style)),

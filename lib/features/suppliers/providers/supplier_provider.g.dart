@@ -340,7 +340,7 @@ final class SupplierNotifierProvider
   SupplierNotifier create() => SupplierNotifier();
 }
 
-String _$supplierNotifierHash() => r'8cf5b977c1a77c44fbb40659bdcededd74d87a03';
+String _$supplierNotifierHash() => r'38dbf2dc84d9a88eb80d1f7fb767ddf8a0b69d6b';
 
 abstract class _$SupplierNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

@@ -126,7 +126,8 @@ class ProductNotifier extends _$ProductNotifier {
       int productId, int delta, String reason, StockMovementType type,
       {String combinationKey = '',
       String supplierName = '',
-      int supplierId = 0}) async {
+      int supplierId = 0,
+      DateTime? at}) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
@@ -170,9 +171,10 @@ class ProductNotifier extends _$ProductNotifier {
           qty: delta,
           reason: fullReason,
           supplierId: supplierId,
-          createdAt: DateTime.now(),
+          createdAt: at ?? DateTime.now(),
         ));
       });
     });
+    if (state.hasError) throw state.error!;
   }
 }

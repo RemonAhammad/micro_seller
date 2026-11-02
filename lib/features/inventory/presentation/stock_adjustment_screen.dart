@@ -11,6 +11,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/number_input.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/entry_date_field.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
@@ -30,6 +31,7 @@ class _StockAdjustmentScreenState
   final _reasonCtrl = TextEditingController();
   StockMovementType _type = StockMovementType.restock;
   bool _isLoading = false;
+  DateTime? _date;
   String _selectedCombinationKey = '';
   Supplier? _selectedSupplier;
   bool _supplierAutoLoaded = false;
@@ -111,6 +113,7 @@ class _StockAdjustmentScreenState
             supplierId: _type == StockMovementType.restock
                 ? (_selectedSupplier?.id ?? 0)
                 : 0,
+            at: _date,
           );
 
       if (mounted) {
@@ -126,7 +129,7 @@ class _StockAdjustmentScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('${AppStrings.of(context).error}: $e'),
+              content: Text(AppStrings.of(context).errorOccurred),
               backgroundColor: Colors.red),
         );
       }
@@ -453,6 +456,14 @@ class _StockAdjustmentScreenState
                     controller: _reasonCtrl,
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 2,
+                  ),
+                  const SizedBox(height: 12),
+                  EntryDateField(
+                    label: s.stockChangeDate,
+                    value: _date,
+                    hint: s.entryDateHint,
+                    onChanged: (d) => setState(() => _date = d),
+                    onReset: () => setState(() => _date = null),
                   ),
                   const SizedBox(height: 32),
 

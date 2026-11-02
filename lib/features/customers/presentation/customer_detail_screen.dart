@@ -55,11 +55,13 @@ class CustomerDetailScreen extends ConsumerWidget {
             title: Text(customer.name),
             actions: [
               IconButton(
+                tooltip: AppStrings.of(context).edit,
                 icon: const ThinIcon(tabler.Pencil.new),
                 onPressed: () =>
                     context.push('/customers/$customerId/edit'),
               ),
               IconButton(
+                tooltip: AppStrings.of(context).delete,
                 icon: const ThinIcon(tabler.Trash.new),
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(

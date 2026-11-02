@@ -35,6 +35,7 @@ import '../../../data/services/release_update_service.dart';
 import '../../../data/services/review_service.dart';
 import '../../updates/presentation/update_notice.dart';
 import '../../updates/providers/update_notice_provider.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key, this.driveService, this.localBackupService});
@@ -339,7 +340,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final updateChannel = ref.watch(updateChannelProvider).value;
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.settings)),
+      appBar: AppBar(
+        title: Text(s.settings),
+        actions: const [SectionHelpButton('settings')],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -1906,6 +1910,7 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                 ),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
+                        tooltip: AppStrings.of(context).clearSearch,
                         icon: const ThinIcon(tabler.X.new, size: 18),
                         onPressed: () {
                           _searchCtrl.clear();

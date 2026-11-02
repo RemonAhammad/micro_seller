@@ -10,6 +10,7 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class SupplierListScreen extends ConsumerWidget {
   const SupplierListScreen({super.key});
@@ -30,6 +31,7 @@ class SupplierListScreen extends ConsumerWidget {
             tooltip: s.allPurchases,
             onPressed: () => context.push('/suppliers/purchases'),
           ),
+          const SectionHelpButton('suppliers'),
         ],
       ),
       floatingActionButton: Column(

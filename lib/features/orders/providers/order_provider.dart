@@ -51,6 +51,13 @@ Stream<List<Order>> pendingOrders(Ref ref) async* {
       .watch(fireImmediately: true);
 }
 
+class OrderDateTooLate implements Exception {
+  const OrderDateTooLate(this.latest);
+  final DateTime latest;
+}
+
+const _atSaleWindow = Duration(seconds: 1);
+
 @Riverpod(keepAlive: true)
 class OrderNotifier extends _$OrderNotifier {
   @override
@@ -80,6 +87,7 @@ class OrderNotifier extends _$OrderNotifier {
     String transactionId = '',
     String note = '',
     String groupId = '',
+    DateTime? paidAt,
   }) async {
     await isar.payments.put(_paymentRow(
       order: order,
@@ -88,6 +96,7 @@ class OrderNotifier extends _$OrderNotifier {
       transactionId: transactionId,
       note: note,
       groupId: groupId,
+      paidAt: paidAt,
     ));
   }
 
@@ -98,6 +107,7 @@ class OrderNotifier extends _$OrderNotifier {
     String transactionId = '',
     String note = '',
     String groupId = '',
+    DateTime? paidAt,
   }) {
     final now = DateTime.now();
     return Payment(
@@ -108,7 +118,7 @@ class OrderNotifier extends _$OrderNotifier {
       transactionId: transactionId,
       note: note,
       groupId: groupId,
-      paidAt: now,
+      paidAt: paidAt ?? now,
       createdAt: now,
     );
   }
@@ -119,6 +129,7 @@ class OrderNotifier extends _$OrderNotifier {
     required int sign,
     required StockMovementType type,
     required String reason,
+    DateTime? at,
   }) async {
     if (items.isEmpty) return;
     final ids = {for (final item in items) item.productId}.toList();
@@ -145,7 +156,7 @@ class OrderNotifier extends _$OrderNotifier {
         type: type,
         qty: delta,
         reason: reason,
-        createdAt: DateTime.now(),
+        createdAt: at ?? DateTime.now(),
       ));
     }
     if (changed.isEmpty) return;
@@ -170,14 +181,16 @@ class OrderNotifier extends _$OrderNotifier {
           await _logPayment(isar,
               order: order.copyWith(id: newId),
               amount: order.amountPaid,
-              transactionId: order.transactionId);
+              transactionId: order.transactionId,
+              paidAt: order.createdAt);
         }
 
         if (order.orderStatus == OrderStatus.confirmed) {
           await _moveStock(isar, order.items,
               sign: -1,
               type: StockMovementType.sale,
-              reason: 'Order ${order.orderNumber}');
+              reason: 'Order ${order.orderNumber}',
+              at: order.createdAt);
         }
 
         if (order.customerId > 0) {
@@ -202,11 +215,78 @@ class OrderNotifier extends _$OrderNotifier {
   }
 
   Future<void> updateOrder(Order order) async {
-    state = await AsyncValue.guard(() async {
-      final isar = await ref.read(isarProvider.future);
-      await isar.writeTxn(
-          () async => isar.orders.put(order.copyWith(updatedAt: DateTime.now())));
-    });
+    final isar = await ref.read(isarProvider.future);
+    try {
+      await isar.writeTxn(() async {
+        final stored = await isar.orders.get(order.id);
+        var updated = order;
+        if (stored != null) {
+          final from = stored.createdAt;
+          final to = order.createdAt;
+          if (from != null && to != null && from != to) {
+            await _moveOrderDate(isar, stored, from, to);
+          }
+          if (stored.orderStatus != order.orderStatus) {
+            updated = await _changeStatus(isar, order,
+                from: stored.orderStatus, to: order.orderStatus);
+          }
+        }
+        await isar.orders.put(updated.copyWith(updatedAt: DateTime.now()));
+      });
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> _moveOrderDate(
+      Isar isar, Order stored, DateTime from, DateTime to) async {
+    final windowEnd = from.add(_atSaleWindow);
+    bool atSale(DateTime? t) =>
+        t != null && !t.isBefore(from) && !t.isAfter(windowEnd);
+
+    DateTime? latest;
+    void bound(DateTime? t) {
+      if (t != null && (latest == null || t.isBefore(latest!))) latest = t;
+    }
+
+    final payments =
+        (await isar.payments.where().orderIdEqualTo(stored.id).findAll())
+          ..sort((a, b) => a.id.compareTo(b.id));
+    final moved = <Payment>[];
+    for (final p in payments) {
+      if (identical(p, payments.first) &&
+          p.amount > 0 &&
+          p.groupId.isEmpty &&
+          atSale(p.paidAt)) {
+        moved.add(p.copyWith(paidAt: to));
+      } else {
+        bound(p.paidAt);
+      }
+    }
+    final returns = await isar.orders
+        .filter()
+        .isReturnEqualTo(true)
+        .originalOrderIdEqualTo(stored.id)
+        .findAll();
+    for (final r in returns) {
+      bound(r.createdAt);
+    }
+    bound(stored.actualDeliveryDate);
+    final limit = latest;
+    if (limit != null && to.isAfter(limit)) throw OrderDateTooLate(limit);
+
+    final sales = await isar.stockMovements
+        .where()
+        .createdAtBetween(from, windowEnd)
+        .filter()
+        .typeEqualTo(StockMovementType.sale)
+        .reasonEqualTo('Order ${stored.orderNumber}')
+        .findAll();
+    await isar.payments.putAll(moved);
+    await isar.stockMovements
+        .putAll([for (final m in sales) m.copyWith(createdAt: to)]);
   }
 
   Future<void> updateStatus(int orderId, OrderStatus status) async {
@@ -214,63 +294,62 @@ class OrderNotifier extends _$OrderNotifier {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
         final order = await isar.orders.get(orderId);
-        if (order == null) return;
-
-        final oldStatus = order.orderStatus;
-        if (oldStatus == status) return;
-
-        final wasStockDeducted = oldStatus != OrderStatus.pending &&
-            oldStatus != OrderStatus.cancelled;
-        final shouldDeductStock =
-            status != OrderStatus.pending && status != OrderStatus.cancelled;
-
-        if (wasStockDeducted && !shouldDeductStock) {
-          await _moveStock(isar, order.items,
-              sign: 1,
-              type: StockMovementType.adjustment,
-              reason: 'Rollback ${order.orderNumber} → ${status.name}');
-        }
-
-        if (!wasStockDeducted && shouldDeductStock) {
-          await _moveStock(isar, order.items,
-              sign: -1,
-              type: StockMovementType.sale,
-              reason: 'Order ${order.orderNumber}');
-        }
-
-        var cancelledOrder = order;
-        if (oldStatus != OrderStatus.cancelled &&
-            status == OrderStatus.cancelled) {
-          if (order.customerId > 0) {
-            final customer = await isar.customers.get(order.customerId);
-            if (customer != null) {
-
-              await isar.customers.put(customer.copyWith(
-                totalOrders: (customer.totalOrders - 1).clamp(0, 999999),
-                totalSpent: (customer.totalSpent - order.totalAmount)
-                    .clamp(0, double.infinity),
-                outstandingBalance:
-                    (customer.outstandingBalance - order.balanceDue)
-                        .clamp(0, double.infinity),
-              ));
-            }
-          }
-          if (order.amountPaid > 0) {
-            await _logPayment(isar,
-                order: order, amount: -order.amountPaid, note: kCancelledPaymentNote);
-          }
-          cancelledOrder = order.copyWith(
-            amountPaid: 0,
-            paymentStatus: PaymentStatus.unpaid,
-          );
-        }
-
-        await isar.orders.put(cancelledOrder.copyWith(
-          orderStatus: status,
-          updatedAt: DateTime.now(),
-        ));
+        if (order == null || order.orderStatus == status) return;
+        final updated =
+            await _changeStatus(isar, order, from: order.orderStatus, to: status);
+        await isar.orders.put(updated.copyWith(updatedAt: DateTime.now()));
       });
     });
+  }
+
+  Future<Order> _changeStatus(Isar isar, Order order,
+      {required OrderStatus from, required OrderStatus to}) async {
+    final wasStockDeducted =
+        from != OrderStatus.pending && from != OrderStatus.cancelled;
+    final shouldDeductStock =
+        to != OrderStatus.pending && to != OrderStatus.cancelled;
+
+    if (wasStockDeducted && !shouldDeductStock) {
+      await _moveStock(isar, order.items,
+          sign: 1,
+          type: StockMovementType.adjustment,
+          reason: 'Rollback ${order.orderNumber} → ${to.name}');
+    }
+
+    if (!wasStockDeducted && shouldDeductStock) {
+      await _moveStock(isar, order.items,
+          sign: -1,
+          type: StockMovementType.sale,
+          reason: 'Order ${order.orderNumber}');
+    }
+
+    var cancelledOrder = order;
+    if (from != OrderStatus.cancelled && to == OrderStatus.cancelled) {
+      if (order.customerId > 0) {
+        final customer = await isar.customers.get(order.customerId);
+        if (customer != null) {
+
+          await isar.customers.put(customer.copyWith(
+            totalOrders: (customer.totalOrders - 1).clamp(0, 999999),
+            totalSpent: (customer.totalSpent - order.totalAmount)
+                .clamp(0, double.infinity),
+            outstandingBalance:
+                (customer.outstandingBalance - order.balanceDue)
+                    .clamp(0, double.infinity),
+          ));
+        }
+      }
+      if (order.amountPaid > 0) {
+        await _logPayment(isar,
+            order: order, amount: -order.amountPaid, note: kCancelledPaymentNote);
+      }
+      cancelledOrder = order.copyWith(
+        amountPaid: 0,
+        paymentStatus: PaymentStatus.unpaid,
+      );
+    }
+
+    return cancelledOrder.copyWith(orderStatus: to);
   }
 
   Future<void> recordPayment(
@@ -278,6 +357,7 @@ class OrderNotifier extends _$OrderNotifier {
     double paymentAmount, {
     PaymentMethod? method,
     String transactionId = '',
+    DateTime? paidAt,
   }) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
@@ -303,7 +383,8 @@ class OrderNotifier extends _$OrderNotifier {
             order: order,
             amount: paymentAmount,
             method: method,
-            transactionId: transactionId);
+            transactionId: transactionId,
+            paidAt: paidAt);
 
         if (order.customerId > 0) {
           final customer = await isar.customers.get(order.customerId);
@@ -325,6 +406,7 @@ class OrderNotifier extends _$OrderNotifier {
     String transactionId = '',
     String note = '',
     int? registerId,
+    DateTime? paidAt,
   }) async {
     var applied = 0.0;
     state = await AsyncValue.guard(() async {
@@ -338,11 +420,12 @@ class OrderNotifier extends _$OrderNotifier {
           ..sort((a, b) => a.id.compareTo(b.id));
         final groupId = 'col-${DateTime.now().microsecondsSinceEpoch}';
 
-        var remaining = amount.clamp(0.0, computeNetDue(orders));
+        final dues = duesOpenAt(computeOrderDues(orders), paidAt);
+        var remaining = amount.clamp(0.0, collectableDue(orders, dues, paidAt));
 
         final paidOrders = <Order>[];
         final payments = <Payment>[];
-        for (final d in computeOrderDues(orders)) {
+        for (final d in dues) {
           if (remaining <= kDueEpsilon) break;
           final part = remaining < d.due ? remaining : d.due;
           final newPaid = d.order.amountPaid + part;
@@ -364,7 +447,8 @@ class OrderNotifier extends _$OrderNotifier {
               method: method,
               transactionId: transactionId,
               note: note,
-              groupId: groupId));
+              groupId: groupId,
+              paidAt: paidAt));
           remaining -= part;
           applied += part;
         }
@@ -384,7 +468,9 @@ class OrderNotifier extends _$OrderNotifier {
 
         if (registerId != null) {
           final register = await isar.cashRegisters.get(registerId);
-          if (register != null && !register.isClosed) {
+          if (register != null &&
+              !register.isClosed &&
+              register.takesCashAt(paidAt)) {
             await isar.cashRegisters.put(register.copyWith(
               totalCashIn: register.totalCashIn + applied,
             ));

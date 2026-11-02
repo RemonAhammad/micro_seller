@@ -10,6 +10,7 @@ import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/customer_card.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class CustomerListScreen extends ConsumerStatefulWidget {
   const CustomerListScreen({super.key});
@@ -45,6 +46,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
             icon: const ThinIcon(tabler.Notebook.new),
             onPressed: () => context.go('/dues'),
           ),
+          const SectionHelpButton('customers'),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),
@@ -59,6 +61,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                 prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
+                        tooltip: AppStrings.of(context).clearSearch,
                         icon: const ThinIcon(tabler.X.new),
                         onPressed: () {
                           _searchCtrl.clear();

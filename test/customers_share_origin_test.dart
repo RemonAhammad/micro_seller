@@ -251,10 +251,11 @@ void main() {
     final path = (share['paths']! as List).single as String;
     expect(path, endsWith('statement_Karim_Uddin.pdf'));
     expect(File(path).readAsBytesSync().take(4), '%PDF'.codeUnits);
-    // The spinner is gone and no error was shown.
+    // The spinner is gone, and the only message says it was shared.
     await tester.pumpAndSettle();
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.byType(SnackBar), findsNothing);
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.text('Shared'), findsOneWidget);
   });
 
   testWidgets('the Due Book\'s Remind points at its card\'s Remind', (

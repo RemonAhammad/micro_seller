@@ -40,6 +40,7 @@ class _RecordingOrders extends OrderNotifier {
     double paymentAmount, {
     PaymentMethod? method,
     String transactionId = '',
+    DateTime? paidAt,
   }) async => payments.add(paymentAmount);
 
   @override

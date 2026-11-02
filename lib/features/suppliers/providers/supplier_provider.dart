@@ -123,8 +123,9 @@ class SupplierNotifier extends _$SupplierNotifier {
   Future<void> createPurchase(Purchase purchase, {bool restockProducts = true, bool updateCostPrice = true}) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
+      final at = purchase.createdAt ?? DateTime.now();
       await isar.writeTxn(() async {
-        await isar.purchases.put(purchase.copyWith(createdAt: DateTime.now()));
+        await isar.purchases.put(purchase.copyWith(createdAt: at));
 
         if (purchase.supplierId > 0) {
           final supplier = await isar.suppliers.get(purchase.supplierId);
@@ -168,7 +169,7 @@ class SupplierNotifier extends _$SupplierNotifier {
               qty: item.qty,
               reason: reason,
               supplierId: purchase.supplierId,
-              createdAt: DateTime.now(),
+              createdAt: at,
             ));
           }
           if (changed.isNotEmpty) {
@@ -179,6 +180,7 @@ class SupplierNotifier extends _$SupplierNotifier {
         }
       });
     });
+    if (state.hasError) throw state.error!;
   }
 
   Future<void> deletePurchase(int id) async {

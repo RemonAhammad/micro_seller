@@ -10,6 +10,8 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
+import '../../../shared/widgets/action_feedback.dart';
 
 class CashRegisterScreen extends ConsumerWidget {
   const CashRegisterScreen({super.key});
@@ -22,7 +24,10 @@ class CashRegisterScreen extends ConsumerWidget {
     final cs = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.cashRegister)),
+      appBar: AppBar(
+        title: Text(s.cashRegister),
+        actions: const [SectionHelpButton('cash_register')],
+      ),
       body: registersAsync.when(
         data: (registers) {
           final openReg = registers.where((r) => !r.isClosed).firstOrNull;
@@ -330,6 +335,7 @@ class _OpenRegisterCard extends StatelessWidget {
                 onPressed: amount == null || amount <= 0
                     ? null
                     : () async {
+                        final messenger = ScaffoldMessenger.of(ctx);
                         if (isIn) {
                           await ref
                               .read(cashRegisterProvider.notifier)
@@ -340,6 +346,16 @@ class _OpenRegisterCard extends StatelessWidget {
                               .addCashOut(register.id, amount);
                         }
                         if (ctx.mounted) Navigator.pop(ctx);
+                        final failed = ref.read(cashRegisterProvider).hasError;
+                        final shown = CurrencyFormatter.format(amount);
+                        showOutcome(
+                            messenger,
+                            failed
+                                ? s.errorOccurred
+                                : isIn
+                                    ? s.cashInRecorded(shown)
+                                    : s.cashOutRecorded(shown),
+                            failed: failed);
                       },
                 child: Text(s.confirm),
               );
@@ -400,11 +416,16 @@ class _OpenRegisterCard extends StatelessWidget {
                 onPressed: amount == null
                     ? null
                     : () async {
+                        final messenger = ScaffoldMessenger.of(ctx);
                         await ref
                             .read(cashRegisterProvider.notifier)
                             .closeRegister(register.id, amount,
                                 notes: notesCtrl.text.trim());
                         if (ctx.mounted) Navigator.pop(ctx);
+                        final failed = ref.read(cashRegisterProvider).hasError;
+                        showOutcome(messenger,
+                            failed ? s.errorOccurred : s.registerClosed,
+                            failed: failed);
                       },
                 child: Text(s.close),
               );
@@ -483,10 +504,15 @@ class _ClosedStateCard extends StatelessWidget {
             onPressed: () async {
 
               final amount = NumberInput.parseDecimal(ctrl.text) ?? 0;
+              final messenger = ScaffoldMessenger.of(ctx);
               await ref
                   .read(cashRegisterProvider.notifier)
                   .openRegister(amount);
               if (ctx.mounted) Navigator.pop(ctx);
+              final failed = ref.read(cashRegisterProvider).hasError;
+              showOutcome(messenger,
+                  failed ? s.errorOccurred : s.registerOpened,
+                  failed: failed);
             },
             child: Text(s.open),
           ),

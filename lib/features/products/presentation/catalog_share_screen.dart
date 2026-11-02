@@ -18,6 +18,7 @@ import '../../settings/providers/settings_provider.dart';
 import '../providers/product_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/action_feedback.dart';
 
 class CatalogShareScreen extends ConsumerStatefulWidget {
   const CatalogShareScreen({super.key});
@@ -304,11 +305,12 @@ class _CatalogShareScreenState extends ConsumerState<CatalogShareScreen> {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(bytes);
-    await SharePlus.instance.share(ShareParams(
+    final result = await SharePlus.instance.share(ShareParams(
       files: [XFile(file.path)],
       subject: fileName,
       sharePositionOrigin: shareOriginOf(button.currentContext),
     ));
+    if (mounted) confirmShared(context, result);
   }
 
   Future<void> _run(Future<void> Function() task) async {

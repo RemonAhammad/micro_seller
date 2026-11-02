@@ -12,6 +12,7 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class ReturnsScreen extends ConsumerStatefulWidget {
   const ReturnsScreen({super.key});
@@ -71,6 +72,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(s.returnsAndRefunds),
+        actions: const [SectionHelpButton('returns')],
         bottom: returnsAsync.whenOrNull(
               data: (returns) {
                 final counts = _getCounts(returns);

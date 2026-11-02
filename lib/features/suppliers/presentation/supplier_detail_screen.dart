@@ -15,6 +15,7 @@ import '../../../shared/widgets/call_phone.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/action_feedback.dart';
 
 class SupplierDetailScreen extends ConsumerWidget {
   final int supplierId;
@@ -51,10 +52,12 @@ class SupplierDetailScreen extends ConsumerWidget {
             title: Text(supplier.name),
             actions: [
               IconButton(
+                tooltip: AppStrings.of(context).edit,
                 icon: const ThinIcon(tabler.Pencil.new),
                 onPressed: () => context.push('/suppliers/${supplier.id}/edit'),
               ),
               IconButton(
+                tooltip: AppStrings.of(context).delete,
                 icon: const ThinIcon(tabler.Trash.new),
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
@@ -66,8 +69,11 @@ class SupplierDetailScreen extends ConsumerWidget {
                     icon: tabler.Trash.new,
                   );
                   if (ok == true && context.mounted) {
+                    final messenger = ScaffoldMessenger.of(context);
                     await ref.read(supplierProvider.notifier).deleteSupplier(supplier.id);
-                    if (context.mounted) context.pop();
+                    final failed = ref.read(supplierProvider).hasError;
+                    showOutcome(messenger, failed ? s.errorOccurred : s.supplierDeleted, failed: failed);
+                    if (!failed && context.mounted) context.pop();
                   }
                 },
               ),
@@ -268,9 +274,16 @@ class SupplierDetailScreen extends ConsumerWidget {
                 onPressed: amount == null || amount <= 0
                     ? null
                     : () async {
+                        final s = AppStrings.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
                         await ref.read(supplierProvider.notifier)
                             .recordSupplierPayment(supplier.id, amount);
                         if (ctx.mounted) Navigator.pop(ctx);
+                        final failed = ref.read(supplierProvider).hasError;
+                        showOutcome(
+                            messenger,
+                            failed ? s.errorOccurred : s.paymentRecorded(CurrencyFormatter.format(amount)),
+                            failed: failed);
                       },
                 child: Text(AppStrings.of(context).payDue),
               );

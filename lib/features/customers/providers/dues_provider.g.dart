@@ -8,14 +8,9 @@ part of 'dues_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Every customer who owes money, live. Re-emits whenever orders or
-/// customers change; computed on a worker isolate.
 
 @ProviderFor(dues)
 final duesProvider = DuesProvider._();
-
-/// Every customer who owes money, live. Re-emits whenever orders or
-/// customers change; computed on a worker isolate.
 
 final class DuesProvider
     extends
@@ -27,8 +22,6 @@ final class DuesProvider
     with
         $FutureModifier<List<CustomerDue>>,
         $StreamProvider<List<CustomerDue>> {
-  /// Every customer who owes money, live. Re-emits whenever orders or
-  /// customers change; computed on a worker isolate.
   DuesProvider._()
     : super(
         from: null,
@@ -98,17 +91,12 @@ final class DueSummaryProvider
 
 String _$dueSummaryHash() => r'3d3dbc1a7f64ef59251222437254b9f2dbd5c45c';
 
-/// Dues collected since the 1st of this month (see [duesCollectedBetween]).
-
 @ProviderFor(duesCollectedThisMonth)
 final duesCollectedThisMonthProvider = DuesCollectedThisMonthProvider._();
-
-/// Dues collected since the 1st of this month (see [duesCollectedBetween]).
 
 final class DuesCollectedThisMonthProvider
     extends $FunctionalProvider<AsyncValue<double>, double, Stream<double>>
     with $FutureModifier<double>, $StreamProvider<double> {
-  /// Dues collected since the 1st of this month (see [duesCollectedBetween]).
   DuesCollectedThisMonthProvider._()
     : super(
         from: null,
@@ -135,14 +123,10 @@ final class DuesCollectedThisMonthProvider
 }
 
 String _$duesCollectedThisMonthHash() =>
-    r'96f37880c717847d07a81e68609b33bd57584423';
-
-/// A customer's payment history, newest first.
+    r'ef35cf84be02643e55892abdbf672e06cdf5e75b';
 
 @ProviderFor(customerPayments)
 final customerPaymentsProvider = CustomerPaymentsFamily._();
-
-/// A customer's payment history, newest first.
 
 final class CustomerPaymentsProvider
     extends
@@ -152,7 +136,6 @@ final class CustomerPaymentsProvider
           Stream<List<Payment>>
         >
     with $FutureModifier<List<Payment>>, $StreamProvider<List<Payment>> {
-  /// A customer's payment history, newest first.
   CustomerPaymentsProvider._({
     required CustomerPaymentsFamily super.from,
     required int super.argument,
@@ -199,8 +182,6 @@ final class CustomerPaymentsProvider
 
 String _$customerPaymentsHash() => r'de5f695787609efefe0dc13888e8b78232c17894';
 
-/// A customer's payment history, newest first.
-
 final class CustomerPaymentsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<Payment>>, int> {
   CustomerPaymentsFamily._()
@@ -211,8 +192,6 @@ final class CustomerPaymentsFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
-
-  /// A customer's payment history, newest first.
 
   CustomerPaymentsProvider call(int customerId) =>
       CustomerPaymentsProvider._(argument: customerId, from: this);

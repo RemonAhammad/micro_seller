@@ -15,6 +15,7 @@ import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/expense_card.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class ExpenseListScreen extends ConsumerWidget {
   const ExpenseListScreen({super.key});
@@ -41,6 +42,7 @@ class ExpenseListScreen extends ConsumerWidget {
               },
             ),
           ),
+          const SectionHelpButton('expenses'),
         ],
       ),
       body: expensesAsync.when(

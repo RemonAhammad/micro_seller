@@ -24,10 +24,13 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../core/theme/document_brand.dart';
 import '../../../shared/widgets/call_phone.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/entry_date_field.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/payment_method_chips.dart';
+import '../../../shared/widgets/action_feedback.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../returns/presentation/create_return_screen.dart';
+import 'widgets/order_feedback.dart';
 import 'widgets/order_status_badge.dart';
 import 'widgets/order_item_row.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -122,6 +125,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
             ),
             actions: [
               IconButton(
+                tooltip: s.edit,
                 icon: const ThinIcon(tabler.Pencil.new),
                 onPressed: () => context.push('/orders/${order.id}/edit'),
               ),
@@ -425,8 +429,9 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
       case 'share_text':
         final text = pdfService.generateWhatsAppText(order,
             currencySymbol: currencySymbol);
-        await SharePlus.instance.share(
+        final result = await SharePlus.instance.share(
             ShareParams(text: text, sharePositionOrigin: origin));
+        if (context.mounted) confirmShared(context, result);
         break;
 
       case 'share_pdf':
@@ -437,8 +442,9 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
         final dir = await getTemporaryDirectory();
         final file = File('${dir.path}/${order.orderNumber}.pdf');
         await file.writeAsBytes(bytes);
-        await SharePlus.instance.share(ShareParams(
+        final result = await SharePlus.instance.share(ShareParams(
             files: [XFile(file.path)], sharePositionOrigin: origin));
+        if (context.mounted) confirmShared(context, result);
         break;
 
       case 'download_pdf':
@@ -492,7 +498,9 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
             shopName: shopName,
             currencySymbol: currencySymbol,
             taxRate: taxRate);
-        await Printing.layoutPdf(onLayout: (_) async => bytes);
+        final printed =
+            await Printing.layoutPdf(onLayout: (_) async => bytes);
+        if (context.mounted) confirmPrinted(context, printed);
         break;
 
       case 'return':
@@ -517,9 +525,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
           icon: tabler.CircleX.new,
         );
         if (ok == true && context.mounted) {
-          await ref
-              .read(orderProvider.notifier)
-              .updateStatus(order.id, OrderStatus.cancelled);
+          await changeOrderStatus(context, ref, order, OrderStatus.cancelled);
         }
         break;
 
@@ -535,10 +541,13 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
           icon: tabler.Trash.new,
         );
         if (ok == true && context.mounted) {
+          final messenger = ScaffoldMessenger.of(context);
           await ref
               .read(orderProvider.notifier)
               .deleteOrder(order.id);
-          if (context.mounted) context.pop();
+          final failed = ref.read(orderProvider).hasError;
+          showOutcome(messenger, failed ? sd.errorOccurred : sd.orderDeleted, failed: failed);
+          if (!failed && context.mounted) context.pop();
         }
         break;
     }
@@ -574,6 +583,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
     final amountCtrl = TextEditingController();
     final txnCtrl = TextEditingController();
     PaymentMethod method = order.paymentMethod;
+    DateTime? paidAt;
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -613,6 +623,15 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                     hintText: s.transactionIdHint,
                   ),
                 ),
+                const SizedBox(height: 12),
+                EntryDateField(
+                  label: s.paymentDate,
+                  value: paidAt,
+                  first: order.createdAt,
+                  hint: s.entryDateHint,
+                  onChanged: (d) => setLocal(() => paidAt = d),
+                  onReset: () => setLocal(() => paidAt = null),
+                ),
               ],
             ),
           ),
@@ -623,13 +642,22 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
               onPressed: () async {
                 final amount = NumberInput.parseDecimal(amountCtrl.text) ?? 0;
                 if (amount <= 0) return;
+                final messenger = ScaffoldMessenger.of(context);
                 await ref.read(orderProvider.notifier).recordPayment(
                       order.id,
                       amount,
                       method: method,
                       transactionId: txnCtrl.text.trim(),
+                      paidAt: paidAt,
                     );
                 if (ctx.mounted) Navigator.pop(ctx);
+                final failed = ref.read(orderProvider).hasError;
+                showOutcome(
+                    messenger,
+                    failed
+                        ? s.errorOccurred
+                        : s.paymentRecorded(CurrencyFormatter.format(amount)),
+                    failed: failed);
               },
               child: Text(s.save),
             ),
@@ -668,11 +696,7 @@ class _StatusActions extends ConsumerWidget {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () async {
-          await ref
-              .read(orderProvider.notifier)
-              .updateStatus(order.id, nextStatus);
-        },
+        onPressed: () => changeOrderStatus(context, ref, order, nextStatus),
         icon: const ThinIcon(tabler.ArrowRight.new),
         label: Text(nextLabel),
       ),
@@ -869,13 +893,20 @@ class _DeliveryTrackingCard extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  await ref.read(orderProvider.notifier).updateOrder(
-                        order.copyWith(
-                          actualDeliveryDate: DateTime.now(),
-                          orderStatus: OrderStatus.completed,
-                          updatedAt: DateTime.now(),
-                        ),
-                      );
+                  final messenger = ScaffoldMessenger.of(context);
+                  var failed = false;
+                  try {
+                    await ref.read(orderProvider.notifier).updateOrder(
+                          order.copyWith(
+                            actualDeliveryDate: DateTime.now(),
+                            orderStatus: OrderStatus.completed,
+                            updatedAt: DateTime.now(),
+                          ),
+                        );
+                  } catch (_) {
+                    failed = true;
+                  }
+                  showOutcome(messenger, failed ? s.errorOccurred : s.markedDelivered, failed: failed);
                 },
                 icon: const ThinIcon(tabler.Check.new, size: 18),
                 label: Text(s.markAsDelivered),
@@ -996,9 +1027,8 @@ class _StatusStepperBar extends StatelessWidget {
   bool get _canGoBack => _currentIndex > 0;
   bool get _canGoForward => _currentIndex < _flow.length - 1;
 
-  Future<void> _changeStatus(BuildContext context, OrderStatus newStatus) async {
-    await ref.read(orderProvider.notifier).updateStatus(order.id, newStatus);
-  }
+  Future<void> _changeStatus(BuildContext context, OrderStatus newStatus) =>
+      changeOrderStatus(context, ref, order, newStatus);
 
   @override
   Widget build(BuildContext context) {
@@ -1342,10 +1372,13 @@ class _ReturnFlowCard extends StatelessWidget {
                     isDestructive: true,
                     icon: tabler.X.new,
                   );
-                  if (ok == true) {
+                  if (ok == true && context.mounted) {
+                    final messenger = ScaffoldMessenger.of(context);
                     await ref
                         .read(orderProvider.notifier)
                         .rejectReturn(order.id);
+                    final failed = ref.read(orderProvider).hasError;
+                    showOutcome(messenger, failed ? s.errorOccurred : s.returnRejected, failed: failed);
                   }
                 },
                 icon: const ThinIcon(tabler.X.new, size: 16),
@@ -1362,10 +1395,13 @@ class _ReturnFlowCard extends StatelessWidget {
                     confirmText: s.tr('approve'),
                     icon: tabler.Check.new,
                   );
-                  if (ok == true) {
+                  if (ok == true && context.mounted) {
+                    final messenger = ScaffoldMessenger.of(context);
                     await ref
                         .read(orderProvider.notifier)
                         .approveReturn(order.id);
+                    final failed = ref.read(orderProvider).hasError;
+                    showOutcome(messenger, failed ? s.errorOccurred : s.returnApproved, failed: failed);
                   }
                 },
                 icon: const ThinIcon(tabler.Check.new, size: 16),

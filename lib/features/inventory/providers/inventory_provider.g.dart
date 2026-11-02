@@ -8,12 +8,9 @@ part of 'inventory_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Every movement newest first, read in createdAt-index order on a worker.
 
 @ProviderFor(stockMovements)
 final stockMovementsProvider = StockMovementsProvider._();
-
-/// Every movement newest first, read in createdAt-index order on a worker.
 
 final class StockMovementsProvider
     extends
@@ -25,7 +22,6 @@ final class StockMovementsProvider
     with
         $FutureModifier<List<StockMovement>>,
         $StreamProvider<List<StockMovement>> {
-  /// Every movement newest first, read in createdAt-index order on a worker.
   StockMovementsProvider._()
     : super(
         from: null,
@@ -54,18 +50,11 @@ final class StockMovementsProvider
 
 String _$stockMovementsHash() => r'93c1d13519607beb87b1e303e21f963967f6d5a7';
 
-/// The movement history, paged: the newest [kMovementPageSize] movements,
-/// more on [loadMore].
-
 @ProviderFor(StockMovementPages)
 final stockMovementPagesProvider = StockMovementPagesProvider._();
 
-/// The movement history, paged: the newest [kMovementPageSize] movements,
-/// more on [loadMore].
 final class StockMovementPagesProvider
     extends $StreamNotifierProvider<StockMovementPages, StockMovementPage> {
-  /// The movement history, paged: the newest [kMovementPageSize] movements,
-  /// more on [loadMore].
   StockMovementPagesProvider._()
     : super(
         from: null,
@@ -87,9 +76,6 @@ final class StockMovementPagesProvider
 
 String _$stockMovementPagesHash() =>
     r'c0e474966c12ad0f814d0fc0481fd897bb375fcd';
-
-/// The movement history, paged: the newest [kMovementPageSize] movements,
-/// more on [loadMore].
 
 abstract class _$StockMovementPages extends $StreamNotifier<StockMovementPage> {
   Stream<StockMovementPage> build();

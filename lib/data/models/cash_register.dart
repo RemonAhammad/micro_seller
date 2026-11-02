@@ -40,6 +40,9 @@ class CashRegister {
   double get difference =>
       closingAmount != null ? closingAmount! - expectedClosing : 0;
 
+  bool takesCashAt(DateTime? at) =>
+      at == null || openedAt == null || !at.isBefore(openedAt!);
+
   CashRegister copyWith({
     Id? id,
     double? openingAmount,

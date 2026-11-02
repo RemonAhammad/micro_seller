@@ -202,6 +202,7 @@ class _PinSheetState extends State<_PinSheet> {
               Row(
                 children: [
                   IconButton(
+                    tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                     icon: const ThinIcon(tabler.X.new),
                     onPressed: () => Navigator.of(context).pop(false),
                   ),

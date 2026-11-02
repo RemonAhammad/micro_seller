@@ -8,16 +8,9 @@ part of 'update_notice_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// How this install gets its updates: Play's in-app update, the GitHub
-/// notice, or none. Tests override it (`UpdateChannel.none`), so they never
-/// ask GitHub.
 
 @ProviderFor(updateChannel)
 final updateChannelProvider = UpdateChannelProvider._();
-
-/// How this install gets its updates: Play's in-app update, the GitHub
-/// notice, or none. Tests override it (`UpdateChannel.none`), so they never
-/// ask GitHub.
 
 final class UpdateChannelProvider
     extends
@@ -27,9 +20,6 @@ final class UpdateChannelProvider
           FutureOr<UpdateChannel>
         >
     with $FutureModifier<UpdateChannel>, $FutureProvider<UpdateChannel> {
-  /// How this install gets its updates: Play's in-app update, the GitHub
-  /// notice, or none. Tests override it (`UpdateChannel.none`), so they never
-  /// ask GitHub.
   UpdateChannelProvider._()
     : super(
         from: null,
@@ -58,14 +48,8 @@ final class UpdateChannelProvider
 
 String _$updateChannelHash() => r'dbf64a62f7285d2e2a5812b69ede96aefed31648';
 
-/// The GitHub release check, on the github channel only; null elsewhere, or
-/// when it couldn't be set up.
-
 @ProviderFor(releaseUpdateService)
 final releaseUpdateServiceProvider = ReleaseUpdateServiceProvider._();
-
-/// The GitHub release check, on the github channel only; null elsewhere, or
-/// when it couldn't be set up.
 
 final class ReleaseUpdateServiceProvider
     extends
@@ -77,8 +61,6 @@ final class ReleaseUpdateServiceProvider
     with
         $FutureModifier<ReleaseUpdateService?>,
         $FutureProvider<ReleaseUpdateService?> {
-  /// The GitHub release check, on the github channel only; null elsewhere, or
-  /// when it couldn't be set up.
   ReleaseUpdateServiceProvider._()
     : super(
         from: null,
@@ -108,18 +90,11 @@ final class ReleaseUpdateServiceProvider
 String _$releaseUpdateServiceHash() =>
     r'72cb8d50d55184d49a851e134c6c9d292bfc0112';
 
-/// The newer release the Dashboard's notice offers, or null. Asks GitHub at
-/// most once a day (`ReleaseUpdateService.check`). Never an error.
-
 @ProviderFor(UpdateNotice)
 final updateNoticeProvider = UpdateNoticeProvider._();
 
-/// The newer release the Dashboard's notice offers, or null. Asks GitHub at
-/// most once a day (`ReleaseUpdateService.check`). Never an error.
 final class UpdateNoticeProvider
     extends $AsyncNotifierProvider<UpdateNotice, AvailableUpdate?> {
-  /// The newer release the Dashboard's notice offers, or null. Asks GitHub at
-  /// most once a day (`ReleaseUpdateService.check`). Never an error.
   UpdateNoticeProvider._()
     : super(
         from: null,
@@ -140,9 +115,6 @@ final class UpdateNoticeProvider
 }
 
 String _$updateNoticeHash() => r'8f4ff5fd99eaa22936061e84a4162b4e101f6b0c';
-
-/// The newer release the Dashboard's notice offers, or null. Asks GitHub at
-/// most once a day (`ReleaseUpdateService.check`). Never an error.
 
 abstract class _$UpdateNotice extends $AsyncNotifier<AvailableUpdate?> {
   FutureOr<AvailableUpdate?> build();

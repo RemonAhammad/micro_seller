@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:micro_seller/core/l10n/app_localizations.dart';
 import 'package:micro_seller/data/models/order.dart';
 import 'package:micro_seller/features/orders/presentation/widgets/order_card.dart';
 
@@ -16,6 +17,8 @@ const _statusBar = 24.0;
 /// left (as a Display size zoom draws it).
 Widget _shell(Order order, {double zoom = 1, ValueChanged<OrderStatus>? onPick}) {
   return MaterialApp(
+    localizationsDelegates: const [AppLocalizations.delegate],
+    supportedLocales: AppLocalizations.supportedLocales,
     builder: (context, child) => zoom == 1
         ? child!
         : Transform.scale(
@@ -64,6 +67,7 @@ void main() {
     testWidgets('the status menu opens at the press point at ${zoom}x zoom',
         (tester) async {
       await tester.pumpWidget(_shell(order, zoom: zoom));
+      await tester.pump();
 
       // A point on the card's left half, so the menu grows rightwards from
       // it (its top-left corner at the press point).
@@ -82,6 +86,7 @@ void main() {
   testWidgets('picking a status from the menu reports it', (tester) async {
     OrderStatus? picked;
     await tester.pumpWidget(_shell(order, onPick: (s) => picked = s));
+    await tester.pump();
     await tester.longPress(find.byType(OrderCard));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Shipped'));

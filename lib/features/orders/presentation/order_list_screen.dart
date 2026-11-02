@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/order_pages_provider.dart';
-import '../providers/order_provider.dart';
 import '../../../data/models/order.dart';
 import '../../../data/services/csv_export_service.dart';
 import '../../../data/services/isar_service.dart';
@@ -13,10 +12,12 @@ import '../../../core/utils/share_origin.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import 'widgets/order_feedback.dart';
 import 'widgets/order_card.dart';
 import 'widgets/order_status_badge.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class OrderListScreen extends ConsumerStatefulWidget {
   const OrderListScreen({super.key});
@@ -120,6 +121,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
                   : () => _exportCsv(shareOriginOf(button)),
             ),
           ),
+          const SectionHelpButton('orders'),
         ],
         bottom: countsAsync.whenOrNull(
               data: (counts) {
@@ -251,11 +253,8 @@ class _OrderListState extends ConsumerState<_OrderList> {
                   index: i,
                   child: OrderCard(
                     order: order,
-                    onStatusChange: (status) {
-                      ref
-                          .read(orderProvider.notifier)
-                          .updateStatus(order.id, status);
-                    },
+                    onStatusChange: (status) =>
+                        changeOrderStatus(context, ref, order, status),
                   ),
                 );
               },

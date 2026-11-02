@@ -5,7 +5,6 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/models/trash_entry.dart';
-import '../../../data/services/trash_service.dart';
 import '../../../shared/widgets/auth_gate.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/empty_state.dart';

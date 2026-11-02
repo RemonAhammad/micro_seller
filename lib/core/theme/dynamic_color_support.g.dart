@@ -8,20 +8,13 @@ part of 'dynamic_color_support.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Whether Phone colors can be offered: Android 12+, where the system hands
-/// out its color palette.
 
 @ProviderFor(dynamicColorAvailable)
 final dynamicColorAvailableProvider = DynamicColorAvailableProvider._();
 
-/// Whether Phone colors can be offered: Android 12+, where the system hands
-/// out its color palette.
-
 final class DynamicColorAvailableProvider
     extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
     with $FutureModifier<bool>, $FutureProvider<bool> {
-  /// Whether Phone colors can be offered: Android 12+, where the system hands
-  /// out its color palette.
   DynamicColorAvailableProvider._()
     : super(
         from: null,

@@ -12,6 +12,7 @@ import '../../../shared/widgets/animated_entrance.dart';
 import 'widgets/product_card.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class ProductListScreen extends ConsumerStatefulWidget {
   const ProductListScreen({super.key});
@@ -52,8 +53,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           IconButton(
             icon: ThinIcon(
                 _showGrid ? tabler.List.new : tabler.LayoutGrid.new),
+            tooltip: _showGrid ? s.showAsList : s.showAsGrid,
             onPressed: () => setState(() => _showGrid = !_showGrid),
           ),
+          const SectionHelpButton('products'),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(116),
@@ -70,6 +73,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                     prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                     suffixIcon: _query.isNotEmpty
                         ? IconButton(
+                            tooltip: AppStrings.of(context).clearSearch,
                             icon: const ThinIcon(tabler.X.new),
                             onPressed: () {
                               _searchCtrl.clear();

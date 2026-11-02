@@ -833,6 +833,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     ),
                                   ),
                                   IconButton(
+                                    tooltip: AppStrings.of(context).remove,
                                     icon: ThinIcon(tabler.X.new,
                                         size: 18, color: cs.error),
                                     onPressed: () => _removeAttribute(i),

@@ -754,4 +754,51 @@ class _L10nStrings {
   String get callNotAvailable => _l10n.tr('callNotAvailable');
   String get copyNumber => _l10n.tr('copyNumber');
   String get numberCopied => _l10n.tr('numberCopied');
+
+  String dateAtTime(String date, String time) =>
+      _l10n.tr('dateAtTime').replaceAll('{date}', date).replaceAll('{time}', time);
+  String get entryDateNow => _l10n.tr('entryDateNow');
+  String get entryDateUseNow => _l10n.tr('entryDateUseNow');
+  String get entryDateHint => _l10n.tr('entryDateHint');
+  String get entryDateInFuture => _l10n.tr('entryDateInFuture');
+  String entryDateTooEarly(String date) =>
+      _l10n.tr('entryDateTooEarly').replaceAll('{date}', date);
+  String get orderDate => _l10n.tr('orderDate');
+  String orderDateTooLate(String date) =>
+      _l10n.tr('orderDateTooLate').replaceAll('{date}', date);
+  String get paymentDate => _l10n.tr('paymentDate');
+  String get purchaseDate => _l10n.tr('purchaseDate');
+  String get stockChangeDate => _l10n.tr('stockChangeDate');
+
+  String get helpAboutScreen => _l10n.tr('helpAboutScreen');
+  String get helpWhenToUse => _l10n.tr('helpWhenToUse');
+  String get helpWorksWith => _l10n.tr('helpWorksWith');
+
+  String paymentRecorded(String amount) =>
+      _l10n.tr('paymentRecorded').replaceAll('{amount}', amount);
+  String orderStatusNow(String order, String status) =>
+      _l10n.tr('orderStatusNow').replaceAll('{order}', order).replaceAll('{status}', status);
+  String get orderDeleted => _l10n.tr('orderDeleted');
+  String get markedDelivered => _l10n.tr('markedDelivered');
+  String get returnApproved => _l10n.tr('returnApproved');
+  String get returnRejected => _l10n.tr('returnRejected');
+  String get sharedDone => _l10n.tr('sharedDone');
+  String get sentToPrinter => _l10n.tr('sentToPrinter');
+  String get purchaseDeleted => _l10n.tr('purchaseDeleted');
+  String get supplierDeleted => _l10n.tr('supplierDeleted');
+  String cashInRecorded(String amount) =>
+      _l10n.tr('cashInRecorded').replaceAll('{amount}', amount);
+  String cashOutRecorded(String amount) =>
+      _l10n.tr('cashOutRecorded').replaceAll('{amount}', amount);
+  String get registerOpened => _l10n.tr('registerOpened');
+  String get registerClosed => _l10n.tr('registerClosed');
+  String get categoryAdded => _l10n.tr('categoryAdded');
+  String get categoryUpdated => _l10n.tr('categoryUpdated');
+  String get statusPendingHint => _l10n.tr('statusPendingHint');
+  String get statusConfirmedHint => _l10n.tr('statusConfirmedHint');
+  String get purchaseStockHint => _l10n.tr('purchaseStockHint');
+  String get clearSearch => _l10n.tr('clearSearch');
+  String get showAsList => _l10n.tr('showAsList');
+  String get showAsGrid => _l10n.tr('showAsGrid');
+  String get remove => _l10n.tr('remove');
 }

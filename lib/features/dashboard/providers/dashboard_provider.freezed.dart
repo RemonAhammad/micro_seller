@@ -277,9 +277,7 @@ as double,
 /// @nodoc
 mixin _$DashboardStats {
 
- double get todayRevenue; double get thisMonthRevenue; double get thisMonthProfit; int get totalOrders; int get pendingOrders; List<Product> get lowStockProducts; List<DailySales> get weeklySales;/// Every order (returns included) per status, in order of first
-/// appearance newest-first — the order-status pie's slices.
- Map<OrderStatus, int> get statusCounts;
+ double get todayRevenue; double get thisMonthRevenue; double get thisMonthProfit; int get totalOrders; int get pendingOrders; List<Product> get lowStockProducts; List<DailySales> get weeklySales; Map<OrderStatus, int> get statusCounts;
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -500,11 +498,7 @@ class _DashboardStats implements DashboardStats {
   return EqualUnmodifiableListView(_weeklySales);
 }
 
-/// Every order (returns included) per status, in order of first
-/// appearance newest-first — the order-status pie's slices.
  final  Map<OrderStatus, int> _statusCounts;
-/// Every order (returns included) per status, in order of first
-/// appearance newest-first — the order-status pie's slices.
 @override@JsonKey() Map<OrderStatus, int> get statusCounts {
   if (_statusCounts is EqualUnmodifiableMapView) return _statusCounts;
   // ignore: implicit_dynamic_type

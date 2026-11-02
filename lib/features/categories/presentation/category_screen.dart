@@ -9,6 +9,8 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/section_help.dart';
+import '../../../shared/widgets/action_feedback.dart';
 
 class CategoryScreen extends ConsumerWidget {
   const CategoryScreen({super.key});
@@ -21,6 +23,7 @@ class CategoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(s.categories),
+        actions: const [SectionHelpButton('categories')],
       ),
       body: categoriesAsync.when(
         data: (cats) {
@@ -85,20 +88,31 @@ class CategoryScreen extends ConsumerWidget {
     );
   }
 
-  void _save(BuildContext ctx, WidgetRef ref, TextEditingController ctrl,
-      Category? existing) {
+  Future<void> _save(BuildContext ctx, WidgetRef ref,
+      TextEditingController ctrl, Category? existing) async {
     final name = ctrl.text.trim();
     if (name.isEmpty) return;
+    final s = AppStrings.of(ctx);
+    final messenger = ScaffoldMessenger.of(ctx);
     if (existing == null) {
-      ref
+      await ref
           .read(categoryProvider.notifier)
           .addCategory(Category(name: name));
     } else {
-      ref
+      await ref
           .read(categoryProvider.notifier)
           .updateCategory(existing.copyWith(name: name));
     }
-    Navigator.pop(ctx);
+    if (ctx.mounted) Navigator.pop(ctx);
+    final failed = ref.read(categoryProvider).hasError;
+    showOutcome(
+        messenger,
+        failed
+            ? s.errorOccurred
+            : existing == null
+                ? s.categoryAdded
+                : s.categoryUpdated,
+        failed: failed);
   }
 }
 
@@ -188,6 +202,7 @@ class _CategoryTile extends StatelessWidget {
               ),
             ),
             IconButton(
+              tooltip: AppStrings.of(context).edit,
               icon: const ThinIcon(tabler.Pencil.new, size: 20),
               onPressed: () => _showEditDialog(context),
             ),
@@ -223,12 +238,17 @@ class _CategoryTile extends StatelessWidget {
     );
   }
 
-  void _saveEdit(BuildContext ctx, TextEditingController ctrl) {
+  Future<void> _saveEdit(BuildContext ctx, TextEditingController ctrl) async {
     final name = ctrl.text.trim();
     if (name.isEmpty) return;
-    ref
+    final s = AppStrings.of(ctx);
+    final messenger = ScaffoldMessenger.of(ctx);
+    await ref
         .read(categoryProvider.notifier)
         .updateCategory(category.copyWith(name: name));
-    Navigator.pop(ctx);
+    if (ctx.mounted) Navigator.pop(ctx);
+    final failed = ref.read(categoryProvider).hasError;
+    showOutcome(messenger, failed ? s.errorOccurred : s.categoryUpdated,
+        failed: failed);
   }
 }

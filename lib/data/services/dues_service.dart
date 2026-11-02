@@ -40,9 +40,28 @@ List<OrderDue> _effectiveDues(Iterable<Order> orders) {
     if (o.isReturn || o.orderStatus == OrderStatus.cancelled) continue;
     dues.add(OrderDue(o, o.balanceDue - (returnedValue[o.id] ?? 0)));
   }
-  dues.sort((a, b) => (a.order.createdAt ?? DateTime(0))
-      .compareTo(b.order.createdAt ?? DateTime(0)));
+  dues.sort((a, b) {
+    final byDate = (a.order.createdAt ?? DateTime(0))
+        .compareTo(b.order.createdAt ?? DateTime(0));
+    return byDate != 0 ? byDate : a.order.id.compareTo(b.order.id);
+  });
   return dues;
+}
+
+List<OrderDue> duesOpenAt(List<OrderDue> dues, DateTime? at) => at == null
+    ? dues
+    : [
+        for (final d in dues)
+          if (!(d.order.createdAt ?? DateTime(0)).isAfter(at)) d,
+      ];
+
+double collectableDue(
+    Iterable<Order> orders, List<OrderDue> openDues, DateTime? at) {
+  final net = computeNetDue(orders);
+  if (at == null) return net;
+  final open = openDues.fold<double>(0, (s, d) => s + d.due);
+  if (open <= 0) return 0;
+  return open < net ? open : net;
 }
 
 Query<Customer> _balanceCustomersQuery(Isar isar) =>

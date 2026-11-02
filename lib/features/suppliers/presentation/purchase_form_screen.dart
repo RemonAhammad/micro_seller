@@ -14,6 +14,7 @@ import '../../../core/utils/number_input.dart';
 import '../providers/supplier_provider.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/entry_date_field.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
@@ -36,6 +37,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   final List<PurchaseItem> _items = [];
   PurchasePaymentMethod _paymentMethod = PurchasePaymentMethod.cash;
   bool _isLoading = false;
+  DateTime? _purchaseDate;
 
   final Map<int, TextEditingController> _costCtrls = {};
   late Listenable _totalsListenable;
@@ -188,6 +190,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
         paymentMethod: _paymentMethod,
         notes: _notesCtrl.text.trim(),
         referenceNumber: _refCtrl.text.trim(),
+        createdAt: _purchaseDate,
       );
 
       await ref
@@ -290,6 +293,14 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            EntryDateField(
+              label: s.purchaseDate,
+              value: _purchaseDate,
+              hint: s.entryDateHint,
+              onChanged: (d) => setState(() => _purchaseDate = d),
+              onReset: () => setState(() => _purchaseDate = null),
             ),
             const SizedBox(height: 16),
 
@@ -489,6 +500,22 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             ),
 
             const SizedBox(height: 20),
+            if (_items.isNotEmpty) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ThinIcon(tabler.InfoCircle.new,
+                      size: 16, color: cs.onSurface.withValues(alpha: 0.6)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(s.purchaseStockHint,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.6))),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
 
             AppButton(
               label: s.savePurchase,
@@ -985,6 +1012,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                 prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
+                        tooltip: AppStrings.of(context).clearSearch,
                         icon: const ThinIcon(tabler.X.new, size: 18),
                         onPressed: () {
                           _searchCtrl.clear();

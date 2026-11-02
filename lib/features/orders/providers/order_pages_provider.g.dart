@@ -8,21 +8,12 @@ part of 'order_pages_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// One Orders tab, paged: the newest [kOrderPageSize] matching orders, more
-/// on [loadMore]. Kept alive so switching tabs doesn't reload from scratch;
-/// a tab that isn't shown is paused and doesn't reload on writes.
 
 @ProviderFor(OrderPages)
 final orderPagesProvider = OrderPagesFamily._();
 
-/// One Orders tab, paged: the newest [kOrderPageSize] matching orders, more
-/// on [loadMore]. Kept alive so switching tabs doesn't reload from scratch;
-/// a tab that isn't shown is paused and doesn't reload on writes.
 final class OrderPagesProvider
     extends $StreamNotifierProvider<OrderPages, OrderPage> {
-  /// One Orders tab, paged: the newest [kOrderPageSize] matching orders, more
-  /// on [loadMore]. Kept alive so switching tabs doesn't reload from scratch;
-  /// a tab that isn't shown is paused and doesn't reload on writes.
   OrderPagesProvider._({
     required OrderPagesFamily super.from,
     required OrderTab super.argument,
@@ -61,10 +52,6 @@ final class OrderPagesProvider
 
 String _$orderPagesHash() => r'60efb0690453b269a47205eb024d42e147342893';
 
-/// One Orders tab, paged: the newest [kOrderPageSize] matching orders, more
-/// on [loadMore]. Kept alive so switching tabs doesn't reload from scratch;
-/// a tab that isn't shown is paused and doesn't reload on writes.
-
 final class OrderPagesFamily extends $Family
     with
         $ClassFamilyOverride<
@@ -83,20 +70,12 @@ final class OrderPagesFamily extends $Family
         isAutoDispose: false,
       );
 
-  /// One Orders tab, paged: the newest [kOrderPageSize] matching orders, more
-  /// on [loadMore]. Kept alive so switching tabs doesn't reload from scratch;
-  /// a tab that isn't shown is paused and doesn't reload on writes.
-
   OrderPagesProvider call(OrderTab tab) =>
       OrderPagesProvider._(argument: tab, from: this);
 
   @override
   String toString() => r'orderPagesProvider';
 }
-
-/// One Orders tab, paged: the newest [kOrderPageSize] matching orders, more
-/// on [loadMore]. Kept alive so switching tabs doesn't reload from scratch;
-/// a tab that isn't shown is paused and doesn't reload on writes.
 
 abstract class _$OrderPages extends $StreamNotifier<OrderPage> {
   late final _$args = ref.$arg as OrderTab;
@@ -119,21 +98,13 @@ abstract class _$OrderPages extends $StreamNotifier<OrderPage> {
   }
 }
 
-/// The Orders tab badges, in [OrderTab] order — counted natively, without
-/// loading any order.
-
 @ProviderFor(orderTabCounts)
 final orderTabCountsProvider = OrderTabCountsProvider._();
-
-/// The Orders tab badges, in [OrderTab] order — counted natively, without
-/// loading any order.
 
 final class OrderTabCountsProvider
     extends
         $FunctionalProvider<AsyncValue<List<int>>, List<int>, Stream<List<int>>>
     with $FutureModifier<List<int>>, $StreamProvider<List<int>> {
-  /// The Orders tab badges, in [OrderTab] order — counted natively, without
-  /// loading any order.
   OrderTabCountsProvider._()
     : super(
         from: null,

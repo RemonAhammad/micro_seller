@@ -8,17 +8,13 @@ part of 'device_channel.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The device channel, overridden with a fake in tests.
 
 @ProviderFor(deviceChannel)
 final deviceChannelProvider = DeviceChannelProvider._();
 
-/// The device channel, overridden with a fake in tests.
-
 final class DeviceChannelProvider
     extends $FunctionalProvider<DeviceChannel, DeviceChannel, DeviceChannel>
     with $Provider<DeviceChannel> {
-  /// The device channel, overridden with a fake in tests.
   DeviceChannelProvider._()
     : super(
         from: null,
@@ -54,17 +50,12 @@ final class DeviceChannelProvider
 
 String _$deviceChannelHash() => r'fa2527c706fca0847c5f46f26059c12ccde719b2';
 
-/// The photo picker (camera and gallery), overridden with a fake in tests.
-
 @ProviderFor(imagePicker)
 final imagePickerProvider = ImagePickerProvider._();
-
-/// The photo picker (camera and gallery), overridden with a fake in tests.
 
 final class ImagePickerProvider
     extends $FunctionalProvider<ImagePicker, ImagePicker, ImagePicker>
     with $Provider<ImagePicker> {
-  /// The photo picker (camera and gallery), overridden with a fake in tests.
   ImagePickerProvider._()
     : super(
         from: null,

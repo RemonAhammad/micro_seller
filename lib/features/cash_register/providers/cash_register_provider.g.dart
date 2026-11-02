@@ -50,12 +50,8 @@ final class CashRegistersProvider
 
 String _$cashRegistersHash() => r'f18d99dab64c7fd0af81c737c386e9af0f9544d4';
 
-/// Returns the currently open register (if any)
-
 @ProviderFor(openRegister)
 final openRegisterProvider = OpenRegisterProvider._();
-
-/// Returns the currently open register (if any)
 
 final class OpenRegisterProvider
     extends
@@ -65,7 +61,6 @@ final class OpenRegisterProvider
           FutureOr<CashRegister?>
         >
     with $FutureModifier<CashRegister?>, $FutureProvider<CashRegister?> {
-  /// Returns the currently open register (if any)
   OpenRegisterProvider._()
     : super(
         from: null,

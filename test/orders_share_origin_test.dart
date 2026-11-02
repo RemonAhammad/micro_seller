@@ -330,12 +330,21 @@ void main() {
       ]);
       final export = find.byTooltip('Export CSV');
       expect(export, findsOneWidget);
-      final button = tester.getRect(find.byType(IconButton));
+      final exportButton =
+          find.ancestor(of: export, matching: find.byType(IconButton));
+      final button = tester.getRect(exportButton);
 
-      await tester.tap(find.byType(IconButton));
-      await _pumpUntil(tester, () => find.text('Share (1)').evaluate().isNotEmpty, 'the selection sheet');
+      await tester.tap(exportButton);
+      // The sheet lists the tab's orders from the database, which earlier
+      // tests in this file add to, so the count on its button varies.
+      final shareSelected = find.textContaining(RegExp(r'^Share \(\d+\)$'));
+      await _pumpUntil(
+        tester,
+        () => shareSelected.evaluate().isNotEmpty,
+        'the selection sheet',
+      );
       await _settle(tester);
-      await tester.tap(find.text('Share (1)'));
+      await tester.tap(shareSelected);
       await _pumpUntil(tester, () => shared.isNotEmpty, 'the export');
       await _settle(tester);
       expect(_originOf(shared.single), button);

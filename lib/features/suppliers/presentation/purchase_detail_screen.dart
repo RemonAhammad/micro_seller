@@ -14,6 +14,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../shared/widgets/action_feedback.dart';
 
 class PurchaseDetailScreen extends ConsumerWidget {
   final int purchaseId;
@@ -89,6 +90,7 @@ class _BodyState extends ConsumerState<_Body> {
             title: Text('${s.purchases} #${p.id}'),
             actions: [
               IconButton(
+                tooltip: AppStrings.of(context).delete,
                 icon: const ThinIcon(tabler.Trash.new),
                 onPressed: () async {
                   final ok = await ConfirmDialog.show(
@@ -100,10 +102,15 @@ class _BodyState extends ConsumerState<_Body> {
                     icon: tabler.Trash.new,
                   );
                   if (ok == true && context.mounted) {
+                    final messenger = ScaffoldMessenger.of(context);
                     await ref
                         .read(supplierProvider.notifier)
                         .deletePurchase(p.id);
-                    if (context.mounted) context.pop();
+                    final failed = ref.read(supplierProvider).hasError;
+                    showOutcome(messenger,
+                        failed ? s.errorOccurred : s.purchaseDeleted,
+                        failed: failed);
+                    if (!failed && context.mounted) context.pop();
                   }
                 },
               ),
@@ -394,10 +401,19 @@ class _BodyState extends ConsumerState<_Body> {
                 onPressed: amount == null || amount <= 0
                     ? null
                     : () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         await ref
                             .read(supplierProvider.notifier)
                             .recordPurchasePayment(purchase.id, amount);
                         if (ctx.mounted) Navigator.pop(ctx);
+                        final failed = ref.read(supplierProvider).hasError;
+                        showOutcome(
+                            messenger,
+                            failed
+                                ? s.errorOccurred
+                                : s.paymentRecorded(
+                                    CurrencyFormatter.format(amount)),
+                            failed: failed);
                       },
                 child: Text(s.pay),
               );
