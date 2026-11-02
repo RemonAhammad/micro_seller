@@ -18,6 +18,7 @@ import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import '../../../shared/widgets/call_phone.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -249,11 +250,17 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
     final duesAsync = ref.watch(duesProvider);
     final active = _filters.activeCount;
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'dues',
+      steps: [
+        GuideStep(title: s.guideDuesFilterTitle, description: s.guideDuesFilterDesc),
+        GuideStep(title: s.guideDuesCollectTitle, description: s.guideDuesCollectDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.dueBook),
         actions: [
-          IconButton(
+          guide.wrap(0, IconButton(
             tooltip: s.filter,
             onPressed: _openFilters,
             icon: Badge(
@@ -261,7 +268,7 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
               label: Text('$active'),
               child: const ThinIcon(tabler.Filter.new),
             ),
-          ),
+          )),
           PopupMenuButton<String>(
             onSelected: (_) => _recalculate(),
             itemBuilder: (_) => [
@@ -364,13 +371,16 @@ class _DueBookScreenState extends ConsumerState<DueBookScreen> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: AnimatedEntrance(
                     index: i,
-                    child: _DueCard(due: visible[i]),
+                    child: i == 0
+                        ? guide.wrap(1, _DueCard(due: visible[i]))
+                        : _DueCard(due: visible[i]),
                   ),
                 ),
             ],
           );
         },
       ),
+    ),
     );
   }
 }

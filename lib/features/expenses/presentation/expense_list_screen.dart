@@ -12,6 +12,7 @@ import '../../../core/utils/share_origin.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'widgets/expense_card.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -24,7 +25,13 @@ class ExpenseListScreen extends ConsumerWidget {
     final s = AppStrings.of(context);
     final expensesAsync = ref.watch(expensesProvider);
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'expenses',
+      steps: [
+        GuideStep(title: s.guideExpensesAddTitle, description: s.guideExpensesAddDesc),
+        GuideStep(title: s.guideExpensesSummaryTitle, description: s.guideExpensesSummaryDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.expenses),
         actions: [
@@ -63,7 +70,7 @@ class ExpenseListScreen extends ConsumerWidget {
           return Column(
             children: [
 
-              Container(
+              guide.wrap(1, Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -119,7 +126,7 @@ class ExpenseListScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              ),
+              )),
 
               Expanded(
                 child: ListView.separated(
@@ -168,11 +175,12 @@ class ExpenseListScreen extends ConsumerWidget {
         error: (e, _) =>
             Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: guide.wrap(0, FloatingActionButton(
         onPressed: () => context.push('/expenses/add'),
         tooltip: s.addExpense,
         child: const ThinIcon(tabler.Plus.new),
-      ),
+      )),
+    ),
     );
   }
 }

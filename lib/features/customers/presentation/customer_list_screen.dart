@@ -7,6 +7,7 @@ import '../../../core/utils/debouncer.dart';
 import '../../../core/utils/number_input.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'widgets/customer_card.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -36,15 +37,21 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
     final s = AppStrings.of(context);
     final customersAsync = ref.watch(customersProvider);
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'customers',
+      steps: [
+        GuideStep(title: s.guideCustomersAddTitle, description: s.guideCustomersAddDesc),
+        GuideStep(title: s.guideCustomersDuesTitle, description: s.guideCustomersDuesDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.customers),
         actions: [
-          IconButton(
+          guide.wrap(1, IconButton(
             tooltip: s.dueBook,
             icon: const ThinIcon(tabler.Notebook.new),
             onPressed: () => context.go('/dues'),
-          ),
+          )),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),
@@ -105,11 +112,12 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
         error: (e, _) =>
             Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: guide.wrap(0, FloatingActionButton(
         onPressed: () => context.push('/customers/add'),
         tooltip: s.addCustomer,
         child: const ThinIcon(tabler.Plus.new),
-      ),
+      )),
+    ),
     );
   }
 }

@@ -10,6 +10,7 @@ import '../../../data/models/product.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'widgets/stock_movement_tile.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -69,15 +70,26 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
+    final tabBar = TabBar(
+      controller: _tabController,
+      tabs: [
+        Tab(text: s.stockLevels),
+        Tab(text: s.movements),
+      ],
+    );
+
+    return ScreenGuide(
+      id: 'inventory',
+      steps: [
+        GuideStep(title: s.guideInventoryTabsTitle, description: s.guideInventoryTabsDesc),
+        GuideStep(title: s.guideInventorySortTitle, description: s.guideInventorySortDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.inventory),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: s.stockLevels),
-            Tab(text: s.movements),
-          ],
+        bottom: PreferredSize(
+          preferredSize: tabBar.preferredSize,
+          child: guide.wrap(0, tabBar),
         ),
       ),
       body: TabBarView(
@@ -118,7 +130,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           child: Row(
                             children: [
                               Flexible(
-                                child: _categoryFilterButton(categoryNames, cs),
+                                child: guide.wrap(
+                                    1, _categoryFilterButton(categoryNames, cs)),
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -190,6 +203,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           const _MovementsTab(),
         ],
       ),
+    ),
     );
   }
 

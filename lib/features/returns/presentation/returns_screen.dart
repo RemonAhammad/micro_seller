@@ -10,6 +10,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
@@ -68,33 +69,43 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
     final returnsAsync = ref.watch(returnOrdersProvider);
     final tabs = _tabLabels(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(s.returnsAndRefunds),
-        bottom: returnsAsync.whenOrNull(
-              data: (returns) {
-                final counts = _getCounts(returns);
-                return TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  labelStyle:
-                      const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                  tabs: [
-                    for (int i = 0; i < tabs.length; i++)
-                      Tab(child: _TabLabel(label: tabs[i], count: counts[i])),
-                  ],
-                );
-              },
-            ) ??
-            TabBar(
+    final PreferredSizeWidget tabBar = returnsAsync.whenOrNull(
+          data: (returns) {
+            final counts = _getCounts(returns);
+            return TabBar(
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
               labelStyle:
                   const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: tabs.map((t) => Tab(text: t)).toList(),
-            ),
+              tabs: [
+                for (int i = 0; i < tabs.length; i++)
+                  Tab(child: _TabLabel(label: tabs[i], count: counts[i])),
+              ],
+            );
+          },
+        ) ??
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelStyle:
+              const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          tabs: tabs.map((t) => Tab(text: t)).toList(),
+        );
+
+    return ScreenGuide(
+      id: 'returns',
+      steps: [
+        GuideStep(title: s.guideReturnsTitle, description: s.guideReturnsDesc),
+      ],
+      builder: (context, guide) => Scaffold(
+      appBar: AppBar(
+        title: Text(s.returnsAndRefunds),
+        bottom: PreferredSize(
+          preferredSize: tabBar.preferredSize,
+          child: guide.wrap(0, tabBar),
+        ),
       ),
       body: returnsAsync.when(
         data: (returns) {
@@ -128,6 +139,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen>
         error: (e, _) =>
             Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
+    ),
     );
   }
 }

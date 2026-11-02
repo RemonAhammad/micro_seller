@@ -13,6 +13,7 @@ import '../../../core/utils/share_origin.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'widgets/order_card.dart';
 import 'widgets/order_status_badge.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
@@ -107,7 +108,39 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     final currentTabOrdersCount =
         countsAsync.value?[_tabController.index] ?? 0;
 
-    return Scaffold(
+    final PreferredSizeWidget tabBar = countsAsync.whenOrNull(
+          data: (counts) {
+            return TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600, fontSize: 13),
+              tabs: [
+                for (int i = 0; i < tabs.length; i++)
+                  Tab(
+                      child: _TabLabel(
+                          label: tabs[i], count: counts[i])),
+              ],
+            );
+          },
+        ) ??
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelStyle:
+              const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          tabs: tabs.map((t) => Tab(text: t)).toList(),
+        );
+
+    return ScreenGuide(
+      id: 'orders',
+      steps: [
+        GuideStep(title: s.guideOrdersAddTitle, description: s.guideOrdersAddDesc),
+        GuideStep(title: s.guideOrdersTabsTitle, description: s.guideOrdersTabsDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.orders),
         actions: [
@@ -121,31 +154,10 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
             ),
           ),
         ],
-        bottom: countsAsync.whenOrNull(
-              data: (counts) {
-                return TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  labelStyle: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 13),
-                  tabs: [
-                    for (int i = 0; i < tabs.length; i++)
-                      Tab(
-                          child: _TabLabel(
-                              label: tabs[i], count: counts[i])),
-                  ],
-                );
-              },
-            ) ??
-            TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelStyle:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: tabs.map((t) => Tab(text: t)).toList(),
-            ),
+        bottom: PreferredSize(
+          preferredSize: tabBar.preferredSize,
+          child: guide.wrap(1, tabBar),
+        ),
       ),
       body: TabBarView(
         controller: _tabController,
@@ -153,11 +165,12 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
           for (final tab in OrderTab.values) _OrderList(tab: tab),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: guide.wrap(0, FloatingActionButton(
         onPressed: () => context.push('/orders/add'),
         tooltip: s.addOrder,
         child: const ThinIcon(tabler.Plus.new),
-      ),
+      )),
+    ),
     );
   }
 }

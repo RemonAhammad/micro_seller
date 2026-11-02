@@ -7,6 +7,7 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
@@ -18,7 +19,12 @@ class CategoryScreen extends ConsumerWidget {
     final s = AppStrings.of(context);
     final categoriesAsync = ref.watch(categoriesProvider);
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'categories',
+      steps: [
+        GuideStep(title: s.guideCategoriesTitle, description: s.guideCategoriesDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.categories),
       ),
@@ -46,11 +52,12 @@ class CategoryScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: guide.wrap(0, FloatingActionButton(
         onPressed: () => _showDialog(context, ref),
         tooltip: s.addCategory,
         child: const ThinIcon(tabler.Plus.new),
-      ),
+      )),
+    ),
     );
   }
 

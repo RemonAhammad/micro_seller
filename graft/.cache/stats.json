@@ -1,6 +1,6 @@
 {
-  "nodeCount": 5447,
-  "edgeCount": 1458,
+  "nodeCount": 6093,
+  "edgeCount": 1848,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 5447,
+  "totalCount": 6093,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-10-27T03:40:09.540Z",
-  "lastFile": "README.md"
+  "syncedAt": "2026-11-02T07:17:38.031Z",
+  "lastFile": "screen-guides.html"
 }

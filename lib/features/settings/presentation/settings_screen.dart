@@ -35,6 +35,7 @@ import '../../../data/services/release_update_service.dart';
 import '../../../data/services/review_service.dart';
 import '../../updates/presentation/update_notice.dart';
 import '../../updates/providers/update_notice_provider.dart';
+import '../../../shared/widgets/screen_guide.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key, this.driveService, this.localBackupService});
@@ -338,7 +339,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
     final updateChannel = ref.watch(updateChannelProvider).value;
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'settings',
+      steps: [
+        GuideStep(title: s.guideSettingsThemeTitle, description: s.guideSettingsThemeDesc),
+        GuideStep(title: s.guideSettingsBackupTitle, description: s.guideSettingsBackupDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(title: Text(s.settings)),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -352,7 +359,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 onChanged: (mode) => ref.read(settingsProvider.notifier).updateThemeMode(mode),
               ),
               const Divider(height: 1),
-              const _ColorThemeTile(),
+              guide.wrap(0, const _ColorThemeTile()),
             ],
           ),
           const SizedBox(height: 16),
@@ -651,7 +658,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const SizedBox(height: 16),
 
-          _SectionHeader(s.localBackup),
+          guide.wrap(1, _SectionHeader(s.localBackup)),
           _SettingsCard(
             children: [
               ListTile(
@@ -1120,6 +1127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           const SizedBox(height: 32),
         ],
       ),
+    ),
     );
   }
 }

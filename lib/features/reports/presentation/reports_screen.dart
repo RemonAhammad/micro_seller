@@ -13,6 +13,7 @@ import '../../../data/services/csv_export_service.dart';
 import '../../../data/services/report_pdf_service.dart';
 import '../../../data/services/report_service.dart';
 import '../../../shared/widgets/bottom_sheet_handle.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../providers/reports_provider.dart';
 import 'widgets/report_tabs.dart';
@@ -255,7 +256,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       tabs: [for (final k in _tabKeys) Tab(text: s.tr(k))],
     );
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'reports',
+      steps: [
+        GuideStep(title: s.guideReportsTabsTitle, description: s.guideReportsTabsDesc),
+        GuideStep(title: s.guideReportsExportTitle, description: s.guideReportsExportDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
@@ -276,7 +283,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               ),
             ),
             actions: [
-              KeyedSubtree(
+              guide.wrap(1, KeyedSubtree(
                 key: _exportSlot,
                 child: _exporting
                     ? Padding(
@@ -295,7 +302,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         ),
                         onPressed: _tabHasData() ? _openExportSheet : null,
                       ),
-              ),
+              )),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -345,7 +352,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ),
               ),
             ),
-            bottom: tabBar,
+            bottom: PreferredSize(
+              preferredSize: tabBar.preferredSize,
+              child: guide.wrap(0, tabBar),
+            ),
           ),
         ],
         body: TabBarView(
@@ -358,6 +368,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           ],
         ),
       ),
+    ),
     );
   }
 }
