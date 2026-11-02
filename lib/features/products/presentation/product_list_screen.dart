@@ -9,6 +9,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'widgets/product_card.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -41,15 +42,21 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     final productsAsync = ref.watch(productsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'products',
+      steps: [
+        GuideStep(title: s.guideProductsAddTitle, description: s.guideProductsAddDesc),
+        GuideStep(title: s.guideProductsShareTitle, description: s.guideProductsShareDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.products),
         actions: [
-          IconButton(
+          guide.wrap(1, IconButton(
             icon: const ThinIcon(tabler.Share.new),
             tooltip: s.shareCatalog,
             onPressed: () => context.push('/products/catalog'),
-          ),
+          )),
           IconButton(
             icon: ThinIcon(
                 _showGrid ? tabler.List.new : tabler.LayoutGrid.new),
@@ -185,11 +192,12 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         error: (e, _) =>
             Center(child: Text('${AppStrings.of(context).error}: $e')),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: guide.wrap(0, FloatingActionButton(
         onPressed: () => context.push('/products/add'),
         tooltip: s.addProduct,
         child: const ThinIcon(tabler.Plus.new),
-      ),
+      )),
+    ),
     );
   }
 }

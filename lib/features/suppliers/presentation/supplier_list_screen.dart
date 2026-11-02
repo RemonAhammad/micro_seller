@@ -8,6 +8,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 import '../../../shared/widgets/section_help.dart';
@@ -22,7 +23,13 @@ class SupplierListScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'suppliers',
+      steps: [
+        GuideStep(title: s.guideSuppliersPurchaseTitle, description: s.guideSuppliersPurchaseDesc),
+        GuideStep(title: s.guideSuppliersAddTitle, description: s.guideSuppliersAddDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.suppliers),
         actions: [
@@ -38,20 +45,20 @@ class SupplierListScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          FloatingActionButton.extended(
+          guide.wrap(0, FloatingActionButton.extended(
             heroTag: 'newPurchase',
             onPressed: () => context.push('/suppliers/purchases/add'),
             icon: const ThinIcon(tabler.ShoppingBag.new),
             label: Text(s.newPurchase),
-          ),
+          )),
           const SizedBox(height: 12),
-          FloatingActionButton(
+          guide.wrap(1, FloatingActionButton(
             heroTag: 'addSupplier',
             onPressed: () => context.push('/suppliers/add'),
             tooltip: s.addSupplier,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: const ThinIcon(tabler.Plus.new),
-          ),
+          )),
         ],
       ),
       body: suppliersAsync.when(
@@ -160,6 +167,7 @@ class SupplierListScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
       ),
+    ),
     );
   }
 }

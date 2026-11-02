@@ -10,6 +10,7 @@ import '../../../data/repositories/product_repository.dart';
 import '../../../data/services/device_channel.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/scanner_camera.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 import '../../../shared/widgets/section_help.dart';
@@ -96,7 +97,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'scanner',
+      steps: [
+        GuideStep(title: s.guideScannerTitle, description: s.guideScannerDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
@@ -112,7 +118,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
           Expanded(
 
-            child: ScannerPreview(
+            child: guide.wrap(0, ScannerPreview(
               session: _session,
               onDetect: _onDetect,
               overlay: Stack(
@@ -144,7 +150,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                   ),
                 ],
               ),
-            ),
+            )),
           ),
 
           AnimatedSize(
@@ -170,6 +176,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

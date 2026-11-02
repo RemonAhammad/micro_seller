@@ -8,6 +8,7 @@ import '../../../core/utils/number_input.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/animated_entrance.dart';
+import '../../../shared/widgets/screen_guide.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 import '../../../shared/widgets/section_help.dart';
@@ -23,7 +24,12 @@ class CashRegisterScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
+    return ScreenGuide(
+      id: 'cash_register',
+      steps: [
+        GuideStep(title: s.guideCashRegisterTitle, description: s.guideCashRegisterDesc),
+      ],
+      builder: (context, guide) => Scaffold(
       appBar: AppBar(
         title: Text(s.cashRegister),
         actions: const [SectionHelpButton('cash_register')],
@@ -46,7 +52,7 @@ class CashRegisterScreen extends ConsumerWidget {
                         _OpenRegisterCard(
                             register: openReg, theme: theme, cs: cs, ref: ref),
                       ] else ...[
-                        _ClosedStateCard(theme: theme, cs: cs, ref: ref),
+                        guide.wrap(0, _ClosedStateCard(theme: theme, cs: cs, ref: ref)),
                       ],
 
                       const SizedBox(height: 24),
@@ -86,6 +92,7 @@ class CashRegisterScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
       ),
+    ),
     );
   }
 
