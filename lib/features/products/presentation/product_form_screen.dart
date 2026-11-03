@@ -1189,6 +1189,7 @@ class _FieldRow extends StatelessWidget {
       }
       if (perRow == children.length) {
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (var i = 0; i < children.length; i++) ...[
               if (i > 0) SizedBox(width: spacing),

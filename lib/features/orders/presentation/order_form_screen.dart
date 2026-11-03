@@ -892,6 +892,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     return Column(
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: AppTextField(
