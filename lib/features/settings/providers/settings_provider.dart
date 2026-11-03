@@ -40,6 +40,7 @@ class Settings extends _$Settings {
 
   static const sidebarPositionLeft = 'left';
   static const sidebarPositionRight = 'right';
+  static const sidebarPositionBottom = 'bottom';
 
   static const _themeModes = {'light', 'dark', 'system'};
   static const _noCustomColorThemes = '[]';
@@ -302,7 +303,9 @@ class Settings extends _$Settings {
   Future<void> updateSidebarPosition(String position) async {
     final normalised = position == sidebarPositionRight
         ? sidebarPositionRight
-        : sidebarPositionLeft;
+        : position == sidebarPositionBottom
+            ? sidebarPositionBottom
+            : sidebarPositionLeft;
     state = {...state, 'sidebarPosition': normalised};
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySidebarPosition, normalised);

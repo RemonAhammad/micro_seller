@@ -76,8 +76,6 @@ void main() {
     });
 
     testWidgets('guide.wrap returns a widget containing the child', (tester) async {
-      late GuideHandle capturedGuide;
-
       await tester.pumpWidget(
         ShowCaseWidget(
           builder: (context) => MaterialApp(
@@ -86,12 +84,9 @@ void main() {
               steps: const [
                 GuideStep(title: 'Step 1', description: 'Desc 1'),
               ],
-              builder: (context, guide) {
-                capturedGuide = guide;
-                return Scaffold(
-                  body: guide.wrap(0, const Text('Target Widget')),
-                );
-              },
+              builder: (context, guide) => Scaffold(
+                body: guide.wrap(0, const Text('Target Widget')),
+              ),
             ),
           ),
         ),

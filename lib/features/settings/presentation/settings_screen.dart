@@ -472,7 +472,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               Builder(
                 builder: (_) {
                   final currentPos = ref.read(settingsProvider.notifier).sidebarPosition;
-                  final isLeft = currentPos == Settings.sidebarPositionLeft;
                   return _EndControl(
                     tile: ListTile(
                       leading: Container(
@@ -488,14 +487,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       title: Text(s.sidebarPosition),
                     ),
                     control: _SidebarPositionToggle(
-                      isLeft: isLeft,
-                      onChanged: (toLeft) async {
-                        if (toLeft == isLeft) return;
+                      position: currentPos,
+                      onChanged: (newPos) async {
+                        if (newPos == currentPos) return;
                         await ref
                             .read(settingsProvider.notifier)
-                            .updateSidebarPosition(
-                              toLeft ? Settings.sidebarPositionLeft : Settings.sidebarPositionRight,
-                            );
+                            .updateSidebarPosition(newPos);
                         setState(() {});
                       },
                     ),
@@ -1137,10 +1134,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 }
 
 class _SidebarPositionToggle extends StatelessWidget {
-  final bool isLeft;
-  final ValueChanged<bool> onChanged;
+  final String position;
+  final ValueChanged<String> onChanged;
 
-  const _SidebarPositionToggle({required this.isLeft, required this.onChanged});
+  const _SidebarPositionToggle({required this.position, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -1151,8 +1148,15 @@ class _SidebarPositionToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _segment(cs, icon: tabler.LayoutSidebar.new, active: isLeft, onTap: () => onChanged(true)),
-          _segment(cs, icon: tabler.LayoutSidebarRight.new, active: !isLeft, onTap: () => onChanged(false)),
+          _segment(cs, icon: tabler.LayoutSidebar.new,
+              active: position == Settings.sidebarPositionLeft,
+              onTap: () => onChanged(Settings.sidebarPositionLeft)),
+          _segment(cs, icon: tabler.LayoutSidebarRight.new,
+              active: position == Settings.sidebarPositionRight,
+              onTap: () => onChanged(Settings.sidebarPositionRight)),
+          _segment(cs, icon: tabler.LayoutBottombar.new,
+              active: position == Settings.sidebarPositionBottom,
+              onTap: () => onChanged(Settings.sidebarPositionBottom)),
         ],
       ),
     );
@@ -1168,7 +1172,6 @@ class _SidebarPositionToggle extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 30,
-
           child: Center(
             child: ThinIcon(icon, size: 18, color: active ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.55)),
           ),

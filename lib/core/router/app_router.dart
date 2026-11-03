@@ -419,17 +419,42 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
     final position = ref.watch(settingsProvider.select((s) =>
         s['sidebarPosition'] as String? ?? Settings.sidebarPositionLeft));
     final isRight = position == Settings.sidebarPositionRight;
+    final isBottom = position == Settings.sidebarPositionBottom;
+
+    final showcaseKeys = <int, GlobalKey>{
+      9: _categoriesKey,
+      1: _productsKey,
+      2: _ordersKey,
+      3: _returnsKey,
+    };
+
+    if (isBottom) {
+      return Scaffold(
+        body: ShellEdgeBackSwipe(
+          enabled: _iosPages,
+          shell: widget.navigationShell,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Expanded(child: widget.navigationShell),
+                _BottomNavBar(
+                  currentIndex: widget.navigationShell.currentIndex,
+                  onNavigate: _navigate,
+                  showcaseKeys: showcaseKeys,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final sidebar = _Sidebar(
       expanded: expanded,
       currentIndex: widget.navigationShell.currentIndex,
       onNavigate: _navigate,
-      showcaseKeys: {
-        9: _categoriesKey,
-        1: _productsKey,
-        2: _ordersKey,
-        3: _returnsKey,
-      },
+      showcaseKeys: showcaseKeys,
     );
     final content = Expanded(child: widget.navigationShell);
 
@@ -604,6 +629,141 @@ class _Sidebar extends ConsumerWidget {
       );
     }
 
+    return tile;
+  }
+}
+
+class _BottomNavBar extends ConsumerWidget {
+  final int currentIndex;
+  final void Function(int branchIndex) onNavigate;
+  final Map<int, GlobalKey> showcaseKeys;
+
+  const _BottomNavBar({
+    required this.currentIndex,
+    required this.onNavigate,
+    this.showcaseKeys = const {},
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(settingsProvider.select((s) => (
+          (s['sidebarOrder'] as List?)?.join(','),
+          (s['hiddenSidebarItems'] as List?)?.join(','),
+        )));
+    final notifier = ref.read(settingsProvider.notifier);
+    final order = notifier.sidebarOrder;
+    final hidden = notifier.hiddenSidebarItems.toSet();
+    final visibleOrder = order.where((k) => !hidden.contains(k)).toList();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: isDark
+          ? colorScheme.surfaceContainerHigh
+          : colorScheme.surfaceContainerLow,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Divider(height: 1, color: colorScheme.outlineVariant),
+            SizedBox(
+              height: 56,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final key in visibleOrder)
+                      _BottomNavTile(
+                        item: sidebarItemByKey(key),
+                        selected: currentIndex == sidebarItemByKey(key).branchIndex,
+                        isDark: isDark,
+                        onTap: () => onNavigate(sidebarItemByKey(key).branchIndex),
+                        showcaseKey: showcaseKeys[sidebarItemByKey(key).branchIndex],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNavTile extends StatelessWidget {
+  final SidebarItem item;
+  final bool selected;
+  final bool isDark;
+  final VoidCallback onTap;
+  final GlobalKey? showcaseKey;
+
+  const _BottomNavTile({
+    required this.item,
+    required this.selected,
+    required this.isDark,
+    required this.onTap,
+    this.showcaseKey,
+  });
+
+  static const _showcaseDescriptions = _Sidebar._showcaseDescriptions;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint =
+        isDark ? Color.lerp(item.color, Colors.white, 0.25)! : item.color;
+    final bg = selected ? tint.withValues(alpha: 0.14) : Colors.transparent;
+    final label = item.label(context);
+
+    final icon = ThinIcon(
+      item.icon,
+      size: 20,
+      color: selected ? tint : tint.withValues(alpha: 0.75),
+      strokeWidth: selected ? kIconStrokeSelected : kIconStroke,
+    );
+
+    final tile = Tooltip(
+      message: label,
+      preferBelow: false,
+      waitDuration: const Duration(milliseconds: 400),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 64),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(color: bg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected ? tint : tint.withValues(alpha: 0.75),
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (showcaseKey != null) {
+      final info = _showcaseDescriptions[item.branchIndex];
+      return Showcase(
+        key: showcaseKey!,
+        title: info?.title ?? label,
+        description: info?.desc ?? '',
+        child: tile,
+      );
+    }
     return tile;
   }
 }
