@@ -617,6 +617,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     const SizedBox(height: 12),
                     AppTextField(
                       label: s.productName,
+                      isRequired: true,
                       controller: _nameCtrl,
                       textCapitalization: TextCapitalization.words,
                       validator: (v) => Validators.required(v, 'Product name'),
@@ -626,6 +627,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
                     AppTextField(
                       label: s.category,
+                      isRequired: true,
                       controller: _categoryCtrl,
                       textCapitalization: TextCapitalization.words,
                       validator: (v) => Validators.required(v, 'Category'),
@@ -692,6 +694,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
                     AppTextField(
                       label: s.sku,
+                      isRequired: true,
                       controller: _skuCtrl,
                       textCapitalization: TextCapitalization.characters,
                       validator: Validators.sku,
@@ -727,6 +730,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       children: [
                         AppTextField(
                           label: s.sellingPrice,
+                          isRequired: true,
                           controller: _sellingPriceCtrl,
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
@@ -757,6 +761,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       children: [
                         AppTextField(
                           label: s.stockQuantity,
+                          isRequired: true,
                           controller: _stockCtrl,
                           keyboardType: TextInputType.number,
                           inputFormatters: const [IntegerInputFormatter()],

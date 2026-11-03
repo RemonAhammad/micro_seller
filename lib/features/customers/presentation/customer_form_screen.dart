@@ -137,6 +137,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
             children: [
               AppTextField(
                 label: s.customerName,
+                isRequired: true,
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
                 validator: (v) => Validators.required(v, 'Name'),

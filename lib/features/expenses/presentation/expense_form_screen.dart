@@ -147,6 +147,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
             children: [
               AppTextField(
                 label: s.expenseTitle,
+                isRequired: true,
                 controller: _titleCtrl,
                 textCapitalization: TextCapitalization.sentences,
                 validator: (v) => Validators.required(v, 'Title'),
@@ -155,6 +156,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               const SizedBox(height: 12),
               AppTextField(
                 label: s.amount,
+                isRequired: true,
                 controller: _amountCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),

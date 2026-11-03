@@ -37,6 +37,7 @@ class AppTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
+  final bool isRequired;
 
   const AppTextField({
     super.key,
@@ -44,6 +45,7 @@ class AppTextField extends StatelessWidget {
     this.hint,
     this.controller,
     this.validator,
+    this.isRequired = false,
     this.keyboardType,
     this.inputFormatters,
     this.obscureText = false,
@@ -92,7 +94,20 @@ class AppTextField extends StatelessWidget {
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: isRequired ? null : label,
+        label: isRequired
+            ? Text.rich(
+                TextSpan(
+                  text: label,
+                  children: [
+                    TextSpan(
+                      text: ' *',
+                      style: TextStyle(color: Colors.red.shade400),
+                    ),
+                  ],
+                ),
+              )
+            : null,
         hintText: hint,
         prefix: prefix,
         suffix: suffix,
