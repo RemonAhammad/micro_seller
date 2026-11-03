@@ -85,7 +85,10 @@ class ColorThemeScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ColorThemeSectionHeader(s.preview),
 
-          const AppPreviewFrame(preview: AppPreviewSample(header: true)),
+          const AppPreviewFrame(
+            sample: SizedBox(height: 200),
+            preview: AppPreviewSample(header: true),
+          ),
           const SizedBox(height: 12),
           _ActiveTheme(
             theme: active,
