@@ -201,6 +201,7 @@ const translationsTh = <String, String>{
   'stockAdjustedSuccess': 'ปรับสต็อกเรียบร้อยแล้ว!',
   'pleaseEnterValidQty': 'กรุณากรอกจำนวนที่ถูกต้อง',
   'noSuppliersYet': 'ยังไม่มีผู้จัดจำหน่าย เพิ่มจากเมนูผู้จัดจำหน่าย',
+  'createSupplierFirst': 'กรุณาเพิ่มผู้จัดจำหน่ายก่อนบันทึกการซื้อ',
   'supplierOptional': 'ผู้จัดจำหน่าย (ไม่บังคับ)',
   'totalStock': 'สต็อกทั้งหมด',
   'inStockLabel': 'มีสินค้า',

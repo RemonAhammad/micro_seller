@@ -201,6 +201,7 @@ const translationsPt = <String, String>{
   'stockAdjustedSuccess': 'Estoque ajustado com sucesso!',
   'pleaseEnterValidQty': 'Por favor insira uma quantidade válida',
   'noSuppliersYet': 'Ainda sem fornecedores. Adicione um pelo menu Fornecedores.',
+  'createSupplierFirst': 'Você precisa adicionar um fornecedor antes de registrar uma compra.',
   'supplierOptional': 'Fornecedor (opcional)',
   'totalStock': 'estoque total',
   'inStockLabel': 'em estoque',

@@ -201,6 +201,7 @@ const translationsTr = <String, String>{
   'stockAdjustedSuccess': 'Stok başarıyla düzeltildi!',
   'pleaseEnterValidQty': 'Lütfen geçerli bir miktar girin',
   'noSuppliersYet': 'Henüz tedarikçi yok. Tedarikçiler menüsünden ekleyin.',
+  'createSupplierFirst': 'Alım kaydetmeden önce bir tedarikçi eklemeniz gerekiyor.',
   'supplierOptional': 'Tedarikçi (isteğe bağlı)',
   'totalStock': 'toplam stok',
   'inStockLabel': 'stokta',

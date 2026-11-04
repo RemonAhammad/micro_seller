@@ -201,6 +201,7 @@ const translationsEn = <String, String>{
   'stockAdjustedSuccess': 'Stock adjusted successfully!',
   'pleaseEnterValidQty': 'Please enter a valid quantity',
   'noSuppliersYet': 'No suppliers yet. Add one from the Suppliers menu.',
+  'createSupplierFirst': 'You need to add a supplier before recording a purchase.',
   'supplierOptional': 'Supplier (optional)',
   'totalStock': 'total stock',
   'inStockLabel': 'in stock',

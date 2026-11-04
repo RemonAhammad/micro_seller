@@ -201,6 +201,7 @@ const translationsAr = <String, String>{
   'stockAdjustedSuccess': 'تم تعديل المخزون بنجاح!',
   'pleaseEnterValidQty': 'يرجى إدخال كمية صحيحة',
   'noSuppliersYet': 'لا يوجد موردون بعد. أضف من قائمة الموردين.',
+  'createSupplierFirst': 'يجب إضافة مورد قبل تسجيل عملية شراء.',
   'supplierOptional': 'المورد (اختياري)',
   'totalStock': 'إجمالي المخزون',
   'inStockLabel': 'متوفر',

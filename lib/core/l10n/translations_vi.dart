@@ -201,6 +201,7 @@ const translationsVi = <String, String>{
   'stockAdjustedSuccess': 'Điều chỉnh kho thành công!',
   'pleaseEnterValidQty': 'Vui lòng nhập số lượng hợp lệ',
   'noSuppliersYet': 'Chưa có nhà cung cấp. Thêm từ menu Nhà cung cấp.',
+  'createSupplierFirst': 'Bạn cần thêm nhà cung cấp trước khi ghi nhận giao dịch mua.',
   'supplierOptional': 'Nhà cung cấp (tùy chọn)',
   'totalStock': 'tổng kho',
   'inStockLabel': 'còn hàng',

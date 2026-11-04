@@ -55,7 +55,33 @@ class SupplierListScreen extends ConsumerWidget {
       ),
       floatingActionButton: guide.wrap(0, FloatingActionButton.extended(
         heroTag: 'newPurchase',
-        onPressed: () => context.push('/suppliers/purchases/add'),
+        onPressed: () {
+          final suppliers = ref.read(suppliersProvider).value ?? [];
+          if (suppliers.isEmpty) {
+            showDialog<void>(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: Text(s.noSuppliersYet),
+                content: Text(s.createSupplierFirst),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: Text(s.cancel),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      context.push('/suppliers/add');
+                    },
+                    child: Text(s.addSupplier),
+                  ),
+                ],
+              ),
+            );
+            return;
+          }
+          context.push('/suppliers/purchases/add');
+        },
         icon: const ThinIcon(tabler.ShoppingBag.new),
         label: Text(s.newPurchase),
       )),

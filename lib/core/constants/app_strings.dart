@@ -374,6 +374,7 @@ class _L10nStrings {
   String get stockAdjustedSuccess => _l10n.tr('stockAdjustedSuccess');
   String get pleaseEnterValidQty => _l10n.tr('pleaseEnterValidQty');
   String get noSuppliersYet => _l10n.tr('noSuppliersYet');
+  String get createSupplierFirst => _l10n.tr('createSupplierFirst');
   String get supplierOptional => _l10n.tr('supplierOptional');
   String get editExpense => _l10n.tr('editExpense');
   String get deleteExpense => _l10n.tr('deleteExpense');

@@ -201,6 +201,7 @@ const translationsBn = <String, String>{
   'stockAdjustedSuccess': 'স্টক সফলভাবে সমন্বয় হয়েছে!',
   'pleaseEnterValidQty': 'অনুগ্রহ করে সঠিক পরিমাণ লিখুন',
   'noSuppliersYet': 'এখনো কোনো সরবরাহকারী নেই। সরবরাহকারী মেনু থেকে যোগ করুন।',
+  'createSupplierFirst': 'ক্রয় যোগ করার আগে একজন সরবরাহকারী যোগ করুন।',
   'supplierOptional': 'সরবরাহকারী (ঐচ্ছিক)',
   'totalStock': 'মোট স্টক',
   'inStockLabel': 'স্টকে আছে',

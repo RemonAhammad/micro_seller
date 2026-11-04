@@ -201,6 +201,7 @@ const translationsId = <String, String>{
   'stockAdjustedSuccess': 'Stok berhasil disesuaikan!',
   'pleaseEnterValidQty': 'Silakan masukkan jumlah yang valid',
   'noSuppliersYet': 'Belum ada pemasok. Tambahkan dari menu Pemasok.',
+  'createSupplierFirst': 'Anda perlu menambahkan pemasok sebelum mencatat pembelian.',
   'supplierOptional': 'Pemasok (opsional)',
   'totalStock': 'total stok',
   'inStockLabel': 'tersedia',

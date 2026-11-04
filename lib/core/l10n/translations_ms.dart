@@ -201,6 +201,7 @@ const translationsMs = <String, String>{
   'stockAdjustedSuccess': 'Stok berjaya dilaraskan!',
   'pleaseEnterValidQty': 'Sila masukkan kuantiti yang sah',
   'noSuppliersYet': 'Belum ada pembekal. Tambah dari menu Pembekal.',
+  'createSupplierFirst': 'Anda perlu menambah pembekal sebelum merekod pembelian.',
   'supplierOptional': 'Pembekal (pilihan)',
   'totalStock': 'jumlah stok',
   'inStockLabel': 'ada stok',

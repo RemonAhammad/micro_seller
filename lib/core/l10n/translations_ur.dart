@@ -201,6 +201,7 @@ const translationsUr = <String, String>{
   'stockAdjustedSuccess': 'اسٹاک کامیابی سے ایڈجسٹ ہو گیا!',
   'pleaseEnterValidQty': 'براہ کرم درست مقدار درج کریں',
   'noSuppliersYet': 'ابھی تک کوئی سپلائر نہیں۔ سپلائرز مینو سے شامل کریں۔',
+  'createSupplierFirst': 'خریداری درج کرنے سے پہلے ایک سپلائر شامل کریں۔',
   'supplierOptional': 'سپلائر (اختیاری)',
   'totalStock': 'کل اسٹاک',
   'inStockLabel': 'دستیاب',
