@@ -450,7 +450,7 @@ const translationsBn = <String, String>{
   'sidebarOrderDesc': 'সাইডবারের ট্যাব পুনর্বিন্যাস করতে টেনে আনুন',
   'resetToDefault': 'ডিফল্টে রিসেট করুন',
   'sidebar': 'সাইডবার',
-  'sidebarPosition': 'সাইডবারের অবস্থান',
+  'sidebarPosition': 'মেনুবারের অবস্থান',
   'left': 'বামে',
   'right': 'ডানে',
 

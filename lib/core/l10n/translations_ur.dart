@@ -450,7 +450,7 @@ const translationsUr = <String, String>{
   'sidebarOrderDesc': 'سائڈبار ٹیبز کو دوبارہ ترتیب دینے کے لیے گھسیٹیں',
   'resetToDefault': 'پہلے سے طے شدہ پر ری سیٹ کریں',
   'sidebar': 'سائڈبار',
-  'sidebarPosition': 'سائڈبار کی پوزیشن',
+  'sidebarPosition': 'مینوبار کی پوزیشن',
   'left': 'بائیں',
   'right': 'دائیں',
 

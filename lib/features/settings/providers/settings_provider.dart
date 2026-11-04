@@ -185,7 +185,9 @@ class Settings extends _$Settings {
       'sidebarOrder': order,
       'sidebarPosition': position == sidebarPositionRight
           ? sidebarPositionRight
-          : sidebarPositionLeft,
+          : position == sidebarPositionBottom
+              ? sidebarPositionBottom
+              : sidebarPositionLeft,
       'hiddenSidebarItems': hidden,
       'autoBackup': flag(_keyAutoBackup, false),
       'securityFingerprintEnabled': flag(_keySecurityFingerprint, true),
@@ -507,7 +509,8 @@ class Settings extends _$Settings {
     }
     final position = data['sidebarPosition'];
     if (position is String &&
-        (position == sidebarPositionLeft || position == sidebarPositionRight)) {
+        (position == sidebarPositionLeft || position == sidebarPositionRight ||
+            position == sidebarPositionBottom)) {
       changes['sidebarPosition'] = position;
       writes.add(prefs.setString(_keySidebarPosition, position));
     }

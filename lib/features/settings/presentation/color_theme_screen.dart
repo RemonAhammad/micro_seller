@@ -8,6 +8,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/theme/app_color_theme.dart';
+import '../../../core/theme/brand_colors.dart';
 import '../../../core/theme/dynamic_color_support.dart';
 import '../../../shared/widgets/app_preview_sample.dart';
 import '../../../shared/widgets/app_zoom.dart';
@@ -86,13 +87,33 @@ class ColorThemeScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ColorThemeSectionHeader(s.preview),
 
-          AppPreviewFrame(
-            preview: ZoomBox(
-              scale: 0.65,
-              child: const AppPreviewSample(header: true),
+          Center(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: context.brand.primary.withValues(alpha: 0.25),
+                    blurRadius: 28,
+                    offset: const Offset(0, 10),
+                    spreadRadius: 2,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: AppPreviewFrame(
+                preview: ZoomBox(
+                  scale: 0.65,
+                  child: const AppPreviewSample(header: true),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _ActiveTheme(
             theme: active,
             onCustomize: active.isPreset && !full

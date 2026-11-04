@@ -33,6 +33,18 @@ class SupplierListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(s.suppliers),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: FilledButton.icon(
+              onPressed: () => context.push('/suppliers/add'),
+              icon: const ThinIcon(tabler.Plus.new, size: 18),
+              label: Text(s.addSupplier),
+              style: FilledButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              ),
+            ),
+          ),
           IconButton(
             icon: const ThinIcon(tabler.ShoppingBag.new),
             tooltip: s.allPurchases,
@@ -41,26 +53,12 @@ class SupplierListScreen extends ConsumerWidget {
           const SectionHelpButton('suppliers'),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          guide.wrap(0, FloatingActionButton.extended(
-            heroTag: 'newPurchase',
-            onPressed: () => context.push('/suppliers/purchases/add'),
-            icon: const ThinIcon(tabler.ShoppingBag.new),
-            label: Text(s.newPurchase),
-          )),
-          const SizedBox(height: 12),
-          guide.wrap(1, FloatingActionButton(
-            heroTag: 'addSupplier',
-            onPressed: () => context.push('/suppliers/add'),
-            tooltip: s.addSupplier,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: const ThinIcon(tabler.Plus.new),
-          )),
-        ],
-      ),
+      floatingActionButton: guide.wrap(0, FloatingActionButton.extended(
+        heroTag: 'newPurchase',
+        onPressed: () => context.push('/suppliers/purchases/add'),
+        icon: const ThinIcon(tabler.ShoppingBag.new),
+        label: Text(s.newPurchase),
+      )),
       body: suppliersAsync.when(
         data: (suppliers) {
           if (suppliers.isEmpty) {

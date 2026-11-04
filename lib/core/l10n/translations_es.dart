@@ -449,7 +449,7 @@ const translationsEs = <String, String>{
   'sidebarOrderDesc': 'Arrastra para reorganizar las pestañas de la barra lateral',
   'resetToDefault': 'Restablecer predeterminado',
   'sidebar': 'Barra lateral',
-  'sidebarPosition': 'Posición de la barra lateral',
+  'sidebarPosition': 'Posición de la barra de menú',
   'left': 'Izquierda',
   'right': 'Derecha',
 

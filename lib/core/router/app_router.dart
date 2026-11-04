@@ -633,7 +633,7 @@ class _Sidebar extends ConsumerWidget {
   }
 }
 
-class _BottomNavBar extends ConsumerWidget {
+class _BottomNavBar extends ConsumerStatefulWidget {
   final int currentIndex;
   final void Function(int branchIndex) onNavigate;
   final Map<int, GlobalKey> showcaseKeys;
@@ -645,7 +645,73 @@ class _BottomNavBar extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_BottomNavBar> createState() => _BottomNavBarState();
+}
+
+class _BottomNavBarState extends ConsumerState<_BottomNavBar> {
+  final _scrollCtrl = ScrollController();
+  final _tileKeys = <String, GlobalKey>{};
+
+  @override
+  void didUpdateWidget(_BottomNavBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
+    }
+  }
+
+  void _scrollToSelected() {
+    if (!_scrollCtrl.hasClients) return;
+    final notifier = ref.read(settingsProvider.notifier);
+    final order = notifier.sidebarOrder;
+    final hidden = notifier.hiddenSidebarItems.toSet();
+    final visibleOrder = order.where((k) => !hidden.contains(k)).toList();
+
+    final selectedKey = visibleOrder.cast<String?>().firstWhere(
+      (k) => k != null && sidebarItemByKey(k).branchIndex == widget.currentIndex,
+      orElse: () => null,
+    );
+    if (selectedKey == null) return;
+
+    final tileKey = _tileKeys[selectedKey];
+    if (tileKey == null) return;
+    final ctx = tileKey.currentContext;
+    if (ctx == null) return;
+
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+
+    // Find the scroll viewport's RenderBox via the scroll controller
+    final scrollRenderObj = _scrollCtrl.position.context.notificationContext
+        ?.findRenderObject() as RenderBox?;
+    if (scrollRenderObj == null) return;
+
+    final tileOffset = box.localToGlobal(Offset.zero, ancestor: scrollRenderObj);
+    final tileWidth = box.size.width;
+    final viewportWidth = _scrollCtrl.position.viewportDimension;
+    final currentOffset = _scrollCtrl.offset;
+
+    final targetOffset = currentOffset + tileOffset.dx - (viewportWidth - tileWidth) / 2;
+    final clampedOffset = targetOffset.clamp(
+      _scrollCtrl.position.minScrollExtent,
+      _scrollCtrl.position.maxScrollExtent,
+    );
+
+    _scrollCtrl.animateTo(
+      clampedOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(settingsProvider.select((s) => (
           (s['sidebarOrder'] as List?)?.join(','),
           (s['hiddenSidebarItems'] as List?)?.join(','),
@@ -654,6 +720,11 @@ class _BottomNavBar extends ConsumerWidget {
     final order = notifier.sidebarOrder;
     final hidden = notifier.hiddenSidebarItems.toSet();
     final visibleOrder = order.where((k) => !hidden.contains(k)).toList();
+
+    // Ensure a GlobalKey exists for each visible tile
+    for (final key in visibleOrder) {
+      _tileKeys.putIfAbsent(key, () => GlobalKey());
+    }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
@@ -671,16 +742,20 @@ class _BottomNavBar extends ConsumerWidget {
             SizedBox(
               height: 56,
               child: SingleChildScrollView(
+                controller: _scrollCtrl,
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
                     for (final key in visibleOrder)
-                      _BottomNavTile(
-                        item: sidebarItemByKey(key),
-                        selected: currentIndex == sidebarItemByKey(key).branchIndex,
-                        isDark: isDark,
-                        onTap: () => onNavigate(sidebarItemByKey(key).branchIndex),
-                        showcaseKey: showcaseKeys[sidebarItemByKey(key).branchIndex],
+                      KeyedSubtree(
+                        key: _tileKeys[key],
+                        child: _BottomNavTile(
+                          item: sidebarItemByKey(key),
+                          selected: widget.currentIndex == sidebarItemByKey(key).branchIndex,
+                          isDark: isDark,
+                          onTap: () => widget.onNavigate(sidebarItemByKey(key).branchIndex),
+                          showcaseKey: widget.showcaseKeys[sidebarItemByKey(key).branchIndex],
+                        ),
                       ),
                   ],
                 ),

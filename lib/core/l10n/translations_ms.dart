@@ -450,7 +450,7 @@ const translationsMs = <String, String>{
   'sidebarOrderDesc': 'Seret untuk menyusun semula tab bar sisi',
   'resetToDefault': 'Tetapkan Semula kepada Lalai',
   'sidebar': 'Bar Sisi',
-  'sidebarPosition': 'Kedudukan Bar Sisi',
+  'sidebarPosition': 'Kedudukan Bar Menu',
   'left': 'Kiri',
   'right': 'Kanan',
 
