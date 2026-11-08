@@ -286,7 +286,7 @@ const AppColorTheme kDefaultColorTheme = AppColorTheme(
   style: ThemeStyle.soft,
   onPrimary: OnColor.white,
   darkPrimary: 0xFF4DB6AC,
-  darkOnPrimary: OnColor.black,
+  darkOnPrimary: OnColor.white,
 );
 
 const List<AppColorTheme> kPresetColorThemes = [
@@ -297,7 +297,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFF64B5F6,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
   AppColorTheme(
     id: 'indigo',
@@ -305,7 +305,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFF7986CB,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
   AppColorTheme(
     id: 'purple',
@@ -313,7 +313,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFFBA68C8,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
   AppColorTheme(
     id: 'pink',
@@ -321,7 +321,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFFF06292,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
   AppColorTheme(
     id: 'red',
@@ -329,25 +329,25 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFFE57373,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
 
   AppColorTheme(
     id: 'orange',
     seed: 0xFFE65100,
     style: ThemeStyle.soft,
-    onPrimary: OnColor.black,
+    onPrimary: OnColor.white,
     darkPrimary: 0xFFFFB74D,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
 
   AppColorTheme(
     id: 'amber',
     seed: 0xFFB07D00,
     style: ThemeStyle.soft,
-    onPrimary: OnColor.black,
+    onPrimary: OnColor.white,
     darkPrimary: 0xFFFFC107,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
   AppColorTheme(
     id: 'green',
@@ -355,7 +355,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFF81C784,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
   AppColorTheme(
     id: 'brown',
@@ -363,7 +363,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFFA1887F,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
   AppColorTheme(
     id: 'slate',
@@ -371,7 +371,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.soft,
     onPrimary: OnColor.white,
     darkPrimary: 0xFF90A4AE,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
 
   AppColorTheme(
@@ -380,7 +380,7 @@ const List<AppColorTheme> kPresetColorThemes = [
     style: ThemeStyle.vivid,
     onPrimary: OnColor.white,
     darkPrimary: 0xFFFFFFFF,
-    darkOnPrimary: OnColor.black,
+    darkOnPrimary: OnColor.white,
   ),
 ];
 
@@ -391,7 +391,7 @@ const AppColorTheme kPhoneColorTheme = AppColorTheme(
   style: ThemeStyle.soft,
   onPrimary: OnColor.white,
   darkPrimary: 0xFF4DB6AC,
-  darkOnPrimary: OnColor.black,
+  darkOnPrimary: OnColor.white,
 );
 
 AppColorTheme resolveColorTheme(String? id, List<AppColorTheme> customs) {
