@@ -30,6 +30,7 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/scanner_camera.dart';
 import '../../../shared/screens/qr_scanner_screen.dart';
+import '../../suppliers/presentation/supplier_form_screen.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
@@ -400,20 +401,33 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Future<void> _pickSupplier() async {
     final isar = await ref.read(isarProvider.future);
-    final suppliers = await isar.suppliers.where().sortByName().findAll();
+    var suppliers = await isar.suppliers.where().sortByName().findAll();
     if (!mounted) return;
 
-    final result = await showModalBottomSheet<Supplier?>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => _SupplierPickerSheet(suppliers: suppliers),
-    );
+    while (true) {
+      final result = await showModalBottomSheet<Object?>(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (_) => _SupplierPickerSheet(suppliers: suppliers),
+      );
 
-    if (result != null) {
-      setState(() => _selectedSupplier = result);
+      if (result is Supplier) {
+        setState(() => _selectedSupplier = result);
+        return;
+      }
+      if (result == _kCreateSupplier) {
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(builder: (_) => const SupplierFormScreen()),
+        );
+        if (!mounted) return;
+        suppliers = await isar.suppliers.where().sortByName().findAll();
+        if (!mounted) return;
+        continue;
+      }
+      return;
     }
   }
 
@@ -1365,6 +1379,8 @@ class _CombinationEntry {
   }
 }
 
+const Object _kCreateSupplier = Object();
+
 class _SupplierPickerSheet extends StatefulWidget {
   final List<Supplier> suppliers;
 
@@ -1384,17 +1400,22 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
     super.dispose();
   }
 
+  void _createSupplier() {
+    Navigator.pop(context, _kCreateSupplier);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final s = AppStrings.of(context);
     final filtered = _query.isEmpty
         ? widget.suppliers
         : widget.suppliers
-            .where((s) =>
-                s.name.toLowerCase().contains(_query) ||
-                s.company.toLowerCase().contains(_query) ||
-                NumberInput.phoneMatches(s.phone, _query))
+            .where((sup) =>
+                sup.name.toLowerCase().contains(_query) ||
+                sup.company.toLowerCase().contains(_query) ||
+                NumberInput.phoneMatches(sup.phone, _query))
             .toList();
 
     return DraggableScrollableSheet(
@@ -1415,7 +1436,7 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(AppStrings.of(context).tr('selectSupplier'),
+            child: Text(s.tr('selectSupplier'),
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.w700)),
           ),
@@ -1427,13 +1448,48 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
               autofocus: true,
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
-                hintText: '${AppStrings.of(context).search}...',
+                hintText: '${s.search}...',
                 prefixIcon: const ThinIcon(tabler.Search.new, size: 20),
                 isDense: true,
               ),
             ),
           ),
           const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: InkWell(
+              onTap: _createSupplier,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: cs.primary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    ThinIcon(tabler.Plus.new,
+                        size: 20, color: cs.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(s.addSupplier,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: cs.primary)),
+                    ),
+                    ThinIcon(tabler.ChevronRight.new,
+                        size: 14,
+                        color: cs.primary.withValues(alpha: 0.6)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
           Expanded(
             child: filtered.isEmpty
                 ? Center(
@@ -1444,13 +1500,8 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                             size: 48,
                             color: cs.onSurface.withValues(alpha: 0.3)),
                         const SizedBox(height: 8),
-                        Text(AppStrings.of(context).tr('noSuppliersFound'),
+                        Text(s.tr('noSuppliersFound'),
                             style: TextStyle(
-                                color: cs.onSurface.withValues(alpha: 0.4))),
-                        const SizedBox(height: 4),
-                        Text(AppStrings.of(context).addSuppliersHint,
-                            style: TextStyle(
-                                fontSize: 12,
                                 color: cs.onSurface.withValues(alpha: 0.4))),
                       ],
                     ),
@@ -1462,27 +1513,29 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                     separatorBuilder: (_, _) => Divider(
                         height: 1, color: cs.outline.withValues(alpha: 0.1)),
                     itemBuilder: (_, i) {
-                      final s = filtered[i];
+                      final sup = filtered[i];
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
-                        onTap: () => Navigator.pop(ctx, s),
+                        onTap: () => Navigator.pop(ctx, sup),
                         leading: CircleAvatar(
                           radius: 18,
                           backgroundColor:
                               cs.primary.withValues(alpha: 0.1),
                           child: Text(
-                            s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                            sup.name.isNotEmpty
+                                ? sup.name[0].toUpperCase()
+                                : '?',
                             style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: cs.primary,
                                 fontSize: 14),
                           ),
                         ),
-                        title: Text(s.name,
+                        title: Text(sup.name,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w500, fontSize: 14)),
-                        subtitle: s.company.isNotEmpty
-                            ? Text(s.company,
+                        subtitle: sup.company.isNotEmpty
+                            ? Text(sup.company,
                                 style: TextStyle(
                                     fontSize: 12,
                                     color:
