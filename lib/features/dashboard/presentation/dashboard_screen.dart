@@ -544,6 +544,7 @@ class _DashboardBody extends StatelessWidget {
           ],
 
           if (stats.weeklySales.isNotEmpty) ...[
+            if (isWide) const SizedBox(height: 14),
             if (!isWide) ...[
               _SectionCard(
                 title: s.revenueVsExpenses,
