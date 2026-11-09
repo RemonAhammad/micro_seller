@@ -87,8 +87,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   }
 
   Future<void> _addProductTarget() async {
-    final products = ref.read(productsProvider).value ?? [];
-    if (products.isEmpty) return;
+    final products = await ref.read(productsProvider.future);
+    if (products.isEmpty || !mounted) return;
 
     final existing =
         ref.read(salesTargetProvider).value;
@@ -166,107 +166,125 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       ),
       data: (target) {
         _populateControllers(target);
+        final cs = Theme.of(context).colorScheme;
+        final productTargets = target?.productTargets ?? [];
         return Scaffold(
           appBar: AppBar(title: Text(s.tr('salesTargets'))),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  s.tr('monthlyTargets'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+          body: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.tr('monthlyTargets'),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
-                ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  label: '${s.tr('revenueTarget')} (${CurrencyFormatter.symbol})',
-                  controller: _revenueCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [DecimalInputFormatter.money()],
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  label: '${s.tr('profitTarget')} (${CurrencyFormatter.symbol})',
-                  controller: _profitCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [DecimalInputFormatter.money()],
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  label: s.tr('orderCountTarget'),
-                  controller: _orderCountCtrl,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: const [IntegerInputFormatter()],
-                  textInputAction: TextInputAction.done,
-                ),
-                const SizedBox(height: 20),
-                AppButton(
-                  label: s.tr('saveTargets'),
-                  onPressed: _saveTargets,
-                  isLoading: _isLoading,
-                  isFullWidth: true,
-                  height: 48,
-                  icon: tabler.DeviceFloppy.new,
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        s.tr('productTargets'),
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        label: '${s.tr('revenueTarget')} (${CurrencyFormatter.symbol})',
+                        controller: _revenueCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [DecimalInputFormatter.money()],
+                        textInputAction: TextInputAction.next,
                       ),
-                    ),
-                    IconButton(
-                      icon: ThinIcon(tabler.Plus.new, size: 20),
-                      onPressed: _addProductTarget,
-                      tooltip: s.tr('addProductTarget'),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        label: '${s.tr('profitTarget')} (${CurrencyFormatter.symbol})',
+                        controller: _profitCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [DecimalInputFormatter.money()],
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        label: s.tr('orderCountTarget'),
+                        controller: _orderCountCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: const [IntegerInputFormatter()],
+                        textInputAction: TextInputAction.done,
+                      ),
+                      const SizedBox(height: 20),
+                      AppButton(
+                        label: s.tr('saveTargets'),
+                        onPressed: _saveTargets,
+                        isLoading: _isLoading,
+                        isFullWidth: true,
+                        height: 48,
+                        icon: tabler.DeviceFloppy.new,
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              s.tr('productTargets'),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: ThinIcon(tabler.Plus.new, size: 20),
+                            onPressed: _addProductTarget,
+                            tooltip: s.tr('addProductTarget'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                if (target == null ||
-                    target.productTargets.isEmpty)
-                  Padding(
+              ),
+              if (productTargets.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Center(
                       child: Text(
                         s.tr('noProductTargets'),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.5),
+                              color: cs.onSurface.withValues(alpha: 0.5),
                             ),
                       ),
                     ),
-                  )
-                else
-                  ...target.productTargets.map(
-                    (pt) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(pt.productName),
-                      subtitle:
-                          Text('${s.tr('target')}: ${pt.targetQty}'),
-                      trailing: IconButton(
-                        icon: ThinIcon(tabler.Trash.new,
-                            size: 18, color: Colors.red),
-                        onPressed: () => ref
-                            .read(salesTargetProvider.notifier)
-                            .removeProductTarget(pt.productId),
-                        tooltip: s.tr('remove'),
-                      ),
-                    ),
                   ),
-              ],
-            ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList.builder(
+                    itemCount: productTargets.length,
+                    itemBuilder: (context, i) {
+                      final pt = productTargets[i];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Material(
+                          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(10),
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            title: Text(pt.productName),
+                            subtitle: Text('${s.tr('target')}: ${pt.targetQty}'),
+                            trailing: IconButton(
+                              icon: ThinIcon(tabler.Trash.new, size: 18, color: Colors.red),
+                              onPressed: () => ref
+                                  .read(salesTargetProvider.notifier)
+                                  .removeProductTarget(pt.productId),
+                              tooltip: s.tr('remove'),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
+            ],
           ),
         );
       },
