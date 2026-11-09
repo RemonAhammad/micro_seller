@@ -904,7 +904,6 @@ const translationsMs = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'Sasaran Jualan',
-  'monthlyGoals': 'Matlamat Bulanan',
   'monthlyTargets': 'Sasaran Bulanan',
   'revenueTarget': 'Sasaran Hasil',
   'profitTarget': 'Sasaran Keuntungan',

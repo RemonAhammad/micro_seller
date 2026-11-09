@@ -904,7 +904,6 @@ const translationsTr = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'Satış Hedefleri',
-  'monthlyGoals': 'Aylık Hedefler',
   'monthlyTargets': 'Aylık Hedefler',
   'revenueTarget': 'Ciro Hedefi',
   'profitTarget': 'Kâr Hedefi',

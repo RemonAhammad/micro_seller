@@ -73,7 +73,7 @@ final class ProductsProvider
         argument: null,
         retry: null,
         name: r'productsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -93,7 +93,7 @@ final class ProductsProvider
   }
 }
 
-String _$productsHash() => r'341cff6e730a838d03e66789c54e47b11e1fdf72';
+String _$productsHash() => r'7df4eaa7124aeb9457de83621345cd93b9dc81ff';
 
 @ProviderFor(lowStockProducts)
 final lowStockProductsProvider = LowStockProductsProvider._();

@@ -531,7 +531,7 @@ class _DashboardBody extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               child: ListTile(
                 leading: ThinIcon(tabler.Target.new, size: 22, color: brand.primary),
-                title: Text(s.tr('monthlyGoals')),
+                title: Text(s.tr('salesTargets')),
                 subtitle: Text(s.tr('noTargetsSet'),
                     style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
                 trailing: IconButton(

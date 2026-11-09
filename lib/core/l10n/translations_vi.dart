@@ -904,7 +904,6 @@ const translationsVi = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'Mục tiêu doanh số',
-  'monthlyGoals': 'Mục tiêu hằng tháng',
   'monthlyTargets': 'Mục tiêu theo tháng',
   'revenueTarget': 'Mục tiêu doanh thu',
   'profitTarget': 'Mục tiêu lợi nhuận',

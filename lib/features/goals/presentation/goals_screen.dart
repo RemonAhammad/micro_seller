@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar_community/isar.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_strings.dart';
@@ -7,9 +8,9 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/number_input.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/sales_target.dart';
+import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
-import '../../products/providers/product_provider.dart';
 import '../providers/sales_target_provider.dart';
 
 class GoalsScreen extends ConsumerStatefulWidget {
@@ -87,7 +88,11 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   }
 
   Future<void> _addProductTarget() async {
-    final products = await ref.read(productsProvider.future);
+    final isar = await ref.read(isarProvider.future);
+    final products = await isar.products
+        .filter()
+        .isActiveEqualTo(true)
+        .findAll();
     if (products.isEmpty || !mounted) return;
 
     final existing =

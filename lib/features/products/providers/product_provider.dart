@@ -19,7 +19,7 @@ ProductRepository productRepository(Ref ref) {
   return ProductRepository(isar);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<List<Product>> products(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* reloadOn(

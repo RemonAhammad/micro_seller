@@ -42,7 +42,7 @@ class GoalsProgressCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    s.tr('monthlyGoals'),
+                    s.tr('salesTargets'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),

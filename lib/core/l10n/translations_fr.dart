@@ -904,7 +904,6 @@ const translationsFr = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'Objectifs de vente',
-  'monthlyGoals': 'Objectifs du mois',
   'monthlyTargets': 'Objectifs mensuels',
   'revenueTarget': 'Objectif de revenus',
   'profitTarget': 'Objectif de bénéfice',

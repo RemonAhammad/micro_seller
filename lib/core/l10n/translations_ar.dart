@@ -903,7 +903,6 @@ const translationsAr = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'أهداف المبيعات',
-  'monthlyGoals': 'الأهداف الشهرية',
   'monthlyTargets': 'الأهداف الشهرية',
   'revenueTarget': 'هدف الإيرادات',
   'profitTarget': 'هدف الأرباح',

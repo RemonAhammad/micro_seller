@@ -904,7 +904,6 @@ const translationsId = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'Target Penjualan',
-  'monthlyGoals': 'Target Bulanan',
   'monthlyTargets': 'Target Bulanan',
   'revenueTarget': 'Target Pendapatan',
   'profitTarget': 'Target Laba',

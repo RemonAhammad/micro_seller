@@ -904,7 +904,6 @@ const translationsUr = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'فروخت کے اہداف',
-  'monthlyGoals': 'ماہانہ اہداف',
   'monthlyTargets': 'ماہانہ ٹارگٹ',
   'revenueTarget': 'آمدنی کا ٹارگٹ',
   'profitTarget': 'منافع کا ٹارگٹ',

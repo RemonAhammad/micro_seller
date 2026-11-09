@@ -904,7 +904,6 @@ const translationsPt = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'Metas de vendas',
-  'monthlyGoals': 'Metas mensais',
   'monthlyTargets': 'Metas mensais',
   'revenueTarget': 'Meta de receita',
   'profitTarget': 'Meta de lucro',

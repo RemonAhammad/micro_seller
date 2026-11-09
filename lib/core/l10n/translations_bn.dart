@@ -904,7 +904,6 @@ const translationsBn = <String, String>{
 
   // Sales targets & goals
   'salesTargets': 'বিক্রয় লক্ষ্য',
-  'monthlyGoals': 'মাসিক লক্ষ্য',
   'monthlyTargets': 'মাসিক টার্গেট',
   'revenueTarget': 'বিক্রয়ের টার্গেট',
   'profitTarget': 'লাভের টার্গেট',
