@@ -954,4 +954,5 @@ const translationsEn = <String, String>{
   'promotionSaved': 'Promotion saved',
   'promotionDeleted': 'Promotion deleted',
   'promoTextCopied': 'Promotion text copied',
+  'sharePromotion': 'Share Promotion',
 };

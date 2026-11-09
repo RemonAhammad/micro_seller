@@ -1,5 +1,5 @@
 {
-  "nodeCount": 6611,
+  "nodeCount": 6620,
   "edgeCount": 1936,
   "languages": [
     "c",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 6611,
+  "totalCount": 6620,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-09T09:53:31.967Z",
-  "lastFile": "promotion_form_screen.dart"
+  "syncedAt": "2026-11-09T10:17:58.791Z",
+  "lastFile": "promotions_screen.dart"
 }
