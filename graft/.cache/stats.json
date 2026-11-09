@@ -1,6 +1,6 @@
 {
-  "nodeCount": 6368,
-  "edgeCount": 1927,
+  "nodeCount": 6376,
+  "edgeCount": 1928,
   "languages": [
     "c",
     "cpp",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 6368,
+  "totalCount": 6376,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-09T07:01:07.383Z",
-  "lastFile": "goals_screen.dart"
+  "syncedAt": "2026-11-09T08:56:26.175Z",
+  "lastFile": "dashboard_screen.dart"
 }

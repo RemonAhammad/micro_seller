@@ -302,7 +302,7 @@ class _DashboardContent extends ConsumerWidget {
                             icon: tabler.Clock.new,
                             iconColor: AppColors.statusPending,
                             action: TextButton(
-                              onPressed: () => context.go('/products'),
+                              onPressed: () => context.go('/expiry'),
                               child: Text(s.viewAll),
                             ),
                             child: _NearExpiryList(products: stats.nearExpiryProducts),
