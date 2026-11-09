@@ -507,20 +507,23 @@ class _DashboardBody extends StatelessWidget {
               currentRevenue: stats.thisMonthRevenue,
               currentProfit: stats.thisMonthProfit,
               currentOrderCount: statusCounts.values.fold(0, (a, b) => a + b),
-              onTap: () => GoRouter.of(context).go('/goals'),
               onEdit: () => GoRouter.of(context).go('/goals'),
             )
           else
             Card(
-              margin: const EdgeInsets.symmetric(horizontal: 0),
+              margin: EdgeInsets.zero,
+              color: brand.primary.withValues(alpha: 0.08),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               child: ListTile(
                 leading: ThinIcon(tabler.Target.new, size: 22, color: brand.primary),
                 title: Text(s.tr('monthlyGoals')),
                 subtitle: Text(s.tr('noTargetsSet'),
                     style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
-                trailing: ThinIcon(tabler.ChevronRight.new, size: 20),
-                onTap: () => GoRouter.of(context).go('/goals'),
+                trailing: IconButton(
+                  icon: ThinIcon(tabler.Edit.new, size: 18, color: brand.primary),
+                  onPressed: () => GoRouter.of(context).go('/goals'),
+                  tooltip: s.tr('editTargets'),
+                ),
               ),
             ),
           const SizedBox(height: 14),

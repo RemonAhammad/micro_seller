@@ -13,7 +13,6 @@ class GoalsProgressCard extends StatelessWidget {
     required this.currentRevenue,
     required this.currentProfit,
     required this.currentOrderCount,
-    this.onTap,
     this.onEdit,
   });
 
@@ -21,7 +20,6 @@ class GoalsProgressCard extends StatelessWidget {
   final double currentRevenue;
   final double currentProfit;
   final int currentOrderCount;
-  final VoidCallback? onTap;
   final VoidCallback? onEdit;
 
   @override
@@ -31,76 +29,72 @@ class GoalsProgressCard extends StatelessWidget {
     final brand = context.brand;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  ThinIcon(tabler.Target.new, size: 20, color: brand.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      s.tr('monthlyGoals'),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                ThinIcon(tabler.Target.new, size: 20, color: brand.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    s.tr('monthlyGoals'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
-                  if (onEdit != null)
-                    IconButton(
-                      icon: ThinIcon(tabler.Edit.new, size: 18),
-                      onPressed: onEdit,
-                      tooltip: s.tr('editTargets'),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
+                ),
+                if (onEdit != null)
+                  IconButton(
+                    icon: ThinIcon(tabler.Edit.new, size: 18),
+                    onPressed: onEdit,
+                    tooltip: s.tr('editTargets'),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (target.revenueTarget > 0)
+              _ProgressRow(
+                label: s.tr('revenue'),
+                current: currentRevenue,
+                targetValue: target.revenueTarget,
+                color: brand.primary,
+                isCurrency: true,
               ),
-              const SizedBox(height: 12),
-              if (target.revenueTarget > 0)
-                _ProgressRow(
-                  label: s.tr('revenue'),
-                  current: currentRevenue,
-                  targetValue: target.revenueTarget,
-                  color: brand.primary,
-                  isCurrency: true,
-                ),
-              if (target.profitTarget > 0) ...[
-                const SizedBox(height: 8),
-                _ProgressRow(
-                  label: s.tr('profit'),
-                  current: currentProfit,
-                  targetValue: target.profitTarget,
-                  color: Colors.green.shade600,
-                  isCurrency: true,
-                ),
-              ],
-              if (target.orderCountTarget > 0) ...[
-                const SizedBox(height: 8),
-                _ProgressRow(
-                  label: s.tr('orders'),
-                  current: currentOrderCount.toDouble(),
-                  targetValue: target.orderCountTarget.toDouble(),
-                  color: Colors.blue.shade600,
-                ),
-              ],
-              if (target.productTargets.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '${target.productTargets.length} ${s.tr('productTargets').toLowerCase()}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6),
-                      ),
-                ),
-              ],
+            if (target.profitTarget > 0) ...[
+              const SizedBox(height: 8),
+              _ProgressRow(
+                label: s.tr('profit'),
+                current: currentProfit,
+                targetValue: target.profitTarget,
+                color: Colors.green.shade600,
+                isCurrency: true,
+              ),
             ],
-          ),
+            if (target.orderCountTarget > 0) ...[
+              const SizedBox(height: 8),
+              _ProgressRow(
+                label: s.tr('orders'),
+                current: currentOrderCount.toDouble(),
+                targetValue: target.orderCountTarget.toDouble(),
+                color: Colors.blue.shade600,
+              ),
+            ],
+            if (target.productTargets.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                '${target.productTargets.length} ${s.tr('productTargets').toLowerCase()}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.6),
+                    ),
+              ),
+            ],
+          ],
         ),
       ),
     );
