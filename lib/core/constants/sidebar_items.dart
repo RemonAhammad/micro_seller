@@ -30,6 +30,7 @@ class SidebarItem {
       'reports' => s.reports,
       'goals' => s.tr('salesTargets'),
       'expiry' => s.tr('nearExpiryProducts'),
+      'promotions' => s.tr('sellPromotion'),
       'scanner' => s.scanner,
 
       'settings' => s.settings,
@@ -53,6 +54,7 @@ const sidebarItems = <SidebarItem>[
   SidebarItem(key: 'reports', branchIndex: 10, icon: AppIcons.reports, color: Color(0xFF5E35B1)),
   SidebarItem(key: 'goals', branchIndex: 14, icon: AppIcons.goals, color: Color(0xFFEF6C00)),
   SidebarItem(key: 'expiry', branchIndex: 15, icon: AppIcons.expiry, color: Color(0xFFE65100)),
+  SidebarItem(key: 'promotions', branchIndex: 16, icon: AppIcons.promotions, color: Color(0xFFAD1457)),
   SidebarItem(key: 'scanner', branchIndex: 12, icon: AppIcons.scanner, color: Color(0xFF546E7A)),
   SidebarItem(key: 'settings', branchIndex: 11, icon: AppIcons.settings, color: Color(0xFF757575)),
 ];

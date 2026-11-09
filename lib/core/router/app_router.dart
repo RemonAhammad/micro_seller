@@ -16,6 +16,8 @@ import '../../features/categories/presentation/category_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/goals/presentation/goals_screen.dart';
 import '../../features/products/presentation/expiry_list_screen.dart';
+import '../../features/promotions/presentation/promotions_screen.dart';
+import '../../features/promotions/presentation/promotion_form_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
 import '../../features/products/presentation/catalog_share_screen.dart';
 import '../../features/products/presentation/product_form_screen.dart';
@@ -350,6 +352,24 @@ final appRouter = GoRouter(
           GoRoute(
             path: '/expiry',
             builder: (_, __) => const ExpiryListScreen(),
+          ),
+        ]),
+        _branch([
+          GoRoute(
+            path: '/promotions',
+            builder: (_, __) => const PromotionsScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (_, __) => const PromotionFormScreen(),
+              ),
+              GoRoute(
+                path: ':id/edit',
+                builder: (_, state) => PromotionFormScreen(
+                  promotionId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ],
           ),
         ]),
       ],
