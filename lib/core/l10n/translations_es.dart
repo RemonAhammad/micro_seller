@@ -900,4 +900,23 @@ const translationsEs = <String, String>{
   'guideSettingsThemeDesc': 'Cambia el tema de color, el idioma, la moneda y los datos de tu tienda.',
   'guideSettingsBackupTitle': 'Respalda tus datos',
   'guideSettingsBackupDesc': 'Guarda una copia de seguridad en Google Drive o en un archivo para no perder nunca tus datos.',
+
+  // Sales targets & goals
+  'salesTargets': 'Metas de ventas',
+  'monthlyGoals': 'Metas mensuales',
+  'monthlyTargets': 'Objetivos mensuales',
+  'revenueTarget': 'Meta de ingresos',
+  'profitTarget': 'Meta de ganancias',
+  'orderCountTarget': 'Meta de cantidad de pedidos',
+  'productTargets': 'Metas por producto',
+  'addProductTarget': 'Añadir meta de producto',
+  'noProductTargets': 'No hay metas de producto',
+  'saveTargets': 'Guardar metas',
+  'editTargets': 'Editar metas',
+  'targetQuantity': 'Cantidad objetivo',
+  'goalProgress': 'Progreso de la meta',
+  'achieved': 'Logrado',
+  'target': 'Meta',
+  'selectProduct': 'Seleccionar producto',
+  'noTargetsSet': 'No hay metas para este mes',
 };

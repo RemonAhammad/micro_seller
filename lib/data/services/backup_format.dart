@@ -7,9 +7,10 @@ import '../models/payment.dart';
 import '../models/product.dart';
 import '../models/purchase.dart';
 import '../models/stock_movement.dart';
+import '../models/sales_target.dart';
 import '../models/supplier.dart';
 
-const kBackupVersion = 4;
+const kBackupVersion = 5;
 
 Map<String, Object?> buildBackupMap({
   required List<Product> products,
@@ -22,6 +23,7 @@ Map<String, Object?> buildBackupMap({
   required List<Purchase> purchases,
   required List<CashRegister> cashRegisters,
   required List<Payment> payments,
+  required List<SalesTarget> salesTargets,
   Map<String, dynamic>? settings,
   DateTime? timestamp,
 }) =>
@@ -39,5 +41,6 @@ Map<String, Object?> buildBackupMap({
       'purchases': purchases.map((e) => e.toJson()).toList(),
       'cashRegisters': cashRegisters.map((e) => e.toJson()).toList(),
       'payments': payments.map((e) => e.toJson()).toList(),
+      'salesTargets': salesTargets.map((e) => e.toJson()).toList(),
       if (settings != null) 'settings': settings,
     };

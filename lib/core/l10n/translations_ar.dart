@@ -900,4 +900,23 @@ const translationsAr = <String, String>{
   'guideSettingsThemeDesc': 'غيّر لون التطبيق واللغة والعملة وبيانات متجرك.',
   'guideSettingsBackupTitle': 'انسخ بياناتك احتياطيًا',
   'guideSettingsBackupDesc': 'احفظ نسخة احتياطية في Google Drive أو في ملف حتى لا تفقد بياناتك أبدًا.',
+
+  // Sales targets & goals
+  'salesTargets': 'أهداف المبيعات',
+  'monthlyGoals': 'الأهداف الشهرية',
+  'monthlyTargets': 'الأهداف الشهرية',
+  'revenueTarget': 'هدف الإيرادات',
+  'profitTarget': 'هدف الأرباح',
+  'orderCountTarget': 'هدف عدد الطلبات',
+  'productTargets': 'أهداف المنتجات',
+  'addProductTarget': 'إضافة هدف منتج',
+  'noProductTargets': 'لا توجد أهداف للمنتجات',
+  'saveTargets': 'حفظ الأهداف',
+  'editTargets': 'تعديل الأهداف',
+  'targetQuantity': 'الكمية المستهدفة',
+  'goalProgress': 'تقدم الهدف',
+  'achieved': 'تم تحقيقه',
+  'target': 'الهدف',
+  'selectProduct': 'اختر منتجًا',
+  'noTargetsSet': 'لم يتم تحديد أهداف لهذا الشهر',
 };

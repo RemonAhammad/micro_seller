@@ -7,6 +7,7 @@ import '../providers/dashboard_provider.dart';
 import '../../../features/expenses/providers/expense_provider.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/expense.dart';
+import '../../../data/models/sales_target.dart';
 import '../../../data/services/update_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/release_update_service.dart';
@@ -29,6 +30,8 @@ import 'widgets/sales_chart.dart';
 import 'widgets/low_stock_list.dart';
 import 'widgets/due_summary_card.dart';
 import '../../customers/providers/dues_provider.dart';
+import '../../goals/presentation/widgets/goals_progress_card.dart';
+import '../../goals/providers/sales_target_provider.dart';
 import '../../../shared/widgets/section_help.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 
@@ -141,6 +144,7 @@ class _DashboardContent extends ConsumerWidget {
     ref.watch(settingsProvider.select((m) => m['currencySymbol']));
 
     final update = ref.watch(updateNoticeProvider).value;
+    final salesTarget = ref.watch(salesTargetProvider).value;
 
     return CustomScrollView(
       slivers: [
@@ -219,6 +223,7 @@ class _DashboardContent extends ConsumerWidget {
                 receivable: dueSummary.total,
                 collectedThisMonth: collectedThisMonth,
                 isWide: isWide,
+                salesTarget: salesTarget,
               );
             },
             loading: () => _DashboardSkeleton(isWide: isWide),
@@ -471,6 +476,7 @@ class _DashboardBody extends StatelessWidget {
   final double receivable;
   final double collectedThisMonth;
   final bool isWide;
+  final SalesTarget? salesTarget;
 
   const _DashboardBody({
     required this.stats,
@@ -480,6 +486,7 @@ class _DashboardBody extends StatelessWidget {
     required this.receivable,
     required this.collectedThisMonth,
     required this.isWide,
+    this.salesTarget,
   });
 
   @override
@@ -492,6 +499,30 @@ class _DashboardBody extends StatelessWidget {
         children: [
 
           _buildStatCards(context),
+          const SizedBox(height: 14),
+
+          if (salesTarget != null && salesTarget!.hasAnyTarget)
+            GoalsProgressCard(
+              target: salesTarget!,
+              currentRevenue: stats.thisMonthRevenue,
+              currentProfit: stats.thisMonthProfit,
+              currentOrderCount: statusCounts.values.fold(0, (a, b) => a + b),
+              onTap: () => GoRouter.of(context).go('/goals'),
+              onEdit: () => GoRouter.of(context).go('/goals'),
+            )
+          else
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: ListTile(
+                leading: ThinIcon(tabler.Target.new, size: 22, color: brand.primary),
+                title: Text(s.tr('monthlyGoals')),
+                subtitle: Text(s.tr('noTargetsSet'),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
+                trailing: ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => GoRouter.of(context).go('/goals'),
+              ),
+            ),
           const SizedBox(height: 14),
 
           if (isWide)

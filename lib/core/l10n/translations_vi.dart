@@ -901,4 +901,23 @@ const translationsVi = <String, String>{
   'guideSettingsThemeDesc': 'Đổi giao diện màu, ngôn ngữ, đơn vị tiền tệ và thông tin cửa hàng.',
   'guideSettingsBackupTitle': 'Sao lưu dữ liệu',
   'guideSettingsBackupDesc': 'Lưu bản sao lưu lên Google Drive hoặc tệp để không bao giờ mất dữ liệu.',
+
+  // Sales targets & goals
+  'salesTargets': 'Mục tiêu doanh số',
+  'monthlyGoals': 'Mục tiêu hằng tháng',
+  'monthlyTargets': 'Mục tiêu theo tháng',
+  'revenueTarget': 'Mục tiêu doanh thu',
+  'profitTarget': 'Mục tiêu lợi nhuận',
+  'orderCountTarget': 'Mục tiêu số đơn hàng',
+  'productTargets': 'Mục tiêu sản phẩm',
+  'addProductTarget': 'Thêm mục tiêu sản phẩm',
+  'noProductTargets': 'Chưa đặt mục tiêu sản phẩm',
+  'saveTargets': 'Lưu mục tiêu',
+  'editTargets': 'Sửa mục tiêu',
+  'targetQuantity': 'Số lượng mục tiêu',
+  'goalProgress': 'Tiến độ mục tiêu',
+  'achieved': 'Đã đạt',
+  'target': 'Mục tiêu',
+  'selectProduct': 'Chọn sản phẩm',
+  'noTargetsSet': 'Chưa đặt mục tiêu cho tháng này',
 };

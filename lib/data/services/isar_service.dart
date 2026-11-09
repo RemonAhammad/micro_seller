@@ -11,6 +11,7 @@ import '../models/product.dart';
 import '../models/purchase.dart';
 import '../models/stock_movement.dart';
 import '../models/supplier.dart';
+import '../models/sales_target.dart';
 import '../models/trash_entry.dart';
 import 'dues_service.dart';
 import 'migration_service.dart';
@@ -30,6 +31,7 @@ const kIsarSchemas = [
   CashRegisterSchema,
   TrashEntrySchema,
   PaymentSchema,
+  SalesTargetSchema,
 ];
 
 @Riverpod(keepAlive: true)

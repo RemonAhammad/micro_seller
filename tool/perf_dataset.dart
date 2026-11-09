@@ -83,6 +83,7 @@ class PerfDataset {
       purchases: purchases,
       cashRegisters: registers,
       payments: payments,
+      salesTargets: const [],
       timestamp: now,
     );
   }

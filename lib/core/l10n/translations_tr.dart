@@ -901,4 +901,23 @@ const translationsTr = <String, String>{
   'guideSettingsThemeDesc': 'Renk temasını, dili, para birimini ve dükkân bilgilerinizi değiştirin.',
   'guideSettingsBackupTitle': 'Verilerinizi yedekleyin',
   'guideSettingsBackupDesc': 'Verilerinizi kaybetmemek için Google Drive\'a veya bir dosyaya yedek kaydedin.',
+
+  // Sales targets & goals
+  'salesTargets': 'Satış Hedefleri',
+  'monthlyGoals': 'Aylık Hedefler',
+  'monthlyTargets': 'Aylık Hedefler',
+  'revenueTarget': 'Ciro Hedefi',
+  'profitTarget': 'Kâr Hedefi',
+  'orderCountTarget': 'Sipariş Sayısı Hedefi',
+  'productTargets': 'Ürün Hedefleri',
+  'addProductTarget': 'Ürün Hedefi Ekle',
+  'noProductTargets': 'Ürün hedefi belirlenmedi',
+  'saveTargets': 'Hedefleri Kaydet',
+  'editTargets': 'Hedefleri Düzenle',
+  'targetQuantity': 'Hedef Miktar',
+  'goalProgress': 'Hedef İlerlemesi',
+  'achieved': 'Ulaşıldı',
+  'target': 'Hedef',
+  'selectProduct': 'Ürün Seç',
+  'noTargetsSet': 'Bu ay için hedef belirlenmedi',
 };

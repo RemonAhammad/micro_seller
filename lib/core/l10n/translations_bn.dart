@@ -901,4 +901,23 @@ const translationsBn = <String, String>{
   'guideSettingsThemeDesc': 'কালার থিম, ভাষা, মুদ্রা ও দোকানের তথ্য বদলান।',
   'guideSettingsBackupTitle': 'ডেটা ব্যাকআপ রাখুন',
   'guideSettingsBackupDesc': 'Google Drive বা ফাইলে ব্যাকআপ সেভ করুন, যাতে ডেটা কখনো হারিয়ে না যায়।',
+
+  // Sales targets & goals
+  'salesTargets': 'বিক্রয় লক্ষ্য',
+  'monthlyGoals': 'মাসিক লক্ষ্য',
+  'monthlyTargets': 'মাসিক টার্গেট',
+  'revenueTarget': 'বিক্রয়ের টার্গেট',
+  'profitTarget': 'লাভের টার্গেট',
+  'orderCountTarget': 'অর্ডারের টার্গেট',
+  'productTargets': 'পণ্যের টার্গেট',
+  'addProductTarget': 'পণ্যের টার্গেট যোগ করুন',
+  'noProductTargets': 'কোনো পণ্যের টার্গেট নেই',
+  'saveTargets': 'টার্গেট সেভ করুন',
+  'editTargets': 'টার্গেট এডিট করুন',
+  'targetQuantity': 'টার্গেট পরিমাণ',
+  'goalProgress': 'লক্ষ্যের অগ্রগতি',
+  'achieved': 'অর্জিত',
+  'target': 'টার্গেট',
+  'selectProduct': 'পণ্য বেছে নিন',
+  'noTargetsSet': 'এই মাসের জন্য কোনো টার্গেট নেই',
 };

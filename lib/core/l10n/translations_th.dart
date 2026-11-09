@@ -901,4 +901,23 @@ const translationsTh = <String, String>{
   'guideSettingsThemeDesc': 'เปลี่ยนธีมสี ภาษา สกุลเงิน และข้อมูลร้านของคุณ',
   'guideSettingsBackupTitle': 'สำรองข้อมูลของคุณ',
   'guideSettingsBackupDesc': 'บันทึกข้อมูลสำรองไว้ใน Google Drive หรือไฟล์ เพื่อไม่ให้ข้อมูลหาย',
+
+  // Sales targets & goals
+  'salesTargets': 'เป้าหมายยอดขาย',
+  'monthlyGoals': 'เป้าหมายรายเดือน',
+  'monthlyTargets': 'เป้าหมายรายเดือน',
+  'revenueTarget': 'เป้าหมายรายได้',
+  'profitTarget': 'เป้าหมายกำไร',
+  'orderCountTarget': 'เป้าหมายจำนวนออเดอร์',
+  'productTargets': 'เป้าหมายสินค้า',
+  'addProductTarget': 'เพิ่มเป้าหมายสินค้า',
+  'noProductTargets': 'ยังไม่ได้ตั้งเป้าหมายสินค้า',
+  'saveTargets': 'บันทึกเป้าหมาย',
+  'editTargets': 'แก้ไขเป้าหมาย',
+  'targetQuantity': 'จำนวนเป้าหมาย',
+  'goalProgress': 'ความคืบหน้าของเป้าหมาย',
+  'achieved': 'ทำได้แล้ว',
+  'target': 'เป้าหมาย',
+  'selectProduct': 'เลือกสินค้า',
+  'noTargetsSet': 'ยังไม่ได้ตั้งเป้าหมายสำหรับเดือนนี้',
 };

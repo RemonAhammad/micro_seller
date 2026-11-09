@@ -901,4 +901,23 @@ const translationsMs = <String, String>{
   'guideSettingsThemeDesc': 'Tukar tema warna, bahasa, mata wang dan butiran kedai anda.',
   'guideSettingsBackupTitle': 'Sandarkan data anda',
   'guideSettingsBackupDesc': 'Simpan sandaran ke Google Drive atau fail supaya data anda tidak hilang.',
+
+  // Sales targets & goals
+  'salesTargets': 'Sasaran Jualan',
+  'monthlyGoals': 'Matlamat Bulanan',
+  'monthlyTargets': 'Sasaran Bulanan',
+  'revenueTarget': 'Sasaran Hasil',
+  'profitTarget': 'Sasaran Keuntungan',
+  'orderCountTarget': 'Sasaran Bilangan Pesanan',
+  'productTargets': 'Sasaran Produk',
+  'addProductTarget': 'Tambah Sasaran Produk',
+  'noProductTargets': 'Tiada sasaran produk ditetapkan',
+  'saveTargets': 'Simpan Sasaran',
+  'editTargets': 'Edit Sasaran',
+  'targetQuantity': 'Kuantiti Sasaran',
+  'goalProgress': 'Kemajuan Matlamat',
+  'achieved': 'Tercapai',
+  'target': 'Sasaran',
+  'selectProduct': 'Pilih Produk',
+  'noTargetsSet': 'Tiada sasaran ditetapkan untuk bulan ini',
 };

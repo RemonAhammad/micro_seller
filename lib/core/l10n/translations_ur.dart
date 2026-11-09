@@ -901,4 +901,23 @@ const translationsUr = <String, String>{
   'guideSettingsThemeDesc': 'رنگ تھیم، زبان، کرنسی اور اپنی دکان کی تفصیلات بدلیں۔',
   'guideSettingsBackupTitle': 'اپنا ڈیٹا بیک اپ کریں',
   'guideSettingsBackupDesc': 'Google Drive یا فائل میں بیک اپ محفوظ کریں تاکہ آپ کا ڈیٹا کبھی ضائع نہ ہو۔',
+
+  // Sales targets & goals
+  'salesTargets': 'فروخت کے اہداف',
+  'monthlyGoals': 'ماہانہ اہداف',
+  'monthlyTargets': 'ماہانہ ٹارگٹ',
+  'revenueTarget': 'آمدنی کا ٹارگٹ',
+  'profitTarget': 'منافع کا ٹارگٹ',
+  'orderCountTarget': 'آرڈرز کی تعداد کا ٹارگٹ',
+  'productTargets': 'پروڈکٹ ٹارگٹس',
+  'addProductTarget': 'پروڈکٹ ٹارگٹ شامل کریں',
+  'noProductTargets': 'کوئی پروڈکٹ ٹارگٹ سیٹ نہیں',
+  'saveTargets': 'ٹارگٹس محفوظ کریں',
+  'editTargets': 'ٹارگٹس میں ترمیم کریں',
+  'targetQuantity': 'ٹارگٹ مقدار',
+  'goalProgress': 'ہدف کی پیش رفت',
+  'achieved': 'حاصل ہوا',
+  'target': 'ٹارگٹ',
+  'selectProduct': 'پروڈکٹ منتخب کریں',
+  'noTargetsSet': 'اس مہینے کے لیے کوئی ٹارگٹ سیٹ نہیں',
 };

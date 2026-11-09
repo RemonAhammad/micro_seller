@@ -14,6 +14,7 @@ import '../constants/sidebar_items.dart';
 import '../../shared/widgets/app_zoom.dart';
 import '../../features/categories/presentation/category_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/goals/presentation/goals_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
 import '../../features/products/presentation/catalog_share_screen.dart';
 import '../../features/products/presentation/product_form_screen.dart';
@@ -91,7 +92,17 @@ final appRouter = GoRouter(
       builder: (context, state, navigationShell) => _NavigationShell(navigationShell: navigationShell),
       branches: [
         _branch([
-          GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
+          GoRoute(
+            path: '/',
+            builder: (_, __) => const DashboardScreen(),
+            routes: [
+              GoRoute(
+                path: 'goals',
+                pageBuilder: (context, state) =>
+                    _subPage(const GoalsScreen(), state),
+              ),
+            ],
+          ),
         ]),
         _branch([
           GoRoute(
