@@ -920,4 +920,14 @@ const translationsBn = <String, String>{
   'target': 'টার্গেট',
   'selectProduct': 'পণ্য বেছে নিন',
   'noTargetsSet': 'এই মাসের জন্য কোনো টার্গেট নেই',
+
+  'expiryDate': 'মেয়াদ শেষের তারিখ',
+  'nearExpiry': 'মেয়াদ শেষের কাছাকাছি',
+  'expired': 'মেয়াদ উত্তীর্ণ',
+  'expiresOn': 'মেয়াদ শেষ হবে {date}',
+  'expiredOn': 'মেয়াদ শেষ হয়েছে {date}',
+  'nearExpiryProducts': 'মেয়াদ শেষের কাছাকাছি পণ্য',
+  'noExpiryDate': 'মেয়াদের তারিখ নেই',
+  'expiryAlertTitle': 'মেয়াদ সতর্কতা',
+  'expiryAlertBody': '{count}টি পণ্যের মেয়াদ শীঘ্রই শেষ হচ্ছে',
 };

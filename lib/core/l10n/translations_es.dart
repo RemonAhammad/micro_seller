@@ -919,4 +919,14 @@ const translationsEs = <String, String>{
   'target': 'Meta',
   'selectProduct': 'Seleccionar producto',
   'noTargetsSet': 'No hay metas para este mes',
+
+  'expiryDate': 'Fecha de caducidad',
+  'nearExpiry': 'Próximo a caducar',
+  'expired': 'Caducado',
+  'expiresOn': 'Caduca el {date}',
+  'expiredOn': 'Caducó el {date}',
+  'nearExpiryProducts': 'Productos próximos a caducar',
+  'noExpiryDate': 'Sin fecha de caducidad',
+  'expiryAlertTitle': 'Alerta de caducidad',
+  'expiryAlertBody': '{count} producto(s) próximo(s) a caducar',
 };

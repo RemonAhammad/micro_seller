@@ -920,4 +920,14 @@ const translationsVi = <String, String>{
   'target': 'Mục tiêu',
   'selectProduct': 'Chọn sản phẩm',
   'noTargetsSet': 'Chưa đặt mục tiêu cho tháng này',
+
+  'expiryDate': 'Hạn sử dụng',
+  'nearExpiry': 'Sắp hết hạn',
+  'expired': 'Đã hết hạn',
+  'expiresOn': 'Hết hạn vào {date}',
+  'expiredOn': 'Đã hết hạn vào {date}',
+  'nearExpiryProducts': 'Sản phẩm sắp hết hạn',
+  'noExpiryDate': 'Không có hạn sử dụng',
+  'expiryAlertTitle': 'Cảnh báo hết hạn',
+  'expiryAlertBody': '{count} sản phẩm sắp hết hạn',
 };

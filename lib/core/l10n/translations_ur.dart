@@ -920,4 +920,14 @@ const translationsUr = <String, String>{
   'target': 'ٹارگٹ',
   'selectProduct': 'پروڈکٹ منتخب کریں',
   'noTargetsSet': 'اس مہینے کے لیے کوئی ٹارگٹ سیٹ نہیں',
+
+  'expiryDate': 'میعاد ختم ہونے کی تاریخ',
+  'nearExpiry': 'میعاد ختم ہونے کے قریب',
+  'expired': 'میعاد ختم',
+  'expiresOn': 'میعاد ختم ہوگی {date}',
+  'expiredOn': 'میعاد ختم ہوئی {date}',
+  'nearExpiryProducts': 'میعاد ختم ہونے کے قریب پروڈکٹس',
+  'noExpiryDate': 'میعاد کی تاریخ نہیں',
+  'expiryAlertTitle': 'میعاد کا الرٹ',
+  'expiryAlertBody': '{count} پروڈکٹ(س) کی میعاد جلد ختم ہو رہی ہے',
 };

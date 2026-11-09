@@ -277,7 +277,7 @@ as double,
 /// @nodoc
 mixin _$DashboardStats {
 
- double get todayRevenue; double get thisMonthRevenue; double get thisMonthProfit; int get totalOrders; int get pendingOrders; List<Product> get lowStockProducts; List<DailySales> get weeklySales; Map<OrderStatus, int> get statusCounts;
+ double get todayRevenue; double get thisMonthRevenue; double get thisMonthProfit; int get totalOrders; int get pendingOrders; List<Product> get lowStockProducts; List<Product> get nearExpiryProducts; List<DailySales> get weeklySales; Map<OrderStatus, int> get statusCounts;
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -288,16 +288,16 @@ $DashboardStatsCopyWith<DashboardStats> get copyWith => _$DashboardStatsCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.todayRevenue, todayRevenue) || other.todayRevenue == todayRevenue)&&(identical(other.thisMonthRevenue, thisMonthRevenue) || other.thisMonthRevenue == thisMonthRevenue)&&(identical(other.thisMonthProfit, thisMonthProfit) || other.thisMonthProfit == thisMonthProfit)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.pendingOrders, pendingOrders) || other.pendingOrders == pendingOrders)&&const DeepCollectionEquality().equals(other.lowStockProducts, lowStockProducts)&&const DeepCollectionEquality().equals(other.weeklySales, weeklySales)&&const DeepCollectionEquality().equals(other.statusCounts, statusCounts));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.todayRevenue, todayRevenue) || other.todayRevenue == todayRevenue)&&(identical(other.thisMonthRevenue, thisMonthRevenue) || other.thisMonthRevenue == thisMonthRevenue)&&(identical(other.thisMonthProfit, thisMonthProfit) || other.thisMonthProfit == thisMonthProfit)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.pendingOrders, pendingOrders) || other.pendingOrders == pendingOrders)&&const DeepCollectionEquality().equals(other.lowStockProducts, lowStockProducts)&&const DeepCollectionEquality().equals(other.nearExpiryProducts, nearExpiryProducts)&&const DeepCollectionEquality().equals(other.weeklySales, weeklySales)&&const DeepCollectionEquality().equals(other.statusCounts, statusCounts));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,todayRevenue,thisMonthRevenue,thisMonthProfit,totalOrders,pendingOrders,const DeepCollectionEquality().hash(lowStockProducts),const DeepCollectionEquality().hash(weeklySales),const DeepCollectionEquality().hash(statusCounts));
+int get hashCode => Object.hash(runtimeType,todayRevenue,thisMonthRevenue,thisMonthProfit,totalOrders,pendingOrders,const DeepCollectionEquality().hash(lowStockProducts),const DeepCollectionEquality().hash(nearExpiryProducts),const DeepCollectionEquality().hash(weeklySales),const DeepCollectionEquality().hash(statusCounts));
 
 @override
 String toString() {
-  return 'DashboardStats(todayRevenue: $todayRevenue, thisMonthRevenue: $thisMonthRevenue, thisMonthProfit: $thisMonthProfit, totalOrders: $totalOrders, pendingOrders: $pendingOrders, lowStockProducts: $lowStockProducts, weeklySales: $weeklySales, statusCounts: $statusCounts)';
+  return 'DashboardStats(todayRevenue: $todayRevenue, thisMonthRevenue: $thisMonthRevenue, thisMonthProfit: $thisMonthProfit, totalOrders: $totalOrders, pendingOrders: $pendingOrders, lowStockProducts: $lowStockProducts, nearExpiryProducts: $nearExpiryProducts, weeklySales: $weeklySales, statusCounts: $statusCounts)';
 }
 
 
@@ -308,7 +308,7 @@ abstract mixin class $DashboardStatsCopyWith<$Res>  {
   factory $DashboardStatsCopyWith(DashboardStats value, $Res Function(DashboardStats) _then) = _$DashboardStatsCopyWithImpl;
 @useResult
 $Res call({
- double todayRevenue, double thisMonthRevenue, double thisMonthProfit, int totalOrders, int pendingOrders, List<Product> lowStockProducts, List<DailySales> weeklySales, Map<OrderStatus, int> statusCounts
+ double todayRevenue, double thisMonthRevenue, double thisMonthProfit, int totalOrders, int pendingOrders, List<Product> lowStockProducts, List<Product> nearExpiryProducts, List<DailySales> weeklySales, Map<OrderStatus, int> statusCounts
 });
 
 
@@ -325,7 +325,7 @@ class _$DashboardStatsCopyWithImpl<$Res>
 
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? todayRevenue = null,Object? thisMonthRevenue = null,Object? thisMonthProfit = null,Object? totalOrders = null,Object? pendingOrders = null,Object? lowStockProducts = null,Object? weeklySales = null,Object? statusCounts = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? todayRevenue = null,Object? thisMonthRevenue = null,Object? thisMonthProfit = null,Object? totalOrders = null,Object? pendingOrders = null,Object? lowStockProducts = null,Object? nearExpiryProducts = null,Object? weeklySales = null,Object? statusCounts = null,}) {
   return _then(_self.copyWith(
 todayRevenue: null == todayRevenue ? _self.todayRevenue : todayRevenue // ignore: cast_nullable_to_non_nullable
 as double,thisMonthRevenue: null == thisMonthRevenue ? _self.thisMonthRevenue : thisMonthRevenue // ignore: cast_nullable_to_non_nullable
@@ -333,6 +333,7 @@ as double,thisMonthProfit: null == thisMonthProfit ? _self.thisMonthProfit : thi
 as double,totalOrders: null == totalOrders ? _self.totalOrders : totalOrders // ignore: cast_nullable_to_non_nullable
 as int,pendingOrders: null == pendingOrders ? _self.pendingOrders : pendingOrders // ignore: cast_nullable_to_non_nullable
 as int,lowStockProducts: null == lowStockProducts ? _self.lowStockProducts : lowStockProducts // ignore: cast_nullable_to_non_nullable
+as List<Product>,nearExpiryProducts: null == nearExpiryProducts ? _self.nearExpiryProducts : nearExpiryProducts // ignore: cast_nullable_to_non_nullable
 as List<Product>,weeklySales: null == weeklySales ? _self.weeklySales : weeklySales // ignore: cast_nullable_to_non_nullable
 as List<DailySales>,statusCounts: null == statusCounts ? _self.statusCounts : statusCounts // ignore: cast_nullable_to_non_nullable
 as Map<OrderStatus, int>,
@@ -420,10 +421,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double todayRevenue,  double thisMonthRevenue,  double thisMonthProfit,  int totalOrders,  int pendingOrders,  List<Product> lowStockProducts,  List<DailySales> weeklySales,  Map<OrderStatus, int> statusCounts)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double todayRevenue,  double thisMonthRevenue,  double thisMonthProfit,  int totalOrders,  int pendingOrders,  List<Product> lowStockProducts,  List<Product> nearExpiryProducts,  List<DailySales> weeklySales,  Map<OrderStatus, int> statusCounts)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DashboardStats() when $default != null:
-return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,_that.totalOrders,_that.pendingOrders,_that.lowStockProducts,_that.weeklySales,_that.statusCounts);case _:
+return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,_that.totalOrders,_that.pendingOrders,_that.lowStockProducts,_that.nearExpiryProducts,_that.weeklySales,_that.statusCounts);case _:
   return orElse();
 
 }
@@ -441,10 +442,10 @@ return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double todayRevenue,  double thisMonthRevenue,  double thisMonthProfit,  int totalOrders,  int pendingOrders,  List<Product> lowStockProducts,  List<DailySales> weeklySales,  Map<OrderStatus, int> statusCounts)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double todayRevenue,  double thisMonthRevenue,  double thisMonthProfit,  int totalOrders,  int pendingOrders,  List<Product> lowStockProducts,  List<Product> nearExpiryProducts,  List<DailySales> weeklySales,  Map<OrderStatus, int> statusCounts)  $default,) {final _that = this;
 switch (_that) {
 case _DashboardStats():
-return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,_that.totalOrders,_that.pendingOrders,_that.lowStockProducts,_that.weeklySales,_that.statusCounts);case _:
+return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,_that.totalOrders,_that.pendingOrders,_that.lowStockProducts,_that.nearExpiryProducts,_that.weeklySales,_that.statusCounts);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -461,10 +462,10 @@ return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double todayRevenue,  double thisMonthRevenue,  double thisMonthProfit,  int totalOrders,  int pendingOrders,  List<Product> lowStockProducts,  List<DailySales> weeklySales,  Map<OrderStatus, int> statusCounts)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double todayRevenue,  double thisMonthRevenue,  double thisMonthProfit,  int totalOrders,  int pendingOrders,  List<Product> lowStockProducts,  List<Product> nearExpiryProducts,  List<DailySales> weeklySales,  Map<OrderStatus, int> statusCounts)?  $default,) {final _that = this;
 switch (_that) {
 case _DashboardStats() when $default != null:
-return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,_that.totalOrders,_that.pendingOrders,_that.lowStockProducts,_that.weeklySales,_that.statusCounts);case _:
+return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,_that.totalOrders,_that.pendingOrders,_that.lowStockProducts,_that.nearExpiryProducts,_that.weeklySales,_that.statusCounts);case _:
   return null;
 
 }
@@ -476,7 +477,7 @@ return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,
 
 
 class _DashboardStats implements DashboardStats {
-  const _DashboardStats({this.todayRevenue = 0.0, this.thisMonthRevenue = 0.0, this.thisMonthProfit = 0.0, this.totalOrders = 0, this.pendingOrders = 0, final  List<Product> lowStockProducts = const [], final  List<DailySales> weeklySales = const [], final  Map<OrderStatus, int> statusCounts = const <OrderStatus, int>{}}): _lowStockProducts = lowStockProducts,_weeklySales = weeklySales,_statusCounts = statusCounts;
+  const _DashboardStats({this.todayRevenue = 0.0, this.thisMonthRevenue = 0.0, this.thisMonthProfit = 0.0, this.totalOrders = 0, this.pendingOrders = 0, final  List<Product> lowStockProducts = const [], final  List<Product> nearExpiryProducts = const [], final  List<DailySales> weeklySales = const [], final  Map<OrderStatus, int> statusCounts = const <OrderStatus, int>{}}): _lowStockProducts = lowStockProducts,_nearExpiryProducts = nearExpiryProducts,_weeklySales = weeklySales,_statusCounts = statusCounts;
   
 
 @override@JsonKey() final  double todayRevenue;
@@ -489,6 +490,13 @@ class _DashboardStats implements DashboardStats {
   if (_lowStockProducts is EqualUnmodifiableListView) return _lowStockProducts;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_lowStockProducts);
+}
+
+ final  List<Product> _nearExpiryProducts;
+@override@JsonKey() List<Product> get nearExpiryProducts {
+  if (_nearExpiryProducts is EqualUnmodifiableListView) return _nearExpiryProducts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_nearExpiryProducts);
 }
 
  final  List<DailySales> _weeklySales;
@@ -516,16 +524,16 @@ _$DashboardStatsCopyWith<_DashboardStats> get copyWith => __$DashboardStatsCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.todayRevenue, todayRevenue) || other.todayRevenue == todayRevenue)&&(identical(other.thisMonthRevenue, thisMonthRevenue) || other.thisMonthRevenue == thisMonthRevenue)&&(identical(other.thisMonthProfit, thisMonthProfit) || other.thisMonthProfit == thisMonthProfit)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.pendingOrders, pendingOrders) || other.pendingOrders == pendingOrders)&&const DeepCollectionEquality().equals(other._lowStockProducts, _lowStockProducts)&&const DeepCollectionEquality().equals(other._weeklySales, _weeklySales)&&const DeepCollectionEquality().equals(other._statusCounts, _statusCounts));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.todayRevenue, todayRevenue) || other.todayRevenue == todayRevenue)&&(identical(other.thisMonthRevenue, thisMonthRevenue) || other.thisMonthRevenue == thisMonthRevenue)&&(identical(other.thisMonthProfit, thisMonthProfit) || other.thisMonthProfit == thisMonthProfit)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.pendingOrders, pendingOrders) || other.pendingOrders == pendingOrders)&&const DeepCollectionEquality().equals(other._lowStockProducts, _lowStockProducts)&&const DeepCollectionEquality().equals(other._nearExpiryProducts, _nearExpiryProducts)&&const DeepCollectionEquality().equals(other._weeklySales, _weeklySales)&&const DeepCollectionEquality().equals(other._statusCounts, _statusCounts));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,todayRevenue,thisMonthRevenue,thisMonthProfit,totalOrders,pendingOrders,const DeepCollectionEquality().hash(_lowStockProducts),const DeepCollectionEquality().hash(_weeklySales),const DeepCollectionEquality().hash(_statusCounts));
+int get hashCode => Object.hash(runtimeType,todayRevenue,thisMonthRevenue,thisMonthProfit,totalOrders,pendingOrders,const DeepCollectionEquality().hash(_lowStockProducts),const DeepCollectionEquality().hash(_nearExpiryProducts),const DeepCollectionEquality().hash(_weeklySales),const DeepCollectionEquality().hash(_statusCounts));
 
 @override
 String toString() {
-  return 'DashboardStats(todayRevenue: $todayRevenue, thisMonthRevenue: $thisMonthRevenue, thisMonthProfit: $thisMonthProfit, totalOrders: $totalOrders, pendingOrders: $pendingOrders, lowStockProducts: $lowStockProducts, weeklySales: $weeklySales, statusCounts: $statusCounts)';
+  return 'DashboardStats(todayRevenue: $todayRevenue, thisMonthRevenue: $thisMonthRevenue, thisMonthProfit: $thisMonthProfit, totalOrders: $totalOrders, pendingOrders: $pendingOrders, lowStockProducts: $lowStockProducts, nearExpiryProducts: $nearExpiryProducts, weeklySales: $weeklySales, statusCounts: $statusCounts)';
 }
 
 
@@ -536,7 +544,7 @@ abstract mixin class _$DashboardStatsCopyWith<$Res> implements $DashboardStatsCo
   factory _$DashboardStatsCopyWith(_DashboardStats value, $Res Function(_DashboardStats) _then) = __$DashboardStatsCopyWithImpl;
 @override @useResult
 $Res call({
- double todayRevenue, double thisMonthRevenue, double thisMonthProfit, int totalOrders, int pendingOrders, List<Product> lowStockProducts, List<DailySales> weeklySales, Map<OrderStatus, int> statusCounts
+ double todayRevenue, double thisMonthRevenue, double thisMonthProfit, int totalOrders, int pendingOrders, List<Product> lowStockProducts, List<Product> nearExpiryProducts, List<DailySales> weeklySales, Map<OrderStatus, int> statusCounts
 });
 
 
@@ -553,7 +561,7 @@ class __$DashboardStatsCopyWithImpl<$Res>
 
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? todayRevenue = null,Object? thisMonthRevenue = null,Object? thisMonthProfit = null,Object? totalOrders = null,Object? pendingOrders = null,Object? lowStockProducts = null,Object? weeklySales = null,Object? statusCounts = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? todayRevenue = null,Object? thisMonthRevenue = null,Object? thisMonthProfit = null,Object? totalOrders = null,Object? pendingOrders = null,Object? lowStockProducts = null,Object? nearExpiryProducts = null,Object? weeklySales = null,Object? statusCounts = null,}) {
   return _then(_DashboardStats(
 todayRevenue: null == todayRevenue ? _self.todayRevenue : todayRevenue // ignore: cast_nullable_to_non_nullable
 as double,thisMonthRevenue: null == thisMonthRevenue ? _self.thisMonthRevenue : thisMonthRevenue // ignore: cast_nullable_to_non_nullable
@@ -561,6 +569,7 @@ as double,thisMonthProfit: null == thisMonthProfit ? _self.thisMonthProfit : thi
 as double,totalOrders: null == totalOrders ? _self.totalOrders : totalOrders // ignore: cast_nullable_to_non_nullable
 as int,pendingOrders: null == pendingOrders ? _self.pendingOrders : pendingOrders // ignore: cast_nullable_to_non_nullable
 as int,lowStockProducts: null == lowStockProducts ? _self._lowStockProducts : lowStockProducts // ignore: cast_nullable_to_non_nullable
+as List<Product>,nearExpiryProducts: null == nearExpiryProducts ? _self._nearExpiryProducts : nearExpiryProducts // ignore: cast_nullable_to_non_nullable
 as List<Product>,weeklySales: null == weeklySales ? _self._weeklySales : weeklySales // ignore: cast_nullable_to_non_nullable
 as List<DailySales>,statusCounts: null == statusCounts ? _self._statusCounts : statusCounts // ignore: cast_nullable_to_non_nullable
 as Map<OrderStatus, int>,

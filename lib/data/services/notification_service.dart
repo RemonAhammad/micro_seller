@@ -91,8 +91,32 @@ class NotificationService {
     );
   }
 
+  static Future<void> showExpiryAlert(List<Product> products) async {
+    if (products.isEmpty) return;
+
+    final names = products.take(3).map((p) => p.name).join(', ');
+    final extra =
+        products.length > 3 ? ' and ${products.length - 3} more' : '';
+
+    await _plugin.show(
+      id: 4,
+      title: 'Expiry Alert',
+      body: '$names$extra ${products.length == 1 ? "is" : "are"} expiring soon',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'expiry_alerts',
+          'Expiry Alerts',
+          channelDescription: 'Notifications for near-expiry products',
+          importance: Importance.high,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   static Future<void> checkAndNotify(Isar isar,
-      {List<Product>? lowStock}) async {
+      {List<Product>? lowStock, List<Product>? nearExpiry}) async {
 
     final init = _initFuture;
     if (init == null) return;
@@ -119,6 +143,14 @@ class NotificationService {
         .count();
     if (unpaidCount > 0) {
       await showPaymentReminder(unpaidCount, 0);
+    }
+
+    final nearExpiryProducts = nearExpiry ??
+        (await isar.products.filter().isActiveEqualTo(true).findAll())
+            .where((p) => p.isNearExpiry || p.isExpired)
+            .toList();
+    if (nearExpiryProducts.isNotEmpty) {
+      await showExpiryAlert(nearExpiryProducts);
     }
   }
 }

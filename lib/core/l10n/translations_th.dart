@@ -920,4 +920,14 @@ const translationsTh = <String, String>{
   'target': 'เป้าหมาย',
   'selectProduct': 'เลือกสินค้า',
   'noTargetsSet': 'ยังไม่ได้ตั้งเป้าหมายสำหรับเดือนนี้',
+
+  'expiryDate': 'วันหมดอายุ',
+  'nearExpiry': 'ใกล้หมดอายุ',
+  'expired': 'หมดอายุแล้ว',
+  'expiresOn': 'หมดอายุวันที่ {date}',
+  'expiredOn': 'หมดอายุเมื่อ {date}',
+  'nearExpiryProducts': 'สินค้าใกล้หมดอายุ',
+  'noExpiryDate': 'ไม่มีวันหมดอายุ',
+  'expiryAlertTitle': 'แจ้งเตือนวันหมดอายุ',
+  'expiryAlertBody': 'สินค้า {count} รายการใกล้หมดอายุ',
 };

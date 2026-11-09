@@ -919,4 +919,14 @@ const translationsAr = <String, String>{
   'target': 'الهدف',
   'selectProduct': 'اختر منتجًا',
   'noTargetsSet': 'لم يتم تحديد أهداف لهذا الشهر',
+
+  'expiryDate': 'تاريخ الانتهاء',
+  'nearExpiry': 'قارب على الانتهاء',
+  'expired': 'منتهي الصلاحية',
+  'expiresOn': 'ينتهي في {date}',
+  'expiredOn': 'انتهى في {date}',
+  'nearExpiryProducts': 'منتجات قاربت على الانتهاء',
+  'noExpiryDate': 'لا يوجد تاريخ انتهاء',
+  'expiryAlertTitle': 'تنبيه انتهاء الصلاحية',
+  'expiryAlertBody': '{count} منتج(ات) تنتهي صلاحيتها قريبًا',
 };

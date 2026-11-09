@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../data/models/product.dart';
 import '../../../../data/services/product_image_store.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import 'stock_badge.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../../core/constants/app_icons.dart';
@@ -105,6 +107,24 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (product.isExpired || product.isNearExpiry)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+                child: Text(
+                  product.isExpired
+                      ? AppStrings.of(context).tr('expired')
+                      : AppStrings.of(context).tr('nearExpiry'),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: product.isExpired
+                        ? AppColors.statusCancelled
+                        : AppColors.statusPending,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
           ],
         ),
       ),

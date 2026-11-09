@@ -920,4 +920,14 @@ const translationsPt = <String, String>{
   'target': 'Meta',
   'selectProduct': 'Selecionar produto',
   'noTargetsSet': 'Nenhuma meta definida para este mês',
+
+  'expiryDate': 'Data de validade',
+  'nearExpiry': 'Perto do vencimento',
+  'expired': 'Vencido',
+  'expiresOn': 'Vence em {date}',
+  'expiredOn': 'Venceu em {date}',
+  'nearExpiryProducts': 'Produtos perto do vencimento',
+  'noExpiryDate': 'Sem data de validade',
+  'expiryAlertTitle': 'Alerta de validade',
+  'expiryAlertBody': '{count} produto(s) vencendo em breve',
 };

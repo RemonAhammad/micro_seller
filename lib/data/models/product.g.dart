@@ -37,53 +37,58 @@ const ProductSchema = CollectionSchema(
       name: r'description',
       type: IsarType.string,
     ),
-    r'imagePath': PropertySchema(
+    r'expiryDate': PropertySchema(
       id: 4,
+      name: r'expiryDate',
+      type: IsarType.dateTime,
+    ),
+    r'imagePath': PropertySchema(
+      id: 5,
       name: r'imagePath',
       type: IsarType.string,
     ),
-    r'isActive': PropertySchema(id: 5, name: r'isActive', type: IsarType.bool),
+    r'isActive': PropertySchema(id: 6, name: r'isActive', type: IsarType.bool),
     r'lowStockThreshold': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'lowStockThreshold',
       type: IsarType.long,
     ),
-    r'name': PropertySchema(id: 7, name: r'name', type: IsarType.string),
-    r'qrCode': PropertySchema(id: 8, name: r'qrCode', type: IsarType.string),
+    r'name': PropertySchema(id: 8, name: r'name', type: IsarType.string),
+    r'qrCode': PropertySchema(id: 9, name: r'qrCode', type: IsarType.string),
     r'sellingPrice': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'sellingPrice',
       type: IsarType.double,
     ),
-    r'sku': PropertySchema(id: 10, name: r'sku', type: IsarType.string),
-    r'stockQty': PropertySchema(id: 11, name: r'stockQty', type: IsarType.long),
+    r'sku': PropertySchema(id: 11, name: r'sku', type: IsarType.string),
+    r'stockQty': PropertySchema(id: 12, name: r'stockQty', type: IsarType.long),
     r'supplierId': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'supplierId',
       type: IsarType.long,
     ),
-    r'tags': PropertySchema(id: 13, name: r'tags', type: IsarType.stringList),
+    r'tags': PropertySchema(id: 14, name: r'tags', type: IsarType.stringList),
     r'updatedAt': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'variantAttributes': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'variantAttributes',
       type: IsarType.objectList,
 
       target: r'VariantAttribute',
     ),
     r'variantCombinations': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'variantCombinations',
       type: IsarType.objectList,
 
       target: r'VariantCombination',
     ),
     r'variants': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'variants',
       type: IsarType.objectList,
 
@@ -197,31 +202,32 @@ void _productSerialize(
   writer.writeDouble(offsets[1], object.costPrice);
   writer.writeDateTime(offsets[2], object.createdAt);
   writer.writeString(offsets[3], object.description);
-  writer.writeString(offsets[4], object.imagePath);
-  writer.writeBool(offsets[5], object.isActive);
-  writer.writeLong(offsets[6], object.lowStockThreshold);
-  writer.writeString(offsets[7], object.name);
-  writer.writeString(offsets[8], object.qrCode);
-  writer.writeDouble(offsets[9], object.sellingPrice);
-  writer.writeString(offsets[10], object.sku);
-  writer.writeLong(offsets[11], object.stockQty);
-  writer.writeLong(offsets[12], object.supplierId);
-  writer.writeStringList(offsets[13], object.tags);
-  writer.writeDateTime(offsets[14], object.updatedAt);
+  writer.writeDateTime(offsets[4], object.expiryDate);
+  writer.writeString(offsets[5], object.imagePath);
+  writer.writeBool(offsets[6], object.isActive);
+  writer.writeLong(offsets[7], object.lowStockThreshold);
+  writer.writeString(offsets[8], object.name);
+  writer.writeString(offsets[9], object.qrCode);
+  writer.writeDouble(offsets[10], object.sellingPrice);
+  writer.writeString(offsets[11], object.sku);
+  writer.writeLong(offsets[12], object.stockQty);
+  writer.writeLong(offsets[13], object.supplierId);
+  writer.writeStringList(offsets[14], object.tags);
+  writer.writeDateTime(offsets[15], object.updatedAt);
   writer.writeObjectList<VariantAttribute>(
-    offsets[15],
+    offsets[16],
     allOffsets,
     VariantAttributeSchema.serialize,
     object.variantAttributes,
   );
   writer.writeObjectList<VariantCombination>(
-    offsets[16],
+    offsets[17],
     allOffsets,
     VariantCombinationSchema.serialize,
     object.variantCombinations,
   );
   writer.writeObjectList<ProductVariant>(
-    offsets[17],
+    offsets[18],
     allOffsets,
     ProductVariantSchema.serialize,
     object.variants,
@@ -239,21 +245,22 @@ Product _productDeserialize(
     costPrice: reader.readDoubleOrNull(offsets[1]) ?? 0.0,
     createdAt: reader.readDateTimeOrNull(offsets[2]),
     description: reader.readStringOrNull(offsets[3]) ?? '',
+    expiryDate: reader.readDateTimeOrNull(offsets[4]),
     id: id,
-    imagePath: reader.readStringOrNull(offsets[4]) ?? '',
-    isActive: reader.readBoolOrNull(offsets[5]) ?? true,
-    lowStockThreshold: reader.readLongOrNull(offsets[6]) ?? 10,
-    name: reader.readString(offsets[7]),
-    qrCode: reader.readStringOrNull(offsets[8]) ?? '',
-    sellingPrice: reader.readDouble(offsets[9]),
-    sku: reader.readStringOrNull(offsets[10]) ?? '',
-    stockQty: reader.readLongOrNull(offsets[11]) ?? 0,
-    supplierId: reader.readLongOrNull(offsets[12]) ?? 0,
-    tags: reader.readStringList(offsets[13]) ?? const [],
-    updatedAt: reader.readDateTimeOrNull(offsets[14]),
+    imagePath: reader.readStringOrNull(offsets[5]) ?? '',
+    isActive: reader.readBoolOrNull(offsets[6]) ?? true,
+    lowStockThreshold: reader.readLongOrNull(offsets[7]) ?? 10,
+    name: reader.readString(offsets[8]),
+    qrCode: reader.readStringOrNull(offsets[9]) ?? '',
+    sellingPrice: reader.readDouble(offsets[10]),
+    sku: reader.readStringOrNull(offsets[11]) ?? '',
+    stockQty: reader.readLongOrNull(offsets[12]) ?? 0,
+    supplierId: reader.readLongOrNull(offsets[13]) ?? 0,
+    tags: reader.readStringList(offsets[14]) ?? const [],
+    updatedAt: reader.readDateTimeOrNull(offsets[15]),
     variantAttributes:
         reader.readObjectList<VariantAttribute>(
-          offsets[15],
+          offsets[16],
           VariantAttributeSchema.deserialize,
           allOffsets,
           VariantAttribute(),
@@ -261,7 +268,7 @@ Product _productDeserialize(
         const [],
     variantCombinations:
         reader.readObjectList<VariantCombination>(
-          offsets[16],
+          offsets[17],
           VariantCombinationSchema.deserialize,
           allOffsets,
           VariantCombination(),
@@ -269,7 +276,7 @@ Product _productDeserialize(
         const [],
     variants:
         reader.readObjectList<ProductVariant>(
-          offsets[17],
+          offsets[18],
           ProductVariantSchema.deserialize,
           allOffsets,
           ProductVariant(),
@@ -295,28 +302,30 @@ P _productDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 4:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 6:
-      return (reader.readLongOrNull(offset) ?? 10) as P;
+      return (reader.readBoolOrNull(offset) ?? true) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 10) as P;
     case 8:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readDouble(offset)) as P;
-    case 10:
       return (reader.readStringOrNull(offset) ?? '') as P;
+    case 10:
+      return (reader.readDouble(offset)) as P;
     case 11:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 12:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 13:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 14:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 15:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 16:
       return (reader.readObjectList<VariantAttribute>(
                 offset,
                 VariantAttributeSchema.deserialize,
@@ -325,7 +334,7 @@ P _productDeserializeProp<P>(
               ) ??
               const [])
           as P;
-    case 16:
+    case 17:
       return (reader.readObjectList<VariantCombination>(
                 offset,
                 VariantCombinationSchema.deserialize,
@@ -334,7 +343,7 @@ P _productDeserializeProp<P>(
               ) ??
               const [])
           as P;
-    case 17:
+    case 18:
       return (reader.readObjectList<ProductVariant>(
                 offset,
                 ProductVariantSchema.deserialize,
@@ -1116,6 +1125,81 @@ extension ProductQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'description', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> expiryDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'expiryDate'),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> expiryDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'expiryDate'),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> expiryDateEqualTo(
+    DateTime? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'expiryDate', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> expiryDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'expiryDate',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> expiryDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'expiryDate',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> expiryDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'expiryDate',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
       );
     });
   }
@@ -2550,6 +2634,18 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
     });
   }
 
+  QueryBuilder<Product, Product, QAfterSortBy> sortByExpiryDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expiryDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByExpiryDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expiryDate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> sortByImagePath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'imagePath', Sort.asc);
@@ -2721,6 +2817,18 @@ extension ProductQuerySortThenBy
     });
   }
 
+  QueryBuilder<Product, Product, QAfterSortBy> thenByExpiryDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expiryDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByExpiryDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expiryDate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -2884,6 +2992,12 @@ extension ProductQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Product, Product, QDistinct> distinctByExpiryDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'expiryDate');
+    });
+  }
+
   QueryBuilder<Product, Product, QDistinct> distinctByImagePath({
     bool caseSensitive = true,
   }) {
@@ -2988,6 +3102,12 @@ extension ProductQueryProperty
   QueryBuilder<Product, String, QQueryOperations> descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<Product, DateTime?, QQueryOperations> expiryDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'expiryDate');
     });
   }
 
@@ -3115,6 +3235,9 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
           .toList() ??
       const [],
   supplierId: (json['supplierId'] as num?)?.toInt() ?? 0,
+  expiryDate: json['expiryDate'] == null
+      ? null
+      : DateTime.parse(json['expiryDate'] as String),
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -3141,6 +3264,7 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
   'variantAttributes': instance.variantAttributes,
   'variantCombinations': instance.variantCombinations,
   'supplierId': instance.supplierId,
+  'expiryDate': instance.expiryDate?.toIso8601String(),
   'createdAt': instance.createdAt?.toIso8601String(),
   'updatedAt': instance.updatedAt?.toIso8601String(),
 };

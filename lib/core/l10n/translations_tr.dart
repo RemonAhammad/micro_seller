@@ -920,4 +920,14 @@ const translationsTr = <String, String>{
   'target': 'Hedef',
   'selectProduct': 'Ürün Seç',
   'noTargetsSet': 'Bu ay için hedef belirlenmedi',
+
+  'expiryDate': 'Son Kullanma Tarihi',
+  'nearExpiry': 'Son Kullanma Tarihi Yaklaşan',
+  'expired': 'Süresi Doldu',
+  'expiresOn': 'Son kullanma: {date}',
+  'expiredOn': 'Süresi doldu: {date}',
+  'nearExpiryProducts': 'Son Kullanma Tarihi Yaklaşan Ürünler',
+  'noExpiryDate': 'Son kullanma tarihi yok',
+  'expiryAlertTitle': 'Son Kullanma Uyarısı',
+  'expiryAlertBody': '{count} ürünün son kullanma tarihi yaklaşıyor',
 };

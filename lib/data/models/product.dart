@@ -27,6 +27,7 @@ class Product {
     this.variantAttributes = const [],
     this.variantCombinations = const [],
     this.supplierId = 0,
+    this.expiryDate,
     this.createdAt,
     this.updatedAt,
   });
@@ -55,6 +56,7 @@ class Product {
 
   int supplierId;
 
+  DateTime? expiryDate;
   DateTime? createdAt;
   DateTime? updatedAt;
 
@@ -62,6 +64,14 @@ class Product {
   double get profitMargin => sellingPrice > 0
       ? ((sellingPrice - costPrice) / sellingPrice) * 100
       : 0;
+
+  @ignore
+  bool get isExpired => expiryDate != null && expiryDate!.isBefore(DateTime.now());
+
+  @ignore
+  bool get isNearExpiry => expiryDate != null &&
+      !isExpired &&
+      expiryDate!.difference(DateTime.now()).inDays <= 30;
 
   @ignore
   bool get isLowStock => hasVariants
@@ -102,6 +112,7 @@ class Product {
     List<VariantAttribute>? variantAttributes,
     List<VariantCombination>? variantCombinations,
     int? supplierId,
+    DateTime? expiryDate,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) =>
@@ -123,6 +134,7 @@ class Product {
         variantAttributes: variantAttributes ?? this.variantAttributes,
         variantCombinations: variantCombinations ?? this.variantCombinations,
         supplierId: supplierId ?? this.supplierId,
+        expiryDate: expiryDate ?? this.expiryDate,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );

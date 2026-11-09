@@ -920,4 +920,14 @@ const translationsMs = <String, String>{
   'target': 'Sasaran',
   'selectProduct': 'Pilih Produk',
   'noTargetsSet': 'Tiada sasaran ditetapkan untuk bulan ini',
+
+  'expiryDate': 'Tarikh Luput',
+  'nearExpiry': 'Hampir Luput',
+  'expired': 'Telah Luput',
+  'expiresOn': 'Luput pada {date}',
+  'expiredOn': 'Telah luput pada {date}',
+  'nearExpiryProducts': 'Produk Hampir Luput',
+  'noExpiryDate': 'Tiada tarikh luput',
+  'expiryAlertTitle': 'Amaran Luput',
+  'expiryAlertBody': '{count} produk akan luput tidak lama lagi',
 };

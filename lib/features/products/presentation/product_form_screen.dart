@@ -31,6 +31,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/scanner_camera.dart';
 import '../../../shared/screens/qr_scanner_screen.dart';
 import '../../suppliers/presentation/supplier_form_screen.dart';
+import 'package:intl/intl.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 
@@ -68,6 +69,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _qrCtrl = TextEditingController();
 
   String? _imagePath;
+  DateTime? _expiryDate;
   bool _isCompressing = false;
   bool _isLoading = false;
   Product? _existingProduct;
@@ -119,6 +121,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         product.lowStockThreshold > 0 ? product.lowStockThreshold.toString() : '';
     _categoryCtrl.text = product.category;
     _qrCtrl.text = product.qrCode;
+    _expiryDate = product.expiryDate;
 
     if (product.supplierId > 0) {
       try {
@@ -503,6 +506,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         variantAttributes: variantAttributes,
         variantCombinations: variantCombinations,
         supplierId: _selectedSupplier?.id ?? 0,
+        expiryDate: _expiryDate,
         createdAt: existing?.createdAt,
       );
 
@@ -792,6 +796,49 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () async {
+                            final now = DateTime.now();
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _expiryDate ?? now,
+                              firstDate: now,
+                              lastDate: DateTime(now.year + 5),
+                            );
+                            if (picked != null) {
+                              setState(() => _expiryDate = picked);
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: s.tr('expiryDate'),
+                              prefixIcon: const Padding(
+                                padding: EdgeInsets.only(left: 12, right: 8),
+                                child: ThinIcon(tabler.Calendar.new, size: 20),
+                              ),
+                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                              suffixIcon: _expiryDate != null
+                                  ? IconButton(
+                                      icon: const ThinIcon(tabler.X.new, size: 16),
+                                      onPressed: () => setState(() => _expiryDate = null),
+                                      tooltip: s.tr('clear'),
+                                    )
+                                  : null,
+                            ),
+                            child: Text(
+                              _expiryDate != null
+                                  ? DateFormat.yMMMd().format(_expiryDate!)
+                                  : s.tr('noExpiryDate'),
+                              style: TextStyle(
+                                color: _expiryDate != null
+                                    ? null
+                                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ),
+                        ),
                     const SizedBox(height: 20),
 
                     SizedBox(

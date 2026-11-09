@@ -99,4 +99,4 @@ final class DashboardStatsProvider
   }
 }
 
-String _$dashboardStatsHash() => r'ac52d3f4f3b2b5414055bbf2ae902b16b6e7b2e0';
+String _$dashboardStatsHash() => r'2ee4d452991312fabdf87e050c43ce598fc14990';

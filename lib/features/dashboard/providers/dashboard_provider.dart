@@ -31,6 +31,7 @@ abstract class DashboardStats with _$DashboardStats {
     @Default(0) int totalOrders,
     @Default(0) int pendingOrders,
     @Default([]) List<Product> lowStockProducts,
+    @Default([]) List<Product> nearExpiryProducts,
     @Default([]) List<DailySales> weeklySales,
 
     @Default(<OrderStatus, int>{}) Map<OrderStatus, int> statusCounts,
@@ -92,7 +93,7 @@ Future<DashboardStats> dashboardStats(Ref ref) async {
       await runDbJob(isar, dashboardStatsJob(range.start, range.end));
 
   if (!ref.isReload) {
-    NotificationService.checkAndNotify(isar, lowStock: stats.lowStockProducts);
+    NotificationService.checkAndNotify(isar, lowStock: stats.lowStockProducts, nearExpiry: stats.nearExpiryProducts);
   }
   return stats;
 }
@@ -172,6 +173,10 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
       .where((p) => p.isActive && (p.isLowStock || p.isOutOfStock))
       .toList();
 
+  final nearExpiryProducts = products
+      .where((p) => p.isActive && (p.isNearExpiry || p.isExpired))
+      .toList();
+
   final weekOrders = nonCancelled(week);
   final weeklySales = <DailySales>[];
   for (int i = 6; i >= 0; i--) {
@@ -210,6 +215,7 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
     totalOrders: totalOrders,
     pendingOrders: pendingOrders,
     lowStockProducts: lowStockProducts,
+    nearExpiryProducts: nearExpiryProducts,
     weeklySales: weeklySales,
     statusCounts: statusCounts,
   );

@@ -187,6 +187,16 @@ class ProductDetailScreen extends ConsumerWidget {
                                     : null,
                           ),
                           _InfoRow(s.lowStockThreshold, '${product.lowStockThreshold}'),
+                          if (product.expiryDate != null)
+                            _InfoRow(
+                              product.isExpired ? s.tr('expiredOn') : s.tr('expiresOn'),
+                              DateFormatter.format(product.expiryDate),
+                              valueColor: product.isExpired
+                                  ? AppColors.statusCancelled
+                                  : product.isNearExpiry
+                                      ? AppColors.statusPending
+                                      : null,
+                            ),
                         ],
                       ),
                       if (product.hasVariants) ...[

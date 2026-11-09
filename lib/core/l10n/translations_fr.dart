@@ -920,4 +920,14 @@ const translationsFr = <String, String>{
   'target': 'Objectif',
   'selectProduct': 'Sélectionner un produit',
   'noTargetsSet': 'Aucun objectif défini pour ce mois',
+
+  'expiryDate': 'Date d\'expiration',
+  'nearExpiry': 'Bientôt expiré',
+  'expired': 'Expiré',
+  'expiresOn': 'Expire le {date}',
+  'expiredOn': 'Expiré le {date}',
+  'nearExpiryProducts': 'Produits bientôt expirés',
+  'noExpiryDate': 'Pas de date d\'expiration',
+  'expiryAlertTitle': 'Alerte d\'expiration',
+  'expiryAlertBody': '{count} produit(s) bientôt expiré(s)',
 };

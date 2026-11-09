@@ -920,4 +920,14 @@ const translationsId = <String, String>{
   'target': 'Target',
   'selectProduct': 'Pilih Produk',
   'noTargetsSet': 'Belum ada target untuk bulan ini',
+
+  'expiryDate': 'Tanggal Kedaluwarsa',
+  'nearExpiry': 'Hampir Kedaluwarsa',
+  'expired': 'Kedaluwarsa',
+  'expiresOn': 'Kedaluwarsa pada {date}',
+  'expiredOn': 'Kedaluwarsa pada {date}',
+  'nearExpiryProducts': 'Produk Hampir Kedaluwarsa',
+  'noExpiryDate': 'Tanpa tanggal kedaluwarsa',
+  'expiryAlertTitle': 'Peringatan Kedaluwarsa',
+  'expiryAlertBody': '{count} produk akan segera kedaluwarsa',
 };
