@@ -95,13 +95,6 @@ final appRouter = GoRouter(
           GoRoute(
             path: '/',
             builder: (_, __) => const DashboardScreen(),
-            routes: [
-              GoRoute(
-                path: 'goals',
-                pageBuilder: (context, state) =>
-                    _subPage(const GoalsScreen(), state),
-              ),
-            ],
           ),
         ]),
         _branch([
@@ -343,6 +336,13 @@ final appRouter = GoRouter(
               key: ValueKey(state.uri.toString()),
               initialOver60: state.uri.queryParameters['age'] == '60',
             ),
+          ),
+        ]),
+
+        _branch([
+          GoRoute(
+            path: '/goals',
+            builder: (_, __) => const GoalsScreen(),
           ),
         ]),
       ],

@@ -1,5 +1,5 @@
 {
-  "nodeCount": 6352,
+  "nodeCount": 6353,
   "edgeCount": 1926,
   "languages": [
     "c",
@@ -8,11 +8,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 6352,
+  "totalCount": 6353,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-09T06:13:59.718Z",
-  "lastFile": "dashboard_screen.dart"
+  "syncedAt": "2026-11-09T06:17:06.848Z",
+  "lastFile": "app_router.dart"
 }

@@ -29,6 +29,7 @@ abstract final class AppIcons {
   static const ThinIconBuilder categories = tabler.Tag.new;
   static const ThinIconBuilder reports = tabler.ChartLine.new;
   static const ThinIconBuilder scanner = tabler.Barcode.new;
+  static const ThinIconBuilder goals = tabler.Target.new;
   static const ThinIconBuilder settings = tabler.Settings.new;
 
   static const ThinIconBuilder revenue = tabler.TrendingUp.new;
