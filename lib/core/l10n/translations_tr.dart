@@ -926,6 +926,7 @@ const translationsTr = <String, String>{
   'expiresOn': 'Son kullanma: {date}',
   'expiredOn': 'Süresi doldu: {date}',
   'nearExpiryProducts': 'Son Kullanma Tarihi Yaklaşan Ürünler',
+  'expireSoon': 'Yakında sona erecek',
   'noExpiryDate': 'Son kullanma tarihi yok',
   'expiryAlertTitle': 'Son Kullanma Uyarısı',
   'expiryAlertBody': '{count} ürünün son kullanma tarihi yaklaşıyor',

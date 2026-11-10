@@ -926,6 +926,7 @@ const translationsPt = <String, String>{
   'expiresOn': 'Vence em {date}',
   'expiredOn': 'Venceu em {date}',
   'nearExpiryProducts': 'Produtos perto do vencimento',
+  'expireSoon': 'Vencem em breve',
   'noExpiryDate': 'Sem data de validade',
   'expiryAlertTitle': 'Alerta de validade',
   'expiryAlertBody': '{count} produto(s) vencendo em breve',

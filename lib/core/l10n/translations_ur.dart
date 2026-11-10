@@ -926,6 +926,7 @@ const translationsUr = <String, String>{
   'expiresOn': 'میعاد ختم ہوگی {date}',
   'expiredOn': 'میعاد ختم ہوئی {date}',
   'nearExpiryProducts': 'میعاد ختم ہونے کے قریب پروڈکٹس',
+  'expireSoon': 'جلد ختم ہونے والی',
   'noExpiryDate': 'میعاد کی تاریخ نہیں',
   'expiryAlertTitle': 'میعاد کا الرٹ',
   'expiryAlertBody': '{count} پروڈکٹ(س) کی میعاد جلد ختم ہو رہی ہے',

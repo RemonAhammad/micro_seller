@@ -19,7 +19,6 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../../shared/widgets/rate_app_dialog.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../data/models/product.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -237,9 +236,23 @@ class _DashboardContent extends ConsumerWidget {
                 skipLoadingOnReload: true,
                 data: (stats) {
                   final hasDues = dues.isNotEmpty;
-                  if (stats.lowStockProducts.isEmpty && !hasDues) {
-                    return const SizedBox(height: 24);
-                  }
+                  final lowStock = stats.lowStockProducts.isEmpty
+                      ? null
+                      : _SectionCard(
+                          title: s.lowStockItems,
+                          icon: tabler.Package.new,
+                          iconColor: AppColors.statusPending,
+                          action: TextButton(
+                            onPressed: () => context.go('/inventory'),
+                            child: Text(s.viewAll),
+                          ),
+                          child: LowStockList(products: stats.lowStockProducts),
+                        );
+                  final cards = <Widget>[
+                    ?lowStock,
+                    if (hasDues) _dueSection(context, dueSummary, dues),
+                  ];
+                  if (cards.isEmpty) return const SizedBox(height: 24);
 
                   if (isWide) {
                     return Padding(
@@ -247,68 +260,26 @@ class _DashboardContent extends ConsumerWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (stats.lowStockProducts.isNotEmpty)
-                            Expanded(
-                              child: _SectionCard(
-                                title: s.lowStockItems,
-                                icon: tabler.Package.new,
-                                iconColor: AppColors.statusPending,
-                                action: TextButton(
-                                  onPressed: () => context.go('/inventory'),
-                                  child: Text(s.viewAll),
-                                ),
-                                child: LowStockList(
-                                    products: stats.lowStockProducts),
-                              ),
-                            ),
-                          if (stats.lowStockProducts.isNotEmpty && hasDues)
-                            const SizedBox(width: 12),
-                          if (hasDues)
-                            Expanded(
-                              child: _dueSection(context, dueSummary, dues),
-                            ),
+                          for (int i = 0; i < cards.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 12),
+                            Expanded(child: cards[i]),
+                          ],
                         ],
                       ),
                     );
                   }
 
-                  return Column(
-                    children: [
-                      if (stats.lowStockProducts.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                          child: _SectionCard(
-                            title: s.lowStockItems,
-                            icon: tabler.Package.new,
-                            iconColor: AppColors.statusPending,
-                            action: TextButton(
-                              onPressed: () => context.go('/inventory'),
-                              child: Text(s.viewAll),
-                            ),
-                            child: LowStockList(
-                                products: stats.lowStockProducts),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      children: [
+                        for (final card in cards)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                            child: card,
                           ),
-                        ),
-                      if (hasDues)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                          child: _dueSection(context, dueSummary, dues),
-                        ),
-                      if (stats.nearExpiryProducts.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                          child: _SectionCard(
-                            title: s.tr('nearExpiryProducts'),
-                            icon: tabler.Clock.new,
-                            iconColor: AppColors.statusPending,
-                            action: TextButton(
-                              onPressed: () => context.go('/expiry'),
-                              child: Text(s.viewAll),
-                            ),
-                            child: _NearExpiryList(products: stats.nearExpiryProducts),
-                          ),
-                        ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               ) ??
@@ -675,6 +646,13 @@ class _DashboardBody extends StatelessWidget {
         icon: AppIcons.lowStock,
         color: AppColors.statusPending,
         route: '/inventory',
+      ),
+      (
+        label: s.tr('expireSoon'),
+        value: '${stats.nearExpiryProducts.length}',
+        icon: AppIcons.expireSoon,
+        color: AppColors.statusCancelled,
+        route: '/expiry',
       ),
     ];
 
@@ -1057,97 +1035,6 @@ class _ErrorBody extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _NearExpiryList extends StatelessWidget {
-  final List<Product> products;
-
-  const _NearExpiryList({required this.products});
-
-  @override
-  Widget build(BuildContext context) {
-    if (products.isEmpty) return const SizedBox.shrink();
-    final theme = Theme.of(context);
-    final s = AppStrings.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: products.take(5).map((product) {
-        final isExp = product.isExpired;
-        final color = isExp ? AppColors.statusCancelled : AppColors.statusPending;
-        final daysLeft = product.expiryDate != null
-            ? product.expiryDate!.difference(DateTime.now()).inDays
-            : 0;
-
-        return InkWell(
-          onTap: () => GoRouter.of(context).push('/products/${product.id}'),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ThinIcon(
-                    isExp ? tabler.AlertOctagon.new : tabler.Clock.new,
-                    color: color,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (product.sku.isNotEmpty)
-                        Text(
-                          product.sku,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    isExp
-                        ? s.tr('expired')
-                        : '$daysLeft ${daysLeft == 1 ? "day" : "days"}',
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 }

@@ -85,6 +85,7 @@ class DashboardDateRange extends _$DashboardDateRange {
 Future<DashboardStats> dashboardStats(Ref ref) async {
 
   ref.watch(ordersRevisionProvider);
+  ref.watch(productsRevisionProvider);
   final isar = await ref.watch(isarProvider.future);
   final range =
       resolveDashboardRange(ref.watch(dashboardDateRangeProvider), DateTime.now());

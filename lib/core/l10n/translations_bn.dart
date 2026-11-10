@@ -926,6 +926,7 @@ const translationsBn = <String, String>{
   'expiresOn': 'মেয়াদ শেষ হবে {date}',
   'expiredOn': 'মেয়াদ শেষ হয়েছে {date}',
   'nearExpiryProducts': 'মেয়াদ শেষের কাছাকাছি পণ্য',
+  'expireSoon': 'শীঘ্রই মেয়াদ শেষ',
   'noExpiryDate': 'মেয়াদের তারিখ নেই',
   'expiryAlertTitle': 'মেয়াদ সতর্কতা',
   'expiryAlertBody': '{count}টি পণ্যের মেয়াদ শীঘ্রই শেষ হচ্ছে',

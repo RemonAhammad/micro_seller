@@ -926,6 +926,7 @@ const translationsFr = <String, String>{
   'expiresOn': 'Expire le {date}',
   'expiredOn': 'Expiré le {date}',
   'nearExpiryProducts': 'Produits bientôt expirés',
+  'expireSoon': 'Expirent bientôt',
   'noExpiryDate': 'Pas de date d\'expiration',
   'expiryAlertTitle': 'Alerte d\'expiration',
   'expiryAlertBody': '{count} produit(s) bientôt expiré(s)',

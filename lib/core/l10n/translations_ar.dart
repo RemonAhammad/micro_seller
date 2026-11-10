@@ -925,6 +925,7 @@ const translationsAr = <String, String>{
   'expiresOn': 'ينتهي في {date}',
   'expiredOn': 'انتهى في {date}',
   'nearExpiryProducts': 'منتجات قاربت على الانتهاء',
+  'expireSoon': 'تنتهي صلاحيتها قريبًا',
   'noExpiryDate': 'لا يوجد تاريخ انتهاء',
   'expiryAlertTitle': 'تنبيه انتهاء الصلاحية',
   'expiryAlertBody': '{count} منتج(ات) تنتهي صلاحيتها قريبًا',

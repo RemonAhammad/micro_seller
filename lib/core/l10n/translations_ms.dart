@@ -926,6 +926,7 @@ const translationsMs = <String, String>{
   'expiresOn': 'Luput pada {date}',
   'expiredOn': 'Telah luput pada {date}',
   'nearExpiryProducts': 'Produk Hampir Luput',
+  'expireSoon': 'Akan tamat tempoh',
   'noExpiryDate': 'Tiada tarikh luput',
   'expiryAlertTitle': 'Amaran Luput',
   'expiryAlertBody': '{count} produk akan luput tidak lama lagi',

@@ -926,6 +926,7 @@ const translationsVi = <String, String>{
   'expiresOn': 'Hết hạn vào {date}',
   'expiredOn': 'Đã hết hạn vào {date}',
   'nearExpiryProducts': 'Sản phẩm sắp hết hạn',
+  'expireSoon': 'Sắp hết hạn',
   'noExpiryDate': 'Không có hạn sử dụng',
   'expiryAlertTitle': 'Cảnh báo hết hạn',
   'expiryAlertBody': '{count} sản phẩm sắp hết hạn',

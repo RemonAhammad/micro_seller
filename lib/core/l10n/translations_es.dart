@@ -925,6 +925,7 @@ const translationsEs = <String, String>{
   'expiresOn': 'Caduca el {date}',
   'expiredOn': 'Caducó el {date}',
   'nearExpiryProducts': 'Productos próximos a caducar',
+  'expireSoon': 'Caducan pronto',
   'noExpiryDate': 'Sin fecha de caducidad',
   'expiryAlertTitle': 'Alerta de caducidad',
   'expiryAlertBody': '{count} producto(s) próximo(s) a caducar',

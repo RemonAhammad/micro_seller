@@ -38,6 +38,7 @@ abstract final class AppIcons {
   static const ThinIconBuilder profit = tabler.ReportMoney.new;
   static const ThinIconBuilder pending = tabler.HourglassHigh.new;
   static const ThinIconBuilder collected = tabler.Coins.new;
+  static const ThinIconBuilder expireSoon = tabler.CalendarExclamation.new;
   static const ThinIconBuilder lowStock = tabler.BoxOff.new;
   static const ThinIconBuilder alert = tabler.AlertTriangle.new;
   static const ThinIconBuilder whatsapp = tabler.BrandWhatsapp.new;
@@ -45,7 +46,7 @@ abstract final class AppIcons {
   static const ThinIconBuilder update = tabler.CloudDownload.new;
 
   static const List<ThinIconBuilder> dashboardSet = [
-    revenue, profit, pending, collected, lowStock, alert, whatsapp,
+    revenue, profit, pending, collected, lowStock, expireSoon, alert, whatsapp,
   ];
 }
 

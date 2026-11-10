@@ -926,6 +926,7 @@ const translationsTh = <String, String>{
   'expiresOn': 'หมดอายุวันที่ {date}',
   'expiredOn': 'หมดอายุเมื่อ {date}',
   'nearExpiryProducts': 'สินค้าใกล้หมดอายุ',
+  'expireSoon': 'ใกล้หมดอายุ',
   'noExpiryDate': 'ไม่มีวันหมดอายุ',
   'expiryAlertTitle': 'แจ้งเตือนวันหมดอายุ',
   'expiryAlertBody': 'สินค้า {count} รายการใกล้หมดอายุ',

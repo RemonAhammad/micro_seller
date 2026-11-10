@@ -926,6 +926,7 @@ const translationsId = <String, String>{
   'expiresOn': 'Kedaluwarsa pada {date}',
   'expiredOn': 'Kedaluwarsa pada {date}',
   'nearExpiryProducts': 'Produk Hampir Kedaluwarsa',
+  'expireSoon': 'Segera kedaluwarsa',
   'noExpiryDate': 'Tanpa tanggal kedaluwarsa',
   'expiryAlertTitle': 'Peringatan Kedaluwarsa',
   'expiryAlertBody': '{count} produk akan segera kedaluwarsa',
