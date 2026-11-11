@@ -33,6 +33,8 @@ import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../data/services/pos_printer_service.dart';
+import 'package:flutter_thermal_printer/utils/printer.dart' as pos;
 
 class OrderFormScreen extends ConsumerStatefulWidget {
   final Order? order;
@@ -486,6 +488,68 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               final text = pdfService.generateWhatsAppText(order, currencySymbol: currencySymbol);
               final result = await SharePlus.instance.share(ShareParams(text: text, sharePositionOrigin: origin));
               return result.status == ShareResultStatus.success;
+            },
+          ),
+          const SizedBox(height: 8),
+          _InvoiceActionTile(
+            icon: tabler.Receipt.new,
+            label: s.tr('posPrint'),
+            color: Colors.deepOrange,
+            onTap: (_) async {
+              final posService = PosPrinterService.instance;
+              final saved = await posService.loadSavedPrinters();
+              final defaultAddr = await posService.loadDefaultPrinterAddress();
+              if (saved.isEmpty || defaultAddr == null) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(s.tr('configurePrinterHint'))),
+                  );
+                }
+                return false;
+              }
+              final defaultPrinter = saved.firstWhere(
+                (p) => p.address == defaultAddr,
+                orElse: () => saved.first,
+              );
+              final target = pos.Printer(
+                name: defaultPrinter.name,
+                address: defaultPrinter.address,
+                connectionType: switch (defaultPrinter.type) {
+                  'usb' => pos.ConnectionType.USB,
+                  'network' => pos.ConnectionType.NETWORK,
+                  _ => pos.ConnectionType.BLE,
+                },
+              );
+              final connected = await posService.connectTo(target);
+              if (!connected) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(s.tr('posPrintFailed')),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+                return false;
+              }
+              final paperWidth = await posService.loadPaperWidth();
+              final ok = await posService.printReceipt(
+                order: order,
+                shopName: settings.shopName,
+                shopPhone: settings.shopPhone,
+                currencySymbol: currencySymbol,
+                paperWidth: paperWidth,
+                printer: target,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(ok ? s.tr('posPrintSuccess') : s.tr('posPrintFailed')),
+                    backgroundColor: ok ? Colors.green : Colors.red,
+                  ),
+                );
+              }
+              return ok;
             },
           ),
           const SizedBox(height: 16),

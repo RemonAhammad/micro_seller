@@ -104,6 +104,7 @@ dependencies:
   # and reboot. Failed silent sign-in (revoked access) raises a notification
   # and a Settings banner — never silent.
   workmanager: ^0.10.10
+  flutter_thermal_printer: ^2.3.0
   tabler_icons_next: ^3.48.0
   # Direct only to size the SVG picture cache (tabler_icons_next renders via it).
   flutter_svg: ^2.3.0

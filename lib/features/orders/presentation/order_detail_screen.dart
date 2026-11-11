@@ -34,6 +34,8 @@ import 'widgets/order_feedback.dart';
 import 'widgets/order_status_badge.dart';
 import 'widgets/order_item_row.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
+import '../../../data/services/pos_printer_service.dart';
+import 'package:flutter_thermal_printer/utils/printer.dart' as pos;
 import '../../../core/constants/app_icons.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
@@ -160,6 +162,13 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                       child: ListTile(
                         leading: const ThinIcon(tabler.Printer.new),
                         title: Text(s.print),
+                        contentPadding: EdgeInsets.zero,
+                      )),
+                  PopupMenuItem(
+                      value: 'pos_print',
+                      child: ListTile(
+                        leading: const ThinIcon(tabler.Receipt.new),
+                        title: Text(s.tr('posPrint')),
                         contentPadding: EdgeInsets.zero,
                       )),
                   if (!order.isReturn)
@@ -501,6 +510,49 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
         final printed =
             await Printing.layoutPdf(onLayout: (_) async => bytes);
         if (context.mounted) confirmPrinted(context, printed);
+        break;
+
+      case 'pos_print':
+        final posService = PosPrinterService.instance;
+        final saved = await posService.loadSavedPrinters();
+        final defaultAddr = await posService.loadDefaultPrinterAddress();
+        final tr = AppStrings.of(context);
+        if (saved.isEmpty || defaultAddr == null) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(tr.tr('configurePrinterHint'))),
+            );
+          }
+          break;
+        }
+        final target = saved.where((p) => p.address == defaultAddr).firstOrNull ?? saved.first;
+        final width = await posService.loadPaperWidth();
+        final posPrinter = pos.Printer(
+          name: target.name,
+          address: target.address,
+          connectionType: switch (target.type) {
+            'usb' => pos.ConnectionType.USB,
+            'network' => pos.ConnectionType.NETWORK,
+            _ => pos.ConnectionType.BLE,
+          },
+        );
+        await posService.connectTo(posPrinter);
+        final ok = await posService.printReceipt(
+          order: order,
+          shopName: shopName,
+          shopPhone: settings.shopPhone,
+          currencySymbol: currencySymbol,
+          paperWidth: width,
+          printer: posPrinter,
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(ok ? tr.tr('posPrintSuccess') : tr.tr('posPrintFailed')),
+              backgroundColor: ok ? Colors.green : Colors.red,
+            ),
+          );
+        }
         break;
 
       case 'return':

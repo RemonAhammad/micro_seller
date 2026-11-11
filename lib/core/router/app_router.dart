@@ -9,6 +9,7 @@ import '../../features/settings/providers/settings_provider.dart';
 import '../../features/settings/presentation/sidebar_order_screen.dart';
 import '../../features/settings/presentation/recycle_bin_screen.dart';
 import '../../features/settings/presentation/color_theme_screen.dart';
+import '../../features/settings/presentation/pos_printer_screen.dart';
 import '../constants/app_icons.dart';
 import '../constants/sidebar_items.dart';
 import '../../shared/widgets/app_zoom.dart';
@@ -323,6 +324,11 @@ final appRouter = GoRouter(
                 path: 'color-theme',
                 pageBuilder: (_, s) =>
                     _subPage(const ColorThemeScreen(), s),
+              ),
+              GoRoute(
+                path: 'pos-printer',
+                pageBuilder: (_, s) =>
+                    _subPage(const PosPrinterScreen(), s),
               ),
             ],
           ),

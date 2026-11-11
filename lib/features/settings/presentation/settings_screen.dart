@@ -629,6 +629,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             const SizedBox(height: 16),
           ],
 
+          _SectionHeader(s.tr('posPrinter')),
+          _SettingsCard(
+            children: [
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: brand.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ThinIcon(tabler.Printer.new,
+                      color: brand.primary, size: 20),
+                ),
+                title: Text(s.tr('posPrinter')),
+                subtitle: Text(
+                  s.tr('posPrinterDesc'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => context.push('/settings/pos-printer'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           _SectionHeader(s.recycleBin),
           _SettingsCard(
             children: [
