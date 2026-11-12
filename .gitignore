@@ -73,3 +73,6 @@ graft/
 
 # Claude Code agents' isolated worktrees (each holds a full checkout).
 /.claude/worktrees/
+
+# Patched local packages for macOS build
+local_packages/

@@ -10,7 +10,6 @@ import file_picker_darwin
 import file_selector_macos
 import flutter_image_compress_macos
 import flutter_local_notifications
-import flutter_thermal_printer
 import google_sign_in_ios
 import in_app_review
 import isar_community_flutter_libs
@@ -31,7 +30,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FileSelectorPlugin.register(with: registry.registrar(forPlugin: "FileSelectorPlugin"))
   FlutterImageCompressMacosPlugin.register(with: registry.registrar(forPlugin: "FlutterImageCompressMacosPlugin"))
   FlutterLocalNotificationsPlugin.register(with: registry.registrar(forPlugin: "FlutterLocalNotificationsPlugin"))
-  FlutterThermalPrinterPlugin.register(with: registry.registrar(forPlugin: "FlutterThermalPrinterPlugin"))
   GoogleSignInPlugin.register(with: registry.registrar(forPlugin: "GoogleSignInPlugin"))
   InAppReviewPlugin.register(with: registry.registrar(forPlugin: "InAppReviewPlugin"))
   IsarFlutterLibsPlugin.register(with: registry.registrar(forPlugin: "IsarFlutterLibsPlugin"))

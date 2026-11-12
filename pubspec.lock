@@ -587,10 +587,9 @@ packages:
   flutter_thermal_printer:
     dependency: "direct main"
     description:
-      name: flutter_thermal_printer
-      sha256: e05d535ab99c16bd5510cef9897f23fd1c39b4528e7e059c9acc105db23a24fc
-      url: "https://pub.dev"
-    source: hosted
+      path: "local_packages/flutter_thermal_printer"
+      relative: true
+    source: path
     version: "2.3.0"
   flutter_web_bluetooth:
     dependency: transitive

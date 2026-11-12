@@ -168,3 +168,7 @@ flutter:
           weight: 700
         - asset: assets/fonts/roboto/Roboto-Black.ttf
           weight: 900
+
+dependency_overrides:
+  flutter_thermal_printer:
+    path: local_packages/flutter_thermal_printer

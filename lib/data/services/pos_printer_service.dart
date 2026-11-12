@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_thermal_printer/flutter_thermal_printer.dart';
 import 'package:flutter_thermal_printer/utils/printer.dart';
@@ -11,6 +12,9 @@ import '../../core/utils/date_formatter.dart';
 const _kSavedPrintersKey = 'pos_printers';
 const _kDefaultPrinterKey = 'pos_default_printer';
 const _kPaperWidthKey = 'pos_paper_width';
+
+bool get isPosPrinterSupported =>
+    !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
 class SavedPrinter {
   final String name;
@@ -50,6 +54,7 @@ class PosPrinterService {
   Future<void> startScan({
     List<ConnectionType> types = const [ConnectionType.BLE],
   }) async {
+    if (!isPosPrinterSupported) return;
     try {
       await _plugin.getPrinters(connectionTypes: types);
     } catch (e) {
@@ -58,6 +63,7 @@ class PosPrinterService {
   }
 
   Future<void> stopScan() async {
+    if (!isPosPrinterSupported) return;
     try {
       await _plugin.stopScan();
     } catch (e) {
@@ -66,6 +72,7 @@ class PosPrinterService {
   }
 
   Future<bool> connectTo(Printer printer) async {
+    if (!isPosPrinterSupported) return false;
     try {
       final ok = await _plugin.connect(printer);
       if (ok) _connectedPrinter = printer;
@@ -96,7 +103,7 @@ class PosPrinterService {
     Printer? printer,
   }) async {
     final target = printer ?? _connectedPrinter;
-    if (target == null) return false;
+    if (target == null || !isPosPrinterSupported) return false;
     try {
       final cols = paperWidth == 58 ? 32 : 48;
       final lines = _buildReceiptLines(
@@ -118,7 +125,7 @@ class PosPrinterService {
 
   Future<bool> printTest({required int paperWidth, Printer? printer}) async {
     final target = printer ?? _connectedPrinter;
-    if (target == null) return false;
+    if (target == null || !isPosPrinterSupported) return false;
     try {
       final cols = paperWidth == 58 ? 32 : 48;
       final lines = <String>[
