@@ -1,18 +1,19 @@
 {
-  "nodeCount": 6666,
-  "edgeCount": 1948,
+  "nodeCount": 6815,
+  "edgeCount": 2093,
   "languages": [
     "c",
     "cpp",
     "dart",
+    "java",
     "kotlin",
     "swift"
   ],
-  "totalCount": 6666,
+  "totalCount": 6815,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-12T04:20:54.758Z",
-  "lastFile": "pos_printer_service.dart"
+  "syncedAt": "2026-11-12T05:13:08.847Z",
+  "lastFile": "pubspec.yaml"
 }
