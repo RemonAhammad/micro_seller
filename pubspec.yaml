@@ -13,7 +13,7 @@ dependencies:
   # State management
   flutter_riverpod: ^3.3.1
   # Moves in lockstep with riverpod_generator (see dev_dependencies).
-  riverpod_annotation: 4.0.2
+  riverpod_annotation: ^4.0.2
 
   # Database
   # Migrated from abandoned `isar` 3.1.0+1 to community fork.
@@ -115,15 +115,9 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
   # Code generation
-  # build_runner 2.17+ needs build 5; riverpod_generator needs build <5.
   build_runner: ^2.15.1
-  # Code generators are pinned as one set: newer riverpod_generator /
-  # json_serializable need analyzer 12+, which only freezed 4 (Dart 3.13,
-  # newer than Flutter 3.44.9) or a freezed 3.2.6 pre-release supports.
-  riverpod_generator: 4.0.3
-  # freezed 4 needs Dart 3.13; Flutter 3.44.9 (on one of the Macs that make
-  # releases) ships Dart 3.12.
-  freezed: 3.2.5
+  riverpod_generator: ^4.0.3
+  freezed: ^4.0.1
   isar_community_generator: ^3.4.1
   json_serializable: ^6.13.0
 
