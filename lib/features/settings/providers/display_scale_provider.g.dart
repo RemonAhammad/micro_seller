@@ -47,7 +47,7 @@ abstract class _$DisplayScale extends $Notifier<DisplayScaleState> {
   DisplayScaleState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<DisplayScaleState, DisplayScaleState>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$DisplayScale extends $Notifier<DisplayScaleState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

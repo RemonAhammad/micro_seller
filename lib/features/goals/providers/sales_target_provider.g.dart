@@ -40,7 +40,7 @@ abstract class _$SalesTargetNotifier extends $AsyncNotifier<SalesTarget?> {
   FutureOr<SalesTarget?> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<SalesTarget?>, SalesTarget?>;
     final element =
         ref.element
@@ -50,7 +50,7 @@ abstract class _$SalesTargetNotifier extends $AsyncNotifier<SalesTarget?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
