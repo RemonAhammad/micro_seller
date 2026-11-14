@@ -6,7 +6,12 @@ import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
 
 bool _envFlag(String key, {bool defaultValue = true}) {
-  final raw = dotenv.env[key]?.trim().toLowerCase();
+  final String? raw;
+  try {
+    raw = dotenv.env[key]?.trim().toLowerCase();
+  } catch (_) {
+    return defaultValue;
+  }
   if (raw == null || raw.isEmpty) return defaultValue;
   if (raw == 'false' || raw == '0' || raw == 'no' || raw == 'off') return false;
   return true;
