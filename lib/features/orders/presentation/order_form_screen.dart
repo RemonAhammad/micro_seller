@@ -33,7 +33,11 @@ import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../data/repositories/product_repository.dart';
+import '../../../data/services/device_channel.dart';
 import '../../../data/services/pos_printer_service.dart';
+import '../../../shared/widgets/scanner_camera.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_thermal_printer/utils/printer.dart' as pos;
 
 class OrderFormScreen extends ConsumerStatefulWidget {
@@ -210,6 +214,96 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         }),
       ),
     );
+  }
+
+  Future<void> _scanToAddItem() async {
+    final isar = await ref.read(isarProvider.future);
+    if (!mounted) return;
+
+    final product = await showModalBottomSheet<Product>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _ScannerSheet(
+        isar: isar,
+        deviceChannel: ref.read(deviceChannelProvider),
+      ),
+    );
+    if (product == null || !mounted) return;
+
+    if (product.hasVariants) {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (_) => _ProductPickerSheet(
+          isar: isar,
+          currentItems: _items,
+          filterProductId: product.id,
+          onChanged: (updated) => setState(() {
+            _items
+              ..clear()
+              ..addAll(updated);
+          }),
+        ),
+      );
+      return;
+    }
+
+    final stock = product.stockQty;
+    if (stock <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+        );
+      }
+      return;
+    }
+
+    final idx = _items.indexWhere(
+      (i) => i.productId == product.id && i.variantCombinationKey.isEmpty,
+    );
+    if (idx >= 0) {
+      final existing = _items[idx];
+      if (existing.qty >= stock) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppStrings.of(context).notEnoughStock(stock, product.name),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      setState(() {
+        _items[idx] = existing.copyWith(
+          qty: existing.qty + 1,
+          totalPrice: existing.unitPrice * (existing.qty + 1),
+        );
+      });
+    } else {
+      setState(() {
+        _items.add(
+          OrderItem(
+            productId: product.id,
+            productName: product.name,
+            productSku: product.sku,
+            qty: 1,
+            unitPrice: product.sellingPrice,
+            costPrice: product.costPrice,
+            totalPrice: product.sellingPrice,
+            variantCombinationKey: '',
+            variantDisplayLabel: '',
+          ),
+        );
+      });
+    }
   }
 
   Future<void> _updateQty(int index, int delta) async {
@@ -788,6 +882,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ),
             ],
             const Spacer(),
+            IconButton(
+              onPressed: _scanToAddItem,
+              icon: const ThinIcon(tabler.Scan.new, size: 20),
+              tooltip: AppStrings.of(context).scanQrBarcode,
+            ),
             TextButton.icon(
               onPressed: _pickProducts,
               icon: const ThinIcon(tabler.Plus.new, size: 16),
@@ -1272,8 +1371,9 @@ class _ProductPickerSheet extends StatefulWidget {
   final Isar isar;
   final List<OrderItem> currentItems;
   final ValueChanged<List<OrderItem>> onChanged;
+  final int? filterProductId;
 
-  const _ProductPickerSheet({required this.isar, required this.currentItems, required this.onChanged});
+  const _ProductPickerSheet({required this.isar, required this.currentItems, required this.onChanged, this.filterProductId});
 
   @override
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
@@ -1296,12 +1396,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   void initState() {
     super.initState();
     _items = List.of(widget.currentItems);
-    _productsStream = widget.isar.products
-        .where()
-        .filter()
-        .isActiveEqualTo(true)
-        .sortByName()
-        .watch(fireImmediately: true);
+    var query = widget.isar.products.where().filter().isActiveEqualTo(true);
+    if (widget.filterProductId != null) {
+      query = query.and().idEqualTo(widget.filterProductId!);
+    }
+    _productsStream = query.sortByName().watch(fireImmediately: true);
   }
 
   @override
@@ -2140,6 +2239,159 @@ class _InvoiceActionTileState extends State<_InvoiceActionTile> {
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ScannerSheet extends ConsumerStatefulWidget {
+  final Isar isar;
+  final DeviceChannel deviceChannel;
+
+  const _ScannerSheet({required this.isar, required this.deviceChannel});
+
+  @override
+  ConsumerState<_ScannerSheet> createState() => _ScannerSheetState();
+}
+
+class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
+  final _controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
+  );
+  late final CameraSession _session;
+  bool _scanned = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _session = CameraSession(_controller, widget.deviceChannel);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _session.setVisible(TickerMode.valuesOf(context).enabled);
+  }
+
+  @override
+  void dispose() {
+    _session.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_scanned) return;
+    final value = capture.barcodes
+        .map((b) => b.rawValue?.trim())
+        .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
+    if (value == null) return;
+    _scanned = true;
+
+    ProductRepository(widget.isar).findByScannedCode(value).then((product) {
+      if (!mounted) return;
+      if (product == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.of(context).noProductMatched)),
+        );
+        _scanned = false;
+        return;
+      }
+
+      if (!product.hasVariants && product.stockQty <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+        );
+        _scanned = false;
+        return;
+      }
+
+      if (product.hasVariants) {
+        final hasStock = product.variantCombinations.any(
+          (c) => c.isActive && c.stockQty > 0,
+        );
+        if (!hasStock) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+          );
+          _scanned = false;
+          return;
+        }
+      }
+
+      Navigator.of(context).pop(product);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.85,
+      minChildSize: 0.3,
+      expand: false,
+      builder: (ctx, scrollController) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+            child: Row(
+              children: [
+                Text(
+                  AppStrings.of(context).scanQrBarcode,
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                TorchButton(controller: _controller),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const ThinIcon(tabler.X.new),
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: ScannerPreview(
+                    session: _session,
+                    onDetect: _onDetect,
+                    overlay: Center(
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: theme.colorScheme.primary,
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              AppStrings.of(context).pointCameraAtCode,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
