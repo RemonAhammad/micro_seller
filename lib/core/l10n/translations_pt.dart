@@ -562,6 +562,7 @@ const translationsPt = <String, String>{
   'selectAll': 'Selecionar tudo',
   'clearSelection': 'Limpar',
   'noProducts': 'Ainda não há produtos',
+  'allProductsHaveTargets': 'Todos os produtos já têm metas',
   'includePhotos': 'Fotos',
   'includeStock': 'Estoque',
   'includeSku': 'SKU',

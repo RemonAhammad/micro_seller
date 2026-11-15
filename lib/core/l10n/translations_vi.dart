@@ -562,6 +562,7 @@ const translationsVi = <String, String>{
   'selectAll': 'Chọn tất cả',
   'clearSelection': 'Xóa chọn',
   'noProducts': 'Chưa có sản phẩm',
+  'allProductsHaveTargets': 'Tất cả sản phẩm đã có mục tiêu',
   'includePhotos': 'Ảnh',
   'includeStock': 'Tồn kho',
   'includeSku': 'SKU',

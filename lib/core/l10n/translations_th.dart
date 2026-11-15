@@ -562,6 +562,7 @@ const translationsTh = <String, String>{
   'selectAll': 'เลือกทั้งหมด',
   'clearSelection': 'ล้าง',
   'noProducts': 'ยังไม่มีสินค้า',
+  'allProductsHaveTargets': 'สินค้าทุกรายการมีเป้าหมายแล้ว',
   'includePhotos': 'รูปภาพ',
   'includeStock': 'สต็อก',
   'includeSku': 'SKU',

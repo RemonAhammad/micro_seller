@@ -93,7 +93,13 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
         .filter()
         .isActiveEqualTo(true)
         .findAll();
-    if (products.isEmpty || !mounted) return;
+    if (!mounted) return;
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).tr('noProducts'))),
+      );
+      return;
+    }
 
     final existing =
         ref.read(salesTargetProvider).value;
@@ -102,7 +108,14 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
     final available =
         products.where((p) => !existingIds.contains(p.id)).toList();
-    if (available.isEmpty) return;
+    if (available.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text(AppStrings.of(context).tr('allProductsHaveTargets'))),
+      );
+      return;
+    }
 
     final picked = await showModalBottomSheet<Product>(
       context: context,

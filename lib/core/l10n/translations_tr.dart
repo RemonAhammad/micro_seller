@@ -562,6 +562,7 @@ const translationsTr = <String, String>{
   'selectAll': 'Tümünü Seç',
   'clearSelection': 'Temizle',
   'noProducts': 'Henüz ürün yok',
+  'allProductsHaveTargets': 'Tüm ürünlerin hedefleri zaten var',
   'includePhotos': 'Fotoğraflar',
   'includeStock': 'Stok',
   'includeSku': 'SKU',

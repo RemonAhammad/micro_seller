@@ -562,6 +562,7 @@ const translationsMs = <String, String>{
   'selectAll': 'Pilih Semua',
   'clearSelection': 'Kosongkan',
   'noProducts': 'Tiada produk lagi',
+  'allProductsHaveTargets': 'Semua produk sudah mempunyai sasaran',
   'includePhotos': 'Foto',
   'includeStock': 'Stok',
   'includeSku': 'SKU',

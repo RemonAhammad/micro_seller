@@ -562,6 +562,7 @@ const translationsId = <String, String>{
   'selectAll': 'Pilih Semua',
   'clearSelection': 'Bersihkan',
   'noProducts': 'Belum ada produk',
+  'allProductsHaveTargets': 'Semua produk sudah memiliki target',
   'includePhotos': 'Foto',
   'includeStock': 'Stok',
   'includeSku': 'SKU',

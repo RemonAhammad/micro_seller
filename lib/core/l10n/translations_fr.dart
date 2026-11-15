@@ -562,6 +562,7 @@ const translationsFr = <String, String>{
   'selectAll': 'Tout sélectionner',
   'clearSelection': 'Effacer',
   'noProducts': 'Aucun produit',
+  'allProductsHaveTargets': 'Tous les produits ont déjà des objectifs',
   'includePhotos': 'Photos',
   'includeStock': 'Stock',
   'includeSku': 'SKU',

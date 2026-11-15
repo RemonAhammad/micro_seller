@@ -562,6 +562,7 @@ const translationsBn = <String, String>{
   'selectAll': 'সব নির্বাচন',
   'clearSelection': 'মুছুন',
   'noProducts': 'এখনও কোনো পণ্য নেই',
+  'allProductsHaveTargets': 'সব পণ্যের টার্গেট আগেই সেট করা আছে',
   'includePhotos': 'ছবি',
   'includeStock': 'স্টক',
   'includeSku': 'এসকেইউ',

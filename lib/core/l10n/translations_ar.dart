@@ -561,6 +561,7 @@ const translationsAr = <String, String>{
   'selectAll': 'تحديد الكل',
   'clearSelection': 'مسح',
   'noProducts': 'لا توجد منتجات بعد',
+  'allProductsHaveTargets': 'جميع المنتجات لديها أهداف بالفعل',
   'includePhotos': 'الصور',
   'includeStock': 'المخزون',
   'includeSku': 'رمز المنتج',

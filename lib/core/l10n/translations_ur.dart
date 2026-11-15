@@ -562,6 +562,7 @@ const translationsUr = <String, String>{
   'selectAll': 'سب منتخب کریں',
   'clearSelection': 'صاف کریں',
   'noProducts': 'ابھی کوئی پروڈکٹ نہیں',
+  'allProductsHaveTargets': 'تمام پروڈکٹس کے ہدف پہلے سے موجود ہیں',
   'includePhotos': 'تصاویر',
   'includeStock': 'اسٹاک',
   'includeSku': 'SKU',

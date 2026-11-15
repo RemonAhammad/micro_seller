@@ -561,6 +561,7 @@ const translationsEs = <String, String>{
   'selectAll': 'Seleccionar todo',
   'clearSelection': 'Limpiar',
   'noProducts': 'Aún no hay productos',
+  'allProductsHaveTargets': 'Todos los productos ya tienen objetivos',
   'includePhotos': 'Fotos',
   'includeStock': 'Stock',
   'includeSku': 'SKU',
