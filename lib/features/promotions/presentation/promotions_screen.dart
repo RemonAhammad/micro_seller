@@ -14,6 +14,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/promotion.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/section_help.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../providers/promotion_provider.dart';
 
@@ -26,7 +27,10 @@ class PromotionsScreen extends ConsumerWidget {
     final promosAsync = ref.watch(promotionProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.tr('sellPromotion'))),
+      appBar: AppBar(
+        title: Text(s.tr('sellPromotion')),
+        actions: const [SectionHelpButton('promotions')],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/promotions/add'),
         tooltip: s.tr('createPromotion'),
