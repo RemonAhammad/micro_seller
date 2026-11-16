@@ -2,7 +2,7 @@
 
 abstract final class AppDistribution {
 
-  static const repo = 'RemonAhammad/micro_seller';
+  static const repo = 'microseller/microseller';
 
   static final latestReleaseApi =
       Uri.parse('https://api.github.com/repos/$repo/releases/latest');
