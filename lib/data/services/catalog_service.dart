@@ -9,6 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart' show SvgStringLoader, vg;
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/document_brand.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/quantity.dart';
 import '../models/product.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../core/constants/app_icons.dart';
@@ -178,19 +179,19 @@ class CatalogService {
     sb.writeln();
 
     for (final p in products) {
-      final price = CurrencyFormatter.format(p.sellingPrice, symbol: sym);
+      final price = documentPricePer(CurrencyFormatter.format(p.sellingPrice, symbol: sym), p.unit);
       sb.write('• ${p.name} — *$price*');
       if (options.includeSku && p.sku.isNotEmpty) sb.write(' [${p.sku}]');
       if (options.includeStock) {
-        sb.write(p.isOutOfStock ? ' (out of stock)' : ' (${p.totalStock} in stock)');
+        sb.write(p.isOutOfStock ? ' (out of stock)' : ' (${documentQty(p.totalStock, p.unit)} in stock)');
       }
       sb.writeln();
 
       if (p.hasVariants) {
         for (final c in p.variantCombinations.where((c) => c.isActive)) {
-          final vPrice = CurrencyFormatter.format(
-            p.sellingPrice + c.priceAdjustment,
-            symbol: sym,
+          final vPrice = documentPricePer(
+            CurrencyFormatter.format(p.sellingPrice + c.priceAdjustment, symbol: sym),
+            p.unit,
           );
           sb.writeln('   ◦ ${c.displayLabel} — $vPrice');
         }
@@ -483,7 +484,7 @@ class _CatalogPageWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  CurrencyFormatter.format(p.sellingPrice, symbol: sym),
+                  documentPricePer(CurrencyFormatter.format(p.sellingPrice, symbol: sym), p.unit),
                   style: TextStyle(
                     color: _brandText,
                     fontWeight: FontWeight.w700,
@@ -500,7 +501,7 @@ class _CatalogPageWidget extends StatelessWidget {
                   Text(
                     p.isOutOfStock
                         ? 'Out of stock'
-                        : '${p.totalStock} in stock',
+                        : '${documentQty(p.totalStock, p.unit)} in stock',
                     style: TextStyle(
                       color: p.isOutOfStock
                           ? const Color(0xFFD32F2F)

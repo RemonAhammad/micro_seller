@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import '../../core/utils/barcode.dart';
+import '../../core/utils/quantity.dart';
 import '../models/product.dart';
 import '../models/stock_movement.dart';
 import '../models/variant_combination.dart';
@@ -61,13 +62,13 @@ class ProductRepository {
     await _isar.writeTxn(() => _isar.products.delete(id));
   }
 
-  Future<void> adjustStock(int productId, int delta, String reason,
+  Future<void> adjustStock(int productId, double delta, String reason,
       StockMovementType type) async {
     await _isar.writeTxn(() async {
       final product = await _isar.products.get(productId);
       if (product == null) return;
       final updated = product.copyWith(
-        stockQty: product.stockQty + delta,
+        stockQty: roundQty(product.stockQty + delta),
         updatedAt: DateTime.now(),
       );
       await _isar.products.put(updated);
@@ -75,7 +76,7 @@ class ProductRepository {
         productId: productId,
         productName: product.name,
         type: type,
-        qty: delta,
+        qty: roundQty(delta),
         reason: reason,
         createdAt: DateTime.now(),
       ));

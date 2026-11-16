@@ -4,6 +4,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../../core/constants/app_icons.dart';
+import '../../../../core/utils/quantity.dart';
 
 class StockMovementTile extends StatelessWidget {
   final StockMovement movement;
@@ -70,7 +71,7 @@ class StockMovementTile extends StatelessWidget {
             ),
           ),
           Text(
-            '${isIn ? '+' : ''}${movement.qty}',
+            '${isIn ? '+' : ''}${formatQtyNumber(movement.qty)}',
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 16,

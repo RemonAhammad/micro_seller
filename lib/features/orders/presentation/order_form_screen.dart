@@ -22,6 +22,7 @@ import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/number_input.dart';
+import '../../../core/utils/quantity.dart';
 import '../../../core/utils/share_origin.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -32,6 +33,7 @@ import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../../shared/widgets/entry_date_field.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
+import '../../../shared/widgets/quantity_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -306,11 +308,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       return;
     }
 
+    final s = AppStrings.of(context);
     final stock = product.stockQty;
     if (stock <= 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+          SnackBar(content: Text(s.outOfStock)),
         );
       }
       return;
@@ -319,15 +322,36 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final idx = _items.indexWhere(
       (i) => i.productId == product.id && i.variantCombinationKey.isEmpty,
     );
+
+    // Weighed / measured goods: ask how much (or for how much money).
+    if (product.unit.allowsDecimal) {
+      final qty = await showQuantitySheet(
+        context,
+        productName: product.name,
+        unit: product.unit,
+        unitPrice: product.sellingPrice,
+        available: stock,
+        initial: idx >= 0 ? _items[idx].qty : null,
+      );
+      if (qty == null || !mounted) return;
+      setState(() {
+        if (idx >= 0) {
+          final existing = _items[idx];
+          _items[idx] = existing.copyWith(qty: qty, totalPrice: lineTotal(existing.unitPrice, qty));
+        } else {
+          _items.add(_newItem(product, qty));
+        }
+      });
+      return;
+    }
+
     if (idx >= 0) {
       final existing = _items[idx];
-      if (existing.qty >= stock) {
+      if (qtyAtLeast(existing.qty, stock)) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                AppStrings.of(context).notEnoughStock(stock, product.name),
-              ),
+              content: Text(s.notEnoughStock(s.qty(stock, product.unit), product.name)),
             ),
           );
         }
@@ -336,58 +360,80 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       setState(() {
         _items[idx] = existing.copyWith(
           qty: existing.qty + 1,
-          totalPrice: existing.unitPrice * (existing.qty + 1),
+          totalPrice: lineTotal(existing.unitPrice, existing.qty + 1),
         );
       });
     } else {
-      setState(() {
-        _items.add(
-          OrderItem(
-            productId: product.id,
-            productName: product.name,
-            productSku: product.sku,
-            qty: 1,
-            unitPrice: product.sellingPrice,
-            costPrice: product.costPrice,
-            totalPrice: product.sellingPrice,
-            variantCombinationKey: '',
-            variantDisplayLabel: '',
-          ),
-        );
-      });
+      setState(() => _items.add(_newItem(product, 1)));
     }
+  }
+
+  static OrderItem _newItem(Product product, double qty) => OrderItem(
+        productId: product.id,
+        productName: product.name,
+        productSku: product.sku,
+        qty: qty,
+        unit: product.unit,
+        unitPrice: product.sellingPrice,
+        costPrice: product.costPrice,
+        totalPrice: lineTotal(product.sellingPrice, qty),
+        variantCombinationKey: '',
+        variantDisplayLabel: '',
+      );
+
+  /// The stock a cart line may take: its combination's or the product's, as
+  /// it is now in the database. Null when the product is gone.
+  Future<({double stock, Product product})?> _stockFor(OrderItem item) async {
+    final isar = await ref.read(isarProvider.future);
+    final product = await isar.products.get(item.productId);
+    if (product == null) return null;
+    final stock = item.variantCombinationKey.isNotEmpty
+        ? product.findCombination(item.variantCombinationKey)?.stockQty ?? 0
+        : product.stockQty;
+    return (stock: stock, product: product);
+  }
+
+  /// A weighed line's quantity box: reopens the quantity sheet.
+  Future<void> _editQty(int index) async {
+    final item = _items[index];
+    final found = await _stockFor(item);
+    if (!mounted) return;
+    final qty = await showQuantitySheet(
+      context,
+      productName: item.displayName,
+      unit: item.unit,
+      unitPrice: item.unitPrice,
+      available: found?.stock,
+      initial: item.qty,
+    );
+    if (qty == null || !mounted || index >= _items.length) return;
+    setState(() {
+      _items[index] = item.copyWith(qty: qty, totalPrice: lineTotal(item.unitPrice, qty));
+    });
   }
 
   Future<void> _updateQty(int index, int delta) async {
     final item = _items[index];
-    final newQty = item.qty + delta;
+    final newQty = roundQty(item.qty + delta);
     if (newQty <= 0) {
       setState(() => _items.removeAt(index));
       return;
     }
     if (delta > 0) {
-      final isar = await ref.read(isarProvider.future);
-      final product = await isar.products.get(item.productId);
-      if (product != null) {
-        int stock;
-        if (item.variantCombinationKey.isNotEmpty) {
-          final combo = product.findCombination(item.variantCombinationKey);
-          stock = combo?.stockQty ?? 0;
-        } else {
-          stock = product.stockQty;
+      final found = await _stockFor(item);
+      if (found != null && qtyExceeds(newQty, found.stock)) {
+        if (mounted) {
+          final s = AppStrings.of(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(s.notEnoughStock(s.qty(found.stock, item.unit), item.displayName))),
+          );
         }
-        if (newQty > stock) {
-          if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).notEnoughStock(stock, item.displayName))));
-          }
-          return;
-        }
+        return;
       }
     }
+    if (!mounted || index >= _items.length) return;
     setState(() {
-      _items[index] = item.copyWith(qty: newQty, totalPrice: item.unitPrice * newQty);
+      _items[index] = item.copyWith(qty: newQty, totalPrice: lineTotal(item.unitPrice, newQty));
     });
   }
 
@@ -1025,7 +1071,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${_items.fold<int>(0, (s, i) => s + i.qty)}',
+                  '${cartItemCount(_items)}',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
                 ),
               ),
@@ -1121,10 +1167,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   Widget _buildItemTile(int index, ThemeData theme, ColorScheme cs) {
     final item = _items[index];
-    final unitPrice = CurrencyFormatter.format(item.unitPrice);
+    final s = AppStrings.of(context);
+    final unitPrice = s.pricePer(CurrencyFormatter.format(item.unitPrice), item.unit);
     final unitPriceStyle = TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5));
     const nameStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 13);
     const qtyStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14);
+    final qtyText = s.qty(item.qty, item.unit);
 
     final info = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1134,23 +1182,43 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ],
     );
 
-    final qty = Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _qtyButton(tabler.Minus.new, () => _updateQty(index, -1), cs),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text('${item.qty}', style: qtyStyle),
-          ),
-          _qtyButton(tabler.Plus.new, () => _updateQty(index, 1), cs),
-        ],
-      ),
+    final box = BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
     );
+    // A weighed line has no + / − (a step of 1 kg is rarely what's sold):
+    // its box opens the quantity sheet.
+    final qty = item.unit.allowsDecimal
+        ? InkWell(
+            onTap: () => _editQty(index),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: box,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(qtyText, style: qtyStyle),
+                  const SizedBox(width: 6),
+                  ThinIcon(tabler.Pencil.new, size: 16, color: cs.primary),
+                ],
+              ),
+            ),
+          )
+        : Container(
+            decoration: box,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _qtyButton(tabler.Minus.new, () => _updateQty(index, -1), cs),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(qtyText, style: qtyStyle),
+                ),
+                _qtyButton(tabler.Plus.new, () => _updateQty(index, 1), cs),
+              ],
+            ),
+          );
 
     final total = Text(
       CurrencyFormatter.format(item.totalPrice),
@@ -1169,7 +1237,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final nameRoom = constraints.maxWidth - _itemControlsWidth - _lineWidth(context, '${item.qty}', qtyStyle);
+          final nameRoom = constraints.maxWidth - _itemControlsWidth - _lineWidth(context, qtyText, qtyStyle);
           final needed = item.displayName.split(' ').fold(
             math.max(
               MediaQuery.textScalerOf(context).scale(_minItemNameWidth),
@@ -1642,28 +1710,29 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     super.dispose();
   }
 
-  int _qtyOf(int productId, {String combinationKey = ''}) {
+  double _qtyOf(int productId, {String combinationKey = ''}) {
     final idx = _items.indexWhere((i) => i.productId == productId && i.variantCombinationKey == combinationKey);
     return idx >= 0 ? _items[idx].qty : 0;
   }
 
   void _setQty(
     Product product,
-    int qty, {
+    double qty, {
     String combinationKey = '',
     String displayLabel = '',
     double? priceOverride,
     String? skuOverride,
-    required int availableStock,
+    required double availableStock,
   }) {
-    if (qty > availableStock) qty = availableStock;
+    qty = roundQty(qty);
+    if (qtyExceeds(qty, availableStock)) qty = availableStock;
     setState(() {
       final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey == combinationKey);
       final unitPrice = priceOverride ?? product.sellingPrice;
       if (qty <= 0) {
         if (idx >= 0) _items.removeAt(idx);
       } else if (idx >= 0) {
-        _items[idx] = _items[idx].copyWith(qty: qty, totalPrice: _items[idx].unitPrice * qty);
+        _items[idx] = _items[idx].copyWith(qty: qty, totalPrice: lineTotal(_items[idx].unitPrice, qty));
       } else {
         _items.add(
           OrderItem(
@@ -1671,9 +1740,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             productName: product.name,
             productSku: skuOverride ?? product.sku,
             qty: qty,
+            unit: product.unit,
             unitPrice: unitPrice,
             costPrice: product.costPrice,
-            totalPrice: unitPrice * qty,
+            totalPrice: lineTotal(unitPrice, qty),
             variantCombinationKey: combinationKey,
             variantDisplayLabel: displayLabel,
           ),
@@ -1681,6 +1751,37 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       }
     });
     widget.onChanged(_items);
+  }
+
+  /// A weighed product's Add (or its quantity, once in the cart): asks how
+  /// much in the quantity sheet, over this picker.
+  Future<void> _askQty(
+    Product product, {
+    String combinationKey = '',
+    String displayLabel = '',
+    double? priceOverride,
+    String? skuOverride,
+    required double availableStock,
+  }) async {
+    final current = _qtyOf(product.id, combinationKey: combinationKey);
+    final qty = await showQuantitySheet(
+      context,
+      productName: displayLabel.isEmpty ? product.name : '${product.name} ($displayLabel)',
+      unit: product.unit,
+      unitPrice: priceOverride ?? product.sellingPrice,
+      available: availableStock,
+      initial: current > 0 ? current : null,
+    );
+    if (qty == null || !mounted) return;
+    _setQty(
+      product,
+      qty,
+      combinationKey: combinationKey,
+      displayLabel: displayLabel,
+      priceOverride: priceOverride,
+      skuOverride: skuOverride,
+      availableStock: availableStock,
+    );
   }
 
   List<Product> _filterProducts(List<Product> all) {
@@ -1722,7 +1823,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   Widget _buildSheet(BuildContext context, ThemeData theme, ColorScheme cs, List<Product>? allProducts) {
     final filtered = allProducts == null ? const <Product>[] : _filterProducts(allProducts);
 
-    final totalItems = _items.fold<int>(0, (s, i) => s + i.qty);
+    final totalItems = cartItemCount(_items);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -1910,7 +2011,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                       ),
                                                     ),
                                                     Text(
-                                                      '  ·  ${c.stockQty} in stock',
+                                                      '  ·  ${AppStrings.of(context).qty(c.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
                                                       style: TextStyle(
                                                         fontSize: 11,
                                                         color: outOfStock
@@ -1924,65 +2025,51 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                             ),
                                           ),
                                           if (qty > 0)
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  _sheetQtyBtn(
-                                                    tabler.Minus.new,
-                                                    () => _setQty(
-                                                      p,
-                                                      qty - 1,
-                                                      combinationKey: c.combinationKey,
-                                                      displayLabel: c.displayLabel,
-                                                      priceOverride: comboPrice,
-                                                      skuOverride: comboSku,
-                                                      availableStock: c.stockQty,
-                                                    ),
-                                                    cs,
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                                                    child: Text(
-                                                      '$qty',
-                                                      style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
-                                                    ),
-                                                  ),
-                                                  _sheetQtyBtn(
-                                                    tabler.Plus.new,
-                                                    qty >= c.stockQty
-                                                        ? null
-                                                        : () => _setQty(
-                                                            p,
-                                                            qty + 1,
-                                                            combinationKey: c.combinationKey,
-                                                            displayLabel: c.displayLabel,
-                                                            priceOverride: comboPrice,
-                                                            skuOverride: comboSku,
-                                                            availableStock: c.stockQty,
-                                                          ),
-                                                    cs,
-                                                  ),
-                                                ],
-                                              ),
-                                            )
-                                          else
-                                            _addButton(
-                                              row.maxWidth,
-                                              outOfStock: outOfStock,
-                                              onAdd: () => _setQty(
+                                            _qtyControl(
+                                              p,
+                                              qty,
+                                              cs,
+                                              available: c.stockQty,
+                                              onStep: (q) => _setQty(
                                                 p,
-                                                1,
+                                                q,
                                                 combinationKey: c.combinationKey,
                                                 displayLabel: c.displayLabel,
                                                 priceOverride: comboPrice,
                                                 skuOverride: comboSku,
                                                 availableStock: c.stockQty,
                                               ),
+                                              onAsk: () => _askQty(
+                                                p,
+                                                combinationKey: c.combinationKey,
+                                                displayLabel: c.displayLabel,
+                                                priceOverride: comboPrice,
+                                                skuOverride: comboSku,
+                                                availableStock: c.stockQty,
+                                              ),
+                                            )
+                                          else
+                                            _addButton(
+                                              row.maxWidth,
+                                              outOfStock: outOfStock,
+                                              onAdd: () => p.unit.allowsDecimal
+                                                  ? _askQty(
+                                                      p,
+                                                      combinationKey: c.combinationKey,
+                                                      displayLabel: c.displayLabel,
+                                                      priceOverride: comboPrice,
+                                                      skuOverride: comboSku,
+                                                      availableStock: c.stockQty,
+                                                    )
+                                                  : _setQty(
+                                                      p,
+                                                      1,
+                                                      combinationKey: c.combinationKey,
+                                                      displayLabel: c.displayLabel,
+                                                      priceOverride: comboPrice,
+                                                      skuOverride: comboSku,
+                                                      availableStock: c.stockQty,
+                                                    ),
                                             ),
                                         ],
                                       ),
@@ -2021,13 +2108,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
-                                            CurrencyFormatter.format(p.sellingPrice),
+                                            AppStrings.of(context).pricePer(CurrencyFormatter.format(p.sellingPrice), p.unit),
                                             style: TextStyle(fontSize: 12, color: cs.primary),
                                             maxLines: 1,
                                           ),
                                         ),
                                         Text(
-                                          '  ·  ${p.stockQty} in stock',
+                                          '  ·  ${AppStrings.of(context).qty(p.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
                                           style: TextStyle(
                                             fontSize: 11,
                                             color: outOfStock ? cs.error : cs.onSurface.withValues(alpha: 0.5),
@@ -2039,39 +2126,21 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 ),
                               ),
                               if (qty > 0)
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _sheetQtyBtn(
-                                        tabler.Minus.new,
-                                        () => _setQty(p, qty - 1, availableStock: p.stockQty),
-                                        cs,
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                                        child: Text(
-                                          '$qty',
-                                          style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
-                                        ),
-                                      ),
-                                      _sheetQtyBtn(
-                                        tabler.Plus.new,
-                                        qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty),
-                                        cs,
-                                      ),
-                                    ],
-                                  ),
+                                _qtyControl(
+                                  p,
+                                  qty,
+                                  cs,
+                                  available: p.stockQty,
+                                  onStep: (q) => _setQty(p, q, availableStock: p.stockQty),
+                                  onAsk: () => _askQty(p, availableStock: p.stockQty),
                                 )
                               else
                                 _addButton(
                                   row.maxWidth,
                                   outOfStock: outOfStock,
-                                  onAdd: () => _setQty(p, 1, availableStock: p.stockQty),
+                                  onAdd: p.unit.allowsDecimal
+                                      ? () => _askQty(p, availableStock: p.stockQty)
+                                      : () => _setQty(p, 1, availableStock: p.stockQty),
                                 ),
                             ],
                           ),
@@ -2096,6 +2165,52 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
           child: FittedBox(fit: BoxFit.scaleDown, child: Text(outOfStock ? s.outOfStock : s.add)),
         ),
+      ),
+    );
+  }
+
+  /// A picked product's quantity: + / − for counted goods, or for weighed
+  /// ones a box showing "1.25 kg" that reopens the quantity sheet.
+  Widget _qtyControl(
+    Product p,
+    double qty,
+    ColorScheme cs, {
+    required double available,
+    required ValueChanged<double> onStep,
+    required VoidCallback onAsk,
+  }) {
+    final s = AppStrings.of(context);
+    final decoration = BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+    );
+    final label = Text(
+      s.qty(qty, p.unit),
+      style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+    );
+    if (p.unit.allowsDecimal) {
+      return InkWell(
+        onTap: onAsk,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: decoration,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [label, const SizedBox(width: 6), ThinIcon(tabler.Pencil.new, size: 16, color: cs.primary)],
+          ),
+        ),
+      );
+    }
+    return Container(
+      decoration: decoration,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _sheetQtyBtn(tabler.Minus.new, () => onStep(qty - 1), cs),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: label),
+          _sheetQtyBtn(tabler.Plus.new, qtyAtLeast(qty, available) ? null : () => onStep(qty + 1), cs),
+        ],
       ),
     );
   }

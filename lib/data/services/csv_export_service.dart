@@ -5,6 +5,7 @@ import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../core/utils/quantity.dart';
 import '../models/order.dart';
 import '../models/product.dart';
 import '../models/expense.dart';
@@ -67,6 +68,7 @@ class CsvExportService {
         'Low Stock Threshold',
         'Profit Margin %',
         'Active',
+        'Unit',
       ],
       ...products.map((p) => [
             p.name,
@@ -74,10 +76,11 @@ class CsvExportService {
             p.category,
             p.sellingPrice,
             p.costPrice,
-            p.stockQty,
-            p.lowStockThreshold,
+            qtyCell(p.stockQty),
+            qtyCell(p.lowStockThreshold),
             p.profitMargin.toStringAsFixed(1),
             p.isActive ? 'Yes' : 'No',
+            p.unit.name,
           ]),
     ];
     await _shareAsCsv(rows, 'products_export', shareOrigin: shareOrigin);
@@ -126,6 +129,7 @@ class CsvExportService {
 
   static Object _safeCell(Object c) {
     if (c is num) return c;
+    if (c is ReportQty) return c.value;
     final s = c.toString();
     return s.isNotEmpty && '=+-@'.contains(s[0]) ? "'$s" : s;
   }

@@ -33,14 +33,19 @@ const StockMovementSchema = CollectionSchema(
       type: IsarType.string,
     ),
     r'qty': PropertySchema(id: 3, name: r'qty', type: IsarType.long),
-    r'reason': PropertySchema(id: 4, name: r'reason', type: IsarType.string),
+    r'quantity': PropertySchema(
+      id: 4,
+      name: r'quantity',
+      type: IsarType.double,
+    ),
+    r'reason': PropertySchema(id: 5, name: r'reason', type: IsarType.string),
     r'supplierId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'supplierId',
       type: IsarType.long,
     ),
     r'type': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'type',
       type: IsarType.string,
       enumMap: _StockMovementtypeEnumValueMap,
@@ -110,10 +115,11 @@ void _stockMovementSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeLong(offsets[1], object.productId);
   writer.writeString(offsets[2], object.productName);
-  writer.writeLong(offsets[3], object.qty);
-  writer.writeString(offsets[4], object.reason);
-  writer.writeLong(offsets[5], object.supplierId);
-  writer.writeString(offsets[6], object.type.name);
+  writer.writeLong(offsets[3], object.legacyQty);
+  writer.writeDouble(offsets[4], object.qty);
+  writer.writeString(offsets[5], object.reason);
+  writer.writeLong(offsets[6], object.supplierId);
+  writer.writeString(offsets[7], object.type.name);
 }
 
 StockMovement _stockMovementDeserialize(
@@ -127,13 +133,14 @@ StockMovement _stockMovementDeserialize(
     id: id,
     productId: reader.readLongOrNull(offsets[1]) ?? 0,
     productName: reader.readStringOrNull(offsets[2]) ?? '',
-    qty: reader.readLongOrNull(offsets[3]) ?? 0,
-    reason: reader.readStringOrNull(offsets[4]) ?? '',
-    supplierId: reader.readLongOrNull(offsets[5]) ?? 0,
+    qty: reader.readDoubleOrNull(offsets[4]) ?? 0,
+    reason: reader.readStringOrNull(offsets[5]) ?? '',
+    supplierId: reader.readLongOrNull(offsets[6]) ?? 0,
     type:
-        _StockMovementtypeValueEnumMap[reader.readStringOrNull(offsets[6])] ??
+        _StockMovementtypeValueEnumMap[reader.readStringOrNull(offsets[7])] ??
         StockMovementType.adjustment,
   );
+  object.legacyQty = reader.readLong(offsets[3]);
   return object;
 }
 
@@ -151,12 +158,14 @@ P _stockMovementDeserializeProp<P>(
     case 2:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 3:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readLong(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
     case 5:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 6:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 7:
       return (_StockMovementtypeValueEnumMap[reader.readStringOrNull(offset)] ??
               StockMovementType.adjustment)
           as P;
@@ -845,9 +854,8 @@ extension StockMovementQueryFilter
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> qtyEqualTo(
-    int value,
-  ) {
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+  legacyQtyEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'qty', value: value),
@@ -856,7 +864,7 @@ extension StockMovementQueryFilter
   }
 
   QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
-  qtyGreaterThan(int value, {bool include = false}) {
+  legacyQtyGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -868,10 +876,8 @@ extension StockMovementQueryFilter
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> qtyLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+  legacyQtyLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.lessThan(
@@ -883,7 +889,8 @@ extension StockMovementQueryFilter
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> qtyBetween(
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+  legacyQtyBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -897,6 +904,81 @@ extension StockMovementQueryFilter
           includeLower: includeLower,
           upper: upper,
           includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> qtyEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition>
+  qtyGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> qtyLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterFilterCondition> qtyBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'quantity',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
         ),
       );
     });
@@ -1290,15 +1372,28 @@ extension StockMovementQuerySortBy
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> sortByQty() {
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> sortByLegacyQty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'qty', Sort.asc);
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> sortByQtyDesc() {
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
+  sortByLegacyQtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'qty', Sort.desc);
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> sortByQty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> sortByQtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.desc);
     });
   }
 
@@ -1393,15 +1488,28 @@ extension StockMovementQuerySortThenBy
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> thenByQty() {
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> thenByLegacyQty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'qty', Sort.asc);
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> thenByQtyDesc() {
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy>
+  thenByLegacyQtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'qty', Sort.desc);
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> thenByQty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QAfterSortBy> thenByQtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.desc);
     });
   }
 
@@ -1465,9 +1573,15 @@ extension StockMovementQueryWhereDistinct
     });
   }
 
-  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByQty() {
+  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByLegacyQty() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'qty');
+    });
+  }
+
+  QueryBuilder<StockMovement, StockMovement, QDistinct> distinctByQty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'quantity');
     });
   }
 
@@ -1520,9 +1634,15 @@ extension StockMovementQueryProperty
     });
   }
 
-  QueryBuilder<StockMovement, int, QQueryOperations> qtyProperty() {
+  QueryBuilder<StockMovement, int, QQueryOperations> legacyQtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'qty');
+    });
+  }
+
+  QueryBuilder<StockMovement, double, QQueryOperations> qtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'quantity');
     });
   }
 
@@ -1558,7 +1678,7 @@ StockMovement _$StockMovementFromJson(Map<String, dynamic> json) =>
       type:
           $enumDecodeNullable(_$StockMovementTypeEnumMap, json['type']) ??
           StockMovementType.adjustment,
-      qty: (json['qty'] as num?)?.toInt() ?? 0,
+      qty: (json['qty'] as num?)?.toDouble() ?? 0,
       reason: json['reason'] as String? ?? '',
       supplierId: (json['supplierId'] as num?)?.toInt() ?? 0,
       createdAt: json['createdAt'] == null

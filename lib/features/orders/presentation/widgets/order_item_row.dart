@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../data/models/order_item.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/constants/app_strings.dart';
 
 class OrderItemRow extends StatelessWidget {
   final OrderItem item;
@@ -27,7 +28,7 @@ class OrderItemRow extends StatelessWidget {
     final details = [
       Text(item.displayName, style: nameStyle),
       Text(
-        '${CurrencyFormatter.format(item.unitPrice)} × ${item.qty}',
+        '${AppStrings.of(context).pricePer(CurrencyFormatter.format(item.unitPrice), item.unit)} × ${AppStrings.of(context).qty(item.qty, item.unit)}',
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
@@ -51,7 +52,7 @@ class OrderItemRow extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      '${item.qty}',
+                      AppStrings.of(context).qty(item.qty, item.unit),
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         color: theme.colorScheme.primary,

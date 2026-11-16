@@ -385,7 +385,7 @@ class _ProductPreview extends StatelessWidget {
             ),
           ),
           Text(
-            '${product.totalStock}',
+            AppStrings.of(context).qty(product.totalStock, product.unit),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: product.isOutOfStock

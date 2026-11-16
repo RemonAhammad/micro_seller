@@ -1652,13 +1652,24 @@ const PurchaseItemSchema = Schema(
       type: IsarType.string,
     ),
     r'qty': PropertySchema(id: 2, name: r'qty', type: IsarType.long),
-    r'totalCost': PropertySchema(
+    r'quantity': PropertySchema(
       id: 3,
+      name: r'quantity',
+      type: IsarType.double,
+    ),
+    r'totalCost': PropertySchema(
+      id: 4,
       name: r'totalCost',
       type: IsarType.double,
     ),
+    r'unit': PropertySchema(
+      id: 5,
+      name: r'unit',
+      type: IsarType.string,
+      enumMap: _PurchaseItemunitEnumValueMap,
+    ),
     r'unitCost': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'unitCost',
       type: IsarType.double,
     ),
@@ -1677,6 +1688,7 @@ int _purchaseItemEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.productName.length * 3;
+  bytesCount += 3 + object.unit.name.length * 3;
   return bytesCount;
 }
 
@@ -1688,9 +1700,11 @@ void _purchaseItemSerialize(
 ) {
   writer.writeLong(offsets[0], object.productId);
   writer.writeString(offsets[1], object.productName);
-  writer.writeLong(offsets[2], object.qty);
-  writer.writeDouble(offsets[3], object.totalCost);
-  writer.writeDouble(offsets[4], object.unitCost);
+  writer.writeLong(offsets[2], object.legacyQty);
+  writer.writeDouble(offsets[3], object.qty);
+  writer.writeDouble(offsets[4], object.totalCost);
+  writer.writeString(offsets[5], object.unit.name);
+  writer.writeDouble(offsets[6], object.unitCost);
 }
 
 PurchaseItem _purchaseItemDeserialize(
@@ -1702,10 +1716,14 @@ PurchaseItem _purchaseItemDeserialize(
   final object = PurchaseItem(
     productId: reader.readLongOrNull(offsets[0]) ?? 0,
     productName: reader.readStringOrNull(offsets[1]) ?? '',
-    qty: reader.readLongOrNull(offsets[2]) ?? 0,
-    totalCost: reader.readDoubleOrNull(offsets[3]) ?? 0.0,
-    unitCost: reader.readDoubleOrNull(offsets[4]) ?? 0.0,
+    qty: reader.readDoubleOrNull(offsets[3]) ?? 0,
+    totalCost: reader.readDoubleOrNull(offsets[4]) ?? 0.0,
+    unit:
+        _PurchaseItemunitValueEnumMap[reader.readStringOrNull(offsets[5])] ??
+        QuantityUnit.piece,
+    unitCost: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
   );
+  object.legacyQty = reader.readLong(offsets[2]);
   return object;
 }
 
@@ -1721,15 +1739,44 @@ P _purchaseItemDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 2:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
     case 4:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 5:
+      return (_PurchaseItemunitValueEnumMap[reader.readStringOrNull(offset)] ??
+              QuantityUnit.piece)
+          as P;
+    case 6:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _PurchaseItemunitEnumValueMap = {
+  r'piece': r'piece',
+  r'kg': r'kg',
+  r'g': r'g',
+  r'litre': r'litre',
+  r'ml': r'ml',
+  r'metre': r'metre',
+  r'cm': r'cm',
+  r'dozen': r'dozen',
+  r'pack': r'pack',
+};
+const _PurchaseItemunitValueEnumMap = {
+  r'piece': QuantityUnit.piece,
+  r'kg': QuantityUnit.kg,
+  r'g': QuantityUnit.g,
+  r'litre': QuantityUnit.litre,
+  r'ml': QuantityUnit.ml,
+  r'metre': QuantityUnit.metre,
+  r'cm': QuantityUnit.cm,
+  r'dozen': QuantityUnit.dozen,
+  r'pack': QuantityUnit.pack,
+};
 
 extension PurchaseItemQueryFilter
     on QueryBuilder<PurchaseItem, PurchaseItem, QFilterCondition> {
@@ -1929,9 +1976,8 @@ extension PurchaseItemQueryFilter
     });
   }
 
-  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> qtyEqualTo(
-    int value,
-  ) {
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  legacyQtyEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'qty', value: value),
@@ -1940,7 +1986,7 @@ extension PurchaseItemQueryFilter
   }
 
   QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
-  qtyGreaterThan(int value, {bool include = false}) {
+  legacyQtyGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -1952,10 +1998,8 @@ extension PurchaseItemQueryFilter
     });
   }
 
-  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> qtyLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  legacyQtyLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.lessThan(
@@ -1967,7 +2011,8 @@ extension PurchaseItemQueryFilter
     });
   }
 
-  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> qtyBetween(
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  legacyQtyBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -1981,6 +2026,81 @@ extension PurchaseItemQueryFilter
           includeLower: includeLower,
           upper: upper,
           includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> qtyEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  qtyGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> qtyLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> qtyBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'quantity',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
         ),
       );
     });
@@ -2057,6 +2177,153 @@ extension PurchaseItemQueryFilter
 
           epsilon: epsilon,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> unitEqualTo(
+    QuantityUnit value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  unitGreaterThan(
+    QuantityUnit value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> unitLessThan(
+    QuantityUnit value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> unitBetween(
+    QuantityUnit lower,
+    QuantityUnit upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'unit',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  unitStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> unitEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> unitContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition> unitMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'unit',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  unitIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'unit', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  unitIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'unit', value: ''),
       );
     });
   }
@@ -2191,7 +2458,14 @@ const _$PurchasePaymentMethodEnumMap = {
 PurchaseItem _$PurchaseItemFromJson(Map<String, dynamic> json) => PurchaseItem(
   productId: (json['productId'] as num?)?.toInt() ?? 0,
   productName: json['productName'] as String? ?? '',
-  qty: (json['qty'] as num?)?.toInt() ?? 0,
+  qty: (json['qty'] as num?)?.toDouble() ?? 0,
+  unit:
+      $enumDecodeNullable(
+        _$QuantityUnitEnumMap,
+        json['unit'],
+        unknownValue: QuantityUnit.piece,
+      ) ??
+      QuantityUnit.piece,
   unitCost: (json['unitCost'] as num?)?.toDouble() ?? 0.0,
   totalCost: (json['totalCost'] as num?)?.toDouble() ?? 0.0,
 );
@@ -2201,6 +2475,19 @@ Map<String, dynamic> _$PurchaseItemToJson(PurchaseItem instance) =>
       'productId': instance.productId,
       'productName': instance.productName,
       'qty': instance.qty,
+      'unit': _$QuantityUnitEnumMap[instance.unit]!,
       'unitCost': instance.unitCost,
       'totalCost': instance.totalCost,
     };
+
+const _$QuantityUnitEnumMap = {
+  QuantityUnit.piece: 'piece',
+  QuantityUnit.kg: 'kg',
+  QuantityUnit.g: 'g',
+  QuantityUnit.litre: 'litre',
+  QuantityUnit.ml: 'ml',
+  QuantityUnit.metre: 'metre',
+  QuantityUnit.cm: 'cm',
+  QuantityUnit.dozen: 'dozen',
+  QuantityUnit.pack: 'pack',
+};

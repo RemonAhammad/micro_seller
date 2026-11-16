@@ -20,7 +20,16 @@ class VariantCombination {
   String displayLabel;
 
   double priceAdjustment;
-  int stockQty;
+
+  /// In the product's unit (see `Product.stockQty` for the stored name).
+  @Name('stockQuantity')
+  double stockQty;
+
+  /// The whole-number stock of older versions, for the one-time migration.
+  @Name('stockQty')
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int legacyStockQty = 0;
+
   String sku;
   bool isActive;
 
@@ -28,7 +37,7 @@ class VariantCombination {
     String? combinationKey,
     String? displayLabel,
     double? priceAdjustment,
-    int? stockQty,
+    double? stockQty,
     String? sku,
     bool? isActive,
   }) =>

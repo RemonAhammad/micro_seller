@@ -27,7 +27,15 @@ class StockMovement {
   @Enumerated(EnumType.name)
   StockMovementType type;
 
-  int qty;
+  /// Signed (+ in, − out), in the product's unit, rounded to 3 decimals.
+  /// Stored as `quantity`; the int it replaced is [legacyQty].
+  @Name('quantity')
+  double qty;
+
+  @Name('qty')
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int legacyQty = 0;
+
   String reason;
 
   int supplierId;
@@ -43,7 +51,7 @@ class StockMovement {
     int? productId,
     String? productName,
     StockMovementType? type,
-    int? qty,
+    double? qty,
     String? reason,
     int? supplierId,
     DateTime? createdAt,

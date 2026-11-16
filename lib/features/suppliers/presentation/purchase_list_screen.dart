@@ -167,7 +167,7 @@ class PurchaseListScreen extends ConsumerWidget {
                       if (p.items.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         Text(
-                          p.items.map((i) => '${i.productName} ×${i.qty}').join(', '),
+                          p.items.map((i) => '${i.productName} ×${AppStrings.of(context).qty(i.qty, i.unit)}').join(', '),
                           style: theme.textTheme.bodySmall?.copyWith(
                               color: cs.onSurface.withValues(alpha: 0.5)),
                           maxLines: 2,

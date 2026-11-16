@@ -8,6 +8,7 @@ import '../models/purchase.dart';
 import '../models/stock_movement.dart';
 import '../models/supplier.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/quantity.dart';
 import '../../features/customers/providers/dues_provider.dart';
 import 'dues_service.dart';
 
@@ -20,9 +21,21 @@ class ReportTable {
   final List<List<Object>> rows;
 }
 
+/// A quantity in a report table. A bare double is money to [formatCell], so
+/// a quantity (which may have decimals: 12.5 kg sold) is wrapped in this.
+/// CSV gets the number itself; the PDF "12.5".
+class ReportQty {
+  const ReportQty(this.value);
+  final double value;
+
+  @override
+  String toString() => formatQtyNumber(value);
+}
+
 String formatCell(Object c) => switch (c) {
       double v => CurrencyFormatter.format(v),
       int v => '$v',
+      ReportQty q => q.toString(),
       _ => c.toString(),
     };
 
@@ -380,7 +393,7 @@ class InventoryReport {
   final int lowStockCount;
   final int outOfStockCount;
 
-  final Map<StockMovementType, int> movementQty;
+  final Map<StockMovementType, double> movementQty;
   final Map<String, double> bestSellers;
 
   final Map<String, double> slowMovers;
@@ -404,13 +417,13 @@ class InventoryReport {
           [tr('refundsPaid'), refunded],
         ]),
         ReportTable(tr('stockMovements'), [tr('type'), tr('quantity')], [
-          for (final e in movementQty.entries) [tr(e.key.name), e.value],
+          for (final e in movementQty.entries) [tr(e.key.name), ReportQty(e.value)],
         ]),
         ReportTable(tr('bestSellers'), [tr('product'), tr('quantity')], [
-          for (final e in bestSellers.entries) [e.key, e.value.round()],
+          for (final e in bestSellers.entries) [e.key, ReportQty(e.value)],
         ]),
         ReportTable(tr('slowMovers'), [tr('product'), tr('inStock')], [
-          for (final e in slowMovers.entries) [e.key, e.value.round()],
+          for (final e in slowMovers.entries) [e.key, ReportQty(e.value)],
         ]),
         ReportTable(tr('returnReasons'), [tr('reason'), tr('returnsLabel')], [
           for (final e in returnsByReason.entries) [tr(e.key.name), e.value],
@@ -448,10 +461,10 @@ InventoryReport buildInventoryReport({
     }
   }
 
-  final moved = <StockMovementType, int>{};
+  final moved = <StockMovementType, double>{};
   for (final m in movements) {
     if (!_inRange(m.createdAt, start, end)) continue;
-    moved[m.type] = (moved[m.type] ?? 0) + m.qty.abs();
+    moved[m.type] = roundQty((moved[m.type] ?? 0) + m.qty.abs());
   }
 
   final soldQty = <String, double>{};
@@ -473,14 +486,14 @@ InventoryReport buildInventoryReport({
     if (!_inRange(o.createdAt, start, end)) continue;
     for (final i in o.items) {
       soldIds.add(i.productId);
-      soldQty[i.productName] = (soldQty[i.productName] ?? 0) + i.qty;
+      soldQty[i.productName] = roundQty((soldQty[i.productName] ?? 0) + i.qty);
     }
   }
 
   final slow = <String, double>{
     for (final p in products)
       if (p.isActive && p.totalStock > 0 && !soldIds.contains(p.id))
-        p.name: p.totalStock.toDouble(),
+        p.name: p.totalStock,
   };
 
   return InventoryReport(

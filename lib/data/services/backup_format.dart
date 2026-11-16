@@ -10,7 +10,10 @@ import '../models/stock_movement.dart';
 import '../models/sales_target.dart';
 import '../models/supplier.dart';
 
-const kBackupVersion = 5;
+/// 6: quantities may have decimals (`stockQty`, `qty`, `lowStockThreshold`
+/// as doubles) and products and items carry a `unit`. Older files restore
+/// unchanged: their whole numbers read as doubles, a missing unit as piece.
+const kBackupVersion = 6;
 
 Map<String, Object?> buildBackupMap({
   required List<Product> products,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../data/models/quantity_unit.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/quantity.dart';
 
 class AppStrings {
   AppStrings._();
@@ -491,8 +493,74 @@ class _L10nStrings {
 
   String productsFoundToImport(int count) => _l10n.tr('productsFoundToImport').replaceAll('{count}', '$count');
   String productsImported(int count) => _l10n.tr('productsImported').replaceAll('{count}', '$count');
-  String notEnoughStock(int stock, String item) =>
-      _l10n.tr('notEnoughStock').replaceAll('{stock}', '$stock').replaceAll('{item}', item);
+  /// [stock] is the formatted quantity ([qty]), so "Only 1.25 kg in stock".
+  String notEnoughStock(String stock, String item) =>
+      _l10n.tr('notEnoughStock').replaceAll('{stock}', stock).replaceAll('{item}', item);
+
+  String get unit => _l10n.tr('unit');
+  String get unitHint => _l10n.tr('unitHint');
+  String get quantity => _l10n.tr('quantity');
+  String get byAmount => _l10n.tr('byAmount');
+  String get byQuantity => _l10n.tr('byQuantity');
+  String get amountToSell => _l10n.tr('amountToSell');
+  String get addQty => _l10n.tr('addQty');
+  String get updateQty => _l10n.tr('updateQty');
+  String get enterQuantity => _l10n.tr('enterQuantity');
+
+  /// "{stock} left", [stock] formatted with [qty].
+  String stockLeftAfter(String stock) => _l10n.tr('stockLeftAfter').replaceAll('{stock}', stock);
+
+  /// A price field's label for [unit]: "Selling price (per kg)"; unchanged
+  /// for pieces.
+  String pricePerUnit(String label, QuantityUnit unit) {
+    final symbol = unitSymbol(unit);
+    if (symbol.isEmpty) return label;
+    return _l10n.tr('pricePerUnit').replaceAll('{label}', label).replaceAll('{unit}', symbol);
+  }
+
+  /// The unit's name for a picker: "Kilogram (kg)".
+  String unitName(QuantityUnit unit) => _l10n.tr(_unitNameKeys[unit]!);
+
+  /// The short sign after a number: "kg", "m". None for pieces, so counted
+  /// products read as they always have ("3").
+  String unitSymbol(QuantityUnit unit) =>
+      unit == QuantityUnit.piece ? '' : _l10n.tr(_unitSymbolKeys[unit]!);
+
+  /// A quantity with its unit: "3", "1.25 kg", "2 dozen".
+  String qty(num qty, QuantityUnit unit) {
+    final number = formatQtyNumber(qty);
+    final symbol = unitSymbol(unit);
+    return symbol.isEmpty ? number : '$number $symbol';
+  }
+
+  /// A price per unit: "৳600 / kg"; a piece price is just the price.
+  String pricePer(String price, QuantityUnit unit) {
+    final symbol = unitSymbol(unit);
+    return symbol.isEmpty ? price : '$price / $symbol';
+  }
+
+  static const _unitNameKeys = {
+    QuantityUnit.piece: 'unitNamePiece',
+    QuantityUnit.kg: 'unitNameKg',
+    QuantityUnit.g: 'unitNameG',
+    QuantityUnit.litre: 'unitNameLitre',
+    QuantityUnit.ml: 'unitNameMl',
+    QuantityUnit.metre: 'unitNameMetre',
+    QuantityUnit.cm: 'unitNameCm',
+    QuantityUnit.dozen: 'unitNameDozen',
+    QuantityUnit.pack: 'unitNamePack',
+  };
+
+  static const _unitSymbolKeys = {
+    QuantityUnit.kg: 'unitSymbolKg',
+    QuantityUnit.g: 'unitSymbolG',
+    QuantityUnit.litre: 'unitSymbolLitre',
+    QuantityUnit.ml: 'unitSymbolMl',
+    QuantityUnit.metre: 'unitSymbolMetre',
+    QuantityUnit.cm: 'unitSymbolCm',
+    QuantityUnit.dozen: 'unitSymbolDozen',
+    QuantityUnit.pack: 'unitSymbolPack',
+  };
   String rowsSkipped(int count) => _l10n.tr('rowsSkipped').replaceAll('{count}', '$count');
   String andMore(int count) => _l10n.tr('andMore').replaceAll('{count}', '$count');
 

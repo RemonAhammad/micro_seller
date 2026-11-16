@@ -1,4 +1,5 @@
 import 'package:isar_community/isar.dart';
+import '../../core/utils/quantity.dart';
 import '../models/order.dart';
 import '../models/customer.dart';
 import '../models/product.dart';
@@ -52,7 +53,7 @@ class OrderRepository {
         final product = await _isar.products.get(item.productId);
         if (product != null && order.orderStatus == OrderStatus.confirmed) {
           final updated = product.copyWith(
-            stockQty: product.stockQty - item.qty,
+            stockQty: roundQty(product.stockQty - item.qty),
             updatedAt: DateTime.now(),
           );
           await _isar.products.put(updated);

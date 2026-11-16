@@ -158,7 +158,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         children: [
                           _InfoRow(
                             s.sellingPrice,
-                            CurrencyFormatter.format(product.sellingPrice),
+                            AppStrings.of(context).pricePer(CurrencyFormatter.format(product.sellingPrice), product.unit),
                             valueColor: theme.colorScheme.primary,
                             isBold: true,
                           ),
@@ -179,14 +179,14 @@ class ProductDetailScreen extends ConsumerWidget {
                         children: [
                           _InfoRow(
                             s.stock,
-                            '${product.stockQty}',
+                            AppStrings.of(context).qty(product.stockQty, product.unit),
                             valueColor: product.isOutOfStock
                                 ? AppColors.statusCancelled
                                 : product.isLowStock
                                     ? AppColors.statusPending
                                     : null,
                           ),
-                          _InfoRow(s.lowStockThreshold, '${product.lowStockThreshold}'),
+                          _InfoRow(s.lowStockThreshold, AppStrings.of(context).qty(product.lowStockThreshold, product.unit)),
                           if (product.expiryDate != null)
                             _InfoRow(
                               product.isExpired ? s.tr('expiredOn') : s.tr('expiresOn'),
@@ -257,7 +257,7 @@ class ProductDetailScreen extends ConsumerWidget {
                                       spacing: 16,
                                       children: [
                                         Text(
-                                          '${s.stock}: ${c.stockQty}',
+                                          '${s.stock}: ${s.qty(c.stockQty, product.unit)}',
                                           style: theme.textTheme.bodySmall?.copyWith(
                                             color: c.stockQty <= 0
                                                 ? AppColors.statusCancelled

@@ -1,7 +1,29 @@
 import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../core/utils/quantity.dart';
 import '../models/product.dart';
+import '../models/quantity_unit.dart';
+
+/// A CSV "Unit" cell: the unit's name ("kg", "litre") or a common spelling
+/// ("kilogram", "l", "meter", "pcs"); anything else is a piece.
+QuantityUnit _unitFrom(String raw) {
+  final v = raw.trim().toLowerCase();
+  for (final u in QuantityUnit.values) {
+    if (u.name == v) return u;
+  }
+  return switch (v) {
+    'kilogram' || 'kilograms' || 'kgs' => QuantityUnit.kg,
+    'gram' || 'grams' || 'gm' => QuantityUnit.g,
+    'l' || 'liter' || 'liters' || 'litres' || 'ltr' => QuantityUnit.litre,
+    'millilitre' || 'milliliter' => QuantityUnit.ml,
+    'm' || 'meter' || 'meters' || 'metres' => QuantityUnit.metre,
+    'centimetre' || 'centimeter' => QuantityUnit.cm,
+    'dz' || 'doz' => QuantityUnit.dozen,
+    'packs' || 'pkt' || 'packet' => QuantityUnit.pack,
+    _ => QuantityUnit.piece,
+  };
+}
 
 class CsvImportResult {
   final List<Product> products;
@@ -50,12 +72,16 @@ class CsvImportService {
         final costPrice = row.length > 4
             ? (double.tryParse(row[4].toString().trim()) ?? 0)
             : 0.0;
+        final unit = row.length > 7 ? _unitFrom(row[7].toString()) : QuantityUnit.piece;
+        // A unit that counts whole things keeps whole numbers (2.5 pieces
+        // would be refused by the product form).
+        double qtyOf(double v) => roundQty(unit.allowsDecimal ? v : v.roundToDouble());
         final stockQty = row.length > 5
-            ? (int.tryParse(row[5].toString().trim()) ?? 0)
-            : 0;
+            ? qtyOf(double.tryParse(row[5].toString().trim()) ?? 0)
+            : 0.0;
         final threshold = row.length > 6
-            ? (int.tryParse(row[6].toString().trim()) ?? 10)
-            : 10;
+            ? qtyOf(double.tryParse(row[6].toString().trim()) ?? 10)
+            : 10.0;
 
         products.add(Product(
           name: name,
@@ -65,6 +91,7 @@ class CsvImportService {
           costPrice: costPrice,
           stockQty: stockQty,
           lowStockThreshold: threshold,
+          unit: unit,
           isActive: true,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),

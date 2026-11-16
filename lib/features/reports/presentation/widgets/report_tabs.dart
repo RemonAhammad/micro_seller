@@ -5,6 +5,7 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/brand_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../shared/widgets/aging_bar.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
 import '../../providers/reports_provider.dart';
@@ -280,8 +281,8 @@ class InventoryReportTab extends ConsumerWidget {
             child: r.movementQty.isEmpty
                 ? ReportEmpty(message: empty)
                 : BreakdownBars(
-                    entries: {for (final e in r.movementQty.entries) s.tr(e.key.name): e.value.toDouble()},
-                    format: (v) => v.toStringAsFixed(0),
+                    entries: {for (final e in r.movementQty.entries) s.tr(e.key.name): e.value},
+                    format: formatQtyNumber,
                     color: const Color(0xFF6D4C41),
                   ),
           ),
@@ -293,7 +294,7 @@ class InventoryReportTab extends ConsumerWidget {
                 ? ReportEmpty(message: empty)
                 : BreakdownBars(
                     entries: r.bestSellers,
-                    format: (v) => v.toStringAsFixed(0),
+                    format: formatQtyNumber,
                     ranked: true,
                     color: AppColors.paymentPaid,
                   ),
@@ -306,7 +307,7 @@ class InventoryReportTab extends ConsumerWidget {
                 ? ReportEmpty(message: empty)
                 : BreakdownBars(
                     entries: r.slowMovers,
-                    format: (v) => '${v.toStringAsFixed(0)} ${s.tr('inStock')}',
+                    format: (v) => '${formatQtyNumber(v)} ${s.tr('inStock')}',
                     color: AppColors.statusPending,
                   ),
           ),

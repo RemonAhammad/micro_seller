@@ -24,6 +24,24 @@ class Validators {
     return null;
   }
 
+  /// A stock-like quantity: whole for counted units, up to 3 decimals for
+  /// weighed ones ([decimal]).
+  static String? nonNegativeQty(String? value,
+      {required bool decimal, String fieldName = 'Quantity'}) {
+    if (!decimal) return nonNegativeInt(value, fieldName);
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+    final parsed = NumberInput.parseDecimal(value);
+    if (parsed == null) {
+      return 'Please enter a valid number';
+    }
+    if (parsed < 0) {
+      return '$fieldName cannot be negative';
+    }
+    return null;
+  }
+
   static String? nonNegativeInt(String? value,
       [String fieldName = 'Quantity']) {
     if (value == null || value.trim().isEmpty) {

@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/utils/quantity.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/purchase.dart';
 import '../../../data/models/product.dart';
@@ -155,7 +156,7 @@ class SupplierNotifier extends _$SupplierNotifier {
             final product = products[item.productId];
             if (product == null) continue;
             products[item.productId] = product.copyWith(
-              stockQty: product.stockQty + item.qty,
+              stockQty: roundQty(product.stockQty + item.qty),
               costPrice: updateCostPrice && item.unitCost > 0
                   ? item.unitCost
                   : product.costPrice,
@@ -166,7 +167,7 @@ class SupplierNotifier extends _$SupplierNotifier {
               productId: item.productId,
               productName: item.productName,
               type: StockMovementType.restock,
-              qty: item.qty,
+              qty: roundQty(item.qty),
               reason: reason,
               supplierId: purchase.supplierId,
               createdAt: at,
@@ -213,7 +214,7 @@ class SupplierNotifier extends _$SupplierNotifier {
           final product = products[item.productId];
           if (product == null) continue;
           products[item.productId] = product.copyWith(
-            stockQty: (product.stockQty - item.qty).clamp(0, 999999),
+            stockQty: clampStock(product.stockQty - item.qty),
             updatedAt: DateTime.now(),
           );
           changed.add(item.productId);
@@ -221,7 +222,7 @@ class SupplierNotifier extends _$SupplierNotifier {
             productId: item.productId,
             productName: item.productName,
             type: StockMovementType.adjustment,
-            qty: -item.qty,
+            qty: roundQty(-item.qty),
             reason: 'Deleted purchase',
             createdAt: DateTime.now(),
           ));

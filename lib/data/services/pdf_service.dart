@@ -5,6 +5,7 @@ import '../models/order.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/document_brand.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/quantity.dart';
 import '../../core/utils/date_formatter.dart';
 import 'pdf_assembly.dart';
 import 'widget_capture.dart';
@@ -63,7 +64,7 @@ class PdfService {
     sb.writeln('Products:');
     for (final item in order.items) {
       sb.writeln(
-          '• ${item.displayName} x${item.qty} — ${CurrencyFormatter.format(item.totalPrice, symbol: waSym)}');
+          '• ${item.displayName} x${documentQty(item.qty, item.unit)} — ${CurrencyFormatter.format(item.totalPrice, symbol: waSym)}');
     }
     sb.writeln();
     sb.writeln('Subtotal: ${CurrencyFormatter.format(order.subtotal, symbol: waSym)}');
@@ -310,8 +311,8 @@ class _ReceiptWidget extends StatelessWidget {
         for (final item in order.items)
           TableRow(children: [
             cell(item.displayName),
-            cell('${item.qty}', numeric: true),
-            cell(CurrencyFormatter.format(item.unitPrice, symbol: sym),
+            cell(documentQty(item.qty, item.unit), numeric: true),
+            cell(documentPricePer(CurrencyFormatter.format(item.unitPrice, symbol: sym), item.unit),
                 numeric: true),
             cell(CurrencyFormatter.format(item.totalPrice, symbol: sym),
                 numeric: true),
