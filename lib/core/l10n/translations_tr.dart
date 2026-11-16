@@ -472,6 +472,21 @@ const translationsTr = <String, String>{
   'addQty': 'Ekle',
   'updateQty': 'Güncelle',
   'enterQuantity': '0\'dan büyük bir miktar girin',
+  // Scale labels
+  'scaleLabels': 'Terazi etiketleri',
+  'scaleLabelsDesc': 'Tartı teraziniz tarafından basılan etiketleri tarayın',
+  'scaleLabelsHelp':
+      'Birçok dükkan terazisi 2 ile başlayan ve ürün kodu ile ağırlığı ya da fiyatı taşıyan bir barkod basar. Bu açıkken böyle bir etiketi taramak, ürünü ağırlığı hazır dolu olarak ekler. Tartılan her ürüne terazinin ürün kodunu QR kodu veya SKU olarak girin.',
+  'scaleLabelsEnable': 'Terazi etiketlerini oku',
+  'scaleLabelCarries': 'Etiketteki sayı',
+  'scaleWeight': 'Ağırlık (gram)',
+  'scalePrice': 'Fiyat (2 ondalık)',
+  'scalePriceWhole': 'Fiyat (tam sayı)',
+  'scaleItemCodeDigits': 'Ürün kodu hane sayısı',
+  'scaleExample': 'Ürün kodu {code}, {value}',
+  'scaleLabel': 'Terazi etiketi',
+  'scaleItemCode': 'Ürün kodu',
+  'scaleLabelAdded': '{item} ürününden {qty} eklendi',
   'rowsSkipped': '{count} satır atlandı:',
   'andMore': '...ve {count} tane daha',
 

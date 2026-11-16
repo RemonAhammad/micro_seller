@@ -472,6 +472,21 @@ const translationsPt = <String, String>{
   'addQty': 'Adicionar',
   'updateQty': 'Atualizar',
   'enterQuantity': 'Informe uma quantidade maior que 0',
+  // Scale labels
+  'scaleLabels': 'Etiquetas de balança',
+  'scaleLabelsDesc': 'Escaneie as etiquetas impressas pela sua balança',
+  'scaleLabelsHelp':
+      'Muitas balanças de loja imprimem um código de barras que começa com 2 e traz o código do item e o peso ou o preço. Com isto ativado, escanear essa etiqueta adiciona o item com o peso já preenchido. Informe para cada produto pesado o código da balança como código QR ou SKU.',
+  'scaleLabelsEnable': 'Ler etiquetas de balança',
+  'scaleLabelCarries': 'O número da etiqueta é',
+  'scaleWeight': 'Peso (gramas)',
+  'scalePrice': 'Preço (2 casas decimais)',
+  'scalePriceWhole': 'Preço (inteiro)',
+  'scaleItemCodeDigits': 'Dígitos do código do item',
+  'scaleExample': 'Código do item {code}, {value}',
+  'scaleLabel': 'Etiqueta de balança',
+  'scaleItemCode': 'Código do item',
+  'scaleLabelAdded': '{qty} de {item} adicionado',
   'rowsSkipped': '{count} linha(s) ignorada(s):',
   'andMore': '...e mais {count}',
 

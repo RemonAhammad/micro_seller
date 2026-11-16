@@ -472,6 +472,21 @@ const translationsTh = <String, String>{
   'addQty': 'เพิ่ม',
   'updateQty': 'อัปเดต',
   'enterQuantity': 'ใส่จำนวนที่มากกว่า 0',
+  // Scale labels
+  'scaleLabels': 'ฉลากเครื่องชั่ง',
+  'scaleLabelsDesc': 'สแกนฉลากที่เครื่องชั่งของคุณพิมพ์ออกมา',
+  'scaleLabelsHelp':
+      'เครื่องชั่งในร้านหลายรุ่นพิมพ์บาร์โค้ดที่ขึ้นต้นด้วย 2 และมีรหัสสินค้าพร้อมน้ำหนักหรือราคา เมื่อเปิดใช้ การสแกนฉลากแบบนี้จะเพิ่มสินค้าโดยใส่น้ำหนักให้อัตโนมัติ ให้ใส่รหัสสินค้าของเครื่องชั่งเป็นรหัส QR หรือ SKU ของสินค้าที่ต้องชั่งแต่ละรายการ',
+  'scaleLabelsEnable': 'อ่านฉลากเครื่องชั่ง',
+  'scaleLabelCarries': 'ตัวเลขบนฉลากคือ',
+  'scaleWeight': 'น้ำหนัก (กรัม)',
+  'scalePrice': 'ราคา (ทศนิยม 2 ตำแหน่ง)',
+  'scalePriceWhole': 'ราคา (จำนวนเต็ม)',
+  'scaleItemCodeDigits': 'จำนวนหลักของรหัสสินค้า',
+  'scaleExample': 'รหัสสินค้า {code}, {value}',
+  'scaleLabel': 'ฉลากเครื่องชั่ง',
+  'scaleItemCode': 'รหัสสินค้า',
+  'scaleLabelAdded': 'เพิ่ม {item} {qty} แล้ว',
   'rowsSkipped': 'ข้าม {count} แถว:',
   'andMore': '...และอีก {count}',
 

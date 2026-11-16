@@ -472,6 +472,21 @@ const translationsBn = <String, String>{
   'addQty': 'যোগ করুন',
   'updateQty': 'আপডেট',
   'enterQuantity': 'শূন্যের বেশি পরিমাণ লিখুন',
+  // Scale labels
+  'scaleLabels': 'স্কেল লেবেল',
+  'scaleLabelsDesc': 'ওজনের স্কেল থেকে প্রিন্ট করা লেবেল স্ক্যান করুন',
+  'scaleLabelsHelp':
+      'অনেক দোকানের স্কেল এমন একটি বারকোড প্রিন্ট করে যা 2 দিয়ে শুরু হয় এবং তাতে আইটেম কোড ও ওজন বা দাম থাকে। এটি চালু থাকলে এমন লেবেল স্ক্যান করলে ওজন আগে থেকেই বসানো অবস্থায় পণ্যটি যোগ হয়ে যায়। ওজন করা প্রতিটি পণ্যের QR কোড বা SKU হিসেবে স্কেলের আইটেম কোড দিন।',
+  'scaleLabelsEnable': 'স্কেল লেবেল পড়ুন',
+  'scaleLabelCarries': 'লেবেলের নম্বরটি হলো',
+  'scaleWeight': 'ওজন (গ্রাম)',
+  'scalePrice': 'দাম (২ দশমিক)',
+  'scalePriceWhole': 'দাম (পূর্ণ টাকা)',
+  'scaleItemCodeDigits': 'আইটেম কোডের অঙ্ক',
+  'scaleExample': 'আইটেম কোড {code}, {value}',
+  'scaleLabel': 'স্কেল লেবেল',
+  'scaleItemCode': 'আইটেম কোড',
+  'scaleLabelAdded': '{item}-এর {qty} যোগ হয়েছে',
   'rowsSkipped': '{count} সারি বাদ দেওয়া হয়েছে:',
   'andMore': '...এবং আরও {count}',
 

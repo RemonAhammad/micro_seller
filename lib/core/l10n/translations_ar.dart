@@ -471,6 +471,21 @@ const translationsAr = <String, String>{
   'addQty': 'إضافة',
   'updateQty': 'تحديث',
   'enterQuantity': 'أدخل كمية أكبر من 0',
+  // Scale labels
+  'scaleLabels': 'ملصقات الميزان',
+  'scaleLabelsDesc': 'امسح الملصقات التي يطبعها ميزان الوزن',
+  'scaleLabelsHelp':
+      'تطبع كثير من موازين المتاجر باركودًا يبدأ بالرقم 2 ويحمل رمز الصنف والوزن أو السعر. عند التفعيل، يؤدي مسح هذا الملصق إلى إضافة الصنف مع تعبئة وزنه تلقائيًا. أدخل رمز الصنف الخاص بالميزان كرمز QR أو SKU لكل منتج يُوزن.',
+  'scaleLabelsEnable': 'قراءة ملصقات الميزان',
+  'scaleLabelCarries': 'الرقم على الملصق هو',
+  'scaleWeight': 'الوزن (بالغرام)',
+  'scalePrice': 'السعر (خانتان عشريتان)',
+  'scalePriceWhole': 'السعر (عدد صحيح)',
+  'scaleItemCodeDigits': 'أرقام رمز الصنف',
+  'scaleExample': 'رمز الصنف {code}، {value}',
+  'scaleLabel': 'ملصق الميزان',
+  'scaleItemCode': 'رمز الصنف',
+  'scaleLabelAdded': 'تمت إضافة {qty} من {item}',
   'rowsSkipped': 'تم تخطي {count} صف:',
   'andMore': '...و{count} آخر',
 

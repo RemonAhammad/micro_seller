@@ -507,6 +507,26 @@ class _L10nStrings {
   String get updateQty => _l10n.tr('updateQty');
   String get enterQuantity => _l10n.tr('enterQuantity');
 
+  String get scaleLabels => _l10n.tr('scaleLabels');
+  String get scaleLabelsDesc => _l10n.tr('scaleLabelsDesc');
+  String get scaleLabelsHelp => _l10n.tr('scaleLabelsHelp');
+  String get scaleLabelsEnable => _l10n.tr('scaleLabelsEnable');
+  String get scaleLabelCarries => _l10n.tr('scaleLabelCarries');
+  String get scaleWeight => _l10n.tr('scaleWeight');
+  String get scalePrice => _l10n.tr('scalePrice');
+  String get scalePriceWhole => _l10n.tr('scalePriceWhole');
+  String get scaleItemCodeDigits => _l10n.tr('scaleItemCodeDigits');
+  String get scaleLabel => _l10n.tr('scaleLabel');
+  String get scaleItemCode => _l10n.tr('scaleItemCode');
+
+  /// "Item code 12345, 1.250 kg"
+  String scaleExample(String code, String value) =>
+      _l10n.tr('scaleExample').replaceAll('{code}', code).replaceAll('{value}', value);
+
+  /// "1.25 kg of Rui fish added", [qty] formatted with [qty].
+  String scaleLabelAdded(String qty, String item) =>
+      _l10n.tr('scaleLabelAdded').replaceAll('{qty}', qty).replaceAll('{item}', item);
+
   /// "{stock} left", [stock] formatted with [qty].
   String stockLeftAfter(String stock) => _l10n.tr('stockLeftAfter').replaceAll('{stock}', stock);
 

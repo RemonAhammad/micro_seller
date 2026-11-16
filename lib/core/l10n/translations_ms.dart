@@ -472,6 +472,21 @@ const translationsMs = <String, String>{
   'addQty': 'Tambah',
   'updateQty': 'Kemas kini',
   'enterQuantity': 'Masukkan kuantiti melebihi 0',
+  // Scale labels
+  'scaleLabels': 'Label penimbang',
+  'scaleLabelsDesc': 'Imbas label yang dicetak oleh penimbang anda',
+  'scaleLabelsHelp':
+      'Banyak penimbang kedai mencetak kod bar yang bermula dengan 2 dan membawa kod item serta berat atau harga. Apabila dihidupkan, mengimbas label sebegini akan menambah item dengan berat yang sudah diisi. Masukkan kod item penimbang sebagai kod QR atau SKU bagi setiap produk yang ditimbang.',
+  'scaleLabelsEnable': 'Baca label penimbang',
+  'scaleLabelCarries': 'Nombor pada label ialah',
+  'scaleWeight': 'Berat (gram)',
+  'scalePrice': 'Harga (2 perpuluhan)',
+  'scalePriceWhole': 'Harga (bulat)',
+  'scaleItemCodeDigits': 'Bilangan digit kod item',
+  'scaleExample': 'Kod item {code}, {value}',
+  'scaleLabel': 'Label penimbang',
+  'scaleItemCode': 'Kod item',
+  'scaleLabelAdded': '{qty} {item} ditambah',
   'rowsSkipped': '{count} baris dilangkau:',
   'andMore': '...dan {count} lagi',
 

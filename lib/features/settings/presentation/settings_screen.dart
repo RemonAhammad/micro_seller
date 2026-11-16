@@ -11,6 +11,7 @@ import '../providers/display_scale_provider.dart';
 import '../providers/settings_provider.dart';
 import 'color_theme_screen.dart';
 import 'widgets/display_size_sheets.dart';
+import 'widgets/scale_label_sheet.dart';
 import '../../../data/services/auto_backup_runner.dart';
 import '../../../data/services/drive_service.dart';
 import '../../../data/services/local_backup_service.dart';
@@ -654,6 +655,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 ),
                 trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
                 onTap: () => context.push('/settings/pos-printer'),
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: brand.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ThinIcon(tabler.Scale.new, color: brand.primary, size: 20),
+                ),
+                title: Text(s.scaleLabels),
+                subtitle: Text(
+                  s.scaleLabelsDesc,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => showScaleLabelSheet(context),
               ),
             ],
           ),

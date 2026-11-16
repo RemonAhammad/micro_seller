@@ -472,6 +472,21 @@ const translationsVi = <String, String>{
   'addQty': 'Thêm',
   'updateQty': 'Cập nhật',
   'enterQuantity': 'Nhập số lượng lớn hơn 0',
+  // Scale labels
+  'scaleLabels': 'Nhãn cân',
+  'scaleLabelsDesc': 'Quét nhãn do cân điện tử của bạn in ra',
+  'scaleLabelsHelp':
+      'Nhiều cân ở cửa hàng in mã vạch bắt đầu bằng số 2 và chứa mã hàng cùng cân nặng hoặc giá. Khi bật, quét nhãn như vậy sẽ thêm mặt hàng với cân nặng đã điền sẵn. Hãy nhập mã hàng của cân làm mã QR hoặc SKU cho từng sản phẩm bán theo cân.',
+  'scaleLabelsEnable': 'Đọc nhãn cân',
+  'scaleLabelCarries': 'Số trên nhãn là',
+  'scaleWeight': 'Cân nặng (gram)',
+  'scalePrice': 'Giá (2 chữ số thập phân)',
+  'scalePriceWhole': 'Giá (số nguyên)',
+  'scaleItemCodeDigits': 'Số chữ số của mã hàng',
+  'scaleExample': 'Mã hàng {code}, {value}',
+  'scaleLabel': 'Nhãn cân',
+  'scaleItemCode': 'Mã hàng',
+  'scaleLabelAdded': 'Đã thêm {qty} {item}',
   'rowsSkipped': 'Đã bỏ qua {count} hàng:',
   'andMore': '...và thêm {count}',
 

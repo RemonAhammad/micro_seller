@@ -472,6 +472,21 @@ const translationsFr = <String, String>{
   'addQty': 'Ajouter',
   'updateQty': 'Mettre à jour',
   'enterQuantity': 'Saisissez une quantité supérieure à 0',
+  // Scale labels
+  'scaleLabels': 'Étiquettes de balance',
+  'scaleLabelsDesc': 'Scannez les étiquettes imprimées par votre balance',
+  'scaleLabelsHelp':
+      'De nombreuses balances de magasin impriment un code-barres qui commence par 2 et contient le code article et le poids ou le prix. Une fois activé, scanner une telle étiquette ajoute l\'article avec son poids déjà renseigné. Indiquez pour chaque produit pesé le code article de la balance comme code QR ou SKU.',
+  'scaleLabelsEnable': 'Lire les étiquettes de balance',
+  'scaleLabelCarries': 'Le nombre de l\'étiquette est',
+  'scaleWeight': 'Poids (grammes)',
+  'scalePrice': 'Prix (2 décimales)',
+  'scalePriceWhole': 'Prix (entier)',
+  'scaleItemCodeDigits': 'Chiffres du code article',
+  'scaleExample': 'Code article {code}, {value}',
+  'scaleLabel': 'Étiquette de balance',
+  'scaleItemCode': 'Code article',
+  'scaleLabelAdded': '{qty} de {item} ajouté',
   'rowsSkipped': '{count} ligne(s) ignorée(s) :',
   'andMore': '...et {count} de plus',
 

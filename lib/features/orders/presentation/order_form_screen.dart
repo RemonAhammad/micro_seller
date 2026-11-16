@@ -23,6 +23,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/number_input.dart';
 import '../../../core/utils/quantity.dart';
+import '../../../core/utils/scale_barcode.dart';
 import '../../../core/utils/share_origin.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -255,7 +256,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final isar = await ref.read(isarProvider.future);
     if (!mounted) return;
 
-    final product = await showModalBottomSheet<Product>(
+    final hit = await showModalBottomSheet<({Product product, double? qty})>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -266,8 +267,38 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         deviceChannel: ref.read(deviceChannelProvider),
       ),
     );
-    if (product == null || !mounted) return;
-    await _addOneOf(isar, product);
+    if (hit == null || !mounted) return;
+    final labelQty = hit.qty;
+    if (labelQty != null) {
+      _addLabelQty(hit.product, labelQty);
+    } else {
+      await _addOneOf(isar, hit.product);
+    }
+  }
+
+  /// A scale label: its weight (or the weight its price buys) goes straight
+  /// into the cart. A second label of the same product adds to its line.
+  void _addLabelQty(Product product, double qty) {
+    final s = AppStrings.of(context);
+    final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey.isEmpty);
+    final total = roundQty((idx >= 0 ? _items[idx].qty : 0) + qty);
+    if (qtyExceeds(total, product.stockQty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.notEnoughStock(s.qty(product.stockQty, product.unit), product.name))),
+      );
+      return;
+    }
+    setState(() {
+      if (idx >= 0) {
+        final existing = _items[idx];
+        _items[idx] = existing.copyWith(qty: total, totalPrice: lineTotal(existing.unitPrice, total));
+      } else {
+        _items.add(_newItem(product, qty));
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(s.scaleLabelAdded(s.qty(qty, product.unit), product.name))),
+    );
   }
 
   /// A quick-add chip: the product as it is now (its stock may have moved
@@ -2609,6 +2640,7 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
   );
   late final CameraSession _session;
   bool _scanned = false;
+  final Future<ScaleLabelSettings> _scale = ScaleLabelSettings.load();
 
   @override
   void initState() {
@@ -2637,8 +2669,9 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
     if (value == null) return;
     _scanned = true;
 
-    ProductRepository(widget.isar).findByScannedCode(value).then((product) {
+    _scale.then((scale) => ProductRepository(widget.isar).findByScan(value, scale)).then((hit) {
       if (!mounted) return;
+      final product = hit?.product;
       if (product == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppStrings.of(context).noProductMatched)),
@@ -2668,7 +2701,7 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
         }
       }
 
-      Navigator.of(context).pop(product);
+      Navigator.of(context).pop((product: product, qty: hit!.label?.qtyFor(product)));
     });
   }
 

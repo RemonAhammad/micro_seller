@@ -472,6 +472,21 @@ const translationsUr = <String, String>{
   'addQty': 'شامل کریں',
   'updateQty': 'اپ ڈیٹ',
   'enterQuantity': '0 سے زیادہ مقدار درج کریں',
+  // Scale labels
+  'scaleLabels': 'ترازو کے لیبل',
+  'scaleLabelsDesc': 'اپنے وزن کرنے والے ترازو کے چھاپے ہوئے لیبل اسکین کریں',
+  'scaleLabelsHelp':
+      'دکانوں کے بہت سے ترازو ایسا بار کوڈ چھاپتے ہیں جو 2 سے شروع ہوتا ہے اور اس میں آئٹم کوڈ اور وزن یا قیمت ہوتی ہے۔ اسے آن کرنے پر ایسا لیبل اسکین کرنے سے آئٹم وزن بھرے ہوئے کے ساتھ شامل ہو جاتا ہے۔ تولی جانے والی ہر پروڈکٹ کے QR کوڈ یا SKU میں ترازو کا آئٹم کوڈ لکھیں۔',
+  'scaleLabelsEnable': 'ترازو کے لیبل پڑھیں',
+  'scaleLabelCarries': 'لیبل کا نمبر ہے',
+  'scaleWeight': 'وزن (گرام)',
+  'scalePrice': 'قیمت (2 اعشاریہ)',
+  'scalePriceWhole': 'قیمت (پورے روپے)',
+  'scaleItemCodeDigits': 'آئٹم کوڈ کے ہندسے',
+  'scaleExample': 'آئٹم کوڈ {code}، {value}',
+  'scaleLabel': 'ترازو کا لیبل',
+  'scaleItemCode': 'آئٹم کوڈ',
+  'scaleLabelAdded': '{item} کا {qty} شامل کر دیا گیا',
   'rowsSkipped': '{count} قطار(یں) چھوڑ دی گئیں:',
   'andMore': '...اور {count} مزید',
 

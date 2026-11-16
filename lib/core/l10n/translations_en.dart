@@ -472,6 +472,21 @@ const translationsEn = <String, String>{
   'addQty': 'Add',
   'updateQty': 'Update',
   'enterQuantity': 'Enter a quantity above 0',
+  // Scale labels
+  'scaleLabels': 'Scale labels',
+  'scaleLabelsDesc': 'Scan the labels your weighing scale prints',
+  'scaleLabelsHelp':
+      'Many shop scales print a barcode that starts with 2 and carries the item code and the weight or price. With this on, scanning such a label adds the item with its weight already filled in. Give each weighed product the scale\'s item code as its QR code or SKU.',
+  'scaleLabelsEnable': 'Read scale labels',
+  'scaleLabelCarries': 'The label\'s number is',
+  'scaleWeight': 'Weight (grams)',
+  'scalePrice': 'Price (2 decimals)',
+  'scalePriceWhole': 'Price (whole)',
+  'scaleItemCodeDigits': 'Item code digits',
+  'scaleExample': 'Item code {code}, {value}',
+  'scaleLabel': 'Scale label',
+  'scaleItemCode': 'Item code',
+  'scaleLabelAdded': '{qty} of {item} added',
   'rowsSkipped': '{count} row(s) skipped:',
   'andMore': '...and {count} more',
 

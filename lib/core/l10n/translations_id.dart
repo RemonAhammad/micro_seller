@@ -472,6 +472,21 @@ const translationsId = <String, String>{
   'addQty': 'Tambah',
   'updateQty': 'Perbarui',
   'enterQuantity': 'Masukkan jumlah di atas 0',
+  // Scale labels
+  'scaleLabels': 'Label timbangan',
+  'scaleLabelsDesc': 'Pindai label yang dicetak timbangan Anda',
+  'scaleLabelsHelp':
+      'Banyak timbangan toko mencetak barcode yang diawali angka 2 dan memuat kode barang serta berat atau harga. Jika aktif, memindai label seperti ini akan menambahkan barang dengan berat yang sudah terisi. Isi kode barang dari timbangan sebagai kode QR atau SKU pada setiap produk yang ditimbang.',
+  'scaleLabelsEnable': 'Baca label timbangan',
+  'scaleLabelCarries': 'Angka pada label adalah',
+  'scaleWeight': 'Berat (gram)',
+  'scalePrice': 'Harga (2 desimal)',
+  'scalePriceWhole': 'Harga (bulat)',
+  'scaleItemCodeDigits': 'Jumlah digit kode barang',
+  'scaleExample': 'Kode barang {code}, {value}',
+  'scaleLabel': 'Label timbangan',
+  'scaleItemCode': 'Kode barang',
+  'scaleLabelAdded': '{qty} {item} ditambahkan',
   'rowsSkipped': '{count} baris dilewati:',
   'andMore': '...dan {count} lagi',
 
