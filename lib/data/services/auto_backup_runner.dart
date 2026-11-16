@@ -12,6 +12,7 @@ import 'package:workmanager/workmanager.dart';
 import '../../features/settings/providers/settings_provider.dart';
 import 'drive_service.dart';
 import 'isar_service.dart';
+import 'migration_service.dart';
 import 'notification_service.dart';
 
 const String kAutoBackupErrorKey = 'autoBackupError';
@@ -173,6 +174,11 @@ Future<bool> _runBackgroundBackup() async {
       directory: dir.path,
       name: 'sellerbook_db',
     );
+
+    // The app may not have opened the database since an update, so its
+    // one-time migrations may not have run: back up today's quantities,
+    // not zeros (migrateDecimalQuantitiesV1 is a no-op once done).
+    await migrateDecimalQuantitiesV1(isar);
 
     final drive = DriveService();
 

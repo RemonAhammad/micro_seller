@@ -347,6 +347,14 @@ class DecimalInputFormatter extends TextInputFormatter {
       grouping = false,
       _money = false;
 
+  /// A weighed or measured quantity (1.25 kg): up to 3 decimals, a gram of a
+  /// kilogram, and no grouping. Read with [NumberInput.parseDecimal].
+  const DecimalInputFormatter.quantity()
+    : signed = false,
+      _maxDecimals = 3,
+      grouping = false,
+      _money = false;
+
   final bool signed;
 
   final bool grouping;

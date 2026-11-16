@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/quantity_unit.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/models/supplier.dart';
 import '../../../features/products/providers/product_provider.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/number_input.dart';
+import '../../../core/utils/quantity_input.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/entry_date_field.dart';
@@ -28,6 +30,9 @@ class StockAdjustmentScreen extends ConsumerStatefulWidget {
 class _StockAdjustmentScreenState
     extends ConsumerState<StockAdjustmentScreen> {
   final _qtyCtrl = TextEditingController();
+
+  /// The product's unit (from the live product), for the quantity field.
+  QuantityUnit _unit = QuantityUnit.piece;
   final _reasonCtrl = TextEditingController();
   StockMovementType _type = StockMovementType.restock;
   bool _isLoading = false;
@@ -85,7 +90,7 @@ class _StockAdjustmentScreenState
   }
 
   Future<void> _submit() async {
-    final qty = NumberInput.parseInteger(_qtyCtrl.text);
+    final qty = parseQty(_qtyCtrl.text, _unit);
     if (qty == null || qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.of(context).pleaseEnterValidQty)),
@@ -153,6 +158,8 @@ class _StockAdjustmentScreenState
               .watchObject(widget.productId, fireImmediately: true),
           builder: (ctx, snap) {
             final product = snap.data;
+            // Kept for _submit: the quantity is read in the product's unit.
+            if (product != null) _unit = product.unit;
             if (product != null && !_supplierAutoLoaded) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 _autoLoadProductSupplier(product);
@@ -209,7 +216,7 @@ class _StockAdjustmentScreenState
                                   FittedBox(
                                     fit: BoxFit.scaleDown,
                                     alignment: AlignmentDirectional.centerEnd,
-                                    child: Text('${product.totalStock}',
+                                    child: Text(AppStrings.of(context).qty(product.totalStock, product.unit),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 20,
@@ -241,7 +248,7 @@ class _StockAdjustmentScreenState
                         runSpacing: 8,
                         children: [
                           ChoiceChip(
-                            label: Text('${s.baseStock} (${product.stockQty})'),
+                            label: Text('${s.baseStock} (${s.qty(product.stockQty, product.unit)})'),
                             selected: _selectedCombinationKey.isEmpty,
                             onSelected: (_) =>
                                 setState(() => _selectedCombinationKey = ''),
@@ -271,7 +278,7 @@ class _StockAdjustmentScreenState
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis),
                                   ),
-                                  Text(' (${c.stockQty})'),
+                                  Text(' (${AppStrings.of(context).qty(c.stockQty, product.unit)})'),
                                 ],
                               ),
                               selected: selected,
@@ -442,9 +449,10 @@ class _StockAdjustmentScreenState
                   AppTextField(
                     label: s.adjustQty,
                     controller: _qtyCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: const [IntegerInputFormatter()],
+                    keyboardType: qtyKeyboard(_unit),
+                    inputFormatters: qtyFormatters(_unit),
                     prefixIcon: const ThinIcon(tabler.Number.new),
+                    suffix: s.unitSymbol(_unit).isEmpty ? null : Text(s.unitSymbol(_unit)),
                     helperText: _type == StockMovementType.sale ||
                             _type == StockMovementType.damage
                         ? s.willDeductFromStock

@@ -12,14 +12,19 @@ import 'package:share_plus/share_plus.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/variant_combination.dart';
 import '../../../data/models/customer.dart';
+import '../providers/order_form_defaults.dart';
 import '../providers/order_provider.dart';
+import '../providers/quick_add_provider.dart';
 import 'widgets/order_feedback.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/number_input.dart';
+import '../../../core/utils/quantity.dart';
+import '../../../core/utils/scale_barcode.dart';
 import '../../../core/utils/share_origin.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -30,10 +35,15 @@ import '../../../shared/widgets/bottom_sheet_handle.dart';
 import '../../../shared/widgets/entry_date_field.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
+import '../../../shared/widgets/quantity_sheet.dart';
 import '../../settings/providers/settings_provider.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+import '../../../data/repositories/product_repository.dart';
+import '../../../data/services/device_channel.dart';
 import '../../../data/services/pos_printer_service.dart';
+import '../../../shared/widgets/scanner_camera.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_thermal_printer/utils/printer.dart' as pos;
 
 class OrderFormScreen extends ConsumerStatefulWidget {
@@ -61,12 +71,26 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   Customer? _selectedCustomer;
   final List<OrderItem> _items = [];
-  OrderStatus _orderStatus = OrderStatus.pending;
-  PaymentMethod _paymentMethod = PaymentMethod.cash;
+  OrderStatus _orderStatus = OrderFormDefaults.fallback.orderStatus;
+  PaymentMethod _paymentMethod = OrderFormDefaults.fallback.paymentMethod;
   DateTime? _orderDate;
   DateTime? _estimatedDeliveryDate;
   bool _isRecurring = false;
   bool _isLoading = false;
+
+  /// A new order starts as a counter sale: the footer offers Paid in full,
+  /// and the amount-paid block appears only after Credit / partial. An edit
+  /// always shows it.
+  bool _creditMode = false;
+
+  /// Discount, delivery, tax, date, status, notes and recurring live behind
+  /// "More options", open from the start only when an edited order uses them.
+  bool _showMore = false;
+
+  /// Set once the seller picks a method or status, so the remembered
+  /// defaults (loaded asynchronously) never overwrite a choice.
+  bool _pickedPaymentMethod = false;
+  bool _pickedStatus = false;
 
   Order? _existingOrder;
 
@@ -106,12 +130,29 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       if (order != null && mounted) {
         _populateForm(order);
       }
+    } else {
+      final defaults = await OrderFormDefaults.load();
+      if (!mounted || _isEditing) return;
+      setState(() {
+        if (!_pickedPaymentMethod) _paymentMethod = defaults.paymentMethod;
+        if (!_pickedStatus) _orderStatus = defaults.orderStatus;
+      });
     }
   }
 
   void _populateForm(Order order) {
     _existingOrder = order;
-    _selectedCustomer = Customer(id: order.customerId, name: order.customerName, phone: order.customerPhone);
+    final walkIn = order.customerId <= 0 && order.customerName.isEmpty && order.customerPhone.isEmpty;
+    _selectedCustomer =
+        walkIn ? null : Customer(id: order.customerId, name: order.customerName, phone: order.customerPhone);
+    _creditMode = true;
+    _showMore = order.discountAmount > 0 ||
+        order.deliveryFee > 0 ||
+        order.notes.isNotEmpty ||
+        order.deliveryAddress.isNotEmpty ||
+        order.estimatedDeliveryDate != null ||
+        order.isRecurring ||
+        !OrderFormDefaults.formStatuses.contains(order.orderStatus);
     _items
       ..clear()
       ..addAll(order.items.map((i) => i.copyWith()));
@@ -212,47 +253,263 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
+  Future<void> _scanToAddItem() async {
+    final isar = await ref.read(isarProvider.future);
+    if (!mounted) return;
+
+    final hit = await showModalBottomSheet<_ScanHit>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _ScannerSheet(
+        isar: isar,
+        deviceChannel: ref.read(deviceChannelProvider),
+      ),
+    );
+    if (hit == null || !mounted) return;
+    final labelQty = hit.qty;
+    if (labelQty != null) {
+      _addLabelQty(hit.product, labelQty, combination: hit.combination);
+    } else {
+      await _addOneOf(isar, hit.product, combination: hit.combination);
+    }
+  }
+
+  /// A scale label: its weight (or the weight its price buys) goes straight
+  /// into the cart. A second label of the same product adds to its line.
+  void _addLabelQty(Product product, double qty, {VariantCombination? combination}) {
+    final s = AppStrings.of(context);
+    final key = combination?.combinationKey ?? '';
+    final name = _lineName(product, combination);
+    final stock = combination?.stockQty ?? product.stockQty;
+    final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey == key);
+    final total = roundQty((idx >= 0 ? _items[idx].qty : 0) + qty);
+    if (qtyExceeds(total, stock)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.notEnoughStock(s.qty(stock, product.unit), name))),
+      );
+      return;
+    }
+    setState(() {
+      if (idx >= 0) {
+        final existing = _items[idx];
+        _items[idx] = existing.copyWith(qty: total, totalPrice: lineTotal(existing.unitPrice, total));
+      } else {
+        _items.add(_newItem(product, qty, combination: combination));
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(s.scaleLabelAdded(s.qty(qty, product.unit), name))),
+    );
+  }
+
+  /// "T-Shirt (Size: L)" for a combination, else the product's name.
+  static String _lineName(Product product, VariantCombination? combination) =>
+      combination == null ? product.name : '${product.name} (${combination.displayLabel})';
+
+  /// A quick-add chip: the product as it is now (its stock may have moved
+  /// since the chips were loaded), then the same path as a scan.
+  Future<void> _quickAdd(Product chip) async {
+    final isar = await ref.read(isarProvider.future);
+    final product = await isar.products.get(chip.id);
+    if (!mounted) return;
+    if (product == null || !product.isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).outOfStock)));
+      return;
+    }
+    await _addOneOf(isar, product);
+  }
+
+  /// Adds one of [product] (of its [combination], when a scan of that
+  /// combination's SKU named it) to the cart: a variant product without one
+  /// opens the picker on that product to choose it; otherwise 1 is added
+  /// (or, for weighed goods, the quantity sheet asks), refused past stock.
+  Future<void> _addOneOf(Isar isar, Product product, {VariantCombination? combination}) async {
+    if (product.hasVariants && combination == null) {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (_) => _ProductPickerSheet(
+          isar: isar,
+          currentItems: _items,
+          filterProductId: product.id,
+          onChanged: (updated) => setState(() {
+            _items
+              ..clear()
+              ..addAll(updated);
+          }),
+        ),
+      );
+      return;
+    }
+
+    final s = AppStrings.of(context);
+    final key = combination?.combinationKey ?? '';
+    final name = _lineName(product, combination);
+    final stock = combination?.stockQty ?? product.stockQty;
+    if (stock <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.outOfStock)),
+        );
+      }
+      return;
+    }
+
+    final idx = _items.indexWhere(
+      (i) => i.productId == product.id && i.variantCombinationKey == key,
+    );
+
+    // Weighed / measured goods: ask how much (or for how much money).
+    if (product.unit.allowsDecimal) {
+      final qty = await showQuantitySheet(
+        context,
+        productName: name,
+        unit: product.unit,
+        unitPrice: product.sellingPrice + (combination?.priceAdjustment ?? 0),
+        available: stock,
+        initial: idx >= 0 ? _items[idx].qty : null,
+      );
+      if (qty == null || !mounted) return;
+      setState(() {
+        if (idx >= 0) {
+          final existing = _items[idx];
+          _items[idx] = existing.copyWith(qty: qty, totalPrice: lineTotal(existing.unitPrice, qty));
+        } else {
+          _items.add(_newItem(product, qty, combination: combination));
+        }
+      });
+      return;
+    }
+
+    if (idx >= 0) {
+      final existing = _items[idx];
+      if (qtyAtLeast(existing.qty, stock)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(s.notEnoughStock(s.qty(stock, product.unit), name)),
+            ),
+          );
+        }
+        return;
+      }
+      setState(() {
+        _items[idx] = existing.copyWith(
+          qty: existing.qty + 1,
+          totalPrice: lineTotal(existing.unitPrice, existing.qty + 1),
+        );
+      });
+    } else {
+      setState(() => _items.add(_newItem(product, 1, combination: combination)));
+    }
+  }
+
+  /// A new cart line, priced and labelled as the picker does for a
+  /// [combination]: its price adjustment, its own SKU when it has one.
+  static OrderItem _newItem(Product product, double qty, {VariantCombination? combination}) {
+    final price = product.sellingPrice + (combination?.priceAdjustment ?? 0);
+    final comboSku = combination?.sku ?? '';
+    return OrderItem(
+      productId: product.id,
+      productName: product.name,
+      productSku: comboSku.isNotEmpty ? comboSku : product.sku,
+      qty: qty,
+      unit: product.unit,
+      unitPrice: price,
+      costPrice: product.costPrice,
+      totalPrice: lineTotal(price, qty),
+      variantCombinationKey: combination?.combinationKey ?? '',
+      variantDisplayLabel: combination?.displayLabel ?? '',
+    );
+  }
+
+  /// The stock a cart line may take: its combination's or the product's, as
+  /// it is now in the database. Null when the product is gone.
+  Future<({double stock, Product product})?> _stockFor(OrderItem item) async {
+    final isar = await ref.read(isarProvider.future);
+    final product = await isar.products.get(item.productId);
+    if (product == null) return null;
+    final stock = item.variantCombinationKey.isNotEmpty
+        ? product.findCombination(item.variantCombinationKey)?.stockQty ?? 0
+        : product.stockQty;
+    return (stock: stock, product: product);
+  }
+
+  /// A weighed line's quantity box: reopens the quantity sheet.
+  Future<void> _editQty(int index) async {
+    final item = _items[index];
+    final found = await _stockFor(item);
+    if (!mounted) return;
+    final qty = await showQuantitySheet(
+      context,
+      productName: item.displayName,
+      unit: item.unit,
+      unitPrice: item.unitPrice,
+      available: found?.stock,
+      initial: item.qty,
+    );
+    if (qty == null || !mounted || index >= _items.length) return;
+    setState(() {
+      _items[index] = item.copyWith(qty: qty, totalPrice: lineTotal(item.unitPrice, qty));
+    });
+  }
+
   Future<void> _updateQty(int index, int delta) async {
     final item = _items[index];
-    final newQty = item.qty + delta;
+    final newQty = roundQty(item.qty + delta);
     if (newQty <= 0) {
       setState(() => _items.removeAt(index));
       return;
     }
     if (delta > 0) {
-      final isar = await ref.read(isarProvider.future);
-      final product = await isar.products.get(item.productId);
-      if (product != null) {
-        int stock;
-        if (item.variantCombinationKey.isNotEmpty) {
-          final combo = product.findCombination(item.variantCombinationKey);
-          stock = combo?.stockQty ?? 0;
-        } else {
-          stock = product.stockQty;
+      final found = await _stockFor(item);
+      if (found != null && qtyExceeds(newQty, found.stock)) {
+        if (mounted) {
+          final s = AppStrings.of(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(s.notEnoughStock(s.qty(found.stock, item.unit), item.displayName))),
+          );
         }
-        if (newQty > stock) {
-          if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).notEnoughStock(stock, item.displayName))));
-          }
-          return;
-        }
+        return;
       }
     }
+    if (!mounted || index >= _items.length) return;
     setState(() {
-      _items[index] = item.copyWith(qty: newQty, totalPrice: item.unitPrice * newQty);
+      _items[index] = item.copyWith(qty: newQty, totalPrice: lineTotal(item.unitPrice, newQty));
     });
   }
 
   void _removeItem(int index) => setState(() => _items.removeAt(index));
 
-  Future<void> _submit() async {
-    if (_selectedCustomer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).pleaseSelectCustomer)));
+  /// The footer's Paid in full: the whole total, paid now, saved.
+  Future<void> _submitPaidInFull() async {
+    if (_items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
       return;
     }
+    _amountPaidCtrl.text = _amountText(_readTotals().total);
+    await _submit();
+  }
 
+  /// The footer's Credit / partial: shows the amount-paid block. Money left
+  /// owing needs someone to owe it, so a walk-in sale asks for a customer.
+  Future<void> _startCredit() async {
+    setState(() {
+      _creditMode = true;
+      if (_amountPaidCtrl.text.isNotEmpty && (NumberInput.parseDecimal(_amountPaidCtrl.text) ?? 0) >= _readTotals().total) {
+        _amountPaidCtrl.clear();
+      }
+    });
+    if (_selectedCustomer == null) await _pickCustomer();
+  }
+
+  Future<void> _submit() async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
       return;
@@ -261,6 +518,14 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final t = _readTotals();
     if (t.overpaid) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).amountPaidExceedsTotal)));
+      return;
+    }
+
+    // Only an order with money still owing needs a customer: the Due Book
+    // lists dues per customer, and a walk-in due would be lost there.
+    if (_selectedCustomer == null && t.due > 0.005) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).customerNeededForCredit)));
+      await _pickCustomer();
       return;
     }
 
@@ -342,6 +607,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
         final newId = await notifier.createOrder(order);
         final saved = order.copyWith(id: newId);
+        await OrderFormDefaults.remember(paymentMethod: _paymentMethod, orderStatus: _orderStatus);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -575,7 +841,90 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               children: [
 
                 _buildCustomerSection(theme, cs),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+
+                _buildItemsSection(theme, cs),
+                const SizedBox(height: 16),
+
+                if (_creditMode) _buildPaymentSection(theme, cs) else _buildPaymentMethodSection(theme, cs),
+                const SizedBox(height: 16),
+
+                _buildMoreOptionsHeader(theme, cs),
+                if (_showMore) ..._buildMoreOptions(theme, cs),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+
+          _buildFooter(theme, cs),
+        ],
+      ),
+    );
+  }
+
+  /// The fold-out header. Collapsed, it names what is set inside, so a
+  /// discount or a Pending status is never hidden from the seller.
+  Widget _buildMoreOptionsHeader(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    return ListenableBuilder(
+      listenable: Listenable.merge([_moneyFields, _notesCtrl, _deliveryAddressCtrl]),
+      builder: (context, _) {
+        final t = _readTotals();
+        final set = <String>[
+          if (t.discount > 0) '${s.discount} ${CurrencyFormatter.format(t.discount)}',
+          if (t.delivery > 0) '${s.deliveryFee} ${CurrencyFormatter.format(t.delivery)}',
+          if (t.taxRate > 0) '${s.tax} ${t.taxRate.toStringAsFixed(t.taxRate == t.taxRate.roundToDouble() ? 0 : 1)}%',
+          if (!_isEditing && _orderDate != null) formatEntryDateTime(context, _orderDate!),
+          orderStatusLabel(context, _orderStatus),
+          if (_notesCtrl.text.trim().isNotEmpty) s.notes,
+          if (_deliveryAddressCtrl.text.trim().isNotEmpty || _estimatedDeliveryDate != null) s.delivery,
+          if (_isRecurring) s.recurringOrder,
+        ];
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => setState(() => _showMore = !_showMore),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  ThinIcon(tabler.Adjustments.new, color: cs.primary, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.moreOptions, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        if (!_showMore)
+                          Text(
+                            set.join(' · '),
+                            style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  ThinIcon(_showMore ? tabler.ChevronUp.new : tabler.ChevronDown.new, size: 20, color: cs.outline),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildMoreOptions(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    return [
+                const SizedBox(height: 16),
+                _buildPricingSection(theme, cs),
+                const SizedBox(height: 16),
 
                 if (_canSetOrderDate) ...[
                   EntryDateField(
@@ -588,15 +937,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-
-                _buildItemsSection(theme, cs),
-                const SizedBox(height: 16),
-
-                _buildPricingSection(theme, cs),
-                const SizedBox(height: 16),
-
-                _buildPaymentSection(theme, cs),
-                const SizedBox(height: 16),
 
                 _buildStatusSection(theme, cs),
                 const SizedBox(height: 16),
@@ -707,16 +1047,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       ],
                     ),
                   ),
-
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-
-          _buildFooter(theme, cs),
-        ],
-      ),
-    );
+    ];
   }
 
   Widget _buildCustomerSection(ThemeData theme, ColorScheme cs) {
@@ -745,9 +1076,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                           ),
                       ],
                     )
-                  : Text(
-                      AppStrings.of(context).selectCustomer,
-                      style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppStrings.of(context).walkInCustomer, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          AppStrings.of(context).selectCustomer,
+                          style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                        ),
+                      ],
                     ),
             ),
             if (_selectedCustomer != null)
@@ -782,12 +1119,17 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${_items.fold<int>(0, (s, i) => s + i.qty)}',
+                  '${cartItemCount(_items)}',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
                 ),
               ),
             ],
             const Spacer(),
+            IconButton(
+              onPressed: _scanToAddItem,
+              icon: const ThinIcon(tabler.Scan.new, size: 20),
+              tooltip: AppStrings.of(context).scanQrBarcode,
+            ),
             TextButton.icon(
               onPressed: _pickProducts,
               icon: const ThinIcon(tabler.Plus.new, size: 16),
@@ -795,6 +1137,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             ),
           ],
         ),
+        _buildQuickAdd(cs),
         if (_items.isEmpty)
           GestureDetector(
             onTap: _pickProducts,
@@ -836,16 +1179,48 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  static const double _itemControlsWidth = 2 + 28 + 20 + 28 + 12 + 70 + 4 + 16;
+  /// One-tap chips of the products sold most often lately. Nothing shows
+  /// until there are sales to learn from, or while they load.
+  Widget _buildQuickAdd(ColorScheme cs) {
+    final products = ref.watch(quickAddProductsProvider).value ?? const <Product>[];
+    if (products.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final p in products)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: ActionChip(
+                  avatar: ThinIcon(tabler.Plus.new, size: 16, color: cs.primary),
+                  label: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 160),
+                    child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                  tooltip: AppStrings.of(context).quickAdd,
+                  onPressed: () => _quickAdd(p),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const double _itemControlsWidth =2 + 28 + 20 + 28 + 12 + 70 + 4 + 16;
 
   static const double _minItemNameWidth = 48;
 
   Widget _buildItemTile(int index, ThemeData theme, ColorScheme cs) {
     final item = _items[index];
-    final unitPrice = CurrencyFormatter.format(item.unitPrice);
+    final s = AppStrings.of(context);
+    final unitPrice = s.pricePer(CurrencyFormatter.format(item.unitPrice), item.unit);
     final unitPriceStyle = TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5));
     const nameStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 13);
     const qtyStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14);
+    final qtyText = s.qty(item.qty, item.unit);
 
     final info = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -855,23 +1230,43 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ],
     );
 
-    final qty = Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _qtyButton(tabler.Minus.new, () => _updateQty(index, -1), cs),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text('${item.qty}', style: qtyStyle),
-          ),
-          _qtyButton(tabler.Plus.new, () => _updateQty(index, 1), cs),
-        ],
-      ),
+    final box = BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
     );
+    // A weighed line has no + / − (a step of 1 kg is rarely what's sold):
+    // its box opens the quantity sheet.
+    final qty = item.unit.allowsDecimal
+        ? InkWell(
+            onTap: () => _editQty(index),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: box,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(qtyText, style: qtyStyle),
+                  const SizedBox(width: 6),
+                  ThinIcon(tabler.Pencil.new, size: 16, color: cs.primary),
+                ],
+              ),
+            ),
+          )
+        : Container(
+            decoration: box,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _qtyButton(tabler.Minus.new, () => _updateQty(index, -1), cs),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(qtyText, style: qtyStyle),
+                ),
+                _qtyButton(tabler.Plus.new, () => _updateQty(index, 1), cs),
+              ],
+            ),
+          );
 
     final total = Text(
       CurrencyFormatter.format(item.totalPrice),
@@ -890,7 +1285,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final nameRoom = constraints.maxWidth - _itemControlsWidth - _lineWidth(context, '${item.qty}', qtyStyle);
+          final nameRoom = constraints.maxWidth - _itemControlsWidth - _lineWidth(context, qtyText, qtyStyle);
           final needed = item.displayName.split(' ').fold(
             math.max(
               MediaQuery.textScalerOf(context).scale(_minItemNameWidth),
@@ -1016,7 +1411,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               child: ChoiceChip(
                 label: Text(label),
                 selected: selected,
-                onSelected: (_) => setState(() => _orderStatus = s),
+                onSelected: (_) => setState(() {
+                  _orderStatus = s;
+                  _pickedStatus = true;
+                }),
                 selectedColor: cs.primary.withValues(alpha: 0.15),
                 labelStyle: TextStyle(
                   color: selected ? cs.primary : cs.onSurface,
@@ -1114,26 +1512,58 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         const SizedBox(height: 12),
         Text(s.paymentMethod, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: methods.map((m) {
-            final selected = _paymentMethod == m;
-            return ChoiceChip(
-              label: Text(labels[m] ?? m.name),
-              selected: selected,
-              onSelected: (_) => setState(() => _paymentMethod = m),
-              selectedColor: cs.primary.withValues(alpha: 0.15),
-              labelStyle: TextStyle(
-                color: selected ? cs.primary : cs.onSurface,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            );
-          }).toList(),
-        ),
+        _paymentMethodChips(cs, methods, labels),
         const SizedBox(height: 12),
         AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
       ],
+    );
+  }
+
+  /// A new counter sale's payment: only how it is paid. The transaction ID
+  /// is asked only for a method that has one (not cash).
+  Widget _buildPaymentMethodSection(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    final labels = {
+      PaymentMethod.cash: s.cash,
+      PaymentMethod.card: s.card,
+      PaymentMethod.mfs: s.mfs,
+      PaymentMethod.bank: s.bank,
+      PaymentMethod.other: s.other,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(s.paymentMethod, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        _paymentMethodChips(cs, PaymentMethod.values, labels),
+        if (_paymentMethod != PaymentMethod.cash) ...[
+          const SizedBox(height: 12),
+          AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
+        ],
+      ],
+    );
+  }
+
+  Widget _paymentMethodChips(ColorScheme cs, List<PaymentMethod> methods, Map<PaymentMethod, String> labels) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: methods.map((m) {
+        final selected = _paymentMethod == m;
+        return ChoiceChip(
+          label: Text(labels[m] ?? m.name),
+          selected: selected,
+          onSelected: (_) => setState(() {
+            _paymentMethod = m;
+            _pickedPaymentMethod = true;
+          }),
+          selectedColor: cs.primary.withValues(alpha: 0.15),
+          labelStyle: TextStyle(
+            color: selected ? cs.primary : cs.onSurface,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -1199,10 +1629,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       ))),
                     ],
                   ),
-                  if (t.total > 0 && t.paid > 0)
+                  if (_creditMode && t.total > 0 && t.paid > 0)
                     _summaryRow(s.amountPaid, CurrencyFormatter.format(t.paid), theme,
                         valueColor: AppColors.paymentPaid),
-                  if (t.total > 0 && t.due > 0.005)
+                  if (_creditMode && t.total > 0 && t.due > 0.005)
                     _summaryRow(s.due, CurrencyFormatter.format(t.due), theme,
                         valueColor: AppColors.paymentPartial),
                 ],
@@ -1210,14 +1640,32 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             },
           ),
           const SizedBox(height: 12),
-          AppButton(
-            label: _isEditing ? s.editOrder : s.addOrder,
-            onPressed: _submit,
-            isLoading: _isLoading,
-            isFullWidth: true,
-            height: 50,
-            icon: tabler.Check.new,
-          ),
+          if (_creditMode)
+            AppButton(
+              label: _isEditing ? s.editOrder : s.addOrder,
+              onPressed: _submit,
+              isLoading: _isLoading,
+              isFullWidth: true,
+              height: 50,
+              icon: tabler.Check.new,
+            )
+          else
+            ButtonPair(
+              first: AppButton(
+                label: s.creditOrPartial,
+                variant: AppButtonVariant.outlined,
+                onPressed: _isLoading ? null : _startCredit,
+                height: 50,
+                icon: tabler.Notebook.new,
+              ),
+              second: AppButton(
+                label: s.paidInFull,
+                onPressed: _submitPaidInFull,
+                isLoading: _isLoading,
+                height: 50,
+                icon: tabler.Check.new,
+              ),
+            ),
         ],
       ),
     );
@@ -1272,8 +1720,9 @@ class _ProductPickerSheet extends StatefulWidget {
   final Isar isar;
   final List<OrderItem> currentItems;
   final ValueChanged<List<OrderItem>> onChanged;
+  final int? filterProductId;
 
-  const _ProductPickerSheet({required this.isar, required this.currentItems, required this.onChanged});
+  const _ProductPickerSheet({required this.isar, required this.currentItems, required this.onChanged, this.filterProductId});
 
   @override
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
@@ -1296,12 +1745,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   void initState() {
     super.initState();
     _items = List.of(widget.currentItems);
-    _productsStream = widget.isar.products
-        .where()
-        .filter()
-        .isActiveEqualTo(true)
-        .sortByName()
-        .watch(fireImmediately: true);
+    var query = widget.isar.products.where().filter().isActiveEqualTo(true);
+    if (widget.filterProductId != null) {
+      query = query.and().idEqualTo(widget.filterProductId!);
+    }
+    _productsStream = query.sortByName().watch(fireImmediately: true);
   }
 
   @override
@@ -1310,28 +1758,29 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     super.dispose();
   }
 
-  int _qtyOf(int productId, {String combinationKey = ''}) {
+  double _qtyOf(int productId, {String combinationKey = ''}) {
     final idx = _items.indexWhere((i) => i.productId == productId && i.variantCombinationKey == combinationKey);
     return idx >= 0 ? _items[idx].qty : 0;
   }
 
   void _setQty(
     Product product,
-    int qty, {
+    double qty, {
     String combinationKey = '',
     String displayLabel = '',
     double? priceOverride,
     String? skuOverride,
-    required int availableStock,
+    required double availableStock,
   }) {
-    if (qty > availableStock) qty = availableStock;
+    qty = roundQty(qty);
+    if (qtyExceeds(qty, availableStock)) qty = availableStock;
     setState(() {
       final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey == combinationKey);
       final unitPrice = priceOverride ?? product.sellingPrice;
       if (qty <= 0) {
         if (idx >= 0) _items.removeAt(idx);
       } else if (idx >= 0) {
-        _items[idx] = _items[idx].copyWith(qty: qty, totalPrice: _items[idx].unitPrice * qty);
+        _items[idx] = _items[idx].copyWith(qty: qty, totalPrice: lineTotal(_items[idx].unitPrice, qty));
       } else {
         _items.add(
           OrderItem(
@@ -1339,9 +1788,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             productName: product.name,
             productSku: skuOverride ?? product.sku,
             qty: qty,
+            unit: product.unit,
             unitPrice: unitPrice,
             costPrice: product.costPrice,
-            totalPrice: unitPrice * qty,
+            totalPrice: lineTotal(unitPrice, qty),
             variantCombinationKey: combinationKey,
             variantDisplayLabel: displayLabel,
           ),
@@ -1349,6 +1799,37 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       }
     });
     widget.onChanged(_items);
+  }
+
+  /// A weighed product's Add (or its quantity, once in the cart): asks how
+  /// much in the quantity sheet, over this picker.
+  Future<void> _askQty(
+    Product product, {
+    String combinationKey = '',
+    String displayLabel = '',
+    double? priceOverride,
+    String? skuOverride,
+    required double availableStock,
+  }) async {
+    final current = _qtyOf(product.id, combinationKey: combinationKey);
+    final qty = await showQuantitySheet(
+      context,
+      productName: displayLabel.isEmpty ? product.name : '${product.name} ($displayLabel)',
+      unit: product.unit,
+      unitPrice: priceOverride ?? product.sellingPrice,
+      available: availableStock,
+      initial: current > 0 ? current : null,
+    );
+    if (qty == null || !mounted) return;
+    _setQty(
+      product,
+      qty,
+      combinationKey: combinationKey,
+      displayLabel: displayLabel,
+      priceOverride: priceOverride,
+      skuOverride: skuOverride,
+      availableStock: availableStock,
+    );
   }
 
   List<Product> _filterProducts(List<Product> all) {
@@ -1390,7 +1871,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   Widget _buildSheet(BuildContext context, ThemeData theme, ColorScheme cs, List<Product>? allProducts) {
     final filtered = allProducts == null ? const <Product>[] : _filterProducts(allProducts);
 
-    final totalItems = _items.fold<int>(0, (s, i) => s + i.qty);
+    final totalItems = cartItemCount(_items);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -1572,13 +2053,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                     FittedBox(
                                                       fit: BoxFit.scaleDown,
                                                       child: Text(
-                                                        CurrencyFormatter.format(comboPrice),
+                                                        AppStrings.of(context).pricePer(CurrencyFormatter.format(comboPrice), p.unit),
                                                         style: TextStyle(fontSize: 12, color: cs.primary),
                                                         maxLines: 1,
                                                       ),
                                                     ),
                                                     Text(
-                                                      '  ·  ${c.stockQty} in stock',
+                                                      '  ·  ${AppStrings.of(context).qty(c.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
                                                       style: TextStyle(
                                                         fontSize: 11,
                                                         color: outOfStock
@@ -1592,65 +2073,51 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                             ),
                                           ),
                                           if (qty > 0)
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  _sheetQtyBtn(
-                                                    tabler.Minus.new,
-                                                    () => _setQty(
-                                                      p,
-                                                      qty - 1,
-                                                      combinationKey: c.combinationKey,
-                                                      displayLabel: c.displayLabel,
-                                                      priceOverride: comboPrice,
-                                                      skuOverride: comboSku,
-                                                      availableStock: c.stockQty,
-                                                    ),
-                                                    cs,
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                                                    child: Text(
-                                                      '$qty',
-                                                      style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
-                                                    ),
-                                                  ),
-                                                  _sheetQtyBtn(
-                                                    tabler.Plus.new,
-                                                    qty >= c.stockQty
-                                                        ? null
-                                                        : () => _setQty(
-                                                            p,
-                                                            qty + 1,
-                                                            combinationKey: c.combinationKey,
-                                                            displayLabel: c.displayLabel,
-                                                            priceOverride: comboPrice,
-                                                            skuOverride: comboSku,
-                                                            availableStock: c.stockQty,
-                                                          ),
-                                                    cs,
-                                                  ),
-                                                ],
-                                              ),
-                                            )
-                                          else
-                                            _addButton(
-                                              row.maxWidth,
-                                              outOfStock: outOfStock,
-                                              onAdd: () => _setQty(
+                                            _qtyControl(
+                                              p,
+                                              qty,
+                                              cs,
+                                              available: c.stockQty,
+                                              onStep: (q) => _setQty(
                                                 p,
-                                                1,
+                                                q,
                                                 combinationKey: c.combinationKey,
                                                 displayLabel: c.displayLabel,
                                                 priceOverride: comboPrice,
                                                 skuOverride: comboSku,
                                                 availableStock: c.stockQty,
                                               ),
+                                              onAsk: () => _askQty(
+                                                p,
+                                                combinationKey: c.combinationKey,
+                                                displayLabel: c.displayLabel,
+                                                priceOverride: comboPrice,
+                                                skuOverride: comboSku,
+                                                availableStock: c.stockQty,
+                                              ),
+                                            )
+                                          else
+                                            _addButton(
+                                              row.maxWidth,
+                                              outOfStock: outOfStock,
+                                              onAdd: () => p.unit.allowsDecimal
+                                                  ? _askQty(
+                                                      p,
+                                                      combinationKey: c.combinationKey,
+                                                      displayLabel: c.displayLabel,
+                                                      priceOverride: comboPrice,
+                                                      skuOverride: comboSku,
+                                                      availableStock: c.stockQty,
+                                                    )
+                                                  : _setQty(
+                                                      p,
+                                                      1,
+                                                      combinationKey: c.combinationKey,
+                                                      displayLabel: c.displayLabel,
+                                                      priceOverride: comboPrice,
+                                                      skuOverride: comboSku,
+                                                      availableStock: c.stockQty,
+                                                    ),
                                             ),
                                         ],
                                       ),
@@ -1689,13 +2156,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
-                                            CurrencyFormatter.format(p.sellingPrice),
+                                            AppStrings.of(context).pricePer(CurrencyFormatter.format(p.sellingPrice), p.unit),
                                             style: TextStyle(fontSize: 12, color: cs.primary),
                                             maxLines: 1,
                                           ),
                                         ),
                                         Text(
-                                          '  ·  ${p.stockQty} in stock',
+                                          '  ·  ${AppStrings.of(context).qty(p.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
                                           style: TextStyle(
                                             fontSize: 11,
                                             color: outOfStock ? cs.error : cs.onSurface.withValues(alpha: 0.5),
@@ -1707,39 +2174,21 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 ),
                               ),
                               if (qty > 0)
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _sheetQtyBtn(
-                                        tabler.Minus.new,
-                                        () => _setQty(p, qty - 1, availableStock: p.stockQty),
-                                        cs,
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                                        child: Text(
-                                          '$qty',
-                                          style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
-                                        ),
-                                      ),
-                                      _sheetQtyBtn(
-                                        tabler.Plus.new,
-                                        qty >= p.stockQty ? null : () => _setQty(p, qty + 1, availableStock: p.stockQty),
-                                        cs,
-                                      ),
-                                    ],
-                                  ),
+                                _qtyControl(
+                                  p,
+                                  qty,
+                                  cs,
+                                  available: p.stockQty,
+                                  onStep: (q) => _setQty(p, q, availableStock: p.stockQty),
+                                  onAsk: () => _askQty(p, availableStock: p.stockQty),
                                 )
                               else
                                 _addButton(
                                   row.maxWidth,
                                   outOfStock: outOfStock,
-                                  onAdd: () => _setQty(p, 1, availableStock: p.stockQty),
+                                  onAdd: p.unit.allowsDecimal
+                                      ? () => _askQty(p, availableStock: p.stockQty)
+                                      : () => _setQty(p, 1, availableStock: p.stockQty),
                                 ),
                             ],
                           ),
@@ -1764,6 +2213,52 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
           child: FittedBox(fit: BoxFit.scaleDown, child: Text(outOfStock ? s.outOfStock : s.add)),
         ),
+      ),
+    );
+  }
+
+  /// A picked product's quantity: + / − for counted goods, or for weighed
+  /// ones a box showing "1.25 kg" that reopens the quantity sheet.
+  Widget _qtyControl(
+    Product p,
+    double qty,
+    ColorScheme cs, {
+    required double available,
+    required ValueChanged<double> onStep,
+    required VoidCallback onAsk,
+  }) {
+    final s = AppStrings.of(context);
+    final decoration = BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+    );
+    final label = Text(
+      s.qty(qty, p.unit),
+      style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
+    );
+    if (p.unit.allowsDecimal) {
+      return InkWell(
+        onTap: onAsk,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: decoration,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [label, const SizedBox(width: 6), ThinIcon(tabler.Pencil.new, size: 16, color: cs.primary)],
+          ),
+        ),
+      );
+    }
+    return Container(
+      decoration: decoration,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _sheetQtyBtn(tabler.Minus.new, () => onStep(qty - 1), cs),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: label),
+          _sheetQtyBtn(tabler.Plus.new, qtyAtLeast(qty, available) ? null : () => onStep(qty + 1), cs),
+        ],
       ),
     );
   }
@@ -2140,6 +2635,173 @@ class _InvoiceActionTileState extends State<_InvoiceActionTile> {
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// What the order form's scanner found: the product, the combination whose
+/// own SKU was scanned (if any), and a scale label's quantity (if any).
+typedef _ScanHit = ({Product product, VariantCombination? combination, double? qty});
+
+class _ScannerSheet extends ConsumerStatefulWidget {
+  final Isar isar;
+  final DeviceChannel deviceChannel;
+
+  const _ScannerSheet({required this.isar, required this.deviceChannel});
+
+  @override
+  ConsumerState<_ScannerSheet> createState() => _ScannerSheetState();
+}
+
+class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
+  final _controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
+  );
+  late final CameraSession _session;
+  bool _scanned = false;
+  final Future<ScaleLabelSettings> _scale = ScaleLabelSettings.load();
+
+  @override
+  void initState() {
+    super.initState();
+    _session = CameraSession(_controller, widget.deviceChannel);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _session.setVisible(TickerMode.valuesOf(context).enabled);
+  }
+
+  @override
+  void dispose() {
+    _session.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_scanned) return;
+    final value = capture.barcodes
+        .map((b) => b.rawValue?.trim())
+        .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
+    if (value == null) return;
+    _scanned = true;
+
+    _scale.then((scale) => ProductRepository(widget.isar).findByScan(value, scale)).then((hit) {
+      if (!mounted) return;
+      final product = hit?.product;
+      if (product == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.of(context).noProductMatched)),
+        );
+        _scanned = false;
+        return;
+      }
+
+      final combination = hit!.combination;
+      final noStock = combination != null
+          ? combination.stockQty <= 0
+          : !product.hasVariants && product.stockQty <= 0;
+      if (noStock) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+        );
+        _scanned = false;
+        return;
+      }
+
+      if (product.hasVariants) {
+        final hasStock = product.variantCombinations.any(
+          (c) => c.isActive && c.stockQty > 0,
+        );
+        if (!hasStock) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+          );
+          _scanned = false;
+          return;
+        }
+      }
+
+      Navigator.of(context).pop((
+        product: product,
+        combination: combination,
+        qty: hit.label?.qtyFor(product, combination: combination),
+      ));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.85,
+      minChildSize: 0.3,
+      expand: false,
+      builder: (ctx, scrollController) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+            child: Row(
+              children: [
+                Text(
+                  AppStrings.of(context).scanQrBarcode,
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                TorchButton(controller: _controller),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const ThinIcon(tabler.X.new),
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: ScannerPreview(
+                    session: _session,
+                    onDetect: _onDetect,
+                    overlay: Center(
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: theme.colorScheme.primary,
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              AppStrings.of(context).pointCameraAtCode,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

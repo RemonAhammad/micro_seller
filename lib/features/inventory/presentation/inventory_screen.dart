@@ -15,6 +15,7 @@ import 'widgets/stock_movement_tile.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 import '../../../shared/widgets/section_help.dart';
+import '../../../core/utils/quantity.dart';
 
 enum _StockSort { lowStock, name, stockAsc, stockDesc }
 
@@ -479,8 +480,8 @@ class _StockTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: LayoutBuilder(builder: (context, beside) {
-                    final stock = '${product.totalStock}';
-                    final caption = 'of ${product.lowStockThreshold} threshold';
+                    final stock = AppStrings.of(context).qty(product.totalStock, product.unit);
+                    final caption = 'of ${formatQtyNumber(product.lowStockThreshold)} threshold';
                     final nameStyle = theme.textTheme.bodyMedium
                         ?.copyWith(fontWeight: FontWeight.w600);
                     final skuStyle = theme.textTheme.bodySmall?.copyWith(
@@ -588,7 +589,7 @@ class _StockTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${c.stockQty}',
+                      AppStrings.of(context).qty(c.stockQty, product.unit),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,

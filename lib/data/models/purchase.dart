@@ -1,6 +1,9 @@
 import 'package:isar_community/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import '../../core/utils/quantity.dart';
+import 'quantity_unit.dart';
+
 part 'purchase.g.dart';
 
 @collection
@@ -37,8 +40,12 @@ class Purchase {
   @ignore
   bool get isFullyPaid => amountPaid >= totalAmount;
 
+  /// How many things were bought, for "N items": the units when every line
+  /// is whole, else the number of lines (2.5 kg + 3 pieces is 2 items).
   @ignore
-  int get totalItems => items.fold(0, (s, i) => s + i.qty);
+  int get totalItems => items.every((i) => isWholeQty(i.qty))
+      ? items.fold(0, (s, i) => s + wholeQty(i.qty))
+      : items.length;
 
   Purchase copyWith({
     Id? id,
@@ -77,20 +84,37 @@ class PurchaseItem {
     this.productId = 0,
     this.productName = '',
     this.qty = 0,
+    this.unit = QuantityUnit.piece,
     this.unitCost = 0.0,
     this.totalCost = 0.0,
   });
 
   int productId;
   String productName;
-  int qty;
+
+  /// In [unit]s, rounded to 3 decimals; stored as `quantity` (see
+  /// `OrderItem.qty`).
+  @Name('quantity')
+  double qty;
+
+  /// The product's unit at the time of the purchase. Older items: piece.
+  @Enumerated(EnumType.name)
+  @JsonKey(unknownEnumValue: QuantityUnit.piece)
+  QuantityUnit unit;
+
+  @Name('qty')
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int legacyQty = 0;
+
+  /// Per one [unit].
   double unitCost;
   double totalCost;
 
   PurchaseItem copyWith({
     int? productId,
     String? productName,
-    int? qty,
+    double? qty,
+    QuantityUnit? unit,
     double? unitCost,
     double? totalCost,
   }) =>
@@ -98,6 +122,7 @@ class PurchaseItem {
         productId: productId ?? this.productId,
         productName: productName ?? this.productName,
         qty: qty ?? this.qty,
+        unit: unit ?? this.unit,
         unitCost: unitCost ?? this.unitCost,
         totalCost: totalCost ?? this.totalCost,
       );

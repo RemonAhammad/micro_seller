@@ -1,6 +1,8 @@
 import 'package:isar_community/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import 'quantity_unit.dart';
+
 part 'order_item.g.dart';
 
 @embedded
@@ -11,6 +13,7 @@ class OrderItem {
     this.productName = '',
     this.productSku = '',
     this.qty = 1,
+    this.unit = QuantityUnit.piece,
     this.unitPrice = 0.0,
     this.costPrice = 0.0,
     this.totalPrice = 0.0,
@@ -23,7 +26,23 @@ class OrderItem {
   int productId;
   String productName;
   String productSku;
-  int qty;
+
+  /// In [unit]s, rounded to 3 decimals. Stored as `quantity`; the int it
+  /// replaced is still read as [legacyQty] by the one-time migration.
+  @Name('quantity')
+  double qty;
+
+  /// The product's unit when the order was taken, so the receipt still says
+  /// "1.25 kg" if the product's unit is changed later. Older items: piece.
+  @Enumerated(EnumType.name)
+  @JsonKey(unknownEnumValue: QuantityUnit.piece)
+  QuantityUnit unit;
+
+  @Name('qty')
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int legacyQty = 0;
+
+  /// Per one [unit].
   double unitPrice;
   double costPrice;
   double totalPrice;
@@ -55,7 +74,8 @@ class OrderItem {
     int? productId,
     String? productName,
     String? productSku,
-    int? qty,
+    double? qty,
+    QuantityUnit? unit,
     double? unitPrice,
     double? costPrice,
     double? totalPrice,
@@ -69,6 +89,7 @@ class OrderItem {
         productName: productName ?? this.productName,
         productSku: productSku ?? this.productSku,
         qty: qty ?? this.qty,
+        unit: unit ?? this.unit,
         unitPrice: unitPrice ?? this.unitPrice,
         costPrice: costPrice ?? this.costPrice,
         totalPrice: totalPrice ?? this.totalPrice,

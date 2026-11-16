@@ -4,13 +4,13 @@
   <a href="https://play.google.com/store/apps/details?id=com.blackshadowsoftware.micro_seller"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80"></a>
 </p>
 <p align="center">
-  <a href="https://github.com/RemonAhammad/micro_seller/releases/latest"><img alt="Or download the Android APK" src="https://img.shields.io/badge/or_download-Android_APK-00897B?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="https://github.com/microseller/microseller/releases/latest"><img alt="Or download the Android APK" src="https://img.shields.io/badge/or_download-Android_APK-00897B?style=for-the-badge&logo=android&logoColor=white"></a>
   <a href="#iphone-sideload"><img alt="Or sideload the iPhone app" src="https://img.shields.io/badge/or_sideload-iPhone_app-00897B?style=for-the-badge&logo=apple&logoColor=white"></a>
 </p>
 <p align="center">
-  <a href="https://github.com/RemonAhammad/micro_seller/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/RemonAhammad/micro_seller?include_prereleases&label=latest&color=00897B"></a>
-  <a href="https://github.com/RemonAhammad/micro_seller/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/RemonAhammad/micro_seller/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/github/license/RemonAhammad/micro_seller?color=00897B"></a>
+  <a href="https://github.com/microseller/microseller/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/microseller/microseller?include_prereleases&label=latest&color=00897B"></a>
+  <a href="https://github.com/microseller/microseller/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/microseller/microseller/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/github/license/microseller/microseller?color=00897B"></a>
 </p>
 
 # Micro Seller
@@ -44,7 +44,7 @@ Install Micro Seller from [Google Play](https://play.google.com/store/apps/detai
 
 For phones without Google Play. GitHub Actions builds and signs each release from this repo.
 
-1. Open the [latest release](https://github.com/RemonAhammad/micro_seller/releases/latest) and find **Assets**.
+1. Open the [latest release](https://github.com/microseller/microseller/releases/latest) and find **Assets**.
 2. Tap the APK for your phone:
 
    | File | For |
@@ -64,7 +64,7 @@ For phones without Google Play. GitHub Actions builds and signs each release fro
 Micro Seller isn't on the App Store yet. Releases also include an iPhone app, `micro-seller-vX.Y.Z-unsigned.ipa`, which GitHub Actions builds from this repo like the APKs. It's **unsigned**: iOS installs it only after a sideloading tool signs it with your own Apple ID. It needs iOS 16 or later.
 
 1. On a Mac or Windows PC, set up one of these free tools by following its guide: [AltStore](https://altstore.io), [SideStore](https://sidestore.io) or [Sideloadly](https://sideloadly.io).
-2. Download the `.ipa` from the [latest release](https://github.com/RemonAhammad/micro_seller/releases/latest)'s **Assets**, and install it with the tool, signed in with your Apple ID.
+2. Download the `.ipa` from the [latest release](https://github.com/microseller/microseller/releases/latest)'s **Assets**, and install it with the tool, signed in with your Apple ID.
 3. The first time, on the iPhone: turn on **Settings → Privacy & Security → Developer Mode** (the iPhone restarts), then open **Settings → General → VPN & Device Management**, tap your Apple ID and trust it.
 
 With a free Apple ID:
@@ -182,8 +182,8 @@ Micro Seller has no account and no server. Your business data stays on your devi
 
 | Platform | Status |
 | --- | --- |
-| Android | On [Google Play](https://play.google.com/store/apps/details?id=com.blackshadowsoftware.micro_seller), and APKs on [GitHub Releases](https://github.com/RemonAhammad/micro_seller/releases) |
-| iOS | An unsigned `.ipa` on [GitHub Releases](https://github.com/RemonAhammad/micro_seller/releases), to [sideload](#iphone-sideload) on an iPhone or iPad with your own Apple ID. App Store and TestFlight are planned. |
+| Android | On [Google Play](https://play.google.com/store/apps/details?id=com.blackshadowsoftware.micro_seller), and APKs on [GitHub Releases](https://github.com/microseller/microseller/releases) |
+| iOS | An unsigned `.ipa` on [GitHub Releases](https://github.com/microseller/microseller/releases), to [sideload](#iphone-sideload) on an iPhone or iPad with your own Apple ID. App Store and TestFlight are planned. |
 | macOS, Windows, Linux, Web | Built from the same code; build them from source (see below) |
 
 ## For developers
@@ -208,7 +208,7 @@ Micro Seller has no account and no server. Your business data stays on your devi
 You need Flutter. CI uses the version pinned in [`.github/actions/setup-flutter/action.yml`](.github/actions/setup-flutter/action.yml).
 
 ```bash
-git clone https://github.com/RemonAhammad/micro_seller.git
+git clone https://github.com/microseller/microseller.git
 cd micro_seller
 cp .env.example .env          # Google OAuth client IDs, only needed for Drive backup
 flutter pub get

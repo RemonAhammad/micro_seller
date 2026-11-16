@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
+import '../../../data/models/order.dart' show lineTotal;
 import '../../../data/models/purchase.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/product.dart';
@@ -11,6 +12,8 @@ import '../../../data/services/isar_service.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/number_input.dart';
+import '../../../core/utils/quantity.dart';
+import '../../../shared/widgets/quantity_sheet.dart';
 import '../providers/supplier_provider.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -147,8 +150,24 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     final cost = NumberInput.parseDecimal(value) ?? 0;
     _items[index] = _items[index].copyWith(
       unitCost: cost,
-      totalCost: cost * _items[index].qty,
+      totalCost: lineTotal(cost, _items[index].qty),
     );
+  }
+
+  /// A weighed line's quantity: the quantity sheet, priced at its unit cost.
+  Future<void> _editItemQty(int index) async {
+    final item = _items[index];
+    final qty = await showQuantitySheet(
+      context,
+      productName: item.productName,
+      unit: item.unit,
+      unitPrice: item.unitCost,
+      initial: item.qty,
+    );
+    if (qty == null || !mounted || index >= _items.length) return;
+    setState(() {
+      _items[index] = item.copyWith(qty: qty, totalCost: lineTotal(item.unitCost, qty));
+    });
   }
 
   void _removeItem(int index) {
@@ -159,7 +178,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   }
 
   void _updateItemQty(int index, int delta) {
-    final newQty = _items[index].qty + delta;
+    final newQty = roundQty(_items[index].qty + delta);
     if (newQty <= 0) {
       _removeItem(index);
       return;
@@ -167,7 +186,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     setState(() {
       _items[index] = _items[index].copyWith(
         qty: newQty,
-        totalCost: _items[index].unitCost * newQty,
+        totalCost: lineTotal(_items[index].unitCost, newQty),
       );
     });
   }
@@ -576,7 +595,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
           LayoutBuilder(builder: (context, box) {
 
             final field = box.maxWidth -
-                (70 + _textWidth(context, '${item.qty}', qtyStyle)) -
+                (70 + _textWidth(context, AppStrings.of(context).qty(item.qty, item.unit), qtyStyle)) -
                 8 - 8 - 70;
             final label = _textWidth(context, AppStrings.of(context).unitCost,
                 theme.textTheme.bodyLarge);
@@ -595,24 +614,31 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (!item.unit.allowsDecimal)
+                            InkWell(
+                              onTap: () => _updateItemQty(index, -1),
+                              child: Padding(
+                                padding: const EdgeInsets.all(6),
+                                child: ThinIcon(tabler.Minus.new, size: 14, color: cs.primary),
+                              ),
+                            ),
                           InkWell(
-                            onTap: () => _updateItemQty(index, -1),
+                            // A weighed line opens the quantity sheet.
+                            onTap: item.unit.allowsDecimal ? () => _editItemQty(index) : null,
                             child: Padding(
-                              padding: const EdgeInsets.all(6),
-                              child: ThinIcon(tabler.Minus.new, size: 14, color: cs.primary),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: item.unit.allowsDecimal ? 6 : 0),
+                              child: Text(AppStrings.of(context).qty(item.qty, item.unit), style: qtyStyle),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('${item.qty}', style: qtyStyle),
-                          ),
-                          InkWell(
-                            onTap: () => _updateItemQty(index, 1),
-                            child: Padding(
-                              padding: const EdgeInsets.all(6),
-                              child: ThinIcon(tabler.Plus.new, size: 14, color: cs.primary),
+                          if (!item.unit.allowsDecimal)
+                            InkWell(
+                              onTap: () => _updateItemQty(index, 1),
+                              child: Padding(
+                                padding: const EdgeInsets.all(6),
+                                child: ThinIcon(tabler.Plus.new, size: 14, color: cs.primary),
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -893,12 +919,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     super.dispose();
   }
 
-  int _qtyOf(int productId) {
+  double _qtyOf(int productId) {
     final idx = _items.indexWhere((i) => i.productId == productId);
     return idx >= 0 ? _items[idx].qty : 0;
   }
 
-  void _setQty(Product product, int qty) {
+  void _setQty(Product product, double qty) {
+    qty = roundQty(qty);
     setState(() {
       final idx = _items.indexWhere((i) => i.productId == product.id);
       if (qty <= 0) {
@@ -906,19 +933,34 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       } else if (idx >= 0) {
         _items[idx] = _items[idx].copyWith(
           qty: qty,
-          totalCost: _items[idx].unitCost * qty,
+          totalCost: lineTotal(_items[idx].unitCost, qty),
         );
       } else {
         _items.add(PurchaseItem(
           productId: product.id,
           productName: product.name,
           qty: qty,
+          unit: product.unit,
           unitCost: product.costPrice,
-          totalCost: product.costPrice * qty,
+          totalCost: lineTotal(product.costPrice, qty),
         ));
       }
     });
     widget.onChanged(_items);
+  }
+
+  /// A weighed product bought by the kilogram: how much, in the quantity
+  /// sheet (no stock cap: a purchase adds stock).
+  Future<void> _askQty(Product product) async {
+    final current = _qtyOf(product.id);
+    final qty = await showQuantitySheet(
+      context,
+      productName: product.name,
+      unit: product.unit,
+      unitPrice: product.costPrice,
+      initial: current > 0 ? current : null,
+    );
+    if (qty != null && mounted) _setQty(product, qty);
   }
 
   Widget _filterLabel(BuildContext context) {
@@ -953,7 +995,9 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final totalItems = _items.fold<int>(0, (s, i) => s + i.qty);
+    final totalItems = _items.every((i) => isWholeQty(i.qty))
+        ? _items.fold<int>(0, (s, i) => s + wholeQty(i.qty))
+        : _items.length;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -1092,7 +1136,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13)),
                                 Text(
-                                  '${AppStrings.of(context).stock}: ${p.stockQty}  ·  ${AppStrings.of(context).costPrice}: ${CurrencyFormatter.format(p.costPrice)}',
+                                  '${AppStrings.of(context).stock}: ${AppStrings.of(context).qty(p.stockQty, p.unit)}  ·  ${AppStrings.of(context).costPrice}: ${CurrencyFormatter.format(p.costPrice)}',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: cs.onSurface.withValues(alpha: 0.5),
@@ -1111,30 +1155,35 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  if (!p.unit.allowsDecimal)
+                                    InkWell(
+                                      onTap: () => _setQty(p, qty - 1),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: ThinIcon(tabler.Minus.new,
+                                            size: 16, color: cs.primary),
+                                      ),
+                                    ),
                                   InkWell(
-                                    onTap: () => _setQty(p, qty - 1),
+                                    onTap: p.unit.allowsDecimal ? () => _askQty(p) : null,
                                     child: Padding(
-                                      padding: const EdgeInsets.all(6),
-                                      child: ThinIcon(tabler.Minus.new,
-                                          size: 16, color: cs.primary),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 6),
+                                      child: Text(AppStrings.of(context).qty(qty, p.unit),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: cs.primary)),
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10),
-                                    child: Text('$qty',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            color: cs.primary)),
-                                  ),
-                                  InkWell(
-                                    onTap: () => _setQty(p, qty + 1),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(6),
-                                      child: ThinIcon(tabler.Plus.new,
-                                          size: 16, color: cs.primary),
+                                  if (!p.unit.allowsDecimal)
+                                    InkWell(
+                                      onTap: () => _setQty(p, qty + 1),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: ThinIcon(tabler.Plus.new,
+                                            size: 16, color: cs.primary),
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             )
@@ -1142,7 +1191,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                             SizedBox(
                               height: 34,
                               child: FilledButton.tonal(
-                                onPressed: () => _setQty(p, 1),
+                                onPressed: p.unit.allowsDecimal ? () => _askQty(p) : () => _setQty(p, 1),
                                 style: FilledButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16),

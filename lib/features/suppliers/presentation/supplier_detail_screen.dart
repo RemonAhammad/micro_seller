@@ -16,6 +16,7 @@ import '../../../shared/widgets/confirm_dialog.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 import '../../../shared/widgets/action_feedback.dart';
+import '../../../core/utils/quantity.dart';
 
 class SupplierDetailScreen extends ConsumerWidget {
   final int supplierId;
@@ -369,7 +370,7 @@ class _SupplierProductsSection extends ConsumerWidget {
                 final skuStyle = TextStyle(
                     fontSize: 11,
                     color: cs.onSurface.withValues(alpha: 0.5));
-                final stock = 'Stock: ${p.totalStock}';
+                final stock = 'Stock: ${AppStrings.of(context).qty(p.totalStock, p.unit)}';
                 final stockStyle = TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -540,7 +541,7 @@ class _SupplierRestockActivity extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 3),
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
-                              child: Text('+${m.qty}',
+                              child: Text('+${formatQtyNumber(m.qty)}',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 12,

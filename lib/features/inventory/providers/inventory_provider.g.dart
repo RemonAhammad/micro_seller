@@ -81,7 +81,7 @@ abstract class _$StockMovementPages extends $StreamNotifier<StockMovementPage> {
   Stream<StockMovementPage> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<StockMovementPage>, StockMovementPage>;
     final element =
@@ -92,7 +92,7 @@ abstract class _$StockMovementPages extends $StreamNotifier<StockMovementPage> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 

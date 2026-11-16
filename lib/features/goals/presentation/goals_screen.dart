@@ -10,6 +10,7 @@ import '../../../data/models/product.dart';
 import '../../../data/models/sales_target.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/section_help.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../providers/sales_target_provider.dart';
 
@@ -93,7 +94,13 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
         .filter()
         .isActiveEqualTo(true)
         .findAll();
-    if (products.isEmpty || !mounted) return;
+    if (!mounted) return;
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).tr('noProducts'))),
+      );
+      return;
+    }
 
     final existing =
         ref.read(salesTargetProvider).value;
@@ -102,7 +109,14 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
     final available =
         products.where((p) => !existingIds.contains(p.id)).toList();
-    if (available.isEmpty) return;
+    if (available.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text(AppStrings.of(context).tr('allProductsHaveTargets'))),
+      );
+      return;
+    }
 
     final picked = await showModalBottomSheet<Product>(
       context: context,
@@ -162,11 +176,17 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
     return targetAsync.when(
       loading: () => Scaffold(
-        appBar: AppBar(title: Text(s.tr('salesTargets'))),
+        appBar: AppBar(
+          title: Text(s.tr('salesTargets')),
+          actions: const [SectionHelpButton('goals')],
+        ),
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        appBar: AppBar(title: Text(s.tr('salesTargets'))),
+        appBar: AppBar(
+          title: Text(s.tr('salesTargets')),
+          actions: const [SectionHelpButton('goals')],
+        ),
         body: Center(child: Text('$e')),
       ),
       data: (target) {
@@ -174,7 +194,10 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
         final cs = Theme.of(context).colorScheme;
         final productTargets = target?.productTargets ?? [];
         return Scaffold(
-          appBar: AppBar(title: Text(s.tr('salesTargets'))),
+          appBar: AppBar(
+            title: Text(s.tr('salesTargets')),
+            actions: const [SectionHelpButton('goals')],
+          ),
           body: CustomScrollView(
             slivers: [
               SliverPadding(

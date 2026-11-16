@@ -4,6 +4,7 @@ import '../../../../data/models/product.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_strings.dart';
 
 class LowStockList extends StatelessWidget {
   final List<Product> products;
@@ -91,7 +92,7 @@ class _LowStockItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                isOut ? 'Out' : '${product.stockQty} left',
+                isOut ? 'Out' : '${AppStrings.of(context).qty(product.stockQty, product.unit)} left',
                 style: TextStyle(
                   color: color,
                   fontSize: 12,

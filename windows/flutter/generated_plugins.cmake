@@ -5,13 +5,13 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
   file_selector_windows
-  flutter_thermal_printer
   isar_community_flutter_libs
   local_auth_windows
   printing
-  share_plus
   universal_ble
+  flutter_thermal_printer
   url_launcher_windows
+  share_plus
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

@@ -163,7 +163,7 @@ class _BodyState extends ConsumerState<_Body> {
                       final nameStyle = theme.textTheme.bodyMedium
                           ?.copyWith(fontWeight: FontWeight.w600);
                       final unit =
-                          '${CurrencyFormatter.format(item.unitCost)} × ${item.qty}';
+                          '${AppStrings.of(context).pricePer(CurrencyFormatter.format(item.unitCost), item.unit)} × ${AppStrings.of(context).qty(item.qty, item.unit)}';
                       final unitStyle = theme.textTheme.bodySmall?.copyWith(
                           color: cs.onSurface.withValues(alpha: 0.5));
                       final total = CurrencyFormatter.format(item.totalCost);
@@ -206,7 +206,7 @@ class _BodyState extends ConsumerState<_Body> {
                                             horizontal: 3),
                                         child: FittedBox(
                                           fit: BoxFit.scaleDown,
-                                          child: Text('${item.qty}',
+                                          child: Text(AppStrings.of(context).qty(item.qty, item.unit),
                                               style: TextStyle(
                                                   fontWeight: FontWeight.w800,
                                                   color: cs.primary,

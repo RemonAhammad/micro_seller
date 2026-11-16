@@ -48,47 +48,63 @@ const ProductSchema = CollectionSchema(
       type: IsarType.string,
     ),
     r'isActive': PropertySchema(id: 6, name: r'isActive', type: IsarType.bool),
-    r'lowStockThreshold': PropertySchema(
+    r'lowStockLevel': PropertySchema(
       id: 7,
+      name: r'lowStockLevel',
+      type: IsarType.double,
+    ),
+    r'lowStockThreshold': PropertySchema(
+      id: 8,
       name: r'lowStockThreshold',
       type: IsarType.long,
     ),
-    r'name': PropertySchema(id: 8, name: r'name', type: IsarType.string),
-    r'qrCode': PropertySchema(id: 9, name: r'qrCode', type: IsarType.string),
+    r'name': PropertySchema(id: 9, name: r'name', type: IsarType.string),
+    r'qrCode': PropertySchema(id: 10, name: r'qrCode', type: IsarType.string),
     r'sellingPrice': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'sellingPrice',
       type: IsarType.double,
     ),
-    r'sku': PropertySchema(id: 11, name: r'sku', type: IsarType.string),
-    r'stockQty': PropertySchema(id: 12, name: r'stockQty', type: IsarType.long),
+    r'sku': PropertySchema(id: 12, name: r'sku', type: IsarType.string),
+    r'stockQty': PropertySchema(id: 13, name: r'stockQty', type: IsarType.long),
+    r'stockQuantity': PropertySchema(
+      id: 14,
+      name: r'stockQuantity',
+      type: IsarType.double,
+    ),
     r'supplierId': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'supplierId',
       type: IsarType.long,
     ),
-    r'tags': PropertySchema(id: 14, name: r'tags', type: IsarType.stringList),
+    r'tags': PropertySchema(id: 16, name: r'tags', type: IsarType.stringList),
+    r'unit': PropertySchema(
+      id: 17,
+      name: r'unit',
+      type: IsarType.string,
+      enumMap: _ProductunitEnumValueMap,
+    ),
     r'updatedAt': PropertySchema(
-      id: 15,
+      id: 18,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'variantAttributes': PropertySchema(
-      id: 16,
+      id: 19,
       name: r'variantAttributes',
       type: IsarType.objectList,
 
       target: r'VariantAttribute',
     ),
     r'variantCombinations': PropertySchema(
-      id: 17,
+      id: 20,
       name: r'variantCombinations',
       type: IsarType.objectList,
 
       target: r'VariantCombination',
     ),
     r'variants': PropertySchema(
-      id: 18,
+      id: 21,
       name: r'variants',
       type: IsarType.objectList,
 
@@ -153,6 +169,7 @@ int _productEstimateSize(
       bytesCount += value.length * 3;
     }
   }
+  bytesCount += 3 + object.unit.name.length * 3;
   bytesCount += 3 + object.variantAttributes.length * 3;
   {
     final offsets = allOffsets[VariantAttribute]!;
@@ -205,29 +222,32 @@ void _productSerialize(
   writer.writeDateTime(offsets[4], object.expiryDate);
   writer.writeString(offsets[5], object.imagePath);
   writer.writeBool(offsets[6], object.isActive);
-  writer.writeLong(offsets[7], object.lowStockThreshold);
-  writer.writeString(offsets[8], object.name);
-  writer.writeString(offsets[9], object.qrCode);
-  writer.writeDouble(offsets[10], object.sellingPrice);
-  writer.writeString(offsets[11], object.sku);
-  writer.writeLong(offsets[12], object.stockQty);
-  writer.writeLong(offsets[13], object.supplierId);
-  writer.writeStringList(offsets[14], object.tags);
-  writer.writeDateTime(offsets[15], object.updatedAt);
+  writer.writeDouble(offsets[7], object.lowStockThreshold);
+  writer.writeLong(offsets[8], object.legacyLowStockThreshold);
+  writer.writeString(offsets[9], object.name);
+  writer.writeString(offsets[10], object.qrCode);
+  writer.writeDouble(offsets[11], object.sellingPrice);
+  writer.writeString(offsets[12], object.sku);
+  writer.writeLong(offsets[13], object.legacyStockQty);
+  writer.writeDouble(offsets[14], object.stockQty);
+  writer.writeLong(offsets[15], object.supplierId);
+  writer.writeStringList(offsets[16], object.tags);
+  writer.writeString(offsets[17], object.unit.name);
+  writer.writeDateTime(offsets[18], object.updatedAt);
   writer.writeObjectList<VariantAttribute>(
-    offsets[16],
+    offsets[19],
     allOffsets,
     VariantAttributeSchema.serialize,
     object.variantAttributes,
   );
   writer.writeObjectList<VariantCombination>(
-    offsets[17],
+    offsets[20],
     allOffsets,
     VariantCombinationSchema.serialize,
     object.variantCombinations,
   );
   writer.writeObjectList<ProductVariant>(
-    offsets[18],
+    offsets[21],
     allOffsets,
     ProductVariantSchema.serialize,
     object.variants,
@@ -249,18 +269,21 @@ Product _productDeserialize(
     id: id,
     imagePath: reader.readStringOrNull(offsets[5]) ?? '',
     isActive: reader.readBoolOrNull(offsets[6]) ?? true,
-    lowStockThreshold: reader.readLongOrNull(offsets[7]) ?? 10,
-    name: reader.readString(offsets[8]),
-    qrCode: reader.readStringOrNull(offsets[9]) ?? '',
-    sellingPrice: reader.readDouble(offsets[10]),
-    sku: reader.readStringOrNull(offsets[11]) ?? '',
-    stockQty: reader.readLongOrNull(offsets[12]) ?? 0,
-    supplierId: reader.readLongOrNull(offsets[13]) ?? 0,
-    tags: reader.readStringList(offsets[14]) ?? const [],
-    updatedAt: reader.readDateTimeOrNull(offsets[15]),
+    lowStockThreshold: reader.readDoubleOrNull(offsets[7]) ?? 10,
+    name: reader.readString(offsets[9]),
+    qrCode: reader.readStringOrNull(offsets[10]) ?? '',
+    sellingPrice: reader.readDouble(offsets[11]),
+    sku: reader.readStringOrNull(offsets[12]) ?? '',
+    stockQty: reader.readDoubleOrNull(offsets[14]) ?? 0,
+    supplierId: reader.readLongOrNull(offsets[15]) ?? 0,
+    tags: reader.readStringList(offsets[16]) ?? const [],
+    unit:
+        _ProductunitValueEnumMap[reader.readStringOrNull(offsets[17])] ??
+        QuantityUnit.piece,
+    updatedAt: reader.readDateTimeOrNull(offsets[18]),
     variantAttributes:
         reader.readObjectList<VariantAttribute>(
-          offsets[16],
+          offsets[19],
           VariantAttributeSchema.deserialize,
           allOffsets,
           VariantAttribute(),
@@ -268,7 +291,7 @@ Product _productDeserialize(
         const [],
     variantCombinations:
         reader.readObjectList<VariantCombination>(
-          offsets[17],
+          offsets[20],
           VariantCombinationSchema.deserialize,
           allOffsets,
           VariantCombination(),
@@ -276,13 +299,15 @@ Product _productDeserialize(
         const [],
     variants:
         reader.readObjectList<ProductVariant>(
-          offsets[18],
+          offsets[21],
           ProductVariantSchema.deserialize,
           allOffsets,
           ProductVariant(),
         ) ??
         const [],
   );
+  object.legacyLowStockThreshold = reader.readLong(offsets[8]);
+  object.legacyStockQty = reader.readLong(offsets[13]);
   return object;
 }
 
@@ -308,24 +333,32 @@ P _productDeserializeProp<P>(
     case 6:
       return (reader.readBoolOrNull(offset) ?? true) as P;
     case 7:
-      return (reader.readLongOrNull(offset) ?? 10) as P;
+      return (reader.readDoubleOrNull(offset) ?? 10) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readString(offset)) as P;
     case 10:
-      return (reader.readDouble(offset)) as P;
-    case 11:
       return (reader.readStringOrNull(offset) ?? '') as P;
+    case 11:
+      return (reader.readDouble(offset)) as P;
     case 12:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 13:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readLong(offset)) as P;
     case 14:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
     case 15:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 16:
+      return (reader.readStringList(offset) ?? const []) as P;
+    case 17:
+      return (_ProductunitValueEnumMap[reader.readStringOrNull(offset)] ??
+              QuantityUnit.piece)
+          as P;
+    case 18:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 19:
       return (reader.readObjectList<VariantAttribute>(
                 offset,
                 VariantAttributeSchema.deserialize,
@@ -334,7 +367,7 @@ P _productDeserializeProp<P>(
               ) ??
               const [])
           as P;
-    case 17:
+    case 20:
       return (reader.readObjectList<VariantCombination>(
                 offset,
                 VariantCombinationSchema.deserialize,
@@ -343,7 +376,7 @@ P _productDeserializeProp<P>(
               ) ??
               const [])
           as P;
-    case 18:
+    case 21:
       return (reader.readObjectList<ProductVariant>(
                 offset,
                 ProductVariantSchema.deserialize,
@@ -356,6 +389,29 @@ P _productDeserializeProp<P>(
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _ProductunitEnumValueMap = {
+  r'piece': r'piece',
+  r'kg': r'kg',
+  r'g': r'g',
+  r'litre': r'litre',
+  r'ml': r'ml',
+  r'metre': r'metre',
+  r'cm': r'cm',
+  r'dozen': r'dozen',
+  r'pack': r'pack',
+};
+const _ProductunitValueEnumMap = {
+  r'piece': QuantityUnit.piece,
+  r'kg': QuantityUnit.kg,
+  r'g': QuantityUnit.g,
+  r'litre': QuantityUnit.litre,
+  r'ml': QuantityUnit.ml,
+  r'metre': QuantityUnit.metre,
+  r'cm': QuantityUnit.cm,
+  r'dozen': QuantityUnit.dozen,
+  r'pack': QuantityUnit.pack,
+};
 
 Id _productGetId(Product object) {
   return object.id;
@@ -1418,7 +1474,82 @@ extension ProductQueryFilter
   }
 
   QueryBuilder<Product, Product, QAfterFilterCondition>
-  lowStockThresholdEqualTo(int value) {
+  lowStockThresholdEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'lowStockLevel',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+  lowStockThresholdGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'lowStockLevel',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+  lowStockThresholdLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'lowStockLevel',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+  lowStockThresholdBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'lowStockLevel',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+  legacyLowStockThresholdEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'lowStockThreshold', value: value),
@@ -1427,7 +1558,7 @@ extension ProductQueryFilter
   }
 
   QueryBuilder<Product, Product, QAfterFilterCondition>
-  lowStockThresholdGreaterThan(int value, {bool include = false}) {
+  legacyLowStockThresholdGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -1440,7 +1571,7 @@ extension ProductQueryFilter
   }
 
   QueryBuilder<Product, Product, QAfterFilterCondition>
-  lowStockThresholdLessThan(int value, {bool include = false}) {
+  legacyLowStockThresholdLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.lessThan(
@@ -1453,7 +1584,7 @@ extension ProductQueryFilter
   }
 
   QueryBuilder<Product, Product, QAfterFilterCondition>
-  lowStockThresholdBetween(
+  legacyLowStockThresholdBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -1984,7 +2115,7 @@ extension ProductQueryFilter
     });
   }
 
-  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyEqualTo(
+  QueryBuilder<Product, Product, QAfterFilterCondition> legacyStockQtyEqualTo(
     int value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1994,10 +2125,8 @@ extension ProductQueryFilter
     });
   }
 
-  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+  legacyStockQtyGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -2009,7 +2138,7 @@ extension ProductQueryFilter
     });
   }
 
-  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyLessThan(
+  QueryBuilder<Product, Product, QAfterFilterCondition> legacyStockQtyLessThan(
     int value, {
     bool include = false,
   }) {
@@ -2024,7 +2153,7 @@ extension ProductQueryFilter
     });
   }
 
-  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyBetween(
+  QueryBuilder<Product, Product, QAfterFilterCondition> legacyStockQtyBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -2038,6 +2167,80 @@ extension ProductQueryFilter
           includeLower: includeLower,
           upper: upper,
           includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'stockQuantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'stockQuantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'stockQuantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> stockQtyBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'stockQuantity',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
         ),
       );
     });
@@ -2300,6 +2503,152 @@ extension ProductQueryFilter
         includeLower,
         upper,
         includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitEqualTo(
+    QuantityUnit value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitGreaterThan(
+    QuantityUnit value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitLessThan(
+    QuantityUnit value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitBetween(
+    QuantityUnit lower,
+    QuantityUnit upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'unit',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'unit',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'unit', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> unitIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'unit', value: ''),
       );
     });
   }
@@ -2672,11 +3021,24 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
 
   QueryBuilder<Product, Product, QAfterSortBy> sortByLowStockThreshold() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'lowStockThreshold', Sort.asc);
+      return query.addSortBy(r'lowStockLevel', Sort.asc);
     });
   }
 
   QueryBuilder<Product, Product, QAfterSortBy> sortByLowStockThresholdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lowStockLevel', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByLegacyLowStockThreshold() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lowStockThreshold', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy>
+  sortByLegacyLowStockThresholdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lowStockThreshold', Sort.desc);
     });
@@ -2730,15 +3092,27 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
     });
   }
 
-  QueryBuilder<Product, Product, QAfterSortBy> sortByStockQty() {
+  QueryBuilder<Product, Product, QAfterSortBy> sortByLegacyStockQty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'stockQty', Sort.asc);
     });
   }
 
-  QueryBuilder<Product, Product, QAfterSortBy> sortByStockQtyDesc() {
+  QueryBuilder<Product, Product, QAfterSortBy> sortByLegacyStockQtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'stockQty', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByStockQty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stockQuantity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByStockQtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stockQuantity', Sort.desc);
     });
   }
 
@@ -2751,6 +3125,18 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
   QueryBuilder<Product, Product, QAfterSortBy> sortBySupplierIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'supplierId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByUnit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByUnitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unit', Sort.desc);
     });
   }
 
@@ -2867,11 +3253,24 @@ extension ProductQuerySortThenBy
 
   QueryBuilder<Product, Product, QAfterSortBy> thenByLowStockThreshold() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'lowStockThreshold', Sort.asc);
+      return query.addSortBy(r'lowStockLevel', Sort.asc);
     });
   }
 
   QueryBuilder<Product, Product, QAfterSortBy> thenByLowStockThresholdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lowStockLevel', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByLegacyLowStockThreshold() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lowStockThreshold', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy>
+  thenByLegacyLowStockThresholdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lowStockThreshold', Sort.desc);
     });
@@ -2925,15 +3324,27 @@ extension ProductQuerySortThenBy
     });
   }
 
-  QueryBuilder<Product, Product, QAfterSortBy> thenByStockQty() {
+  QueryBuilder<Product, Product, QAfterSortBy> thenByLegacyStockQty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'stockQty', Sort.asc);
     });
   }
 
-  QueryBuilder<Product, Product, QAfterSortBy> thenByStockQtyDesc() {
+  QueryBuilder<Product, Product, QAfterSortBy> thenByLegacyStockQtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'stockQty', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByStockQty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stockQuantity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByStockQtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stockQuantity', Sort.desc);
     });
   }
 
@@ -2946,6 +3357,18 @@ extension ProductQuerySortThenBy
   QueryBuilder<Product, Product, QAfterSortBy> thenBySupplierIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'supplierId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByUnit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByUnitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unit', Sort.desc);
     });
   }
 
@@ -3014,6 +3437,13 @@ extension ProductQueryWhereDistinct
 
   QueryBuilder<Product, Product, QDistinct> distinctByLowStockThreshold() {
     return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lowStockLevel');
+    });
+  }
+
+  QueryBuilder<Product, Product, QDistinct>
+  distinctByLegacyLowStockThreshold() {
+    return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lowStockThreshold');
     });
   }
@@ -3048,9 +3478,15 @@ extension ProductQueryWhereDistinct
     });
   }
 
-  QueryBuilder<Product, Product, QDistinct> distinctByStockQty() {
+  QueryBuilder<Product, Product, QDistinct> distinctByLegacyStockQty() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'stockQty');
+    });
+  }
+
+  QueryBuilder<Product, Product, QDistinct> distinctByStockQty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'stockQuantity');
     });
   }
 
@@ -3063,6 +3499,14 @@ extension ProductQueryWhereDistinct
   QueryBuilder<Product, Product, QDistinct> distinctByTags() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'tags');
+    });
+  }
+
+  QueryBuilder<Product, Product, QDistinct> distinctByUnit({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'unit', caseSensitive: caseSensitive);
     });
   }
 
@@ -3123,7 +3567,14 @@ extension ProductQueryProperty
     });
   }
 
-  QueryBuilder<Product, int, QQueryOperations> lowStockThresholdProperty() {
+  QueryBuilder<Product, double, QQueryOperations> lowStockThresholdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lowStockLevel');
+    });
+  }
+
+  QueryBuilder<Product, int, QQueryOperations>
+  legacyLowStockThresholdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lowStockThreshold');
     });
@@ -3153,9 +3604,15 @@ extension ProductQueryProperty
     });
   }
 
-  QueryBuilder<Product, int, QQueryOperations> stockQtyProperty() {
+  QueryBuilder<Product, int, QQueryOperations> legacyStockQtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'stockQty');
+    });
+  }
+
+  QueryBuilder<Product, double, QQueryOperations> stockQtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'stockQuantity');
     });
   }
 
@@ -3168,6 +3625,12 @@ extension ProductQueryProperty
   QueryBuilder<Product, List<String>, QQueryOperations> tagsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'tags');
+    });
+  }
+
+  QueryBuilder<Product, QuantityUnit, QQueryOperations> unitProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'unit');
     });
   }
 
@@ -3211,8 +3674,15 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
   imagePath: json['imagePath'] as String? ?? '',
   sellingPrice: (json['sellingPrice'] as num).toDouble(),
   costPrice: (json['costPrice'] as num?)?.toDouble() ?? 0.0,
-  stockQty: (json['stockQty'] as num?)?.toInt() ?? 0,
-  lowStockThreshold: (json['lowStockThreshold'] as num?)?.toInt() ?? 10,
+  stockQty: (json['stockQty'] as num?)?.toDouble() ?? 0,
+  lowStockThreshold: (json['lowStockThreshold'] as num?)?.toDouble() ?? 10,
+  unit:
+      $enumDecodeNullable(
+        _$QuantityUnitEnumMap,
+        json['unit'],
+        unknownValue: QuantityUnit.piece,
+      ) ??
+      QuantityUnit.piece,
   category: json['category'] as String? ?? '',
   qrCode: json['qrCode'] as String? ?? '',
   tags:
@@ -3256,6 +3726,7 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
   'costPrice': instance.costPrice,
   'stockQty': instance.stockQty,
   'lowStockThreshold': instance.lowStockThreshold,
+  'unit': _$QuantityUnitEnumMap[instance.unit]!,
   'category': instance.category,
   'qrCode': instance.qrCode,
   'tags': instance.tags,
@@ -3267,4 +3738,16 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
   'expiryDate': instance.expiryDate?.toIso8601String(),
   'createdAt': instance.createdAt?.toIso8601String(),
   'updatedAt': instance.updatedAt?.toIso8601String(),
+};
+
+const _$QuantityUnitEnumMap = {
+  QuantityUnit.piece: 'piece',
+  QuantityUnit.kg: 'kg',
+  QuantityUnit.g: 'g',
+  QuantityUnit.litre: 'litre',
+  QuantityUnit.ml: 'ml',
+  QuantityUnit.metre: 'metre',
+  QuantityUnit.cm: 'cm',
+  QuantityUnit.dozen: 'dozen',
+  QuantityUnit.pack: 'pack',
 };

@@ -154,7 +154,7 @@ abstract class _$CustomerOrders extends $StreamNotifier<CustomerOrdersPage> {
   Stream<CustomerOrdersPage> build(int customerId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<CustomerOrdersPage>, CustomerOrdersPage>;
     final element =
@@ -165,7 +165,7 @@ abstract class _$CustomerOrders extends $StreamNotifier<CustomerOrdersPage> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 

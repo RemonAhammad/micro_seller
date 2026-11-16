@@ -11,6 +11,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/section_help.dart';
 
 class ExpiryListScreen extends ConsumerStatefulWidget {
   const ExpiryListScreen({super.key});
@@ -51,7 +52,10 @@ class _ExpiryListScreenState extends ConsumerState<ExpiryListScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.tr('nearExpiryProducts'))),
+      appBar: AppBar(
+        title: Text(s.tr('nearExpiryProducts')),
+        actions: const [SectionHelpButton('expiry')],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _products.isEmpty

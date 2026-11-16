@@ -233,14 +233,14 @@ class _ProductListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final price = Text(
-      CurrencyFormatter.format(product.sellingPrice),
+      AppStrings.of(context).pricePer(CurrencyFormatter.format(product.sellingPrice), product.unit),
       style: TextStyle(
         fontWeight: FontWeight.w700,
         color: theme.colorScheme.primary,
       ),
     );
     final stock = Text(
-      '${product.stockQty} ${AppStrings.of(context).tr('inStockLabel')}',
+      '${AppStrings.of(context).qty(product.stockQty, product.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
       style: theme.textTheme.bodySmall?.copyWith(
         color: product.isLowStock
             ? Colors.orange

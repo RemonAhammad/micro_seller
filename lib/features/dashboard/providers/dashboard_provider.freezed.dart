@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'dashboard_provider.dart';
@@ -9,6 +9,7 @@ part of 'dashboard_provider.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $DailySalesCopyWith<DailySales> get copyWith => _$DailySalesCopyWithImpl<DailySa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailySales&&(identical(other.date, date) || other.date == date)&&(identical(other.revenue, revenue) || other.revenue == revenue)&&(identical(other.profit, profit) || other.profit == profit));
+  final _this = this as DailySales;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailySales&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.revenue, _this.revenue) || other.revenue == _this.revenue)&&(identical(other.profit, _this.profit) || other.profit == _this.profit));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,date,revenue,profit);
+int get hashCode {
+  final _this = this as DailySales;
+  return Object.hash(runtimeType,_this.date,_this.revenue,_this.profit);
+}
 
 @override
 String toString() {
-  return 'DailySales(date: $date, revenue: $revenue, profit: $profit)';
+  final _this = this as DailySales;
+  return 'DailySales(date: ${_this.date}, revenue: ${_this.revenue}, profit: ${_this.profit})';
 }
 
 
@@ -63,7 +69,7 @@ class _$DailySalesCopyWithImpl<$Res>
 /// Create a copy of DailySales
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? date = null,Object? revenue = null,Object? profit = null,}) {
-  return _then(_self.copyWith(
+  return _then(DailySales(
 date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,revenue: null == revenue ? _self.revenue : revenue // ignore: cast_nullable_to_non_nullable
 as double,profit: null == profit ? _self.profit : profit // ignore: cast_nullable_to_non_nullable
@@ -225,16 +231,18 @@ _$DailySalesCopyWith<_DailySales> get copyWith => __$DailySalesCopyWithImpl<_Dai
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DailySales&&(identical(other.date, date) || other.date == date)&&(identical(other.revenue, revenue) || other.revenue == revenue)&&(identical(other.profit, profit) || other.profit == profit));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DailySales&&(identical(other.date, date) || other.date == date)&&(identical(other.revenue, revenue) || other.revenue == revenue)&&(identical(other.profit, profit) || other.profit == profit));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,date,revenue,profit);
+int get hashCode {
+    return Object.hash(runtimeType,date,revenue,profit);
+}
 
 @override
 String toString() {
-  return 'DailySales(date: $date, revenue: $revenue, profit: $profit)';
+    return 'DailySales(date: $date, revenue: $revenue, profit: $profit)';
 }
 
 
@@ -288,16 +296,21 @@ $DashboardStatsCopyWith<DashboardStats> get copyWith => _$DashboardStatsCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.todayRevenue, todayRevenue) || other.todayRevenue == todayRevenue)&&(identical(other.thisMonthRevenue, thisMonthRevenue) || other.thisMonthRevenue == thisMonthRevenue)&&(identical(other.thisMonthProfit, thisMonthProfit) || other.thisMonthProfit == thisMonthProfit)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.pendingOrders, pendingOrders) || other.pendingOrders == pendingOrders)&&const DeepCollectionEquality().equals(other.lowStockProducts, lowStockProducts)&&const DeepCollectionEquality().equals(other.nearExpiryProducts, nearExpiryProducts)&&const DeepCollectionEquality().equals(other.weeklySales, weeklySales)&&const DeepCollectionEquality().equals(other.statusCounts, statusCounts));
+  final _this = this as DashboardStats;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.todayRevenue, _this.todayRevenue) || other.todayRevenue == _this.todayRevenue)&&(identical(other.thisMonthRevenue, _this.thisMonthRevenue) || other.thisMonthRevenue == _this.thisMonthRevenue)&&(identical(other.thisMonthProfit, _this.thisMonthProfit) || other.thisMonthProfit == _this.thisMonthProfit)&&(identical(other.totalOrders, _this.totalOrders) || other.totalOrders == _this.totalOrders)&&(identical(other.pendingOrders, _this.pendingOrders) || other.pendingOrders == _this.pendingOrders)&&const DeepCollectionEquality().equals(other.lowStockProducts, _this.lowStockProducts)&&const DeepCollectionEquality().equals(other.nearExpiryProducts, _this.nearExpiryProducts)&&const DeepCollectionEquality().equals(other.weeklySales, _this.weeklySales)&&const DeepCollectionEquality().equals(other.statusCounts, _this.statusCounts));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,todayRevenue,thisMonthRevenue,thisMonthProfit,totalOrders,pendingOrders,const DeepCollectionEquality().hash(lowStockProducts),const DeepCollectionEquality().hash(nearExpiryProducts),const DeepCollectionEquality().hash(weeklySales),const DeepCollectionEquality().hash(statusCounts));
+int get hashCode {
+  final _this = this as DashboardStats;
+  return Object.hash(runtimeType,_this.todayRevenue,_this.thisMonthRevenue,_this.thisMonthProfit,_this.totalOrders,_this.pendingOrders,const DeepCollectionEquality().hash(_this.lowStockProducts),const DeepCollectionEquality().hash(_this.nearExpiryProducts),const DeepCollectionEquality().hash(_this.weeklySales),const DeepCollectionEquality().hash(_this.statusCounts));
+}
 
 @override
 String toString() {
-  return 'DashboardStats(todayRevenue: $todayRevenue, thisMonthRevenue: $thisMonthRevenue, thisMonthProfit: $thisMonthProfit, totalOrders: $totalOrders, pendingOrders: $pendingOrders, lowStockProducts: $lowStockProducts, nearExpiryProducts: $nearExpiryProducts, weeklySales: $weeklySales, statusCounts: $statusCounts)';
+  final _this = this as DashboardStats;
+  return 'DashboardStats(todayRevenue: ${_this.todayRevenue}, thisMonthRevenue: ${_this.thisMonthRevenue}, thisMonthProfit: ${_this.thisMonthProfit}, totalOrders: ${_this.totalOrders}, pendingOrders: ${_this.pendingOrders}, lowStockProducts: ${_this.lowStockProducts}, nearExpiryProducts: ${_this.nearExpiryProducts}, weeklySales: ${_this.weeklySales}, statusCounts: ${_this.statusCounts})';
 }
 
 
@@ -326,7 +339,7 @@ class _$DashboardStatsCopyWithImpl<$Res>
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? todayRevenue = null,Object? thisMonthRevenue = null,Object? thisMonthProfit = null,Object? totalOrders = null,Object? pendingOrders = null,Object? lowStockProducts = null,Object? nearExpiryProducts = null,Object? weeklySales = null,Object? statusCounts = null,}) {
-  return _then(_self.copyWith(
+  return _then(DashboardStats(
 todayRevenue: null == todayRevenue ? _self.todayRevenue : todayRevenue // ignore: cast_nullable_to_non_nullable
 as double,thisMonthRevenue: null == thisMonthRevenue ? _self.thisMonthRevenue : thisMonthRevenue // ignore: cast_nullable_to_non_nullable
 as double,thisMonthProfit: null == thisMonthProfit ? _self.thisMonthProfit : thisMonthProfit // ignore: cast_nullable_to_non_nullable
@@ -477,7 +490,7 @@ return $default(_that.todayRevenue,_that.thisMonthRevenue,_that.thisMonthProfit,
 
 
 class _DashboardStats implements DashboardStats {
-  const _DashboardStats({this.todayRevenue = 0.0, this.thisMonthRevenue = 0.0, this.thisMonthProfit = 0.0, this.totalOrders = 0, this.pendingOrders = 0, final  List<Product> lowStockProducts = const [], final  List<Product> nearExpiryProducts = const [], final  List<DailySales> weeklySales = const [], final  Map<OrderStatus, int> statusCounts = const <OrderStatus, int>{}}): _lowStockProducts = lowStockProducts,_nearExpiryProducts = nearExpiryProducts,_weeklySales = weeklySales,_statusCounts = statusCounts;
+  const _DashboardStats({this.todayRevenue = 0.0, this.thisMonthRevenue = 0.0, this.thisMonthProfit = 0.0, this.totalOrders = 0, this.pendingOrders = 0,  List<Product> lowStockProducts = const [],  List<Product> nearExpiryProducts = const [],  List<DailySales> weeklySales = const [],  Map<OrderStatus, int> statusCounts = const <OrderStatus, int>{}}): _lowStockProducts = lowStockProducts,_nearExpiryProducts = nearExpiryProducts,_weeklySales = weeklySales,_statusCounts = statusCounts;
   
 
 @override@JsonKey() final  double todayRevenue;
@@ -524,16 +537,18 @@ _$DashboardStatsCopyWith<_DashboardStats> get copyWith => __$DashboardStatsCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.todayRevenue, todayRevenue) || other.todayRevenue == todayRevenue)&&(identical(other.thisMonthRevenue, thisMonthRevenue) || other.thisMonthRevenue == thisMonthRevenue)&&(identical(other.thisMonthProfit, thisMonthProfit) || other.thisMonthProfit == thisMonthProfit)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.pendingOrders, pendingOrders) || other.pendingOrders == pendingOrders)&&const DeepCollectionEquality().equals(other._lowStockProducts, _lowStockProducts)&&const DeepCollectionEquality().equals(other._nearExpiryProducts, _nearExpiryProducts)&&const DeepCollectionEquality().equals(other._weeklySales, _weeklySales)&&const DeepCollectionEquality().equals(other._statusCounts, _statusCounts));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.todayRevenue, todayRevenue) || other.todayRevenue == todayRevenue)&&(identical(other.thisMonthRevenue, thisMonthRevenue) || other.thisMonthRevenue == thisMonthRevenue)&&(identical(other.thisMonthProfit, thisMonthProfit) || other.thisMonthProfit == thisMonthProfit)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.pendingOrders, pendingOrders) || other.pendingOrders == pendingOrders)&&const DeepCollectionEquality().equals(other.lowStockProducts, _lowStockProducts)&&const DeepCollectionEquality().equals(other.nearExpiryProducts, _nearExpiryProducts)&&const DeepCollectionEquality().equals(other.weeklySales, _weeklySales)&&const DeepCollectionEquality().equals(other.statusCounts, _statusCounts));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,todayRevenue,thisMonthRevenue,thisMonthProfit,totalOrders,pendingOrders,const DeepCollectionEquality().hash(_lowStockProducts),const DeepCollectionEquality().hash(_nearExpiryProducts),const DeepCollectionEquality().hash(_weeklySales),const DeepCollectionEquality().hash(_statusCounts));
+int get hashCode {
+    return Object.hash(runtimeType,todayRevenue,thisMonthRevenue,thisMonthProfit,totalOrders,pendingOrders,const DeepCollectionEquality().hash(_lowStockProducts),const DeepCollectionEquality().hash(_nearExpiryProducts),const DeepCollectionEquality().hash(_weeklySales),const DeepCollectionEquality().hash(_statusCounts));
+}
 
 @override
 String toString() {
-  return 'DashboardStats(todayRevenue: $todayRevenue, thisMonthRevenue: $thisMonthRevenue, thisMonthProfit: $thisMonthProfit, totalOrders: $totalOrders, pendingOrders: $pendingOrders, lowStockProducts: $lowStockProducts, nearExpiryProducts: $nearExpiryProducts, weeklySales: $weeklySales, statusCounts: $statusCounts)';
+    return 'DashboardStats(todayRevenue: $todayRevenue, thisMonthRevenue: $thisMonthRevenue, thisMonthProfit: $thisMonthProfit, totalOrders: $totalOrders, pendingOrders: $pendingOrders, lowStockProducts: $lowStockProducts, nearExpiryProducts: $nearExpiryProducts, weeklySales: $weeklySales, statusCounts: $statusCounts)';
 }
 
 

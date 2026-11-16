@@ -1,5 +1,5 @@
 {
-  "lastQuery": "let me show tree with screen about what will guide for every screen?",
+  "lastQuery": "<pasted_content id=\"cdb1\">\nRun flutter test --no-pub --file-reporter \"json:$RUNNER_TEMP/tests.jsonl\"\n  flutter test --no-pub --file-reporter \"json:$RUNNER_TEMP/tests.jsonl\"\n  shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}\n  env:\n    FLUTTER_ROOT: /opt/hostedtoolcache/flutter/stable-3.44.9-x64/flutter\n    PUB_CACHE: /home/runner/.pub-cache\nTest directory \"test\" not found.\nError: Process completed with exit code 1.\n</pasted_content id=\"cdb1\">",
   "perAgentQuery": {},
   "graftReads": 0,
   "sourceReads": 62,

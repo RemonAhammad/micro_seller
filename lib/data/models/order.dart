@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
+import '../../core/utils/quantity.dart';
 import 'order_item.dart';
 
 part 'order.g.dart';
@@ -108,7 +109,9 @@ class Order {
   bool get isFullyPaid => paymentStatus == PaymentStatus.paid;
 
   @ignore
-  int get totalItems => items.fold(0, (sum, item) => sum + item.qty);
+  /// How many things were sold, for "N items": the units when every line is
+  /// whole, else the number of lines (1.25 kg of fish + 2 soaps is 2 items).
+  int get totalItems => cartItemCount(items);
 
   @ignore
   bool get isRefunded => returnStatus == ReturnStatus.refunded;
@@ -209,6 +212,19 @@ class Order {
 }
 
 double roundMoney(double v) => (v * 100).roundToDouble() / 100;
+
+/// "N items" for a list of lines: the units when every line is whole (3
+/// soaps + 2 combs = 5), else the number of lines (1.25 kg of fish + 2 soaps
+/// = 2), since kilograms and pieces don't add up.
+int cartItemCount(List<OrderItem> items) => items.every((i) => isWholeQty(i.qty))
+    ? items.fold(0, (sum, item) => sum + wholeQty(item.qty))
+    : items.length;
+
+/// What a line costs: [unitPrice] × [qty]. A whole quantity multiplies as it
+/// always has (no rounding, so older totals stay bit for bit); a decimal one
+/// (1.25 kg × ৳615.50) is rounded to the paisa, as a receipt shows it.
+double lineTotal(double unitPrice, double qty) =>
+    isWholeQty(qty) ? unitPrice * qty.roundToDouble() : roundMoney(unitPrice * qty);
 
 ({double tax, double total}) orderTotals({
   required double subtotal,

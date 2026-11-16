@@ -31,6 +31,11 @@ const VariantCombinationSchema = Schema(
     ),
     r'sku': PropertySchema(id: 4, name: r'sku', type: IsarType.string),
     r'stockQty': PropertySchema(id: 5, name: r'stockQty', type: IsarType.long),
+    r'stockQuantity': PropertySchema(
+      id: 6,
+      name: r'stockQuantity',
+      type: IsarType.double,
+    ),
   },
 
   estimateSize: _variantCombinationEstimateSize,
@@ -62,7 +67,8 @@ void _variantCombinationSerialize(
   writer.writeBool(offsets[2], object.isActive);
   writer.writeDouble(offsets[3], object.priceAdjustment);
   writer.writeString(offsets[4], object.sku);
-  writer.writeLong(offsets[5], object.stockQty);
+  writer.writeLong(offsets[5], object.legacyStockQty);
+  writer.writeDouble(offsets[6], object.stockQty);
 }
 
 VariantCombination _variantCombinationDeserialize(
@@ -77,8 +83,9 @@ VariantCombination _variantCombinationDeserialize(
     isActive: reader.readBoolOrNull(offsets[2]) ?? true,
     priceAdjustment: reader.readDoubleOrNull(offsets[3]) ?? 0.0,
     sku: reader.readStringOrNull(offsets[4]) ?? '',
-    stockQty: reader.readLongOrNull(offsets[5]) ?? 0,
+    stockQty: reader.readDoubleOrNull(offsets[6]) ?? 0,
   );
+  object.legacyStockQty = reader.readLong(offsets[5]);
   return object;
 }
 
@@ -100,7 +107,9 @@ P _variantCombinationDeserializeProp<P>(
     case 4:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 5:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readLong(offset)) as P;
+    case 6:
+      return (reader.readDoubleOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -612,7 +621,7 @@ extension VariantCombinationQueryFilter
   }
 
   QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
-  stockQtyEqualTo(int value) {
+  legacyStockQtyEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'stockQty', value: value),
@@ -621,7 +630,7 @@ extension VariantCombinationQueryFilter
   }
 
   QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
-  stockQtyGreaterThan(int value, {bool include = false}) {
+  legacyStockQtyGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -634,7 +643,7 @@ extension VariantCombinationQueryFilter
   }
 
   QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
-  stockQtyLessThan(int value, {bool include = false}) {
+  legacyStockQtyLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.lessThan(
@@ -647,7 +656,7 @@ extension VariantCombinationQueryFilter
   }
 
   QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
-  stockQtyBetween(
+  legacyStockQtyBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -661,6 +670,81 @@ extension VariantCombinationQueryFilter
           includeLower: includeLower,
           upper: upper,
           includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
+  stockQtyEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'stockQuantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
+  stockQtyGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'stockQuantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
+  stockQtyLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'stockQuantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VariantCombination, VariantCombination, QAfterFilterCondition>
+  stockQtyBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'stockQuantity',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
         ),
       );
     });
@@ -679,7 +763,7 @@ VariantCombination _$VariantCombinationFromJson(Map<String, dynamic> json) =>
       combinationKey: json['combinationKey'] as String? ?? '',
       displayLabel: json['displayLabel'] as String? ?? '',
       priceAdjustment: (json['priceAdjustment'] as num?)?.toDouble() ?? 0.0,
-      stockQty: (json['stockQty'] as num?)?.toInt() ?? 0,
+      stockQty: (json['stockQty'] as num?)?.toDouble() ?? 0,
       sku: json['sku'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? true,
     );

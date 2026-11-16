@@ -33,6 +33,9 @@ const kSectionRoutes = {
   'reports': '/reports',
   'scanner': '/scanner',
   'settings': '/settings',
+  'goals': '/goals',
+  'expiry': '/expiry',
+  'promotions': '/promotions',
 };
 
 const kSectionHelp = {
@@ -153,6 +156,31 @@ const kSectionHelp = {
   'settings': SectionHelp(
     what: 'helpSettingsWhat',
     when: 'helpSettingsWhen',
+  ),
+  'goals': SectionHelp(
+    what: 'helpGoalsWhat',
+    when: 'helpGoalsWhen',
+    related: [
+      ('dashboard', 'helpGoalsDashboard'),
+      ('reports', 'helpGoalsReports'),
+      ('products', 'helpGoalsProducts'),
+    ],
+  ),
+  'expiry': SectionHelp(
+    what: 'helpExpiryWhat',
+    when: 'helpExpiryWhen',
+    related: [
+      ('products', 'helpExpiryProducts'),
+      ('inventory', 'helpExpiryInventory'),
+    ],
+  ),
+  'promotions': SectionHelp(
+    what: 'helpPromotionsWhat',
+    when: 'helpPromotionsWhen',
+    related: [
+      ('products', 'helpPromotionsProducts'),
+      ('orders', 'helpPromotionsOrders'),
+    ],
   ),
 };
 

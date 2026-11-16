@@ -1,6 +1,8 @@
 import 'package:isar_community/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
+import '../../core/utils/quantity.dart';
 import 'product_variant.dart';
+import 'quantity_unit.dart';
 import 'variant_attribute.dart';
 import 'variant_combination.dart';
 
@@ -19,6 +21,7 @@ class Product {
     this.costPrice = 0.0,
     this.stockQty = 0,
     this.lowStockThreshold = 10,
+    this.unit = QuantityUnit.piece,
     this.category = '',
     this.qrCode = '',
     this.tags = const [],
@@ -37,10 +40,35 @@ class Product {
   String sku;
   String description;
   String imagePath;
+  /// Per one [unit]: ৳600 is per kg for a kg product.
   double sellingPrice;
   double costPrice;
-  int stockQty;
-  int lowStockThreshold;
+
+  /// In [unit]s, rounded to 3 decimals (`roundQty`). Stored as
+  /// `stockQuantity`: the int it replaced kept the name `stockQty`, which
+  /// [legacyStockQty] still reads for the one-time migration.
+  @Name('stockQuantity')
+  double stockQty;
+
+  @Name('lowStockLevel')
+  double lowStockThreshold;
+
+  /// What [stockQty] and the prices count. Older products have none: piece.
+  @Enumerated(EnumType.name)
+  @JsonKey(unknownEnumValue: QuantityUnit.piece)
+  QuantityUnit unit;
+
+  /// The whole-number stock of versions before decimal quantities, read only
+  /// by `migrateDecimalQuantitiesV1`, which moves it into [stockQty] and
+  /// sets it back to 0. Never in JSON: backups carry [stockQty].
+  @Name('stockQty')
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int legacyStockQty = 0;
+
+  @Name('lowStockThreshold')
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int legacyLowStockThreshold = 0;
+
   String category;
   String qrCode;
   List<String> tags;
@@ -87,8 +115,8 @@ class Product {
   bool get hasVariants => variantCombinations.isNotEmpty;
 
   @ignore
-  int get totalStock => hasVariants
-      ? variantCombinations.where((c) => c.isActive).fold(0, (s, c) => s + c.stockQty)
+  double get totalStock => hasVariants
+      ? roundQty(variantCombinations.where((c) => c.isActive).fold(0.0, (s, c) => s + c.stockQty))
       : stockQty;
 
   VariantCombination? findCombination(String key) =>
@@ -102,8 +130,9 @@ class Product {
     String? imagePath,
     double? sellingPrice,
     double? costPrice,
-    int? stockQty,
-    int? lowStockThreshold,
+    double? stockQty,
+    double? lowStockThreshold,
+    QuantityUnit? unit,
     String? category,
     String? qrCode,
     List<String>? tags,
@@ -126,6 +155,7 @@ class Product {
         costPrice: costPrice ?? this.costPrice,
         stockQty: stockQty ?? this.stockQty,
         lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
+        unit: unit ?? this.unit,
         category: category ?? this.category,
         qrCode: qrCode ?? this.qrCode,
         tags: tags ?? this.tags,

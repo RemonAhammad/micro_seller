@@ -52,6 +52,9 @@ Future<Isar> isar(Ref ref) async {
     ),
   );
 
+  // First: migrateVariantsV2 rebuilds products with copyWith, which would
+  // drop the whole-number quantities this one moves.
+  await migrateDecimalQuantitiesV1(db);
   await migrateVariantsV2(db);
   await migrateOutstandingBalancesV1(db);
   await migrateProductImagePathsV1(db);

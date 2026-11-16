@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/number_input.dart';
+import '../../../core/utils/quantity.dart';
+import '../../../shared/widgets/quantity_sheet.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/services/dues_service.dart';
@@ -21,7 +23,7 @@ class CreateReturnScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
-  late List<int> _returnQtys;
+  late List<double> _returnQtys;
   ReturnReason _reason = ReturnReason.defective;
   final _notesCtrl = TextEditingController();
   final _refundCtrl = TextEditingController();
@@ -46,7 +48,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           if (_returnQtys[i] > 0)
             widget.originalOrder.items[i].copyWith(
               qty: _returnQtys[i],
-              totalPrice: widget.originalOrder.items[i].unitPrice * _returnQtys[i],
+              totalPrice: lineTotal(widget.originalOrder.items[i].unitPrice, _returnQtys[i]),
             ),
       ];
 
@@ -191,14 +193,14 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
                                 ?.copyWith(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 2),
                         Text(
-                          '${item.productSku}  ·  Ordered: ${item.qty}  ·  ${CurrencyFormatter.format(item.unitPrice)}/ea',
+                          '${item.productSku}  ·  Ordered: ${AppStrings.of(context).qty(item.qty, item.unit)}  ·  ${AppStrings.of(context).pricePer(CurrencyFormatter.format(item.unitPrice), item.unit)}',
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
                   ),
-                  _buildQtyControl(i, rQty, item.qty, cs),
+                  _buildQtyControl(i, rQty, item, cs),
                 ]),
               ),
             );
@@ -267,7 +269,47 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
     );
   }
 
-  Widget _buildQtyControl(int idx, int value, int max, ColorScheme cs) {
+  Widget _buildQtyControl(int idx, double value, OrderItem item, ColorScheme cs) {
+    final max = item.qty;
+    // A weighed line comes back in any amount up to what was sold: its
+    // value opens the quantity sheet instead of stepping by 1 kg.
+    if (item.unit.allowsDecimal) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () async {
+          final qty = await showQuantitySheet(
+            context,
+            productName: item.displayName,
+            unit: item.unit,
+            unitPrice: item.unitPrice,
+            available: max,
+            initial: value > 0 ? value : null,
+          );
+          if (qty == null || !mounted) return;
+          setState(() => _returnQtys[idx] = qty);
+          _updateRefundAmount();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: cs.outline),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(
+              AppStrings.of(context).qty(value, item.unit),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: value > 0 ? cs.onSurface : cs.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 6),
+            ThinIcon(tabler.Pencil.new, size: 16, color: cs.primary),
+          ]),
+        ),
+      );
+    }
+
     Widget btn(ThinIconBuilder icon, bool enabled, VoidCallback onTap) => InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: enabled ? onTap : null,
@@ -294,7 +336,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
         child: Center(
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text('$value',
+            child: Text(formatQtyNumber(value),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -303,7 +345,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           ),
         ),
       ),
-      btn(tabler.Plus.new, value < max, () {
+      btn(tabler.Plus.new, !qtyAtLeast(value, max), () {
         setState(() => _returnQtys[idx] = value + 1);
         _updateRefundAmount();
       }),

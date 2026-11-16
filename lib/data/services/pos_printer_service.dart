@@ -7,6 +7,7 @@ import 'package:flutter_thermal_printer/utils/printer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/order.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/quantity.dart';
 import '../../core/utils/date_formatter.dart';
 
 const _kSavedPrintersKey = 'pos_printers';
@@ -175,7 +176,7 @@ class PosPrinterService {
 
     for (final item in order.items) {
       final name = item.displayName;
-      final qty = 'x${item.qty}';
+      final qty = 'x${documentQty(item.qty, item.unit)}';
       final price = CurrencyFormatter.format(item.totalPrice);
       final needed = name.length + qty.length + price.length + 2;
       if (needed <= cols) {

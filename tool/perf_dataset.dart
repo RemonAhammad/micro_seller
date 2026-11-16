@@ -164,7 +164,7 @@ class PerfDataset {
       final sku = 'SKU-${pad(i, 5)}';
       final combos = generateCombinations(attributes, baseSku: sku)
           .map((c) => c.copyWith(
-                stockQty: rnd.nextInt(30),
+                stockQty: rnd.nextInt(30).toDouble(),
                 priceAdjustment: rnd.nextDouble() < 0.3 ? 20.0 : 0.0,
               ))
           .toList();
@@ -175,8 +175,8 @@ class PerfDataset {
         sellingPrice: selling,
         costPrice: cost,
         stockQty: withVariants
-            ? combos.fold(0, (s, c) => s + c.stockQty)
-            : (rnd.nextDouble() < 0.05 ? 0 : rnd.nextInt(200)),
+            ? combos.fold(0.0, (s, c) => s + c.stockQty)
+            : (rnd.nextDouble() < 0.05 ? 0.0 : rnd.nextInt(200).toDouble()),
         lowStockThreshold: 10,
         category: pick(_categoryNames),
         isActive: rnd.nextDouble() > 0.02,
@@ -242,7 +242,7 @@ class PerfDataset {
           productId: p.id,
           productName: p.name,
           productSku: p.sku,
-          qty: qty,
+          qty: qty.toDouble(),
           unitPrice: unit,
           costPrice: p.costPrice,
           totalPrice: unit * qty,
@@ -453,7 +453,7 @@ class PerfDataset {
             return PurchaseItem(
               productId: p.id,
               productName: p.name,
-              qty: qty,
+              qty: qty.toDouble(),
               unitCost: p.costPrice,
               totalCost: roundMoney(p.costPrice * qty),
             );
@@ -502,7 +502,7 @@ class PerfDataset {
         productId: p.id,
         productName: p.name,
         type: damage ? StockMovementType.damage : StockMovementType.adjustment,
-        qty: damage ? -(1 + rnd.nextInt(3)) : (rnd.nextBool() ? 1 : -1) * (1 + rnd.nextInt(10)),
+        qty: (damage ? -(1 + rnd.nextInt(3)) : (rnd.nextBool() ? 1 : -1) * (1 + rnd.nextInt(10))).toDouble(),
         reason: damage ? 'Damaged in storage' : 'Stock count',
         createdAt: recentDate(),
       ));

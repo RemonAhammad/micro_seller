@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../data/models/quantity_unit.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/quantity.dart';
 
 class AppStrings {
   AppStrings._();
@@ -326,6 +328,11 @@ class _L10nStrings {
   String get taxVat => _l10n.tr('taxVat');
   String get selectCustomer => _l10n.tr('selectCustomer');
   String get pleaseSelectCustomer => _l10n.tr('pleaseSelectCustomer');
+  String get walkInCustomer => _l10n.tr('walkInCustomer');
+  String get customerNeededForCredit => _l10n.tr('customerNeededForCredit');
+  String get creditOrPartial => _l10n.tr('creditOrPartial');
+  String get moreOptions => _l10n.tr('moreOptions');
+  String get quickAdd => _l10n.tr('quickAdd');
   String get addAtLeastOneProduct => _l10n.tr('addAtLeastOneProduct');
   String get orderCreated => _l10n.tr('orderCreated');
   String get orderUpdated => _l10n.tr('orderUpdated');
@@ -486,8 +493,94 @@ class _L10nStrings {
 
   String productsFoundToImport(int count) => _l10n.tr('productsFoundToImport').replaceAll('{count}', '$count');
   String productsImported(int count) => _l10n.tr('productsImported').replaceAll('{count}', '$count');
-  String notEnoughStock(int stock, String item) =>
-      _l10n.tr('notEnoughStock').replaceAll('{stock}', '$stock').replaceAll('{item}', item);
+  /// [stock] is the formatted quantity ([qty]), so "Only 1.25 kg in stock".
+  String notEnoughStock(String stock, String item) =>
+      _l10n.tr('notEnoughStock').replaceAll('{stock}', stock).replaceAll('{item}', item);
+
+  String get unit => _l10n.tr('unit');
+  String get unitHint => _l10n.tr('unitHint');
+  String get quantity => _l10n.tr('quantity');
+  String get byAmount => _l10n.tr('byAmount');
+  String get byQuantity => _l10n.tr('byQuantity');
+  String get amountToSell => _l10n.tr('amountToSell');
+  String get addQty => _l10n.tr('addQty');
+  String get updateQty => _l10n.tr('updateQty');
+  String get enterQuantity => _l10n.tr('enterQuantity');
+
+  String get scaleLabels => _l10n.tr('scaleLabels');
+  String get scaleLabelsDesc => _l10n.tr('scaleLabelsDesc');
+  String get scaleLabelsHelp => _l10n.tr('scaleLabelsHelp');
+  String get scaleLabelsEnable => _l10n.tr('scaleLabelsEnable');
+  String get scaleLabelCarries => _l10n.tr('scaleLabelCarries');
+  String get scaleWeight => _l10n.tr('scaleWeight');
+  String get scalePrice => _l10n.tr('scalePrice');
+  String get scalePriceWhole => _l10n.tr('scalePriceWhole');
+  String get scaleItemCodeDigits => _l10n.tr('scaleItemCodeDigits');
+  String get scaleLabel => _l10n.tr('scaleLabel');
+  String get scaleItemCode => _l10n.tr('scaleItemCode');
+
+  /// "Item code 12345, 1.250 kg"
+  String scaleExample(String code, String value) =>
+      _l10n.tr('scaleExample').replaceAll('{code}', code).replaceAll('{value}', value);
+
+  /// "1.25 kg of Rui fish added", [qty] formatted with [qty].
+  String scaleLabelAdded(String qty, String item) =>
+      _l10n.tr('scaleLabelAdded').replaceAll('{qty}', qty).replaceAll('{item}', item);
+
+  /// "{stock} left", [stock] formatted with [qty].
+  String stockLeftAfter(String stock) => _l10n.tr('stockLeftAfter').replaceAll('{stock}', stock);
+
+  /// A price field's label for [unit]: "Selling price (per kg)"; unchanged
+  /// for pieces.
+  String pricePerUnit(String label, QuantityUnit unit) {
+    final symbol = unitSymbol(unit);
+    if (symbol.isEmpty) return label;
+    return _l10n.tr('pricePerUnit').replaceAll('{label}', label).replaceAll('{unit}', symbol);
+  }
+
+  /// The unit's name for a picker: "Kilogram (kg)".
+  String unitName(QuantityUnit unit) => _l10n.tr(_unitNameKeys[unit]!);
+
+  /// The short sign after a number: "kg", "m". None for pieces, so counted
+  /// products read as they always have ("3").
+  String unitSymbol(QuantityUnit unit) =>
+      unit == QuantityUnit.piece ? '' : _l10n.tr(_unitSymbolKeys[unit]!);
+
+  /// A quantity with its unit: "3", "1.25 kg", "2 dozen".
+  String qty(num qty, QuantityUnit unit) {
+    final number = formatQtyNumber(qty);
+    final symbol = unitSymbol(unit);
+    return symbol.isEmpty ? number : '$number $symbol';
+  }
+
+  /// A price per unit: "৳600 / kg"; a piece price is just the price.
+  String pricePer(String price, QuantityUnit unit) {
+    final symbol = unitSymbol(unit);
+    return symbol.isEmpty ? price : '$price / $symbol';
+  }
+
+  static const _unitNameKeys = {
+    QuantityUnit.piece: 'unitNamePiece',
+    QuantityUnit.kg: 'unitNameKg',
+    QuantityUnit.g: 'unitNameG',
+    QuantityUnit.litre: 'unitNameLitre',
+    QuantityUnit.ml: 'unitNameMl',
+    QuantityUnit.metre: 'unitNameMetre',
+    QuantityUnit.cm: 'unitNameCm',
+    QuantityUnit.dozen: 'unitNameDozen',
+    QuantityUnit.pack: 'unitNamePack',
+  };
+
+  static const _unitSymbolKeys = {
+    QuantityUnit.kg: 'unitSymbolKg',
+    QuantityUnit.g: 'unitSymbolG',
+    QuantityUnit.litre: 'unitSymbolLitre',
+    QuantityUnit.ml: 'unitSymbolMl',
+    QuantityUnit.metre: 'unitSymbolMetre',
+    QuantityUnit.cm: 'unitSymbolCm',
+    QuantityUnit.dozen: 'unitSymbolDozen',
+    QuantityUnit.pack: 'unitSymbolPack',
+  };
   String rowsSkipped(int count) => _l10n.tr('rowsSkipped').replaceAll('{count}', '$count');
   String andMore(int count) => _l10n.tr('andMore').replaceAll('{count}', '$count');
 
@@ -774,6 +867,37 @@ class _L10nStrings {
   String get helpAboutScreen => _l10n.tr('helpAboutScreen');
   String get helpWhenToUse => _l10n.tr('helpWhenToUse');
   String get helpWorksWith => _l10n.tr('helpWorksWith');
+
+  // Support
+  String get helpAndSupport => _l10n.tr('helpAndSupport');
+  String get faq => _l10n.tr('faq');
+  String get stillNeedHelp => _l10n.tr('stillNeedHelp');
+  String get reportAProblem => _l10n.tr('reportAProblem');
+  String get reportAProblemDesc => _l10n.tr('reportAProblemDesc');
+  String get featureRequest => _l10n.tr('featureRequest');
+  String get featureRequestDesc => _l10n.tr('featureRequestDesc');
+  String get featureRequestHint => _l10n.tr('featureRequestHint');
+  String get askAQuestion => _l10n.tr('askAQuestion');
+  String get askAQuestionDesc => _l10n.tr('askAQuestionDesc');
+  String get askAQuestionHint => _l10n.tr('askAQuestionHint');
+  String get diagnostics => _l10n.tr('diagnostics');
+  String get diagnosticsDesc => _l10n.tr('diagnosticsDesc');
+  String get describeProblemHint => _l10n.tr('describeProblemHint');
+  String get copy => _l10n.tr('copy');
+  String get diagnosticsCopied => _l10n.tr('diagnosticsCopied');
+  String get privacyPolicy => _l10n.tr('privacyPolicy');
+  String get couldNotOpenLink => _l10n.tr('couldNotOpenLink');
+  List<(String, String)> get supportFaqs => [
+        (_l10n.tr('supportFaqBackupQ'), _l10n.tr('supportFaqBackupA')),
+        (_l10n.tr('supportFaqMoveQ'), _l10n.tr('supportFaqMoveA')),
+        (_l10n.tr('supportFaqRecoverQ'), _l10n.tr('supportFaqRecoverA')),
+        (_l10n.tr('supportFaqMultiDeviceQ'), _l10n.tr('supportFaqMultiDeviceA')),
+        (_l10n.tr('supportFaqCreditQ'), _l10n.tr('supportFaqCreditA')),
+        (_l10n.tr('supportFaqInvoiceQ'), _l10n.tr('supportFaqInvoiceA')),
+        (_l10n.tr('supportFaqCurrencyQ'), _l10n.tr('supportFaqCurrencyA')),
+        (_l10n.tr('supportFaqUpdateQ'), _l10n.tr('supportFaqUpdateA')),
+        (_l10n.tr('supportFaqPrivacyQ'), _l10n.tr('supportFaqPrivacyA')),
+      ];
 
   String paymentRecorded(String amount) =>
       _l10n.tr('paymentRecorded').replaceAll('{amount}', amount);

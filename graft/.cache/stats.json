@@ -1,6 +1,6 @@
 {
-  "nodeCount": 6815,
-  "edgeCount": 2093,
+  "nodeCount": 6173,
+  "edgeCount": 1545,
   "languages": [
     "c",
     "cpp",
@@ -9,11 +9,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 6815,
+  "totalCount": 6173,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-12T05:13:08.847Z",
-  "lastFile": "pubspec.yaml"
+  "syncedAt": "2026-11-16T15:22:02.393Z",
+  "lastFile": "product_repository.dart"
 }

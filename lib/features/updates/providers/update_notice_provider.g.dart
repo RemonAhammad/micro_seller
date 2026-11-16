@@ -120,7 +120,7 @@ abstract class _$UpdateNotice extends $AsyncNotifier<AvailableUpdate?> {
   FutureOr<AvailableUpdate?> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<AvailableUpdate?>, AvailableUpdate?>;
     final element =
@@ -131,6 +131,6 @@ abstract class _$UpdateNotice extends $AsyncNotifier<AvailableUpdate?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

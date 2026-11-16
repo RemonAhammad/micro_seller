@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/utils/quantity.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
@@ -123,7 +124,7 @@ class ProductNotifier extends _$ProductNotifier {
   }
 
   Future<void> adjustStock(
-      int productId, int delta, String reason, StockMovementType type,
+      int productId, double delta, String reason, StockMovementType type,
       {String combinationKey = '',
       String supplierName = '',
       int supplierId = 0,
@@ -135,14 +136,14 @@ class ProductNotifier extends _$ProductNotifier {
         if (product == null) return;
 
         var updated = product.copyWith(
-          stockQty: (product.stockQty + delta).clamp(0, 999999),
+          stockQty: clampStock(product.stockQty + delta),
           updatedAt: DateTime.now(),
         );
 
         if (combinationKey.isNotEmpty) {
           final updatedCombinations = updated.variantCombinations.map((c) {
             if (c.combinationKey == combinationKey) {
-              return c.copyWith(stockQty: (c.stockQty + delta).clamp(0, 999999));
+              return c.copyWith(stockQty: clampStock(c.stockQty + delta));
             }
             return c;
           }).toList();
@@ -168,7 +169,7 @@ class ProductNotifier extends _$ProductNotifier {
           productId: productId,
           productName: movementName,
           type: type,
-          qty: delta,
+          qty: roundQty(delta),
           reason: fullReason,
           supplierId: supplierId,
           createdAt: at ?? DateTime.now(),

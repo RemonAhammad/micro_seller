@@ -34,33 +34,44 @@ const OrderItemSchema = Schema(
       type: IsarType.string,
     ),
     r'qty': PropertySchema(id: 4, name: r'qty', type: IsarType.long),
-    r'totalPrice': PropertySchema(
+    r'quantity': PropertySchema(
       id: 5,
+      name: r'quantity',
+      type: IsarType.double,
+    ),
+    r'totalPrice': PropertySchema(
+      id: 6,
       name: r'totalPrice',
       type: IsarType.double,
     ),
+    r'unit': PropertySchema(
+      id: 7,
+      name: r'unit',
+      type: IsarType.string,
+      enumMap: _OrderItemunitEnumValueMap,
+    ),
     r'unitPrice': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'unitPrice',
       type: IsarType.double,
     ),
     r'variantCombinationKey': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'variantCombinationKey',
       type: IsarType.string,
     ),
     r'variantDisplayLabel': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'variantDisplayLabel',
       type: IsarType.string,
     ),
     r'variantName': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'variantName',
       type: IsarType.string,
     ),
     r'variantValue': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'variantValue',
       type: IsarType.string,
     ),
@@ -80,6 +91,7 @@ int _orderItemEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.productName.length * 3;
   bytesCount += 3 + object.productSku.length * 3;
+  bytesCount += 3 + object.unit.name.length * 3;
   bytesCount += 3 + object.variantCombinationKey.length * 3;
   bytesCount += 3 + object.variantDisplayLabel.length * 3;
   bytesCount += 3 + object.variantName.length * 3;
@@ -97,13 +109,15 @@ void _orderItemSerialize(
   writer.writeLong(offsets[1], object.productId);
   writer.writeString(offsets[2], object.productName);
   writer.writeString(offsets[3], object.productSku);
-  writer.writeLong(offsets[4], object.qty);
-  writer.writeDouble(offsets[5], object.totalPrice);
-  writer.writeDouble(offsets[6], object.unitPrice);
-  writer.writeString(offsets[7], object.variantCombinationKey);
-  writer.writeString(offsets[8], object.variantDisplayLabel);
-  writer.writeString(offsets[9], object.variantName);
-  writer.writeString(offsets[10], object.variantValue);
+  writer.writeLong(offsets[4], object.legacyQty);
+  writer.writeDouble(offsets[5], object.qty);
+  writer.writeDouble(offsets[6], object.totalPrice);
+  writer.writeString(offsets[7], object.unit.name);
+  writer.writeDouble(offsets[8], object.unitPrice);
+  writer.writeString(offsets[9], object.variantCombinationKey);
+  writer.writeString(offsets[10], object.variantDisplayLabel);
+  writer.writeString(offsets[11], object.variantName);
+  writer.writeString(offsets[12], object.variantValue);
 }
 
 OrderItem _orderItemDeserialize(
@@ -117,14 +131,18 @@ OrderItem _orderItemDeserialize(
     productId: reader.readLongOrNull(offsets[1]) ?? 0,
     productName: reader.readStringOrNull(offsets[2]) ?? '',
     productSku: reader.readStringOrNull(offsets[3]) ?? '',
-    qty: reader.readLongOrNull(offsets[4]) ?? 1,
-    totalPrice: reader.readDoubleOrNull(offsets[5]) ?? 0.0,
-    unitPrice: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
-    variantCombinationKey: reader.readStringOrNull(offsets[7]) ?? '',
-    variantDisplayLabel: reader.readStringOrNull(offsets[8]) ?? '',
-    variantName: reader.readStringOrNull(offsets[9]) ?? '',
-    variantValue: reader.readStringOrNull(offsets[10]) ?? '',
+    qty: reader.readDoubleOrNull(offsets[5]) ?? 1,
+    totalPrice: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
+    unit:
+        _OrderItemunitValueEnumMap[reader.readStringOrNull(offsets[7])] ??
+        QuantityUnit.piece,
+    unitPrice: reader.readDoubleOrNull(offsets[8]) ?? 0.0,
+    variantCombinationKey: reader.readStringOrNull(offsets[9]) ?? '',
+    variantDisplayLabel: reader.readStringOrNull(offsets[10]) ?? '',
+    variantName: reader.readStringOrNull(offsets[11]) ?? '',
+    variantValue: reader.readStringOrNull(offsets[12]) ?? '',
   );
+  object.legacyQty = reader.readLong(offsets[4]);
   return object;
 }
 
@@ -144,23 +162,52 @@ P _orderItemDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 4:
-      return (reader.readLongOrNull(offset) ?? 1) as P;
+      return (reader.readLong(offset)) as P;
     case 5:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readDoubleOrNull(offset) ?? 1) as P;
     case 6:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 7:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (_OrderItemunitValueEnumMap[reader.readStringOrNull(offset)] ??
+              QuantityUnit.piece)
+          as P;
     case 8:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 9:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 10:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 11:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 12:
       return (reader.readStringOrNull(offset) ?? '') as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _OrderItemunitEnumValueMap = {
+  r'piece': r'piece',
+  r'kg': r'kg',
+  r'g': r'g',
+  r'litre': r'litre',
+  r'ml': r'ml',
+  r'metre': r'metre',
+  r'cm': r'cm',
+  r'dozen': r'dozen',
+  r'pack': r'pack',
+};
+const _OrderItemunitValueEnumMap = {
+  r'piece': QuantityUnit.piece,
+  r'kg': QuantityUnit.kg,
+  r'g': QuantityUnit.g,
+  r'litre': QuantityUnit.litre,
+  r'ml': QuantityUnit.ml,
+  r'metre': QuantityUnit.metre,
+  r'cm': QuantityUnit.cm,
+  r'dozen': QuantityUnit.dozen,
+  r'pack': QuantityUnit.pack,
+};
 
 extension OrderItemQueryFilter
     on QueryBuilder<OrderItem, OrderItem, QFilterCondition> {
@@ -590,7 +637,7 @@ extension OrderItemQueryFilter
     });
   }
 
-  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyEqualTo(
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> legacyQtyEqualTo(
     int value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -600,10 +647,8 @@ extension OrderItemQueryFilter
     });
   }
 
-  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  legacyQtyGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -615,7 +660,7 @@ extension OrderItemQueryFilter
     });
   }
 
-  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyLessThan(
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> legacyQtyLessThan(
     int value, {
     bool include = false,
   }) {
@@ -630,7 +675,7 @@ extension OrderItemQueryFilter
     });
   }
 
-  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyBetween(
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> legacyQtyBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -644,6 +689,80 @@ extension OrderItemQueryFilter
           includeLower: includeLower,
           upper: upper,
           includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'quantity',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> qtyBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'quantity',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
         ),
       );
     });
@@ -720,6 +839,152 @@ extension OrderItemQueryFilter
 
           epsilon: epsilon,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitEqualTo(
+    QuantityUnit value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitGreaterThan(
+    QuantityUnit value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitLessThan(
+    QuantityUnit value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitBetween(
+    QuantityUnit lower,
+    QuantityUnit upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'unit',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'unit',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'unit',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'unit', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'unit', value: ''),
       );
     });
   }
@@ -1390,7 +1655,14 @@ OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => OrderItem(
   productId: (json['productId'] as num?)?.toInt() ?? 0,
   productName: json['productName'] as String? ?? '',
   productSku: json['productSku'] as String? ?? '',
-  qty: (json['qty'] as num?)?.toInt() ?? 1,
+  qty: (json['qty'] as num?)?.toDouble() ?? 1,
+  unit:
+      $enumDecodeNullable(
+        _$QuantityUnitEnumMap,
+        json['unit'],
+        unknownValue: QuantityUnit.piece,
+      ) ??
+      QuantityUnit.piece,
   unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0.0,
   costPrice: (json['costPrice'] as num?)?.toDouble() ?? 0.0,
   totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
@@ -1405,6 +1677,7 @@ Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
   'productName': instance.productName,
   'productSku': instance.productSku,
   'qty': instance.qty,
+  'unit': _$QuantityUnitEnumMap[instance.unit]!,
   'unitPrice': instance.unitPrice,
   'costPrice': instance.costPrice,
   'totalPrice': instance.totalPrice,
@@ -1412,4 +1685,16 @@ Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
   'variantValue': instance.variantValue,
   'variantCombinationKey': instance.variantCombinationKey,
   'variantDisplayLabel': instance.variantDisplayLabel,
+};
+
+const _$QuantityUnitEnumMap = {
+  QuantityUnit.piece: 'piece',
+  QuantityUnit.kg: 'kg',
+  QuantityUnit.g: 'g',
+  QuantityUnit.litre: 'litre',
+  QuantityUnit.ml: 'ml',
+  QuantityUnit.metre: 'metre',
+  QuantityUnit.cm: 'cm',
+  QuantityUnit.dozen: 'dozen',
+  QuantityUnit.pack: 'pack',
 };

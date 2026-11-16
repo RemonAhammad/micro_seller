@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:isar_community/isar.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/quantity_unit.dart';
 import '../../../data/models/supplier.dart';
 import '../../../data/models/variant_attribute.dart';
 import '../../../data/models/variant_combination.dart';
@@ -24,6 +25,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../core/utils/number_input.dart';
+import '../../../core/utils/quantity.dart';
+import '../../../core/utils/quantity_input.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/variant_utils.dart';
 import '../../../shared/widgets/app_text_field.dart';
@@ -67,6 +70,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _thresholdCtrl = TextEditingController();
   final _categoryCtrl = TextEditingController();
   final _qrCtrl = TextEditingController();
+
+  /// What the prices and stock count: per piece, per kg, …
+  QuantityUnit _unit = QuantityUnit.piece;
 
   String? _imagePath;
   DateTime? _expiryDate;
@@ -116,9 +122,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         product.sellingPrice > 0 ? product.sellingPrice.toString() : '';
     _costPriceCtrl.text =
         product.costPrice > 0 ? product.costPrice.toString() : '';
-    _stockCtrl.text = product.stockQty.toString();
+    _unit = product.unit;
+    _stockCtrl.text = qtyFieldText(product.stockQty);
     _thresholdCtrl.text =
-        product.lowStockThreshold > 0 ? product.lowStockThreshold.toString() : '';
+        product.lowStockThreshold > 0 ? qtyFieldText(product.lowStockThreshold) : '';
     _categoryCtrl.text = product.category;
     _qrCtrl.text = product.qrCode;
     _expiryDate = product.expiryDate;
@@ -482,7 +489,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final variantCombinations = _combinations.map((c) => VariantCombination(
         combinationKey: c.key,
         displayLabel: c.displayLabel,
-        stockQty: NumberInput.parseInteger(c.stockCtrl.text) ?? 0,
+        stockQty: parseQty(c.stockCtrl.text, _unit) ?? 0,
         priceAdjustment: NumberInput.parseDecimal(c.priceCtrl.text) ?? 0,
         sku: c.skuCtrl.text.trim(),
         isActive: c.isActive,
@@ -498,8 +505,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
         sellingPrice: NumberInput.parseDecimal(_sellingPriceCtrl.text)!,
         costPrice: NumberInput.parseDecimal(_costPriceCtrl.text) ?? 0.0,
-        stockQty: NumberInput.parseInteger(_stockCtrl.text)!,
-        lowStockThreshold: NumberInput.parseInteger(_thresholdCtrl.text) ?? 10,
+        stockQty: parseQty(_stockCtrl.text, _unit)!,
+        lowStockThreshold: parseQty(_thresholdCtrl.text, _unit) ?? 10,
+        unit: _unit,
         category: categoryName,
         qrCode: _qrCtrl.text.trim(),
         isActive: existing?.isActive ?? true,
@@ -549,6 +557,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// "kg" after a stock figure; nothing for pieces, as before units.
+  Widget? _unitSuffix(String symbol) {
+    return symbol.isEmpty ? null : Text(symbol);
   }
 
   @override
@@ -742,12 +755,33 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
                     const _SectionLabel('Pricing'),
                     const SizedBox(height: 12),
+                    DropdownButtonFormField<QuantityUnit>(
+                      initialValue: _unit,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: s.unit,
+                        helperText: s.unitHint,
+                        helperMaxLines: 3,
+                        prefixIcon: const ThinIcon(tabler.Ruler2.new, size: 20),
+                      ),
+                      items: [
+                        for (final u in QuantityUnit.values)
+                          DropdownMenuItem(
+                            value: u,
+                            child: Text(s.unitName(u), overflow: TextOverflow.ellipsis),
+                          ),
+                      ],
+                      onChanged: (u) {
+                        if (u != null) setState(() => _unit = u);
+                      },
+                    ),
+                    const SizedBox(height: 12),
                     _FieldRow(
                       chrome: _kAppFieldChrome,
                       spacing: 12,
                       children: [
                         AppTextField(
-                          label: s.sellingPrice,
+                          label: s.pricePerUnit(s.sellingPrice, _unit),
                           isRequired: true,
                           controller: _sellingPriceCtrl,
                           keyboardType:
@@ -758,7 +792,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           textInputAction: TextInputAction.next,
                         ),
                         AppTextField(
-                          label: s.costPrice,
+                          label: s.pricePerUnit(s.costPrice, _unit),
                           controller: _costPriceCtrl,
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
@@ -781,17 +815,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           label: s.stockQuantity,
                           isRequired: true,
                           controller: _stockCtrl,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: const [IntegerInputFormatter()],
-                          validator: (v) =>
-                              Validators.nonNegativeInt(v, 'Stock quantity'),
+                          keyboardType: qtyKeyboard(_unit),
+                          inputFormatters: qtyFormatters(_unit),
+                          suffix: _unitSuffix(s.unitSymbol(_unit)),
+                          validator: (v) => Validators.nonNegativeQty(v,
+                              decimal: _unit.allowsDecimal, fieldName: 'Stock quantity'),
                           textInputAction: TextInputAction.next,
                         ),
                         AppTextField(
                           label: s.lowStockThreshold,
                           controller: _thresholdCtrl,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: const [IntegerInputFormatter()],
+                          keyboardType: qtyKeyboard(_unit),
+                          inputFormatters: qtyFormatters(_unit),
+                          suffix: _unitSuffix(s.unitSymbol(_unit)),
                           textInputAction: TextInputAction.done,
                         ),
                       ],
@@ -997,14 +1033,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: _BulkSetField(
                               label: s.setAllStock,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: const [IntegerInputFormatter()],
+                              keyboardType: qtyKeyboard(_unit),
+                              inputFormatters: qtyFormatters(_unit),
                               onApply: (val) {
-                                final v = NumberInput.parseInteger(val);
+                                final v = parseQty(val, _unit);
                                 if (v == null || v < 0) return false;
                                 setState(() {
                                   for (final c in _combinations) {
-                                    c.stockCtrl.text = '$v';
+                                    c.stockCtrl.text = qtyFieldText(v);
                                   }
                                 });
                                 return true;
@@ -1058,6 +1094,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   itemBuilder: (context, i) => _CombinationRow(
                     key: ObjectKey(combinations[i]),
                     entry: combinations[i],
+                    unit: _unit,
                   ),
                 ),
               ),
@@ -1085,7 +1122,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 class _CombinationRow extends StatefulWidget {
   final _CombinationEntry entry;
 
-  const _CombinationRow({super.key, required this.entry});
+  /// The product's unit: a combination's stock is counted in it too.
+  final QuantityUnit unit;
+
+  const _CombinationRow({super.key, required this.entry, required this.unit});
 
   @override
   State<_CombinationRow> createState() => _CombinationRowState();
@@ -1152,14 +1192,15 @@ class _CombinationRowState extends State<_CombinationRow> {
                     decoration: InputDecoration(
                       labelText: s.stock,
                       isDense: true,
+                      suffixText: s.unitSymbol(widget.unit).isEmpty ? null : s.unitSymbol(widget.unit),
                     ),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: const [IntegerInputFormatter()],
+                    keyboardType: qtyKeyboard(widget.unit),
+                    inputFormatters: qtyFormatters(widget.unit),
                     controller: combo.stockCtrl,
                   ),
                   TextField(
                     decoration: InputDecoration(
-                      labelText: s.priceAdjustment,
+                      labelText: s.pricePerUnit(s.priceAdjustment, widget.unit),
                       isDense: true,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
@@ -1399,7 +1440,7 @@ class _CombinationEntry {
         key: combo.combinationKey,
         displayLabel: combo.displayLabel,
         stockCtrl: TextEditingController(
-            text: combo.stockQty > 0 ? combo.stockQty.toString() : ''),
+            text: combo.stockQty > 0 ? qtyFieldText(combo.stockQty) : ''),
         priceCtrl: TextEditingController(
             text: combo.priceAdjustment != 0
                 ? combo.priceAdjustment.toString()
@@ -1413,7 +1454,8 @@ class _CombinationEntry {
       _CombinationEntry.fromCombination(VariantCombination(
         combinationKey: other.key,
         displayLabel: displayLabel,
-        stockQty: NumberInput.parseInteger(other.stockCtrl.text) ?? 0,
+        // Decimal-tolerant: the field's formatter already kept it to the unit.
+        stockQty: roundQty(NumberInput.parseDecimal(other.stockCtrl.text) ?? 0),
         priceAdjustment: NumberInput.parseDecimal(other.priceCtrl.text) ?? 0,
         sku: other.skuCtrl.text,
         isActive: other.isActive,

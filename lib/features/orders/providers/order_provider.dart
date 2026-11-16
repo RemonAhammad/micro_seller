@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/utils/quantity.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/cash_register.dart';
@@ -63,7 +64,7 @@ class OrderNotifier extends _$OrderNotifier {
   @override
   FutureOr<void> build() {}
 
-  Product _adjustVariantStock(Product product, OrderItem item, int delta) {
+  Product _adjustVariantStock(Product product, OrderItem item, double delta) {
     if (!item.hasVariant) return product;
 
     final key = item.variantCombinationKey.isNotEmpty
@@ -72,7 +73,7 @@ class OrderNotifier extends _$OrderNotifier {
 
     final updatedCombinations = product.variantCombinations.map((c) {
       if (c.combinationKey == key) {
-        return c.copyWith(stockQty: (c.stockQty + delta).clamp(0, 999999));
+        return c.copyWith(stockQty: clampStock(c.stockQty + delta));
       }
       return c;
     }).toList();
@@ -142,9 +143,9 @@ class OrderNotifier extends _$OrderNotifier {
     for (final item in items) {
       final product = products[item.productId];
       if (product == null) continue;
-      final delta = sign * item.qty;
+      final delta = roundQty(sign * item.qty);
       var updated = product.copyWith(
-        stockQty: product.stockQty + delta,
+        stockQty: roundQty(product.stockQty + delta),
         updatedAt: DateTime.now(),
       );
       updated = _adjustVariantStock(updated, item, delta);
