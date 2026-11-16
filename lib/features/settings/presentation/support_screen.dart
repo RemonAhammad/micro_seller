@@ -114,9 +114,9 @@ class _SupportScreenState extends State<SupportScreen> {
                   shape: const Border(),
                   collapsedShape: const Border(),
                   tilePadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   childrenPadding:
-                      const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                      const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   expandedCrossAxisAlignment: CrossAxisAlignment.start,
                   title: Text(
                     q,
@@ -173,7 +173,7 @@ class _SupportScreenState extends State<SupportScreen> {
           _Card(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -184,25 +184,28 @@ class _SupportScreenState extends State<SupportScreen> {
                             theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     SelectableText(
                       _diagnostics ?? '…',
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontFeatures: const [FontFeature.tabularFigures()],
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                        height: 1.5,
+                        height: 1.6,
                       ),
                     ),
                   ],
                 ),
               ),
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: TextButton.icon(
-                  onPressed: _diagnostics == null ? null : _copyDiagnostics,
-                  icon: const ThinIcon(tabler.Copy.new, size: 18),
-                  label: Text(s.copy),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton.icon(
+                    onPressed: _diagnostics == null ? null : _copyDiagnostics,
+                    icon: const ThinIcon(tabler.Copy.new, size: 18),
+                    label: Text(s.copy),
+                  ),
                 ),
               ),
             ],
