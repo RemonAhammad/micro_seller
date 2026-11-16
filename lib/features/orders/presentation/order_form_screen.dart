@@ -13,7 +13,9 @@ import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/customer.dart';
+import '../providers/order_form_defaults.dart';
 import '../providers/order_provider.dart';
+import '../providers/quick_add_provider.dart';
 import 'widgets/order_feedback.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/pdf_service.dart';
@@ -65,12 +67,26 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   Customer? _selectedCustomer;
   final List<OrderItem> _items = [];
-  OrderStatus _orderStatus = OrderStatus.pending;
-  PaymentMethod _paymentMethod = PaymentMethod.cash;
+  OrderStatus _orderStatus = OrderFormDefaults.fallback.orderStatus;
+  PaymentMethod _paymentMethod = OrderFormDefaults.fallback.paymentMethod;
   DateTime? _orderDate;
   DateTime? _estimatedDeliveryDate;
   bool _isRecurring = false;
   bool _isLoading = false;
+
+  /// A new order starts as a counter sale: the footer offers Paid in full,
+  /// and the amount-paid block appears only after Credit / partial. An edit
+  /// always shows it.
+  bool _creditMode = false;
+
+  /// Discount, delivery, tax, date, status, notes and recurring live behind
+  /// "More options", open from the start only when an edited order uses them.
+  bool _showMore = false;
+
+  /// Set once the seller picks a method or status, so the remembered
+  /// defaults (loaded asynchronously) never overwrite a choice.
+  bool _pickedPaymentMethod = false;
+  bool _pickedStatus = false;
 
   Order? _existingOrder;
 
@@ -110,12 +126,29 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       if (order != null && mounted) {
         _populateForm(order);
       }
+    } else {
+      final defaults = await OrderFormDefaults.load();
+      if (!mounted || _isEditing) return;
+      setState(() {
+        if (!_pickedPaymentMethod) _paymentMethod = defaults.paymentMethod;
+        if (!_pickedStatus) _orderStatus = defaults.orderStatus;
+      });
     }
   }
 
   void _populateForm(Order order) {
     _existingOrder = order;
-    _selectedCustomer = Customer(id: order.customerId, name: order.customerName, phone: order.customerPhone);
+    final walkIn = order.customerId <= 0 && order.customerName.isEmpty && order.customerPhone.isEmpty;
+    _selectedCustomer =
+        walkIn ? null : Customer(id: order.customerId, name: order.customerName, phone: order.customerPhone);
+    _creditMode = true;
+    _showMore = order.discountAmount > 0 ||
+        order.deliveryFee > 0 ||
+        order.notes.isNotEmpty ||
+        order.deliveryAddress.isNotEmpty ||
+        order.estimatedDeliveryDate != null ||
+        order.isRecurring ||
+        !OrderFormDefaults.formStatuses.contains(order.orderStatus);
     _items
       ..clear()
       ..addAll(order.items.map((i) => i.copyWith()));
@@ -232,7 +265,26 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ),
     );
     if (product == null || !mounted) return;
+    await _addOneOf(isar, product);
+  }
 
+  /// A quick-add chip: the product as it is now (its stock may have moved
+  /// since the chips were loaded), then the same path as a scan.
+  Future<void> _quickAdd(Product chip) async {
+    final isar = await ref.read(isarProvider.future);
+    final product = await isar.products.get(chip.id);
+    if (!mounted) return;
+    if (product == null || !product.isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).outOfStock)));
+      return;
+    }
+    await _addOneOf(isar, product);
+  }
+
+  /// Adds one of [product] to the cart: a variant product opens the picker on
+  /// that product to choose the combination; a simple one adds 1, refused
+  /// past its stock.
+  Future<void> _addOneOf(Isar isar, Product product) async {
     if (product.hasVariants) {
       await showModalBottomSheet(
         context: context,
@@ -341,12 +393,29 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   void _removeItem(int index) => setState(() => _items.removeAt(index));
 
-  Future<void> _submit() async {
-    if (_selectedCustomer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).pleaseSelectCustomer)));
+  /// The footer's Paid in full: the whole total, paid now, saved.
+  Future<void> _submitPaidInFull() async {
+    if (_items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
       return;
     }
+    _amountPaidCtrl.text = _amountText(_readTotals().total);
+    await _submit();
+  }
 
+  /// The footer's Credit / partial: shows the amount-paid block. Money left
+  /// owing needs someone to owe it, so a walk-in sale asks for a customer.
+  Future<void> _startCredit() async {
+    setState(() {
+      _creditMode = true;
+      if (_amountPaidCtrl.text.isNotEmpty && (NumberInput.parseDecimal(_amountPaidCtrl.text) ?? 0) >= _readTotals().total) {
+        _amountPaidCtrl.clear();
+      }
+    });
+    if (_selectedCustomer == null) await _pickCustomer();
+  }
+
+  Future<void> _submit() async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
       return;
@@ -355,6 +424,14 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final t = _readTotals();
     if (t.overpaid) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).amountPaidExceedsTotal)));
+      return;
+    }
+
+    // Only an order with money still owing needs a customer: the Due Book
+    // lists dues per customer, and a walk-in due would be lost there.
+    if (_selectedCustomer == null && t.due > 0.005) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).customerNeededForCredit)));
+      await _pickCustomer();
       return;
     }
 
@@ -436,6 +513,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
         final newId = await notifier.createOrder(order);
         final saved = order.copyWith(id: newId);
+        await OrderFormDefaults.remember(paymentMethod: _paymentMethod, orderStatus: _orderStatus);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -669,7 +747,90 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               children: [
 
                 _buildCustomerSection(theme, cs),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+
+                _buildItemsSection(theme, cs),
+                const SizedBox(height: 16),
+
+                if (_creditMode) _buildPaymentSection(theme, cs) else _buildPaymentMethodSection(theme, cs),
+                const SizedBox(height: 16),
+
+                _buildMoreOptionsHeader(theme, cs),
+                if (_showMore) ..._buildMoreOptions(theme, cs),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+
+          _buildFooter(theme, cs),
+        ],
+      ),
+    );
+  }
+
+  /// The fold-out header. Collapsed, it names what is set inside, so a
+  /// discount or a Pending status is never hidden from the seller.
+  Widget _buildMoreOptionsHeader(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    return ListenableBuilder(
+      listenable: Listenable.merge([_moneyFields, _notesCtrl, _deliveryAddressCtrl]),
+      builder: (context, _) {
+        final t = _readTotals();
+        final set = <String>[
+          if (t.discount > 0) '${s.discount} ${CurrencyFormatter.format(t.discount)}',
+          if (t.delivery > 0) '${s.deliveryFee} ${CurrencyFormatter.format(t.delivery)}',
+          if (t.taxRate > 0) '${s.tax} ${t.taxRate.toStringAsFixed(t.taxRate == t.taxRate.roundToDouble() ? 0 : 1)}%',
+          if (!_isEditing && _orderDate != null) formatEntryDateTime(context, _orderDate!),
+          orderStatusLabel(context, _orderStatus),
+          if (_notesCtrl.text.trim().isNotEmpty) s.notes,
+          if (_deliveryAddressCtrl.text.trim().isNotEmpty || _estimatedDeliveryDate != null) s.delivery,
+          if (_isRecurring) s.recurringOrder,
+        ];
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => setState(() => _showMore = !_showMore),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  ThinIcon(tabler.Adjustments.new, color: cs.primary, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.moreOptions, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        if (!_showMore)
+                          Text(
+                            set.join(' · '),
+                            style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  ThinIcon(_showMore ? tabler.ChevronUp.new : tabler.ChevronDown.new, size: 20, color: cs.outline),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildMoreOptions(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    return [
+                const SizedBox(height: 16),
+                _buildPricingSection(theme, cs),
+                const SizedBox(height: 16),
 
                 if (_canSetOrderDate) ...[
                   EntryDateField(
@@ -682,15 +843,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-
-                _buildItemsSection(theme, cs),
-                const SizedBox(height: 16),
-
-                _buildPricingSection(theme, cs),
-                const SizedBox(height: 16),
-
-                _buildPaymentSection(theme, cs),
-                const SizedBox(height: 16),
 
                 _buildStatusSection(theme, cs),
                 const SizedBox(height: 16),
@@ -801,16 +953,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       ],
                     ),
                   ),
-
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-
-          _buildFooter(theme, cs),
-        ],
-      ),
-    );
+    ];
   }
 
   Widget _buildCustomerSection(ThemeData theme, ColorScheme cs) {
@@ -839,9 +982,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                           ),
                       ],
                     )
-                  : Text(
-                      AppStrings.of(context).selectCustomer,
-                      style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppStrings.of(context).walkInCustomer, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          AppStrings.of(context).selectCustomer,
+                          style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                        ),
+                      ],
                     ),
             ),
             if (_selectedCustomer != null)
@@ -894,6 +1043,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             ),
           ],
         ),
+        _buildQuickAdd(cs),
         if (_items.isEmpty)
           GestureDetector(
             onTap: _pickProducts,
@@ -935,7 +1085,37 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  static const double _itemControlsWidth = 2 + 28 + 20 + 28 + 12 + 70 + 4 + 16;
+  /// One-tap chips of the products sold most often lately. Nothing shows
+  /// until there are sales to learn from, or while they load.
+  Widget _buildQuickAdd(ColorScheme cs) {
+    final products = ref.watch(quickAddProductsProvider).value ?? const <Product>[];
+    if (products.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final p in products)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: ActionChip(
+                  avatar: ThinIcon(tabler.Plus.new, size: 16, color: cs.primary),
+                  label: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 160),
+                    child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                  tooltip: AppStrings.of(context).quickAdd,
+                  onPressed: () => _quickAdd(p),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const double _itemControlsWidth =2 + 28 + 20 + 28 + 12 + 70 + 4 + 16;
 
   static const double _minItemNameWidth = 48;
 
@@ -1115,7 +1295,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               child: ChoiceChip(
                 label: Text(label),
                 selected: selected,
-                onSelected: (_) => setState(() => _orderStatus = s),
+                onSelected: (_) => setState(() {
+                  _orderStatus = s;
+                  _pickedStatus = true;
+                }),
                 selectedColor: cs.primary.withValues(alpha: 0.15),
                 labelStyle: TextStyle(
                   color: selected ? cs.primary : cs.onSurface,
@@ -1213,26 +1396,58 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         const SizedBox(height: 12),
         Text(s.paymentMethod, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: methods.map((m) {
-            final selected = _paymentMethod == m;
-            return ChoiceChip(
-              label: Text(labels[m] ?? m.name),
-              selected: selected,
-              onSelected: (_) => setState(() => _paymentMethod = m),
-              selectedColor: cs.primary.withValues(alpha: 0.15),
-              labelStyle: TextStyle(
-                color: selected ? cs.primary : cs.onSurface,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            );
-          }).toList(),
-        ),
+        _paymentMethodChips(cs, methods, labels),
         const SizedBox(height: 12),
         AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
       ],
+    );
+  }
+
+  /// A new counter sale's payment: only how it is paid. The transaction ID
+  /// is asked only for a method that has one (not cash).
+  Widget _buildPaymentMethodSection(ThemeData theme, ColorScheme cs) {
+    final s = AppStrings.of(context);
+    final labels = {
+      PaymentMethod.cash: s.cash,
+      PaymentMethod.card: s.card,
+      PaymentMethod.mfs: s.mfs,
+      PaymentMethod.bank: s.bank,
+      PaymentMethod.other: s.other,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(s.paymentMethod, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        _paymentMethodChips(cs, PaymentMethod.values, labels),
+        if (_paymentMethod != PaymentMethod.cash) ...[
+          const SizedBox(height: 12),
+          AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
+        ],
+      ],
+    );
+  }
+
+  Widget _paymentMethodChips(ColorScheme cs, List<PaymentMethod> methods, Map<PaymentMethod, String> labels) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: methods.map((m) {
+        final selected = _paymentMethod == m;
+        return ChoiceChip(
+          label: Text(labels[m] ?? m.name),
+          selected: selected,
+          onSelected: (_) => setState(() {
+            _paymentMethod = m;
+            _pickedPaymentMethod = true;
+          }),
+          selectedColor: cs.primary.withValues(alpha: 0.15),
+          labelStyle: TextStyle(
+            color: selected ? cs.primary : cs.onSurface,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -1298,10 +1513,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                       ))),
                     ],
                   ),
-                  if (t.total > 0 && t.paid > 0)
+                  if (_creditMode && t.total > 0 && t.paid > 0)
                     _summaryRow(s.amountPaid, CurrencyFormatter.format(t.paid), theme,
                         valueColor: AppColors.paymentPaid),
-                  if (t.total > 0 && t.due > 0.005)
+                  if (_creditMode && t.total > 0 && t.due > 0.005)
                     _summaryRow(s.due, CurrencyFormatter.format(t.due), theme,
                         valueColor: AppColors.paymentPartial),
                 ],
@@ -1309,14 +1524,32 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             },
           ),
           const SizedBox(height: 12),
-          AppButton(
-            label: _isEditing ? s.editOrder : s.addOrder,
-            onPressed: _submit,
-            isLoading: _isLoading,
-            isFullWidth: true,
-            height: 50,
-            icon: tabler.Check.new,
-          ),
+          if (_creditMode)
+            AppButton(
+              label: _isEditing ? s.editOrder : s.addOrder,
+              onPressed: _submit,
+              isLoading: _isLoading,
+              isFullWidth: true,
+              height: 50,
+              icon: tabler.Check.new,
+            )
+          else
+            ButtonPair(
+              first: AppButton(
+                label: s.creditOrPartial,
+                variant: AppButtonVariant.outlined,
+                onPressed: _isLoading ? null : _startCredit,
+                height: 50,
+                icon: tabler.Notebook.new,
+              ),
+              second: AppButton(
+                label: s.paidInFull,
+                onPressed: _submitPaidInFull,
+                isLoading: _isLoading,
+                height: 50,
+                icon: tabler.Check.new,
+              ),
+            ),
         ],
       ),
     );

@@ -326,6 +326,11 @@ class _L10nStrings {
   String get taxVat => _l10n.tr('taxVat');
   String get selectCustomer => _l10n.tr('selectCustomer');
   String get pleaseSelectCustomer => _l10n.tr('pleaseSelectCustomer');
+  String get walkInCustomer => _l10n.tr('walkInCustomer');
+  String get customerNeededForCredit => _l10n.tr('customerNeededForCredit');
+  String get creditOrPartial => _l10n.tr('creditOrPartial');
+  String get moreOptions => _l10n.tr('moreOptions');
+  String get quickAdd => _l10n.tr('quickAdd');
   String get addAtLeastOneProduct => _l10n.tr('addAtLeastOneProduct');
   String get orderCreated => _l10n.tr('orderCreated');
   String get orderUpdated => _l10n.tr('orderUpdated');
