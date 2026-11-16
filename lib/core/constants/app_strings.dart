@@ -775,6 +775,31 @@ class _L10nStrings {
   String get helpWhenToUse => _l10n.tr('helpWhenToUse');
   String get helpWorksWith => _l10n.tr('helpWorksWith');
 
+  // Support
+  String get helpAndSupport => _l10n.tr('helpAndSupport');
+  String get faq => _l10n.tr('faq');
+  String get stillNeedHelp => _l10n.tr('stillNeedHelp');
+  String get reportAProblem => _l10n.tr('reportAProblem');
+  String get reportAProblemDesc => _l10n.tr('reportAProblemDesc');
+  String get diagnostics => _l10n.tr('diagnostics');
+  String get diagnosticsDesc => _l10n.tr('diagnosticsDesc');
+  String get describeProblemHint => _l10n.tr('describeProblemHint');
+  String get copy => _l10n.tr('copy');
+  String get diagnosticsCopied => _l10n.tr('diagnosticsCopied');
+  String get privacyPolicy => _l10n.tr('privacyPolicy');
+  String get couldNotOpenLink => _l10n.tr('couldNotOpenLink');
+  List<(String, String)> get supportFaqs => [
+        (_l10n.tr('supportFaqBackupQ'), _l10n.tr('supportFaqBackupA')),
+        (_l10n.tr('supportFaqMoveQ'), _l10n.tr('supportFaqMoveA')),
+        (_l10n.tr('supportFaqRecoverQ'), _l10n.tr('supportFaqRecoverA')),
+        (_l10n.tr('supportFaqMultiDeviceQ'), _l10n.tr('supportFaqMultiDeviceA')),
+        (_l10n.tr('supportFaqCreditQ'), _l10n.tr('supportFaqCreditA')),
+        (_l10n.tr('supportFaqInvoiceQ'), _l10n.tr('supportFaqInvoiceA')),
+        (_l10n.tr('supportFaqCurrencyQ'), _l10n.tr('supportFaqCurrencyA')),
+        (_l10n.tr('supportFaqUpdateQ'), _l10n.tr('supportFaqUpdateA')),
+        (_l10n.tr('supportFaqPrivacyQ'), _l10n.tr('supportFaqPrivacyA')),
+      ];
+
   String paymentRecorded(String amount) =>
       _l10n.tr('paymentRecorded').replaceAll('{amount}', amount);
   String orderStatusNow(String order, String status) =>

@@ -1,6 +1,6 @@
 {
-  "nodeCount": 5928,
-  "edgeCount": 1345,
+  "nodeCount": 5948,
+  "edgeCount": 1349,
   "languages": [
     "c",
     "cpp",
@@ -9,11 +9,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 5928,
+  "totalCount": 5948,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-16T06:06:45.991Z",
-  "lastFile": "Flutter-Release.xcconfig"
+  "syncedAt": "2026-11-16T06:43:54.324Z",
+  "lastFile": "privacy_policy.html"
 }

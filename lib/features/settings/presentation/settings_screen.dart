@@ -971,6 +971,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           _SettingsCard(
             children: [
 
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: brand.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ThinIcon(tabler.Lifebuoy.new,
+                      color: brand.primary, size: 20),
+                ),
+                title: Text(s.helpAndSupport),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => context.push('/settings/support'),
+              ),
+              const Divider(height: 1, indent: 56),
+
               if (ReviewService.hasStoreListing()) ...[
                 ListTile(
                   leading: Container(
