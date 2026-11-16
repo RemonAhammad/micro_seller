@@ -781,6 +781,12 @@ class _L10nStrings {
   String get stillNeedHelp => _l10n.tr('stillNeedHelp');
   String get reportAProblem => _l10n.tr('reportAProblem');
   String get reportAProblemDesc => _l10n.tr('reportAProblemDesc');
+  String get featureRequest => _l10n.tr('featureRequest');
+  String get featureRequestDesc => _l10n.tr('featureRequestDesc');
+  String get featureRequestHint => _l10n.tr('featureRequestHint');
+  String get askAQuestion => _l10n.tr('askAQuestion');
+  String get askAQuestionDesc => _l10n.tr('askAQuestionDesc');
+  String get askAQuestionHint => _l10n.tr('askAQuestionHint');
   String get diagnostics => _l10n.tr('diagnostics');
   String get diagnosticsDesc => _l10n.tr('diagnosticsDesc');
   String get describeProblemHint => _l10n.tr('describeProblemHint');

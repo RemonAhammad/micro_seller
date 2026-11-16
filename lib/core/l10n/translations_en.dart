@@ -1003,6 +1003,13 @@ const translationsEn = <String, String>{
   'stillNeedHelp': 'Still need help?',
   'reportAProblem': 'Report a problem',
   'reportAProblemDesc': 'Describe the issue on GitHub so we can look into it',
+  'featureRequest': 'Feature request',
+  'featureRequestDesc': 'Suggest a new feature or improvement',
+  'featureRequestHint':
+      'Describe the feature you would like and how it would help you:',
+  'askAQuestion': 'Ask a question',
+  'askAQuestionDesc': 'Get help with how something works',
+  'askAQuestionHint': 'What would you like to know?',
   'diagnostics': 'Diagnostics',
   'diagnosticsDesc': 'Sent with your report so we can help faster',
   'describeProblemHint': 'Describe the problem here (what happened, and the steps before it):',

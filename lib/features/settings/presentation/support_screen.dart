@@ -77,14 +77,12 @@ class _SupportScreenState extends State<SupportScreen> {
     }
   }
 
-  Future<void> _reportProblem() async {
+  Future<void> _openIssue({required String title, required String hint}) async {
     final s = AppStrings.of(context);
     final diag = _diagnostics ?? '';
-    final body = '${s.describeProblemHint}\n\n\n\n---\n'
+    final body = '$hint\n\n\n\n---\n'
         '${s.diagnostics}:\n$diag';
-    await _openUri(
-      AppDistribution.newIssueUrl(title: s.reportAProblem, body: body),
-    );
+    await _openUri(AppDistribution.newIssueUrl(title: title, body: body));
   }
 
   Future<void> _copyDiagnostics() async {
@@ -151,7 +149,34 @@ class _SupportScreenState extends State<SupportScreen> {
                 title: Text(s.reportAProblem),
                 subtitle: Text(s.reportAProblemDesc),
                 trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
-                onTap: _reportProblem,
+                onTap: () => _openIssue(
+                  title: s.reportAProblem,
+                  hint: s.describeProblemHint,
+                ),
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: _IconBox(
+                    icon: tabler.Bulb.new, color: Colors.amber.shade700),
+                title: Text(s.featureRequest),
+                subtitle: Text(s.featureRequestDesc),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => _openIssue(
+                  title: s.featureRequest,
+                  hint: s.featureRequestHint,
+                ),
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: _IconBox(
+                    icon: tabler.HelpCircle.new, color: Colors.blue.shade400),
+                title: Text(s.askAQuestion),
+                subtitle: Text(s.askAQuestionDesc),
+                trailing: const ThinIcon(tabler.ChevronRight.new, size: 20),
+                onTap: () => _openIssue(
+                  title: s.askAQuestion,
+                  hint: s.askAQuestionHint,
+                ),
               ),
               if (hasPrivacy) ...[
                 const Divider(height: 1, indent: 56),
