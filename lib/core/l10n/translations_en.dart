@@ -996,4 +996,46 @@ const translationsEn = <String, String>{
   'noPrinterConfigured': 'No printer configured',
   'configurePrinterHint': 'Set up a printer in Settings → POS Printer',
   'notConnected': 'Not connected',
+
+  // Support
+  'helpAndSupport': 'Help & Support',
+  'faq': 'Frequently asked questions',
+  'stillNeedHelp': 'Still need help?',
+  'reportAProblem': 'Report a problem',
+  'reportAProblemDesc': 'Describe the issue on GitHub so we can look into it',
+  'diagnostics': 'Diagnostics',
+  'diagnosticsDesc': 'Sent with your report so we can help faster',
+  'describeProblemHint': 'Describe the problem here (what happened, and the steps before it):',
+  'copy': 'Copy',
+  'diagnosticsCopied': 'Diagnostics copied',
+  'privacyPolicy': 'Privacy Policy',
+  'couldNotOpenLink': 'Could not open the link',
+  // FAQ entries
+  'supportFaqBackupQ': 'How do I back up my data?',
+  'supportFaqBackupA':
+      'Go to Settings → Google Drive Backup and sign in to back up to your Google account, or use Settings → Local Backup to save a backup file you can share or store anywhere. Back up regularly so you never lose your records.',
+  'supportFaqMoveQ': 'How do I move my data to a new phone?',
+  'supportFaqMoveA':
+      'On the old phone, make a backup (Google Drive or Local Backup). On the new phone, install the app and use Restore from the same Drive account, or import the local backup file. This replaces the data on the new phone.',
+  'supportFaqRecoverQ': 'I deleted something by mistake. Can I get it back?',
+  'supportFaqRecoverA':
+      'Yes. Open Settings → Recycle Bin. Deleted customers, products, expenses and categories stay there for 30 days and can be restored. Right after a delete you can also tap Undo on the message that appears.',
+  'supportFaqMultiDeviceQ': 'Can I use the app on two devices at the same time?',
+  'supportFaqMultiDeviceA':
+      'Not yet. The app stores everything on one device. To move to another phone, back up on the first and restore on the second. Live syncing between devices is planned for a future update.',
+  'supportFaqCreditQ': 'How do I sell on credit and track who owes me?',
+  'supportFaqCreditA':
+      'When you create an order, enter only what the customer paid. The rest becomes due and appears in the Due Book, where you can collect payments, send reminders and see each customer\'s balance.',
+  'supportFaqInvoiceQ': 'How do I print or share an invoice?',
+  'supportFaqInvoiceA':
+      'Open an order and use Share, Print or Download. You can send the invoice as a PDF, share it on WhatsApp, or print it. After creating an order you also get quick buttons to share or print right away.',
+  'supportFaqCurrencyQ': 'How do I change the currency or language?',
+  'supportFaqCurrencyA':
+      'Go to Settings. The Language section changes the app language, and the Shop section lets you pick your currency from the list.',
+  'supportFaqUpdateQ': 'How do I update the app?',
+  'supportFaqUpdateA':
+      'If you installed from Google Play, updates arrive there. If you downloaded the app file (APK or iPhone sideload), the app shows a notice when a new version is available, with a Download button. You can also check in Settings → About → Check for updates.',
+  'supportFaqPrivacyQ': 'Is my data private?',
+  'supportFaqPrivacyA':
+      'Your business data stays on your device. It is only uploaded if you turn on Google Drive backup, and then it goes to a private app folder in your own Google account that only this app can read.',
 };

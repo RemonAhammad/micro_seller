@@ -415,7 +415,7 @@
           Software</a> · Privacy</div>
       <h1>Privacy Policy — Micro Seller</h1>
       <div class="hero-meta">
-        <div><strong>Effective date:</strong> 19 April 2026</div>
+        <div><strong>Effective date:</strong> 16 November 2026</div>
         <div><strong>Publisher:</strong> Black Shadow Software Ltd</div>
         <div><strong>Contact:</strong> <a
             href="mailto:blackshadowsoftwareltd@gmail.com">blackshadowsoftwareltd@gmail.com</a></div>
@@ -512,9 +512,22 @@
       messaging, file transfer). The export is created and stored entirely on your device. We have no access to it.</p>
 
     <h2>5. Third parties</h2>
-    <p>Aside from the optional Google Drive backup above, there are <strong>no</strong> third-party services — no
-      analytics providers, ad networks, A/B-testing services, crash reporters, or tracking SDKs of any kind embedded in
-      Micro Seller.</p>
+    <p>There are <strong>no</strong> analytics providers, ad networks, A/B-testing services, crash reporters, or tracking
+      SDKs of any kind embedded in Micro Seller. The app makes outbound network connections only in the cases below, and
+      only the request itself reaches the other service — never your business data:</p>
+    <ul>
+      <li><strong>Google Drive backup</strong> (optional, off by default) — described in section 3.</li>
+      <li><strong>Update checks</strong> — if you installed the app outside the Google Play Store (a downloaded APK, or a
+        sideloaded iPhone build), the app occasionally contacts GitHub's public releases API to see whether a newer
+        version is available. As with any web request your device's IP address is visible to GitHub, but no account,
+        product, customer, or order data is sent. Google Play installs update through Google Play instead.</li>
+      <li><strong>"Report a problem"</strong> (Settings &gt; Help &amp; Support) — opens GitHub in your browser with
+        technical diagnostics pre-filled: app version and build, install source, device platform and OS version, app
+        language, and selected currency. It contains <strong>no</strong> business data (no products, customers, or
+        orders). You decide whether to submit it, and reports posted to GitHub are publicly visible.</li>
+    </ul>
+    <p>The app can also open other apps you choose — for example your browser, or WhatsApp to send a payment reminder you
+      compose. What you share through them is up to you.</p>
 
     <h2>6. Permissions requested</h2>
     <div class="table-scroll">
@@ -540,12 +553,25 @@
           </tr>
           <tr>
             <td>Internet</td>
-            <td>Only used when you opt in to Google Drive backup</td>
+            <td>Used for optional Google Drive backup, and to check for app updates on installs that don't come from the
+              Google Play Store</td>
             <td>Yes — without it, the app still works fully offline</td>
           </tr>
           <tr>
             <td>Google Sign-In</td>
             <td>Only when you enable Google Drive backup</td>
+            <td>Yes — optional feature</td>
+          </tr>
+          <tr>
+            <td>Bluetooth</td>
+            <td>Only if you set up a Bluetooth thermal receipt printer (Settings &gt; POS Printer), to find and connect to
+              it. Scanning is flagged as never used for location.</td>
+            <td>Yes — printing is optional; USB and network printers don't use it</td>
+          </tr>
+          <tr>
+            <td>Local network</td>
+            <td>Only to reach a Wi-Fi / LAN receipt printer you configure. Printing happens directly between your device
+              and the printer.</td>
             <td>Yes — optional feature</td>
           </tr>
         </tbody>
@@ -600,6 +626,8 @@
         <li>Nothing is collected by us. No analytics, no ads, no tracking, no account.</li>
         <li>Google Drive backup is opt-in — the data goes to <em>your</em> Drive, not ours, in an app-specific folder we
           cannot read outside the app.</li>
+        <li>The app only reaches the internet for optional Drive backup, update checks on non-Play installs, and a
+          problem report you choose to send to GitHub — never your business data.</li>
         <li>Camera access is only for scanning codes; photo access only for product images you pick yourself.</li>
         <li>Uninstalling the app removes everything stored locally.</li>
       </ul>
@@ -632,7 +660,7 @@
     <footer>
       © 2026 Black Shadow Software Ltd ·
       <a href="mailto:blackshadowsoftwareltd@gmail.com">blackshadowsoftwareltd@gmail.com</a> ·
-      Last updated 19 April 2026
+      Last updated 16 November 2026
     </footer>
   </div>
 </body>
