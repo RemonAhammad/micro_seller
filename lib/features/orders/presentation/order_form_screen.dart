@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/variant_combination.dart';
 import '../../../data/models/customer.dart';
 import '../providers/order_form_defaults.dart';
 import '../providers/order_provider.dart';
@@ -256,7 +257,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final isar = await ref.read(isarProvider.future);
     if (!mounted) return;
 
-    final hit = await showModalBottomSheet<({Product product, double? qty})>(
+    final hit = await showModalBottomSheet<_ScanHit>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -270,21 +271,24 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     if (hit == null || !mounted) return;
     final labelQty = hit.qty;
     if (labelQty != null) {
-      _addLabelQty(hit.product, labelQty);
+      _addLabelQty(hit.product, labelQty, combination: hit.combination);
     } else {
-      await _addOneOf(isar, hit.product);
+      await _addOneOf(isar, hit.product, combination: hit.combination);
     }
   }
 
   /// A scale label: its weight (or the weight its price buys) goes straight
   /// into the cart. A second label of the same product adds to its line.
-  void _addLabelQty(Product product, double qty) {
+  void _addLabelQty(Product product, double qty, {VariantCombination? combination}) {
     final s = AppStrings.of(context);
-    final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey.isEmpty);
+    final key = combination?.combinationKey ?? '';
+    final name = _lineName(product, combination);
+    final stock = combination?.stockQty ?? product.stockQty;
+    final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey == key);
     final total = roundQty((idx >= 0 ? _items[idx].qty : 0) + qty);
-    if (qtyExceeds(total, product.stockQty)) {
+    if (qtyExceeds(total, stock)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.notEnoughStock(s.qty(product.stockQty, product.unit), product.name))),
+        SnackBar(content: Text(s.notEnoughStock(s.qty(stock, product.unit), name))),
       );
       return;
     }
@@ -293,13 +297,17 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         final existing = _items[idx];
         _items[idx] = existing.copyWith(qty: total, totalPrice: lineTotal(existing.unitPrice, total));
       } else {
-        _items.add(_newItem(product, qty));
+        _items.add(_newItem(product, qty, combination: combination));
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(s.scaleLabelAdded(s.qty(qty, product.unit), product.name))),
+      SnackBar(content: Text(s.scaleLabelAdded(s.qty(qty, product.unit), name))),
     );
   }
+
+  /// "T-Shirt (Size: L)" for a combination, else the product's name.
+  static String _lineName(Product product, VariantCombination? combination) =>
+      combination == null ? product.name : '${product.name} (${combination.displayLabel})';
 
   /// A quick-add chip: the product as it is now (its stock may have moved
   /// since the chips were loaded), then the same path as a scan.
@@ -314,11 +322,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     await _addOneOf(isar, product);
   }
 
-  /// Adds one of [product] to the cart: a variant product opens the picker on
-  /// that product to choose the combination; a simple one adds 1, refused
-  /// past its stock.
-  Future<void> _addOneOf(Isar isar, Product product) async {
-    if (product.hasVariants) {
+  /// Adds one of [product] (of its [combination], when a scan of that
+  /// combination's SKU named it) to the cart: a variant product without one
+  /// opens the picker on that product to choose it; otherwise 1 is added
+  /// (or, for weighed goods, the quantity sheet asks), refused past stock.
+  Future<void> _addOneOf(Isar isar, Product product, {VariantCombination? combination}) async {
+    if (product.hasVariants && combination == null) {
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -340,7 +349,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     }
 
     final s = AppStrings.of(context);
-    final stock = product.stockQty;
+    final key = combination?.combinationKey ?? '';
+    final name = _lineName(product, combination);
+    final stock = combination?.stockQty ?? product.stockQty;
     if (stock <= 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -351,16 +362,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     }
 
     final idx = _items.indexWhere(
-      (i) => i.productId == product.id && i.variantCombinationKey.isEmpty,
+      (i) => i.productId == product.id && i.variantCombinationKey == key,
     );
 
     // Weighed / measured goods: ask how much (or for how much money).
     if (product.unit.allowsDecimal) {
       final qty = await showQuantitySheet(
         context,
-        productName: product.name,
+        productName: name,
         unit: product.unit,
-        unitPrice: product.sellingPrice,
+        unitPrice: product.sellingPrice + (combination?.priceAdjustment ?? 0),
         available: stock,
         initial: idx >= 0 ? _items[idx].qty : null,
       );
@@ -370,7 +381,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           final existing = _items[idx];
           _items[idx] = existing.copyWith(qty: qty, totalPrice: lineTotal(existing.unitPrice, qty));
         } else {
-          _items.add(_newItem(product, qty));
+          _items.add(_newItem(product, qty, combination: combination));
         }
       });
       return;
@@ -382,7 +393,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(s.notEnoughStock(s.qty(stock, product.unit), product.name)),
+              content: Text(s.notEnoughStock(s.qty(stock, product.unit), name)),
             ),
           );
         }
@@ -395,22 +406,28 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         );
       });
     } else {
-      setState(() => _items.add(_newItem(product, 1)));
+      setState(() => _items.add(_newItem(product, 1, combination: combination)));
     }
   }
 
-  static OrderItem _newItem(Product product, double qty) => OrderItem(
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku,
-        qty: qty,
-        unit: product.unit,
-        unitPrice: product.sellingPrice,
-        costPrice: product.costPrice,
-        totalPrice: lineTotal(product.sellingPrice, qty),
-        variantCombinationKey: '',
-        variantDisplayLabel: '',
-      );
+  /// A new cart line, priced and labelled as the picker does for a
+  /// [combination]: its price adjustment, its own SKU when it has one.
+  static OrderItem _newItem(Product product, double qty, {VariantCombination? combination}) {
+    final price = product.sellingPrice + (combination?.priceAdjustment ?? 0);
+    final comboSku = combination?.sku ?? '';
+    return OrderItem(
+      productId: product.id,
+      productName: product.name,
+      productSku: comboSku.isNotEmpty ? comboSku : product.sku,
+      qty: qty,
+      unit: product.unit,
+      unitPrice: price,
+      costPrice: product.costPrice,
+      totalPrice: lineTotal(price, qty),
+      variantCombinationKey: combination?.combinationKey ?? '',
+      variantDisplayLabel: combination?.displayLabel ?? '',
+    );
+  }
 
   /// The stock a cart line may take: its combination's or the product's, as
   /// it is now in the database. Null when the product is gone.
@@ -2036,7 +2053,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                     FittedBox(
                                                       fit: BoxFit.scaleDown,
                                                       child: Text(
-                                                        CurrencyFormatter.format(comboPrice),
+                                                        AppStrings.of(context).pricePer(CurrencyFormatter.format(comboPrice), p.unit),
                                                         style: TextStyle(fontSize: 12, color: cs.primary),
                                                         maxLines: 1,
                                                       ),
@@ -2623,6 +2640,10 @@ class _InvoiceActionTileState extends State<_InvoiceActionTile> {
   }
 }
 
+/// What the order form's scanner found: the product, the combination whose
+/// own SKU was scanned (if any), and a scale label's quantity (if any).
+typedef _ScanHit = ({Product product, VariantCombination? combination, double? qty});
+
 class _ScannerSheet extends ConsumerStatefulWidget {
   final Isar isar;
   final DeviceChannel deviceChannel;
@@ -2680,7 +2701,11 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
         return;
       }
 
-      if (!product.hasVariants && product.stockQty <= 0) {
+      final combination = hit!.combination;
+      final noStock = combination != null
+          ? combination.stockQty <= 0
+          : !product.hasVariants && product.stockQty <= 0;
+      if (noStock) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppStrings.of(context).outOfStock)),
         );
@@ -2701,7 +2726,11 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
         }
       }
 
-      Navigator.of(context).pop((product: product, qty: hit!.label?.qtyFor(product)));
+      Navigator.of(context).pop((
+        product: product,
+        combination: combination,
+        qty: hit.label?.qtyFor(product, combination: combination),
+      ));
     });
   }
 

@@ -1,6 +1,6 @@
 {
-  "nodeCount": 6171,
-  "edgeCount": 1541,
+  "nodeCount": 6173,
+  "edgeCount": 1545,
   "languages": [
     "c",
     "cpp",
@@ -9,11 +9,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 6171,
+  "totalCount": 6173,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-16T13:06:18.089Z",
-  "lastFile": "scale_barcode_test.dart"
+  "syncedAt": "2026-11-16T15:22:02.393Z",
+  "lastFile": "product_repository.dart"
 }

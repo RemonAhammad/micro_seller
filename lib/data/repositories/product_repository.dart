@@ -39,15 +39,34 @@ class ProductRepository {
   /// A scan: the product whose code it is, as [findByScannedCode], else —
   /// when scale labels are on — the product whose code is the label's item
   /// code, with the label (its weight or price) to fill the quantity.
-  Future<({Product product, ScaleLabel? label})?> findByScan(
+  /// [combination] is set when the code is one combination's own SKU (and
+  /// not the product's QR code or SKU), so a scan of a variant picks it.
+  Future<({Product product, VariantCombination? combination, ScaleLabel? label})?> findByScan(
       String raw, ScaleLabelSettings scale) async {
     final direct = await findByScannedCode(raw);
-    if (direct != null) return (product: direct, label: null);
+    if (direct != null) {
+      return (product: direct, combination: scannedCombination(direct, barcodeLookupForms(raw)), label: null);
+    }
     final label = parseScaleLabel(raw, scale);
     if (label == null) return null;
     for (final form in label.itemCodeForms) {
       final product = await findByScannedCode(form);
-      if (product != null) return (product: product, label: label);
+      if (product != null) {
+        return (product: product, combination: scannedCombination(product, [form]), label: label);
+      }
+    }
+    return null;
+  }
+
+  /// The active combination of [product] whose own SKU is one of [forms],
+  /// or null when the code is the product's (its QR code or SKU) or none.
+  static VariantCombination? scannedCombination(Product product, List<String> forms) {
+    final codes = {for (final f in forms) f.toLowerCase()};
+    if (codes.contains(product.qrCode.toLowerCase()) || codes.contains(product.sku.toLowerCase())) {
+      return null;
+    }
+    for (final c in product.variantCombinations) {
+      if (c.isActive && c.sku.isNotEmpty && codes.contains(c.sku.toLowerCase())) return c;
     }
     return null;
   }

@@ -9,6 +9,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/scale_barcode.dart';
 import '../../../data/models/order.dart' show lineTotal;
 import '../../../data/models/product.dart';
+import '../../../data/models/variant_combination.dart';
 import '../../../data/repositories/product_repository.dart';
 import '../../../data/services/device_channel.dart';
 import '../../../data/services/isar_service.dart';
@@ -35,6 +36,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   /// The scan read as a shop scale's label, when scale labels are on.
   ScaleLabel? _label;
+
+  /// The combination whose own SKU was scanned, if any.
+  VariantCombination? _combination;
   bool _searching = false;
   bool _paused = false;
 
@@ -70,6 +74,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     setState(() {
       _scannedCode = value;
       _matchedProduct = null;
+      _combination = null;
       _label = null;
       _searching = true;
       _paused = true;
@@ -83,6 +88,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       if (!mounted) return;
       setState(() {
         _matchedProduct = hit?.product;
+        _combination = hit?.combination;
         // Kept even without a match: "Add as new product" then offers the
         // label's item code, which is what the product needs as its code.
         _label = hit?.label ?? parseScaleLabel(value, scale);
@@ -101,9 +107,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     if (label == null) return null;
     final s = AppStrings.of(context);
     final product = _matchedProduct;
-    final qty = product == null ? null : label.qtyFor(product);
+    final combination = _combination;
+    final qty = product == null ? null : label.qtyFor(product, combination: combination);
     final price = label.price ??
-        (product != null && qty != null ? lineTotal(product.sellingPrice, qty) : null);
+        (product != null && qty != null
+            ? lineTotal(product.sellingPrice + (combination?.priceAdjustment ?? 0), qty)
+            : null);
     final parts = <String>[
       if (product == null) '${s.scaleItemCode}: ${label.itemCode}',
       if (product != null && qty != null) s.qty(qty, product.unit),
@@ -116,6 +125,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     setState(() {
       _scannedCode = null;
       _matchedProduct = null;
+      _combination = null;
       _label = null;
       _searching = false;
       _paused = false;
@@ -191,6 +201,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 : _ResultPanel(
                     code: _scannedCode!,
                     product: _matchedProduct,
+                    combination: _combination,
                     labelInfo: _labelInfo(context),
                     searching: _searching,
                     onScanAgain: _resetAndScanAgain,
@@ -217,6 +228,9 @@ class _ResultPanel extends StatelessWidget {
   final String code;
   final Product? product;
 
+  /// The combination whose own SKU was scanned, if any.
+  final VariantCombination? combination;
+
   /// What a scale label carried, when the scan was one.
   final String? labelInfo;
   final bool searching;
@@ -227,6 +241,7 @@ class _ResultPanel extends StatelessWidget {
   const _ResultPanel({
     required this.code,
     required this.product,
+    this.combination,
     this.labelInfo,
     required this.searching,
     required this.onScanAgain,
@@ -315,7 +330,7 @@ class _ResultPanel extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (found) ...[const SizedBox(height: 14), _ProductPreview(product: product!)],
+                      if (found) ...[const SizedBox(height: 14), _ProductPreview(product: product!, combination: combination)],
                     ],
                   ),
                 ),
@@ -382,7 +397,8 @@ class _ResultPanel extends StatelessWidget {
 
 class _ProductPreview extends StatelessWidget {
   final Product product;
-  const _ProductPreview({required this.product});
+  final VariantCombination? combination;
+  const _ProductPreview({required this.product, this.combination});
 
   @override
   Widget build(BuildContext context) {
@@ -417,21 +433,28 @@ class _ProductPreview extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (product.sku.isNotEmpty)
+                if (combination != null)
                   Text(
-                    'SKU: ${product.sku}',
+                    combination!.displayLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, color: cs.primary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                if ((combination?.sku.isNotEmpty ?? false) || product.sku.isNotEmpty)
+                  Text(
+                    'SKU: ${(combination?.sku.isNotEmpty ?? false) ? combination!.sku : product.sku}',
                     style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
                   ),
               ],
             ),
           ),
           Text(
-            AppStrings.of(context).qty(product.totalStock, product.unit),
+            AppStrings.of(context).qty(combination?.stockQty ?? product.totalStock, product.unit),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: product.isOutOfStock
+              color: (combination != null ? combination!.stockQty <= 0 : product.isOutOfStock)
                   ? Colors.red
-                  : product.isLowStock
+                  : combination == null && product.isLowStock
                   ? Colors.orange
                   : Colors.green,
             ),

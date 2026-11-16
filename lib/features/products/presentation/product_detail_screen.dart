@@ -266,7 +266,7 @@ class ProductDetailScreen extends ConsumerWidget {
                                         ),
                                         if (c.priceAdjustment != 0) ...[
                                           Text(
-                                            'Price: ${c.priceAdjustment > 0 ? '+' : ''}${CurrencyFormatter.format(c.priceAdjustment)}',
+                                            '${s.priceAdjustment}: ${s.pricePer('${c.priceAdjustment > 0 ? '+' : ''}${CurrencyFormatter.format(c.priceAdjustment)}', product.unit)}',
                                             style: theme.textTheme.bodySmall?.copyWith(
                                               color: c.priceAdjustment > 0
                                                   ? AppColors.statusCompleted

@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/models/product.dart';
 import '../../data/models/quantity_unit.dart';
+import '../../data/models/variant_combination.dart';
 import 'number_input.dart';
 import 'quantity.dart';
 
@@ -107,11 +108,14 @@ class ScaleLabel {
   }
 
   /// How much of [product] the label is for, in the product's unit, or null
-  /// when the label can't say (a variant product, a piece product on a
-  /// weight label, a price that isn't a whole number of pieces, no price).
-  double? qtyFor(Product product) {
-    if (product.hasVariants) return null;
+  /// when the label can't say (a variant product whose [combination] isn't
+  /// known, a piece product on a weight label, a price that isn't a whole
+  /// number of pieces, no price). A price label buys at the combination's
+  /// price when there is one.
+  double? qtyFor(Product product, {VariantCombination? combination}) {
+    if (product.hasVariants && combination == null) return null;
     final unit = product.unit;
+    final unitPrice = product.sellingPrice + (combination?.priceAdjustment ?? 0);
     double? qty;
     final weight = weightKg;
     final labelPrice = price;
@@ -121,8 +125,8 @@ class ScaleLabel {
         QuantityUnit.g || QuantityUnit.ml || QuantityUnit.cm => weight * 1000,
         _ => null,
       };
-    } else if (labelPrice != null && product.sellingPrice > 0) {
-      qty = labelPrice / product.sellingPrice;
+    } else if (labelPrice != null && unitPrice > 0) {
+      qty = labelPrice / unitPrice;
       if (unit.isCounted) qty = isWholeQty(qty) ? qty.roundToDouble() : null;
     }
     if (qty == null) return null;

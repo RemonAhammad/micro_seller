@@ -107,6 +107,14 @@ void main() {
     test('a variant product chooses its combination by hand', () {
       expect(const ScaleLabel(itemCode: '1', weightKg: 1).qtyFor(p(QuantityUnit.kg, variants: true)), isNull);
     });
+
+    test('a known combination: its weight, and a price at its own price', () {
+      final fish = p(QuantityUnit.kg, variants: true);
+      final steak = VariantCombination(combinationKey: 'Cut:Steak', priceAdjustment: 150);
+      expect(const ScaleLabel(itemCode: '1', weightKg: 1.25).qtyFor(fish, combination: steak), 1.25);
+      // 650 + 150 = 800 per kg: 1000 buys 1.25 kg.
+      expect(const ScaleLabel(itemCode: '1', price: 1000).qtyFor(fish, combination: steak), 1.25);
+    });
   });
 
   group('ScaleLabelSettings', () {
@@ -150,6 +158,34 @@ void main() {
 
       expect(await repo.findByScan(ean13('211234501250'), const ScaleLabelSettings()), isNull,
           reason: 'labels off: the code is looked up as it is');
+    });
+
+    test('a variant\'s own SKU picks that combination, directly or on a label', () async {
+      final isar = await openTestIsar('scan_variant');
+      await isar.writeTxn(() async {
+        await isar.products.put(Product(
+          name: 'Rui fish',
+          sellingPrice: 650,
+          sku: 'RUI',
+          unit: QuantityUnit.kg,
+          variantCombinations: [
+            VariantCombination(combinationKey: 'Cut:Whole', displayLabel: 'Cut: Whole', sku: '12345', stockQty: 8),
+            VariantCombination(combinationKey: 'Cut:Steak', displayLabel: 'Cut: Steak', sku: '12346', stockQty: 3),
+          ],
+        ));
+      });
+      final repo = ProductRepository(isar);
+
+      final label = (await repo.findByScan(ean13('211234601250'), weight))!;
+      expect(label.combination!.combinationKey, 'Cut:Steak');
+      expect(label.label!.qtyFor(label.product, combination: label.combination), 1.25);
+
+      final direct = (await repo.findByScan('12345', weight))!;
+      expect(direct.combination!.combinationKey, 'Cut:Whole');
+      expect(direct.label, isNull);
+
+      final product = (await repo.findByScan('rui', weight))!;
+      expect(product.combination, isNull, reason: 'the product\'s own SKU: choose the combination by hand');
     });
 
     test('a product saved with the whole label code is found as before', () async {

@@ -1192,6 +1192,7 @@ class _CombinationRowState extends State<_CombinationRow> {
                     decoration: InputDecoration(
                       labelText: s.stock,
                       isDense: true,
+                      suffixText: s.unitSymbol(widget.unit).isEmpty ? null : s.unitSymbol(widget.unit),
                     ),
                     keyboardType: qtyKeyboard(widget.unit),
                     inputFormatters: qtyFormatters(widget.unit),
@@ -1199,7 +1200,7 @@ class _CombinationRowState extends State<_CombinationRow> {
                   ),
                   TextField(
                     decoration: InputDecoration(
-                      labelText: s.priceAdjustment,
+                      labelText: s.pricePerUnit(s.priceAdjustment, widget.unit),
                       isDense: true,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
