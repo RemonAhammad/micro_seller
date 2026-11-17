@@ -78,37 +78,47 @@ const ProductSchema = CollectionSchema(
       type: IsarType.long,
     ),
     r'tags': PropertySchema(id: 16, name: r'tags', type: IsarType.stringList),
-    r'unit': PropertySchema(
+    r'trackSerials': PropertySchema(
       id: 17,
+      name: r'trackSerials',
+      type: IsarType.bool,
+    ),
+    r'unit': PropertySchema(
+      id: 18,
       name: r'unit',
       type: IsarType.string,
       enumMap: _ProductunitEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'variantAttributes': PropertySchema(
-      id: 19,
+      id: 20,
       name: r'variantAttributes',
       type: IsarType.objectList,
 
       target: r'VariantAttribute',
     ),
     r'variantCombinations': PropertySchema(
-      id: 20,
+      id: 21,
       name: r'variantCombinations',
       type: IsarType.objectList,
 
       target: r'VariantCombination',
     ),
     r'variants': PropertySchema(
-      id: 21,
+      id: 22,
       name: r'variants',
       type: IsarType.objectList,
 
       target: r'ProductVariant',
+    ),
+    r'warrantyMonths': PropertySchema(
+      id: 23,
+      name: r'warrantyMonths',
+      type: IsarType.long,
     ),
   },
 
@@ -232,26 +242,28 @@ void _productSerialize(
   writer.writeDouble(offsets[14], object.stockQty);
   writer.writeLong(offsets[15], object.supplierId);
   writer.writeStringList(offsets[16], object.tags);
-  writer.writeString(offsets[17], object.unit.name);
-  writer.writeDateTime(offsets[18], object.updatedAt);
+  writer.writeBool(offsets[17], object.trackSerials);
+  writer.writeString(offsets[18], object.unit.name);
+  writer.writeDateTime(offsets[19], object.updatedAt);
   writer.writeObjectList<VariantAttribute>(
-    offsets[19],
+    offsets[20],
     allOffsets,
     VariantAttributeSchema.serialize,
     object.variantAttributes,
   );
   writer.writeObjectList<VariantCombination>(
-    offsets[20],
+    offsets[21],
     allOffsets,
     VariantCombinationSchema.serialize,
     object.variantCombinations,
   );
   writer.writeObjectList<ProductVariant>(
-    offsets[21],
+    offsets[22],
     allOffsets,
     ProductVariantSchema.serialize,
     object.variants,
   );
+  writer.writeLong(offsets[23], object.warrantyMonths);
 }
 
 Product _productDeserialize(
@@ -277,13 +289,14 @@ Product _productDeserialize(
     stockQty: reader.readDoubleOrNull(offsets[14]) ?? 0,
     supplierId: reader.readLongOrNull(offsets[15]) ?? 0,
     tags: reader.readStringList(offsets[16]) ?? const [],
+    trackSerials: reader.readBoolOrNull(offsets[17]) ?? false,
     unit:
-        _ProductunitValueEnumMap[reader.readStringOrNull(offsets[17])] ??
+        _ProductunitValueEnumMap[reader.readStringOrNull(offsets[18])] ??
         QuantityUnit.piece,
-    updatedAt: reader.readDateTimeOrNull(offsets[18]),
+    updatedAt: reader.readDateTimeOrNull(offsets[19]),
     variantAttributes:
         reader.readObjectList<VariantAttribute>(
-          offsets[19],
+          offsets[20],
           VariantAttributeSchema.deserialize,
           allOffsets,
           VariantAttribute(),
@@ -291,7 +304,7 @@ Product _productDeserialize(
         const [],
     variantCombinations:
         reader.readObjectList<VariantCombination>(
-          offsets[20],
+          offsets[21],
           VariantCombinationSchema.deserialize,
           allOffsets,
           VariantCombination(),
@@ -299,12 +312,13 @@ Product _productDeserialize(
         const [],
     variants:
         reader.readObjectList<ProductVariant>(
-          offsets[21],
+          offsets[22],
           ProductVariantSchema.deserialize,
           allOffsets,
           ProductVariant(),
         ) ??
         const [],
+    warrantyMonths: reader.readLongOrNull(offsets[23]) ?? 0,
   );
   object.legacyLowStockThreshold = reader.readLong(offsets[8]);
   object.legacyStockQty = reader.readLong(offsets[13]);
@@ -353,12 +367,14 @@ P _productDeserializeProp<P>(
     case 16:
       return (reader.readStringList(offset) ?? const []) as P;
     case 17:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 18:
       return (_ProductunitValueEnumMap[reader.readStringOrNull(offset)] ??
               QuantityUnit.piece)
           as P;
-    case 18:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 19:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 20:
       return (reader.readObjectList<VariantAttribute>(
                 offset,
                 VariantAttributeSchema.deserialize,
@@ -367,7 +383,7 @@ P _productDeserializeProp<P>(
               ) ??
               const [])
           as P;
-    case 20:
+    case 21:
       return (reader.readObjectList<VariantCombination>(
                 offset,
                 VariantCombinationSchema.deserialize,
@@ -376,7 +392,7 @@ P _productDeserializeProp<P>(
               ) ??
               const [])
           as P;
-    case 21:
+    case 22:
       return (reader.readObjectList<ProductVariant>(
                 offset,
                 ProductVariantSchema.deserialize,
@@ -385,6 +401,8 @@ P _productDeserializeProp<P>(
               ) ??
               const [])
           as P;
+    case 23:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -2507,6 +2525,16 @@ extension ProductQueryFilter
     });
   }
 
+  QueryBuilder<Product, Product, QAfterFilterCondition> trackSerialsEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'trackSerials', value: value),
+      );
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterFilterCondition> unitEqualTo(
     QuantityUnit value, {
     bool caseSensitive = true,
@@ -2904,6 +2932,63 @@ extension ProductQueryFilter
       );
     });
   }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> warrantyMonthsEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'warrantyMonths', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition>
+  warrantyMonthsGreaterThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'warrantyMonths',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> warrantyMonthsLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'warrantyMonths',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> warrantyMonthsBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'warrantyMonths',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
 }
 
 extension ProductQueryObject
@@ -3128,6 +3213,18 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
     });
   }
 
+  QueryBuilder<Product, Product, QAfterSortBy> sortByTrackSerials() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackSerials', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByTrackSerialsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackSerials', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> sortByUnit() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'unit', Sort.asc);
@@ -3149,6 +3246,18 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
   QueryBuilder<Product, Product, QAfterSortBy> sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByWarrantyMonths() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'warrantyMonths', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByWarrantyMonthsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'warrantyMonths', Sort.desc);
     });
   }
 }
@@ -3360,6 +3469,18 @@ extension ProductQuerySortThenBy
     });
   }
 
+  QueryBuilder<Product, Product, QAfterSortBy> thenByTrackSerials() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackSerials', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByTrackSerialsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackSerials', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> thenByUnit() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'unit', Sort.asc);
@@ -3381,6 +3502,18 @@ extension ProductQuerySortThenBy
   QueryBuilder<Product, Product, QAfterSortBy> thenByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByWarrantyMonths() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'warrantyMonths', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByWarrantyMonthsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'warrantyMonths', Sort.desc);
     });
   }
 }
@@ -3502,6 +3635,12 @@ extension ProductQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Product, Product, QDistinct> distinctByTrackSerials() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'trackSerials');
+    });
+  }
+
   QueryBuilder<Product, Product, QDistinct> distinctByUnit({
     bool caseSensitive = true,
   }) {
@@ -3513,6 +3652,12 @@ extension ProductQueryWhereDistinct
   QueryBuilder<Product, Product, QDistinct> distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
+    });
+  }
+
+  QueryBuilder<Product, Product, QDistinct> distinctByWarrantyMonths() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'warrantyMonths');
     });
   }
 }
@@ -3628,6 +3773,12 @@ extension ProductQueryProperty
     });
   }
 
+  QueryBuilder<Product, bool, QQueryOperations> trackSerialsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'trackSerials');
+    });
+  }
+
   QueryBuilder<Product, QuantityUnit, QQueryOperations> unitProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'unit');
@@ -3658,6 +3809,12 @@ extension ProductQueryProperty
   variantsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'variants');
+    });
+  }
+
+  QueryBuilder<Product, int, QQueryOperations> warrantyMonthsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'warrantyMonths');
     });
   }
 }
@@ -3705,6 +3862,8 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
           .toList() ??
       const [],
   supplierId: (json['supplierId'] as num?)?.toInt() ?? 0,
+  trackSerials: json['trackSerials'] as bool? ?? false,
+  warrantyMonths: (json['warrantyMonths'] as num?)?.toInt() ?? 0,
   expiryDate: json['expiryDate'] == null
       ? null
       : DateTime.parse(json['expiryDate'] as String),
@@ -3735,6 +3894,8 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
   'variantAttributes': instance.variantAttributes,
   'variantCombinations': instance.variantCombinations,
   'supplierId': instance.supplierId,
+  'trackSerials': instance.trackSerials,
+  'warrantyMonths': instance.warrantyMonths,
   'expiryDate': instance.expiryDate?.toIso8601String(),
   'createdAt': instance.createdAt?.toIso8601String(),
   'updatedAt': instance.updatedAt?.toIso8601String(),

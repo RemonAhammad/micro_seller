@@ -3,16 +3,21 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../data/models/order_item.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/constants/app_strings.dart';
 
 class OrderItemRow extends StatelessWidget {
   final OrderItem item;
   final bool showDivider;
 
+  /// The order's date, from which the warranty is counted.
+  final DateTime? saleDate;
+
   const OrderItemRow({
     super.key,
     required this.item,
     this.showDivider = true,
+    this.saleDate,
   });
 
   static const double _minNameWidth = 64;
@@ -33,6 +38,21 @@ class OrderItemRow extends StatelessWidget {
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
       ),
+      if (item.hasSerials)
+        Text('S/N: ${item.serials.join(', ')}',
+            textDirection: TextDirection.ltr,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
+      if (item.warrantyMonths > 0)
+        Builder(builder: (context) {
+          final s = AppStrings.of(context);
+          final end = saleDate == null ? null : item.warrantyEndsFrom(saleDate!);
+          final text = end == null
+              ? '${s.warrantyMonths}: ${s.warrantyMonthsValue(item.warrantyMonths)}'
+              : (end.isBefore(DateTime.now())
+                  ? s.warrantyExpiredOn(DateFormatter.format(end))
+                  : s.warrantyUntil(DateFormatter.format(end)));
+          return Text(text, style: theme.textTheme.bodySmall);
+        }),
     ];
     return Column(
       children: [

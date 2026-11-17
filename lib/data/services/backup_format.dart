@@ -5,15 +5,19 @@ import '../models/expense.dart';
 import '../models/order.dart';
 import '../models/payment.dart';
 import '../models/product.dart';
+import '../models/product_serial.dart';
 import '../models/purchase.dart';
 import '../models/stock_movement.dart';
 import '../models/sales_target.dart';
 import '../models/supplier.dart';
 
+/// 7: `productSerials` (serial numbers of products that track them), and
+/// products, order and purchase items carry `trackSerials` /
+/// `warrantyMonths` / `serials`. Older files restore with none.
 /// 6: quantities may have decimals (`stockQty`, `qty`, `lowStockThreshold`
 /// as doubles) and products and items carry a `unit`. Older files restore
 /// unchanged: their whole numbers read as doubles, a missing unit as piece.
-const kBackupVersion = 6;
+const kBackupVersion = 7;
 
 Map<String, Object?> buildBackupMap({
   required List<Product> products,
@@ -27,6 +31,7 @@ Map<String, Object?> buildBackupMap({
   required List<CashRegister> cashRegisters,
   required List<Payment> payments,
   required List<SalesTarget> salesTargets,
+  List<ProductSerial> productSerials = const [],
   Map<String, dynamic>? settings,
   DateTime? timestamp,
 }) =>
@@ -45,5 +50,6 @@ Map<String, Object?> buildBackupMap({
       'cashRegisters': cashRegisters.map((e) => e.toJson()).toList(),
       'payments': payments.map((e) => e.toJson()).toList(),
       'salesTargets': salesTargets.map((e) => e.toJson()).toList(),
+      'productSerials': productSerials.map((e) => e.toJson()).toList(),
       if (settings != null) 'settings': settings,
     };

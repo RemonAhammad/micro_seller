@@ -7,6 +7,7 @@ import 'package:flutter_thermal_printer/utils/printer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/order.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/item_notes.dart';
 import '../../core/utils/quantity.dart';
 import '../../core/utils/date_formatter.dart';
 
@@ -185,6 +186,13 @@ class PosPrinterService {
       } else {
         lines.add(name);
         lines.add(_rightAlign('$qty  $price', cols));
+      }
+      // Indented, cut to the paper's width (a long serial list wraps).
+      for (final note in documentItemNotes(item, order.createdAt)) {
+        final width = cols - 2;
+        for (var i = 0; i < note.length; i += width) {
+          lines.add('  ${note.substring(i, i + width > note.length ? note.length : i + width)}');
+        }
       }
     }
 

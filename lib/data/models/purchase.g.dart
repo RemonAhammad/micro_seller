@@ -1657,19 +1657,24 @@ const PurchaseItemSchema = Schema(
       name: r'quantity',
       type: IsarType.double,
     ),
-    r'totalCost': PropertySchema(
+    r'serials': PropertySchema(
       id: 4,
+      name: r'serials',
+      type: IsarType.stringList,
+    ),
+    r'totalCost': PropertySchema(
+      id: 5,
       name: r'totalCost',
       type: IsarType.double,
     ),
     r'unit': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'unit',
       type: IsarType.string,
       enumMap: _PurchaseItemunitEnumValueMap,
     ),
     r'unitCost': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'unitCost',
       type: IsarType.double,
     ),
@@ -1688,6 +1693,13 @@ int _purchaseItemEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.productName.length * 3;
+  bytesCount += 3 + object.serials.length * 3;
+  {
+    for (var i = 0; i < object.serials.length; i++) {
+      final value = object.serials[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.unit.name.length * 3;
   return bytesCount;
 }
@@ -1702,9 +1714,10 @@ void _purchaseItemSerialize(
   writer.writeString(offsets[1], object.productName);
   writer.writeLong(offsets[2], object.legacyQty);
   writer.writeDouble(offsets[3], object.qty);
-  writer.writeDouble(offsets[4], object.totalCost);
-  writer.writeString(offsets[5], object.unit.name);
-  writer.writeDouble(offsets[6], object.unitCost);
+  writer.writeStringList(offsets[4], object.serials);
+  writer.writeDouble(offsets[5], object.totalCost);
+  writer.writeString(offsets[6], object.unit.name);
+  writer.writeDouble(offsets[7], object.unitCost);
 }
 
 PurchaseItem _purchaseItemDeserialize(
@@ -1717,11 +1730,12 @@ PurchaseItem _purchaseItemDeserialize(
     productId: reader.readLongOrNull(offsets[0]) ?? 0,
     productName: reader.readStringOrNull(offsets[1]) ?? '',
     qty: reader.readDoubleOrNull(offsets[3]) ?? 0,
-    totalCost: reader.readDoubleOrNull(offsets[4]) ?? 0.0,
+    serials: reader.readStringList(offsets[4]) ?? const [],
+    totalCost: reader.readDoubleOrNull(offsets[5]) ?? 0.0,
     unit:
-        _PurchaseItemunitValueEnumMap[reader.readStringOrNull(offsets[5])] ??
+        _PurchaseItemunitValueEnumMap[reader.readStringOrNull(offsets[6])] ??
         QuantityUnit.piece,
-    unitCost: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
+    unitCost: reader.readDoubleOrNull(offsets[7]) ?? 0.0,
   );
   object.legacyQty = reader.readLong(offsets[2]);
   return object;
@@ -1743,12 +1757,14 @@ P _purchaseItemDeserializeProp<P>(
     case 3:
       return (reader.readDoubleOrNull(offset) ?? 0) as P;
     case 4:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 5:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 6:
       return (_PurchaseItemunitValueEnumMap[reader.readStringOrNull(offset)] ??
               QuantityUnit.piece)
           as P;
-    case 6:
+    case 7:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2102,6 +2118,200 @@ extension PurchaseItemQueryFilter
 
           epsilon: epsilon,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'serials',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'serials',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'serials', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'serials', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<PurchaseItem, PurchaseItem, QAfterFilterCondition>
+  serialsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'serials',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
       );
     });
   }
@@ -2468,12 +2678,16 @@ PurchaseItem _$PurchaseItemFromJson(Map<String, dynamic> json) => PurchaseItem(
       QuantityUnit.piece,
   unitCost: (json['unitCost'] as num?)?.toDouble() ?? 0.0,
   totalCost: (json['totalCost'] as num?)?.toDouble() ?? 0.0,
+  serials:
+      (json['serials'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$PurchaseItemToJson(PurchaseItem instance) =>
     <String, dynamic>{
       'productId': instance.productId,
       'productName': instance.productName,
+      'serials': instance.serials,
       'qty': instance.qty,
       'unit': _$QuantityUnitEnumMap[instance.unit]!,
       'unitCost': instance.unitCost,

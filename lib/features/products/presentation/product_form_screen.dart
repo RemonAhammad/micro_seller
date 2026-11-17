@@ -13,7 +13,10 @@ import 'dart:io';
 import 'package:isar_community/isar.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/quantity_unit.dart';
+import '../../../data/models/product_serial.dart';
 import '../../../data/models/supplier.dart';
+import '../../../data/services/serial_service.dart';
+import '../../../shared/widgets/serial_sheet.dart';
 import '../../../data/models/variant_attribute.dart';
 import '../../../data/models/variant_combination.dart';
 import '../providers/product_provider.dart';
@@ -34,7 +37,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/scanner_camera.dart';
 import '../../../shared/screens/qr_scanner_screen.dart';
 import '../../suppliers/presentation/supplier_form_screen.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
 class ProductFormScreen extends ConsumerStatefulWidget {
@@ -72,6 +75,60 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   /// What the prices and stock count: per piece, per kg, …
   QuantityUnit _unit = QuantityUnit.piece;
+
+  // Serial numbers and warranty: offered only for a product sold by the
+  // piece, without variants.
+  bool _trackSerials = false;
+  final _warrantyCtrl = TextEditingController();
+
+  /// The product's serials as saved (every status), for an edit.
+  List<ProductSerial> _savedSerials = const [];
+
+  /// Serials typed in this edit, not saved yet.
+  final List<String> _addedSerials = [];
+
+  /// Saved in-stock serials taken out in this edit (lower case).
+  final Set<String> _removedSerials = {};
+
+  bool get _hasVariants => _attributes.isNotEmpty || _combinations.isNotEmpty;
+  bool get _serialsOffered => _unit == QuantityUnit.piece && !_hasVariants;
+  bool get _usesSerials => _trackSerials && _serialsOffered;
+
+  /// The saved serials still in stock and not removed, then the new ones.
+  List<String> get _serialsInStock => [
+        for (final x in _savedSerials)
+          if (x.isInStock && !_removedSerials.contains(x.serial.toLowerCase())) x.serial,
+        ..._addedSerials,
+      ];
+
+  /// With serials tracked, the stock field shows their count.
+  void _syncSerialStock() {
+    if (_usesSerials) _stockCtrl.text = '${_serialsInStock.length}';
+  }
+
+  Future<void> _editSerials() async {
+    final s = AppStrings.of(context);
+    final result = await showSerialEntrySheet(
+      context,
+      productName: _nameCtrl.text.trim().isEmpty ? s.serialNumbers : _nameCtrl.text.trim(),
+      initial: _addedSerials,
+      taken: [for (final x in _savedSerials) x.serial],
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _addedSerials
+        ..clear()
+        ..addAll(result);
+      _syncSerialStock();
+    });
+  }
+
+  void _removeSerial(String serial) {
+    setState(() {
+      if (!_addedSerials.remove(serial)) _removedSerials.add(serial.toLowerCase());
+      _syncSerialStock();
+    });
+  }
 
   String? _imagePath;
   DateTime? _expiryDate;
@@ -123,6 +180,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         product.costPrice > 0 ? product.costPrice.toString() : '';
     _unit = product.unit;
     _stockCtrl.text = qtyFieldText(product.stockQty);
+    _trackSerials = product.trackSerials;
+    _warrantyCtrl.text = product.warrantyMonths > 0 ? '${product.warrantyMonths}' : '';
+    if (product.trackSerials) {
+      final isar = await ref.read(isarProvider.future);
+      final saved = await SerialService.ofProduct(isar, product.id);
+      if (mounted) {
+        setState(() {
+          _savedSerials = saved;
+          _syncSerialStock();
+        });
+      }
+    }
     _thresholdCtrl.text =
         product.lowStockThreshold > 0 ? qtyFieldText(product.lowStockThreshold) : '';
     _categoryCtrl.text = product.category;
@@ -172,6 +241,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _sellingPriceCtrl.dispose();
     _costPriceCtrl.dispose();
     _stockCtrl.dispose();
+    _warrantyCtrl.dispose();
     _thresholdCtrl.dispose();
     _categoryCtrl.dispose();
     _qrCtrl.dispose();
@@ -513,16 +583,27 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         variantAttributes: variantAttributes,
         variantCombinations: variantCombinations,
         supplierId: _selectedSupplier?.id ?? 0,
+        // Serials and warranty only for a product sold by the piece; picking
+        // another unit saves them off.
+        trackSerials: _usesSerials,
+        warrantyMonths: _unit == QuantityUnit.piece ? (NumberInput.parseInteger(_warrantyCtrl.text) ?? 0) : 0,
         expiryDate: _expiryDate,
         createdAt: existing?.createdAt,
       );
 
+      final removed = [
+        for (final x in _savedSerials)
+          if (x.isInStock && _removedSerials.contains(x.serial.toLowerCase())) x.serial,
+      ];
       if (isEdit) {
-        await ref
-            .read(productProvider.notifier)
-            .updateProduct(product);
+        await ref.read(productProvider.notifier).updateProduct(
+              product,
+              addedSerials: _usesSerials ? _addedSerials : const [],
+              removedSerials: _usesSerials ? removed : const [],
+            );
       } else {
-        await ref.read(productProvider.notifier).addProduct(product);
+        await ref.read(productProvider.notifier).addProduct(product,
+            serials: _usesSerials ? _addedSerials : const []);
       }
 
       if (!mounted) return;
@@ -544,10 +625,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                kDebugMode
+            content: Text(serialErrorMessage(context, e) ??
+                (kDebugMode
                     ? 'Save failed: $e'
-                    : AppStrings.of(context).failedToSaveProduct),
+                    : AppStrings.of(context).failedToSaveProduct)),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 6),
           ),
@@ -814,6 +895,34 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ),
                     ),
+                    if (_unit == QuantityUnit.piece) ...[
+                      const SizedBox(height: 4),
+                      SwitchListTile(
+                        key: const ValueKey('trackSerialsSwitch'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _usesSerials,
+                        title: Text(s.trackSerials),
+                        subtitle: Text(
+                          _hasVariants ? s.trackSerialsNoVariants : s.trackSerialsHint,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        onChanged: _hasVariants
+                            ? null
+                            : (v) => setState(() {
+                                  _trackSerials = v;
+                                  _syncSerialStock();
+                                }),
+                      ),
+                      AppTextField(
+                        label: s.warrantyMonths,
+                        controller: _warrantyCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [IntegerInputFormatter(), LengthLimitingTextInputFormatter(3)],
+                        helperText: s.warrantyHint,
+                        prefixIcon: const ThinIcon(tabler.ShieldCheck.new, size: 20),
+                        textInputAction: TextInputAction.next,
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     _FieldRow(
                       chrome: _kAppFieldChrome,
@@ -854,6 +963,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           label: s.stockQuantity,
                           isRequired: true,
                           controller: _stockCtrl,
+                          readOnly: _usesSerials,
+                          helperText: _usesSerials ? s.serialStockHint : null,
                           keyboardType: qtyKeyboard(_unit),
                           inputFormatters: qtyFormatters(_unit),
                           suffix: _unitSuffix(s.unitSymbol(_unit)),
@@ -871,6 +982,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ],
                     ),
+                    if (_usesSerials) ...[
+                      const SizedBox(height: 12),
+                      _SerialList(
+                        serials: _serialsInStock,
+                        onAdd: _editSerials,
+                        onRemove: _removeSerial,
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     InkWell(
                           borderRadius: BorderRadius.circular(8),
@@ -923,7 +1042,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           _SectionLabel(s.variantAttributes),
-                          if (_attributes.length < 3)
+                          if (_attributes.length < 3 && !_usesSerials)
                             TextButton.icon(
                               onPressed: _addAttribute,
                               icon: const ThinIcon(tabler.Plus.new, size: 16),
@@ -936,7 +1055,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
-                          s.tr('noVariantsHint'),
+                          _usesSerials ? s.serialsNoVariants : s.tr('noVariantsHint'),
                           style: TextStyle(
                             fontSize: 12,
                             color: cs.onSurface.withValues(alpha: 0.5),
@@ -1353,6 +1472,65 @@ class _FieldRow extends StatelessWidget {
         ],
       );
     });
+  }
+}
+
+/// The serial numbers in stock in the product form: count, list, remove,
+/// and Add serials (typed, pasted or scanned).
+class _SerialList extends StatelessWidget {
+  const _SerialList({required this.serials, required this.onAdd, required this.onRemove});
+
+  final List<String> serials;
+  final VoidCallback onAdd;
+  final ValueChanged<String> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: cs.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('${s.serialNumbers} (${serials.length})',
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              TextButton.icon(
+                key: const ValueKey('addSerialsButton'),
+                onPressed: onAdd,
+                icon: const ThinIcon(tabler.Plus.new, size: 16),
+                label: Text(s.addSerials),
+              ),
+            ],
+          ),
+          if (serials.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(s.noSerialsYet, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+            ),
+          for (final serial in serials)
+            Row(
+              children: [
+                Expanded(child: Text(serial, textDirection: TextDirection.ltr)),
+                IconButton(
+                  tooltip: s.remove,
+                  visualDensity: VisualDensity.compact,
+                  icon: const ThinIcon(tabler.X.new, size: 16),
+                  onPressed: () => onRemove(serial),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }
 

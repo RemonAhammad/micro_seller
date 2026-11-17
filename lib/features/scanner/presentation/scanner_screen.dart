@@ -7,7 +7,11 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/scale_barcode.dart';
-import '../../../data/models/order.dart' show lineTotal;
+import '../../../core/utils/date_formatter.dart';
+import '../../../data/models/order.dart';
+import '../../../data/models/product_serial.dart';
+import '../../../data/services/serial_service.dart';
+import '../../../shared/widgets/serial_sheet.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/variant_combination.dart';
 import '../../../data/repositories/product_repository.dart';
@@ -39,6 +43,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   /// The combination whose own SKU was scanned, if any.
   VariantCombination? _combination;
+
+  /// The scan was a unit's serial number (IMEI): that unit, its product and
+  /// the order it went out on.
+  ({ProductSerial unit, Product? product, Order? order})? _serialHit;
   bool _searching = false;
   bool _paused = false;
 
@@ -76,6 +84,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       _matchedProduct = null;
       _combination = null;
       _label = null;
+      _serialHit = null;
       _searching = true;
       _paused = true;
     });
@@ -83,6 +92,19 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     try {
       final isar = await ref.read(isarProvider.future);
       final scale = await ScaleLabelSettings.load();
+
+      // A unit's serial number first: it names one unit, a product code many.
+      final unit = (await SerialService.find(isar, value)).firstOrNull;
+      if (unit != null) {
+        final product = await isar.products.get(unit.productId);
+        final order = unit.orderId > 0 ? await isar.orders.get(unit.orderId) : null;
+        if (!mounted) return;
+        setState(() {
+          _serialHit = (unit: unit, product: product, order: order);
+          _searching = false;
+        });
+        return;
+      }
 
       final hit = await ProductRepository(isar).findByScan(value, scale);
       if (!mounted) return;
@@ -127,6 +149,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       _matchedProduct = null;
       _combination = null;
       _label = null;
+      _serialHit = null;
       _searching = false;
       _paused = false;
     });
@@ -198,6 +221,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             curve: Curves.easeOut,
             child: _scannedCode == null
                 ? const SizedBox.shrink()
+                : _serialHit != null
+                ? _SerialPanel(
+                    hit: _serialHit!,
+                    onScanAgain: _resetAndScanAgain,
+                  )
                 : _ResultPanel(
                     code: _scannedCode!,
                     product: _matchedProduct,
@@ -220,6 +248,82 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         ],
       ),
     ),
+    );
+  }
+}
+
+/// A scanned serial number: its product, where the unit is (in stock,
+/// sold to whom on which order, removed), and its warranty.
+class _SerialPanel extends StatelessWidget {
+  const _SerialPanel({required this.hit, required this.onScanAgain});
+
+  final ({ProductSerial unit, Product? product, Order? order}) hit;
+  final VoidCallback onScanAgain;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final unit = hit.unit;
+    final product = hit.product;
+    final order = hit.order;
+    final (status, color) = serialStatusLabel(context, unit.status);
+    final months = order?.items
+            .where((i) => i.productId == unit.productId)
+            .map((i) => i.warrantyMonths)
+            .firstOrNull ??
+        product?.warrantyMonths ??
+        0;
+    final warranty = unit.status == SerialStatus.sold ? warrantyText(context, unit.soldAt, months) : null;
+    final lines = <(String, Color?)>[
+      (product?.name ?? '—', null),
+      (status, color),
+      if (order != null)
+        ([order.orderNumber, if (order.customerName.isNotEmpty) order.customerName, if (order.customerPhone.isNotEmpty) order.customerPhone].join(' · '), null),
+      if (unit.status == SerialStatus.sold && unit.soldAt != null) (s.serialSoldOn(DateFormatter.format(unit.soldAt)), null),
+      if (warranty != null) (warranty.$1, warranty.$2 ? Colors.green : cs.error),
+      if (unit.status == SerialStatus.sold && warranty == null && months <= 0) (s.warrantyNone, null),
+    ];
+    return Container(
+      key: const ValueKey('serialPanel'),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12)],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(s.serialLookup, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+            Text(unit.serial,
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            const SizedBox(height: 8),
+            for (final (text, c) in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(text, style: TextStyle(color: c, fontWeight: c == null ? null : FontWeight.w600)),
+              ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (order != null)
+                  FilledButton(onPressed: () => context.push('/orders/${order.id}'), child: Text(s.viewOrder)),
+                if (product != null)
+                  OutlinedButton(onPressed: () => context.push('/products/${product.id}'), child: Text(s.viewProduct)),
+                TextButton(onPressed: onScanAgain, child: Text(s.scanAgain)),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

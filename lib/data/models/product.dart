@@ -30,6 +30,8 @@ class Product {
     this.variantAttributes = const [],
     this.variantCombinations = const [],
     this.supplierId = 0,
+    this.trackSerials = false,
+    this.warrantyMonths = 0,
     this.expiryDate,
     this.createdAt,
     this.updatedAt,
@@ -83,6 +85,19 @@ class Product {
   List<VariantCombination> variantCombinations;
 
   int supplierId;
+
+  /// Each unit has its own serial number (IMEI): stock is the number of its
+  /// serials in stock, and a sale picks which ones went. Only for a product
+  /// sold by the piece, without variants (the form offers it only then).
+  bool trackSerials;
+
+  /// Months of warranty from the sale date; 0 = none. Copied onto each order
+  /// line when sold, so a later change doesn't rewrite past receipts.
+  int warrantyMonths;
+
+  /// Whether this product's stock follows its serial numbers.
+  @ignore
+  bool get usesSerials => trackSerials && unit == QuantityUnit.piece && !hasVariants;
 
   DateTime? expiryDate;
   DateTime? createdAt;
@@ -141,6 +156,8 @@ class Product {
     List<VariantAttribute>? variantAttributes,
     List<VariantCombination>? variantCombinations,
     int? supplierId,
+    bool? trackSerials,
+    int? warrantyMonths,
     DateTime? expiryDate,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -164,6 +181,8 @@ class Product {
         variantAttributes: variantAttributes ?? this.variantAttributes,
         variantCombinations: variantCombinations ?? this.variantCombinations,
         supplierId: supplierId ?? this.supplierId,
+        trackSerials: trackSerials ?? this.trackSerials,
+        warrantyMonths: warrantyMonths ?? this.warrantyMonths,
         expiryDate: expiryDate ?? this.expiryDate,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,

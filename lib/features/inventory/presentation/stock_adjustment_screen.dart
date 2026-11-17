@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../data/services/serial_service.dart';
+import '../../../shared/widgets/serial_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
@@ -33,6 +35,34 @@ class _StockAdjustmentScreenState
 
   /// The product's unit (from the live product), for the quantity field.
   QuantityUnit _unit = QuantityUnit.piece;
+
+  /// The product tracks serial numbers: it moves by serial (restock adds
+  /// them, sale / damage picks them), never by a typed quantity.
+  bool _usesSerials = false;
+  String _productName = '';
+  final List<String> _serials = [];
+
+  Future<void> _chooseSerials() async {
+    final isar = await ref.read(isarProvider.future);
+    final units = await SerialService.ofProduct(isar, widget.productId);
+    if (!mounted) return;
+    final List<String>? result;
+    if (_type == StockMovementType.restock) {
+      result = await showSerialEntrySheet(context,
+          productName: _productName, initial: _serials, taken: [for (final u in units) u.serial]);
+    } else {
+      result = await showSerialPickerSheet(context,
+          productName: _productName,
+          available: [for (final u in units) if (u.isInStock) u.serial],
+          selected: _serials);
+    }
+    if (result == null || !mounted) return;
+    setState(() {
+      _serials
+        ..clear()
+        ..addAll(result!);
+    });
+  }
   final _reasonCtrl = TextEditingController();
   StockMovementType _type = StockMovementType.restock;
   bool _isLoading = false;
@@ -90,7 +120,7 @@ class _StockAdjustmentScreenState
   }
 
   Future<void> _submit() async {
-    final qty = parseQty(_qtyCtrl.text, _unit);
+    final qty = _usesSerials ? _serials.length.toDouble() : parseQty(_qtyCtrl.text, _unit);
     if (qty == null || qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.of(context).pleaseEnterValidQty)),
@@ -119,6 +149,7 @@ class _StockAdjustmentScreenState
                 ? (_selectedSupplier?.id ?? 0)
                 : 0,
             at: _date,
+            serials: _usesSerials ? List.of(_serials) : const [],
           );
 
       if (mounted) {
@@ -134,7 +165,7 @@ class _StockAdjustmentScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(AppStrings.of(context).errorOccurred),
+              content: Text(serialErrorMessage(context, e) ?? AppStrings.of(context).errorOccurred),
               backgroundColor: Colors.red),
         );
       }
@@ -159,7 +190,12 @@ class _StockAdjustmentScreenState
           builder: (ctx, snap) {
             final product = snap.data;
             // Kept for _submit: the quantity is read in the product's unit.
-            if (product != null) _unit = product.unit;
+            if (product != null) {
+              _unit = product.unit;
+              _usesSerials = product.usesSerials;
+              _productName = product.name;
+              if (_usesSerials && _type == StockMovementType.adjustment) _type = StockMovementType.restock;
+            }
             if (product != null && !_supplierAutoLoaded) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 _autoLoadProductSupplier(product);
@@ -313,7 +349,9 @@ class _StockAdjustmentScreenState
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: StockMovementType.values.map((type) {
+                    children: StockMovementType.values
+                        .where((t) => !_usesSerials || t != StockMovementType.adjustment)
+                        .map((type) {
                       final (icon, label, color) = switch (type) {
                         StockMovementType.restock => (
                             tabler.ShoppingCartPlus.new,
@@ -339,7 +377,10 @@ class _StockAdjustmentScreenState
                       final isSelected = _type == type;
 
                       return GestureDetector(
-                        onTap: () => setState(() => _type = type),
+                        onTap: () => setState(() {
+                          if (_type != type) _serials.clear();
+                          _type = type;
+                        }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           padding: const EdgeInsets.symmetric(
@@ -446,6 +487,26 @@ class _StockAdjustmentScreenState
                     const SizedBox(height: 12),
                   ],
 
+                  if (_usesSerials)
+                    InkWell(
+                      key: const ValueKey('adjustSerials'),
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: _chooseSerials,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: '${s.serialNumbers} (${_serials.length})',
+                          prefixIcon: const ThinIcon(tabler.Barcode.new),
+                          suffixIcon: const ThinIcon(tabler.ChevronRight.new, size: 18),
+                          helperText: _type == StockMovementType.restock ? s.willAddToStock : s.willDeductFromStock,
+                        ),
+                        child: Text(
+                          _serials.isEmpty
+                              ? (_type == StockMovementType.restock ? s.addSerials : s.pickSerials)
+                              : _serials.join(', '),
+                        ),
+                      ),
+                    )
+                  else
                   AppTextField(
                     label: s.adjustQty,
                     controller: _qtyCtrl,

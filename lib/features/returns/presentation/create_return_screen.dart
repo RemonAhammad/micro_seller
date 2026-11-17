@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/serial_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -24,6 +25,10 @@ class CreateReturnScreen extends ConsumerStatefulWidget {
 
 class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
   late List<double> _returnQtys;
+
+  /// Per item, the serials coming back (all at first); its quantity is
+  /// their count. Empty for lines without serials.
+  late List<List<String>> _returnSerials;
   ReturnReason _reason = ReturnReason.defective;
   final _notesCtrl = TextEditingController();
   final _refundCtrl = TextEditingController();
@@ -33,6 +38,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
   void initState() {
     super.initState();
     _returnQtys = widget.originalOrder.items.map((i) => i.qty).toList();
+    _returnSerials = widget.originalOrder.items.map((i) => List.of(i.serials)).toList();
     _updateRefundAmount();
   }
 
@@ -48,6 +54,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           if (_returnQtys[i] > 0)
             widget.originalOrder.items[i].copyWith(
               qty: _returnQtys[i],
+              serials: _returnSerials[i],
               totalPrice: lineTotal(widget.originalOrder.items[i].unitPrice, _returnQtys[i]),
             ),
       ];
@@ -197,6 +204,11 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: cs.onSurfaceVariant),
                         ),
+                        if (item.hasSerials && _returnSerials[i].isNotEmpty)
+                          Text(
+                            '${s.serialsReturned}: ${_returnSerials[i].join(', ')}',
+                            style: theme.textTheme.bodySmall?.copyWith(color: cs.primary),
+                          ),
                       ],
                     ),
                   ),
@@ -271,6 +283,36 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
 
   Widget _buildQtyControl(int idx, double value, OrderItem item, ColorScheme cs) {
     final max = item.qty;
+    // A serial-numbered line comes back by serial: its value opens the
+    // serial picker over the serials it was sold with.
+    if (item.hasSerials) {
+      return InkWell(
+        key: ValueKey('returnSerials$idx'),
+        borderRadius: BorderRadius.circular(8),
+        onTap: () async {
+          final picked = await showSerialPickerSheet(
+            context,
+            productName: item.displayName,
+            available: item.serials,
+            selected: _returnSerials[idx],
+          );
+          if (picked == null || !mounted) return;
+          setState(() {
+            _returnSerials[idx] = picked;
+            _returnQtys[idx] = picked.length.toDouble();
+            _updateRefundAmount();
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Text('${value.round()} / ${max.round()}', style: const TextStyle(fontWeight: FontWeight.w600)),
+        ),
+      );
+    }
     // A weighed line comes back in any amount up to what was sold: its
     // value opens the quantity sheet instead of stepping by 1 kg.
     if (item.unit.allowsDecimal) {

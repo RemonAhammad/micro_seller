@@ -8,6 +8,7 @@ import '../models/expense.dart';
 import '../models/order.dart';
 import '../models/payment.dart';
 import '../models/product.dart';
+import '../models/product_serial.dart';
 import '../models/purchase.dart';
 import '../models/stock_movement.dart';
 import '../models/supplier.dart';
@@ -34,6 +35,7 @@ const kIsarSchemas = [
   PaymentSchema,
   SalesTargetSchema,
   PromotionSchema,
+  ProductSerialSchema,
 ];
 
 @Riverpod(keepAlive: true)

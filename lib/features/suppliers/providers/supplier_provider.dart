@@ -7,6 +7,7 @@ import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/serial_service.dart';
 
 part 'supplier_provider.g.dart';
 
@@ -126,7 +127,7 @@ class SupplierNotifier extends _$SupplierNotifier {
       final isar = await ref.read(isarProvider.future);
       final at = purchase.createdAt ?? DateTime.now();
       await isar.writeTxn(() async {
-        await isar.purchases.put(purchase.copyWith(createdAt: at));
+        final purchaseId = await isar.purchases.put(purchase.copyWith(createdAt: at));
 
         if (purchase.supplierId > 0) {
           final supplier = await isar.suppliers.get(purchase.supplierId);
@@ -155,6 +156,10 @@ class SupplierNotifier extends _$SupplierNotifier {
           for (final item in items) {
             final product = products[item.productId];
             if (product == null) continue;
+            // A serial-tracked product arrives by serial: one per unit.
+            if (product.usesSerials && item.serials.length != item.qty.round()) {
+              throw SerialsMissingException(product.name);
+            }
             products[item.productId] = product.copyWith(
               stockQty: roundQty(product.stockQty + item.qty),
               costPrice: updateCostPrice && item.unitCost > 0
@@ -177,6 +182,11 @@ class SupplierNotifier extends _$SupplierNotifier {
             await isar.products
                 .putAll([for (final id in changed) products[id]!]);
             await isar.stockMovements.putAll(movements);
+          }
+          for (final item in items) {
+            if (products[item.productId]?.usesSerials ?? false) {
+              await SerialService.add(isar, item.productId, item.serials, purchaseId: purchaseId, at: at);
+            }
           }
         }
       });
@@ -208,11 +218,36 @@ class SupplierNotifier extends _$SupplierNotifier {
             if (item.productId > 0 && item.qty > 0) item,
         ];
         final products = await _productsById(isar, items);
+        // Serials that came with it and are still in stock go; sold ones stay
+        // (their units left with orders), so a tracked product loses only
+        // what was deleted.
+        final serialsRemoved = await SerialService.deleteUnsoldOfPurchase(isar, id, [
+          for (final item in items)
+            if (products[item.productId]?.usesSerials ?? false) item.productId,
+        ]);
+        for (final pid in serialsRemoved.keys) {
+          final fresh = await isar.products.get(pid);
+          if (fresh != null) products[pid] = fresh;
+        }
         final changed = <int>{};
         final movements = <StockMovement>[];
         for (final item in items) {
           final product = products[item.productId];
           if (product == null) continue;
+          if (product.usesSerials) {
+            final n = serialsRemoved.remove(item.productId) ?? 0;
+            if (n > 0) {
+              movements.add(StockMovement(
+                productId: item.productId,
+                productName: item.productName,
+                type: StockMovementType.adjustment,
+                qty: -n.toDouble(),
+                reason: 'Deleted purchase',
+                createdAt: DateTime.now(),
+              ));
+            }
+            continue;
+          }
           products[item.productId] = product.copyWith(
             stockQty: clampStock(product.stockQty - item.qty),
             updatedAt: DateTime.now(),
@@ -229,8 +264,8 @@ class SupplierNotifier extends _$SupplierNotifier {
         }
         if (changed.isNotEmpty) {
           await isar.products.putAll([for (final id in changed) products[id]!]);
-          await isar.stockMovements.putAll(movements);
         }
+        await isar.stockMovements.putAll(movements);
 
         await isar.purchases.delete(id);
       });

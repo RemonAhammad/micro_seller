@@ -78,3 +78,87 @@ final class ProductByIdFamily extends $Family
   @override
   String toString() => r'productByIdProvider';
 }
+
+/// A product's serial numbers, newest first, each with its order; live.
+
+@ProviderFor(productSerials)
+final productSerialsProvider = ProductSerialsFamily._();
+
+/// A product's serial numbers, newest first, each with its order; live.
+
+final class ProductSerialsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<SerialRow>>,
+          List<SerialRow>,
+          Stream<List<SerialRow>>
+        >
+    with $FutureModifier<List<SerialRow>>, $StreamProvider<List<SerialRow>> {
+  /// A product's serial numbers, newest first, each with its order; live.
+  ProductSerialsProvider._({
+    required ProductSerialsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'productSerialsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$productSerialsHash();
+
+  @override
+  String toString() {
+    return r'productSerialsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<SerialRow>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<SerialRow>> create(Ref ref) {
+    final argument = this.argument as int;
+    return productSerials(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProductSerialsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$productSerialsHash() => r'48e923bdbbd0bf4e77d6e5e96023de96b2d2da42';
+
+/// A product's serial numbers, newest first, each with its order; live.
+
+final class ProductSerialsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<SerialRow>>, int> {
+  ProductSerialsFamily._()
+    : super(
+        retry: null,
+        name: r'productSerialsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A product's serial numbers, newest first, each with its order; live.
+
+  ProductSerialsProvider call(int productId) =>
+      ProductSerialsProvider._(argument: productId, from: this);
+
+  @override
+  String toString() => r'productSerialsProvider';
+}

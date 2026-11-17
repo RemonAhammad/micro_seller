@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../../data/services/serial_service.dart';
+import '../../../shared/widgets/serial_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:isar_community/isar.dart';
@@ -170,6 +172,22 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     });
   }
 
+  /// A serial-numbered line: the serials received, in the entry sheet.
+  Future<void> _editItemSerials(int index) async {
+    final item = _items[index];
+    final isar = await ref.read(isarProvider.future);
+    final serials = await enterPurchaseSerials(context, isar, item.productId, item.productName, item.serials);
+    if (serials == null || !mounted || index >= _items.length) return;
+    if (serials.isEmpty) {
+      _removeItem(index);
+      return;
+    }
+    setState(() {
+      final qty = serials.length.toDouble();
+      _items[index] = item.copyWith(qty: qty, serials: serials, totalCost: lineTotal(item.unitCost, qty));
+    });
+  }
+
   void _removeItem(int index) {
     setState(() {
       _items.removeAt(index);
@@ -178,6 +196,11 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   }
 
   void _updateItemQty(int index, int delta) {
+    // A serial-numbered line changes by its serials, not by ± 1.
+    if (_items[index].serials.isNotEmpty) {
+      _editItemSerials(index);
+      return;
+    }
     final newQty = roundQty(_items[index].qty + delta);
     if (newQty <= 0) {
       _removeItem(index);
@@ -229,7 +252,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppStrings.of(context).failedToSavePurchase),
+            content: Text(serialErrorMessage(context, e) ?? AppStrings.of(context).failedToSavePurchase),
             backgroundColor: Colors.red,
           ),
         );
@@ -580,9 +603,21 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(item.productName,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.productName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13)),
+                    if (item.serials.isNotEmpty)
+                      InkWell(
+                        onTap: () => _editItemSerials(index),
+                        child: Text('S/N: ${item.serials.join(', ')}',
+                            textDirection: TextDirection.ltr,
+                            style: TextStyle(fontSize: 12, color: cs.primary)),
+                      ),
+                  ],
+                ),
               ),
               GestureDetector(
                 onTap: () => _removeItem(index),
@@ -863,6 +898,15 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
   }
 }
 
+/// The serials of [productId] received on a purchase line: the entry sheet,
+/// refusing serials the product already has. Null when dismissed.
+Future<List<String>?> enterPurchaseSerials(
+    BuildContext context, Isar isar, int productId, String name, List<String> current) async {
+  final taken = [for (final u in await SerialService.ofProduct(isar, productId)) u.serial];
+  if (!context.mounted) return null;
+  return showSerialEntrySheet(context, productName: name, initial: current, taken: taken);
+}
+
 class _ProductPickerSheet extends StatefulWidget {
   final Isar isar;
   final List<PurchaseItem> currentItems;
@@ -925,6 +969,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   }
 
   void _setQty(Product product, double qty) {
+    // A serial-tracked product arrives by serial: one per unit received.
+    if (product.usesSerials) {
+      _askSerials(product);
+      return;
+    }
     qty = roundQty(qty);
     setState(() {
       final idx = _items.indexWhere((i) => i.productId == product.id);
@@ -943,6 +992,33 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           unit: product.unit,
           unitCost: product.costPrice,
           totalCost: lineTotal(product.costPrice, qty),
+        ));
+      }
+    });
+    widget.onChanged(_items);
+  }
+
+  Future<void> _askSerials(Product product) async {
+    final idx = _items.indexWhere((i) => i.productId == product.id);
+    final current = idx >= 0 ? _items[idx].serials : const <String>[];
+    final serials = await enterPurchaseSerials(context, widget.isar, product.id, product.name, current);
+    if (serials == null || !mounted) return;
+    setState(() {
+      final at = _items.indexWhere((i) => i.productId == product.id);
+      final qty = serials.length.toDouble();
+      if (serials.isEmpty) {
+        if (at >= 0) _items.removeAt(at);
+      } else if (at >= 0) {
+        _items[at] = _items[at].copyWith(qty: qty, serials: serials, totalCost: lineTotal(_items[at].unitCost, qty));
+      } else {
+        _items.add(PurchaseItem(
+          productId: product.id,
+          productName: product.name,
+          qty: qty,
+          unit: product.unit,
+          unitCost: product.costPrice,
+          totalCost: lineTotal(product.costPrice, qty),
+          serials: serials,
         ));
       }
     });

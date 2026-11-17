@@ -87,10 +87,15 @@ class PurchaseItem {
     this.unit = QuantityUnit.piece,
     this.unitCost = 0.0,
     this.totalCost = 0.0,
+    this.serials = const [],
   });
 
   int productId;
   String productName;
+
+  /// The serial numbers received, for a product that tracks them: [qty] is
+  /// their count. Empty for every other line.
+  List<String> serials;
 
   /// In [unit]s, rounded to 3 decimals; stored as `quantity` (see
   /// `OrderItem.qty`).
@@ -117,6 +122,7 @@ class PurchaseItem {
     QuantityUnit? unit,
     double? unitCost,
     double? totalCost,
+    List<String>? serials,
   }) =>
       PurchaseItem(
         productId: productId ?? this.productId,
@@ -125,6 +131,7 @@ class PurchaseItem {
         unit: unit ?? this.unit,
         unitCost: unitCost ?? this.unitCost,
         totalCost: totalCost ?? this.totalCost,
+        serials: serials ?? this.serials,
       );
 
   factory PurchaseItem.fromJson(Map<String, dynamic> json) =>

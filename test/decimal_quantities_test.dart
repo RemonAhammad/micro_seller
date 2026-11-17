@@ -6,6 +6,7 @@ import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:micro_seller/data/models/order.dart';
+import 'package:micro_seller/data/services/backup_format.dart';
 import 'package:micro_seller/data/models/order_item.dart';
 import 'package:micro_seller/data/models/product.dart';
 import 'package:micro_seller/data/models/purchase.dart';
@@ -200,7 +201,7 @@ void main() {
         await isar.products.put(Product(name: 'Cloth', sellingPrice: 250, stockQty: 12.345, unit: QuantityUnit.metre));
       });
       final bytes = encodeBackupBytesSync(isar);
-      expect(jsonDecode(utf8.decode(bytes))['version'], 6);
+      expect(jsonDecode(utf8.decode(bytes))['version'], kBackupVersion, reason: 'decimals arrived in 6');
 
       final other = await openTestIsar('roundtrip2');
       restoreBackupSync(other, parseBackupBytes(bytes));

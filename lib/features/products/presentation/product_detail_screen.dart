@@ -12,6 +12,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../settings/providers/trash_provider.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/serial_sheet.dart';
+import '../../../data/models/product_serial.dart';
 import 'widgets/stock_badge.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
@@ -197,8 +199,14 @@ class ProductDetailScreen extends ConsumerWidget {
                                       ? AppColors.statusPending
                                       : null,
                             ),
+                          if (product.warrantyMonths > 0)
+                            _InfoRow(s.warrantyMonths, s.warrantyMonthsValue(product.warrantyMonths)),
                         ],
                       ),
+                      if (product.usesSerials) ...[
+                        const SizedBox(height: 12),
+                        _SerialsCard(productId: product.id, warrantyMonths: product.warrantyMonths),
+                      ],
                       if (product.hasVariants) ...[
                         const SizedBox(height: 12),
                         _InfoCard(
@@ -354,6 +362,128 @@ class ProductDetailScreen extends ConsumerWidget {
           color: theme.colorScheme.onPrimary.withAlpha(0x4D),
         ),
       );
+}
+
+/// The product's serial numbers: how many in stock / sold / removed, a
+/// search, and each one with its status; a sold one opens its order.
+class _SerialsCard extends ConsumerStatefulWidget {
+  const _SerialsCard({required this.productId, required this.warrantyMonths});
+
+  final int productId;
+  final int warrantyMonths;
+
+  @override
+  ConsumerState<_SerialsCard> createState() => _SerialsCardState();
+}
+
+class _SerialsCardState extends ConsumerState<_SerialsCard> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final theme = Theme.of(context);
+    final rows = ref.watch(productSerialsProvider(widget.productId)).value ?? const <SerialRow>[];
+    int count(SerialStatus st) => rows.where((r) => r.serial.status == st).length;
+    final q = _query.trim().toLowerCase();
+    final shown = [
+      for (final r in rows)
+        if (q.isEmpty || r.serial.serial.toLowerCase().contains(q) || (r.order?.customerName.toLowerCase().contains(q) ?? false)) r,
+    ];
+    return _InfoCard(
+      children: [
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            '${s.serialNumbers} (${rows.length})',
+            style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final st in SerialStatus.values)
+              if (count(st) > 0 || st == SerialStatus.inStock)
+                Builder(builder: (context) {
+                  final (label, color) = serialStatusLabel(context, st);
+                  return Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text('$label ${count(st)}'),
+                    labelStyle: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                    side: BorderSide(color: color.withValues(alpha: 0.4)),
+                  );
+                }),
+          ],
+        ),
+        if (rows.length > 6) ...[
+          const SizedBox(height: 8),
+          TextField(
+            decoration: InputDecoration(
+              isDense: true,
+              labelText: s.searchSerials,
+              prefixIcon: const ThinIcon(tabler.Search.new, size: 18),
+            ),
+            onChanged: (v) => setState(() => _query = v),
+          ),
+        ],
+        const SizedBox(height: 4),
+        for (final r in shown) _SerialTile(row: r, warrantyMonths: widget.warrantyMonths),
+      ],
+    );
+  }
+}
+
+class _SerialTile extends StatelessWidget {
+  const _SerialTile({required this.row, required this.warrantyMonths});
+
+  final SerialRow row;
+  final int warrantyMonths;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final serial = row.serial;
+    final order = row.order;
+    final (label, color) = serialStatusLabel(context, serial.status);
+    final months = order?.items
+            .where((i) => i.productId == serial.productId)
+            .map((i) => i.warrantyMonths)
+            .firstOrNull ??
+        warrantyMonths;
+    final warranty = serial.status == SerialStatus.sold ? warrantyText(context, serial.soldAt, months) : null;
+    final details = [
+      if (order != null) [order.orderNumber, if (order.customerName.isNotEmpty) order.customerName].join(' · '),
+      if (serial.status == SerialStatus.sold && order == null) s.serialsUnknownOrder,
+      if (serial.soldAt != null && serial.status == SerialStatus.sold) s.serialSoldOn(DateFormatter.format(serial.soldAt)),
+      if (warranty != null) warranty.$1,
+    ];
+    return InkWell(
+      onTap: order == null ? null : () => context.push('/orders/${order.id}'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(serial.serial, textDirection: TextDirection.ltr, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  for (final d in details)
+                    Text(d, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _InfoCard extends StatelessWidget {

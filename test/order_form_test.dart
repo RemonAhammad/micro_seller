@@ -11,9 +11,11 @@ import 'package:micro_seller/data/models/customer.dart';
 import 'package:micro_seller/data/models/order.dart';
 import 'package:micro_seller/data/models/order_item.dart';
 import 'package:micro_seller/data/models/product.dart';
+import 'package:micro_seller/data/models/product_serial.dart';
 import 'package:micro_seller/data/models/quantity_unit.dart';
 import 'package:micro_seller/data/models/variant_combination.dart';
 import 'package:micro_seller/data/services/isar_service.dart';
+import 'package:micro_seller/data/services/serial_service.dart';
 import 'package:micro_seller/features/orders/presentation/order_form_screen.dart';
 import 'package:micro_seller/features/orders/providers/order_form_defaults.dart';
 import 'package:micro_seller/features/orders/providers/quick_add_provider.dart';
@@ -161,6 +163,57 @@ void main() {
 
       await tapText(tester, 'Done');
       expect(find.text('orders list'), findsOneWidget);
+    });
+
+    testWidgets('a serial-numbered phone: quick add picks its serial, the sale sells it', (tester) async {
+      await openDb(tester, 'form_serials');
+      late Product phone;
+      await tester.runAsync(() async {
+        await isar.writeTxn(() async {
+          final id = await isar.products.put(
+              Product(name: 'Phone X', sellingPrice: 20000, costPrice: 15000, trackSerials: true, warrantyMonths: 12));
+          await SerialService.add(isar, id, ['IMEI-1', 'IMEI-2']);
+          phone = (await isar.products.get(id))!;
+        });
+      });
+      await pumpForm(tester, quick: [phone]);
+
+      await tapText(tester, 'Phone X');
+      expect(find.text('IMEI-1'), findsOneWidget, reason: 'the serial picker, with the serials in stock');
+      await tester.tap(find.text('IMEI-2'));
+      await tester.pump();
+      await tester.tap(find.textContaining('1 selected'));
+      await settle(tester);
+      expect(find.text('S/N: IMEI-2'), findsOneWidget, reason: 'the cart line shows its serial');
+
+      await tapText(tester, 'Paid in full');
+      final saved = (await orders(tester)).single;
+      expect(saved.items.single.serials, ['IMEI-2']);
+      expect(saved.items.single.qty, 1);
+      expect(saved.items.single.warrantyMonths, 12);
+      expect(saved.totalAmount, 20000);
+      final units = (await tester.runAsync(() => SerialService.ofProduct(isar, phone.id)))!;
+      expect({for (final u in units) u.serial: u.status}, {'IMEI-1': SerialStatus.inStock, 'IMEI-2': SerialStatus.sold});
+      expect((await reload(tester, phone)).stockQty, 1);
+    });
+
+    testWidgets('a serial-numbered phone with nothing picked adds nothing', (tester) async {
+      await openDb(tester, 'form_serials_none');
+      late Product phone;
+      await tester.runAsync(() async {
+        await isar.writeTxn(() async {
+          final id = await isar.products.put(Product(name: 'Phone X', sellingPrice: 20000, trackSerials: true));
+          await SerialService.add(isar, id, ['IMEI-1']);
+          phone = (await isar.products.get(id))!;
+        });
+      });
+      await pumpForm(tester, quick: [phone]);
+      await tapText(tester, 'Phone X');
+      await tester.tap(find.textContaining('0 selected'));
+      await settle(tester);
+      await tapText(tester, 'Paid in full');
+      expect(find.text('Add at least one product'), findsOneWidget);
+      expect(await orders(tester), isEmpty);
     });
 
     testWidgets('Paid in full with nothing in the cart saves nothing', (tester) async {

@@ -21,6 +21,8 @@ class OrderItem {
     this.variantValue = '',
     this.variantCombinationKey = '',
     this.variantDisplayLabel = '',
+    this.serials = const [],
+    this.warrantyMonths = 0,
   });
 
   int productId;
@@ -54,6 +56,21 @@ class OrderItem {
 
   String variantDisplayLabel;
 
+  /// The serial numbers (IMEIs) of the units on this line, for a product that
+  /// tracks them: [qty] is their count. Empty for every other line.
+  List<String> serials;
+
+  /// The product's warranty when it was sold, in months; 0 = none.
+  int warrantyMonths;
+
+  @ignore
+  bool get hasSerials => serials.isNotEmpty;
+
+  /// When the warranty of a line sold on [saleDate] ends; null without one.
+  DateTime? warrantyEndsFrom(DateTime saleDate) => warrantyMonths <= 0
+      ? null
+      : warrantyEnd(saleDate, warrantyMonths);
+
   @ignore
   bool get hasVariant =>
       variantCombinationKey.isNotEmpty ||
@@ -83,6 +100,8 @@ class OrderItem {
     String? variantValue,
     String? variantCombinationKey,
     String? variantDisplayLabel,
+    List<String>? serials,
+    int? warrantyMonths,
   }) =>
       OrderItem(
         productId: productId ?? this.productId,
@@ -98,9 +117,19 @@ class OrderItem {
         variantCombinationKey:
             variantCombinationKey ?? this.variantCombinationKey,
         variantDisplayLabel: variantDisplayLabel ?? this.variantDisplayLabel,
+        serials: serials ?? this.serials,
+        warrantyMonths: warrantyMonths ?? this.warrantyMonths,
       );
 
   factory OrderItem.fromJson(Map<String, dynamic> json) =>
       _$OrderItemFromJson(json);
   Map<String, dynamic> toJson() => _$OrderItemToJson(this);
+}
+
+/// [months] after [from], on the same day of the month, or the month's last
+/// day when it has fewer days (31 Jan + 1 month = 28 / 29 Feb).
+DateTime warrantyEnd(DateTime from, int months) {
+  final firstOfTarget = DateTime(from.year, from.month + months, 1);
+  final lastDay = DateTime(firstOfTarget.year, firstOfTarget.month + 1, 0).day;
+  return DateTime(firstOfTarget.year, firstOfTarget.month, from.day > lastDay ? lastDay : from.day);
 }

@@ -499,6 +499,42 @@ class _L10nStrings {
 
   String get unit => _l10n.tr('unit');
   String get unitHint => _l10n.tr('unitHint');
+  // Serial numbers and warranty
+  String get trackSerials => _l10n.tr('trackSerials');
+  String get trackSerialsHint => _l10n.tr('trackSerialsHint');
+  String get trackSerialsNoVariants => _l10n.tr('trackSerialsNoVariants');
+  String get serialsNoVariants => _l10n.tr('serialsNoVariants');
+  String get warrantyMonths => _l10n.tr('warrantyMonths');
+  String get warrantyHint => _l10n.tr('warrantyHint');
+  String get serialNumbers => _l10n.tr('serialNumbers');
+  String get serialStockHint => _l10n.tr('serialStockHint');
+  String get serialFieldHint => _l10n.tr('serialFieldHint');
+  String get addSerials => _l10n.tr('addSerials');
+  String get scanSerial => _l10n.tr('scanSerial');
+  String get noSerialsYet => _l10n.tr('noSerialsYet');
+  String serialAlreadyAdded(String serial) => _l10n.tr('serialAlreadyAdded').replaceAll('{serial}', serial);
+  String serialNotAvailable(String serial, String name) =>
+      _l10n.tr('serialNotAvailable').replaceAll('{serial}', serial).replaceAll('{name}', name);
+  String serialsMissing(String name) => _l10n.tr('serialsMissing').replaceAll('{name}', name);
+  String get serialsOnePerUnit => _l10n.tr('serialsOnePerUnit');
+  String get pickSerials => _l10n.tr('pickSerials');
+  String get enterSerials => _l10n.tr('enterSerials');
+  String get noSerialsInStock => _l10n.tr('noSerialsInStock');
+  String serialNotInStock(String serial) => _l10n.tr('serialNotInStock').replaceAll('{serial}', serial);
+  String serialsSelected(int count) => _l10n.tr('serialsSelected').replaceAll('{count}', '$count');
+  String get searchSerials => _l10n.tr('searchSerials');
+  String get serialStatusInStock => _l10n.tr('serialStatusInStock');
+  String get serialStatusSold => _l10n.tr('serialStatusSold');
+  String get serialStatusRemoved => _l10n.tr('serialStatusRemoved');
+  String warrantyUntil(String date) => _l10n.tr('warrantyUntil').replaceAll('{date}', date);
+  String warrantyExpiredOn(String date) => _l10n.tr('warrantyExpiredOn').replaceAll('{date}', date);
+  String get warrantyNone => _l10n.tr('warrantyNone');
+  String warrantyMonthsValue(int count) => _l10n.tr('warrantyMonthsValue').replaceAll('{count}', '$count');
+  String get serialLookup => _l10n.tr('serialLookup');
+  String serialSoldOn(String date) => _l10n.tr('serialSoldOn').replaceAll('{date}', date);
+  String get viewOrder => _l10n.tr('viewOrder');
+  String get serialsReturned => _l10n.tr('serialsReturned');
+  String get serialsUnknownOrder => _l10n.tr('serialsUnknownOrder');
   String get quantity => _l10n.tr('quantity');
   String get byAmount => _l10n.tr('byAmount');
   String get byQuantity => _l10n.tr('byQuantity');

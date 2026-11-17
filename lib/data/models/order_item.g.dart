@@ -39,41 +39,51 @@ const OrderItemSchema = Schema(
       name: r'quantity',
       type: IsarType.double,
     ),
-    r'totalPrice': PropertySchema(
+    r'serials': PropertySchema(
       id: 6,
+      name: r'serials',
+      type: IsarType.stringList,
+    ),
+    r'totalPrice': PropertySchema(
+      id: 7,
       name: r'totalPrice',
       type: IsarType.double,
     ),
     r'unit': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'unit',
       type: IsarType.string,
       enumMap: _OrderItemunitEnumValueMap,
     ),
     r'unitPrice': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'unitPrice',
       type: IsarType.double,
     ),
     r'variantCombinationKey': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'variantCombinationKey',
       type: IsarType.string,
     ),
     r'variantDisplayLabel': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'variantDisplayLabel',
       type: IsarType.string,
     ),
     r'variantName': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'variantName',
       type: IsarType.string,
     ),
     r'variantValue': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'variantValue',
       type: IsarType.string,
+    ),
+    r'warrantyMonths': PropertySchema(
+      id: 14,
+      name: r'warrantyMonths',
+      type: IsarType.long,
     ),
   },
 
@@ -91,6 +101,13 @@ int _orderItemEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.productName.length * 3;
   bytesCount += 3 + object.productSku.length * 3;
+  bytesCount += 3 + object.serials.length * 3;
+  {
+    for (var i = 0; i < object.serials.length; i++) {
+      final value = object.serials[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.unit.name.length * 3;
   bytesCount += 3 + object.variantCombinationKey.length * 3;
   bytesCount += 3 + object.variantDisplayLabel.length * 3;
@@ -111,13 +128,15 @@ void _orderItemSerialize(
   writer.writeString(offsets[3], object.productSku);
   writer.writeLong(offsets[4], object.legacyQty);
   writer.writeDouble(offsets[5], object.qty);
-  writer.writeDouble(offsets[6], object.totalPrice);
-  writer.writeString(offsets[7], object.unit.name);
-  writer.writeDouble(offsets[8], object.unitPrice);
-  writer.writeString(offsets[9], object.variantCombinationKey);
-  writer.writeString(offsets[10], object.variantDisplayLabel);
-  writer.writeString(offsets[11], object.variantName);
-  writer.writeString(offsets[12], object.variantValue);
+  writer.writeStringList(offsets[6], object.serials);
+  writer.writeDouble(offsets[7], object.totalPrice);
+  writer.writeString(offsets[8], object.unit.name);
+  writer.writeDouble(offsets[9], object.unitPrice);
+  writer.writeString(offsets[10], object.variantCombinationKey);
+  writer.writeString(offsets[11], object.variantDisplayLabel);
+  writer.writeString(offsets[12], object.variantName);
+  writer.writeString(offsets[13], object.variantValue);
+  writer.writeLong(offsets[14], object.warrantyMonths);
 }
 
 OrderItem _orderItemDeserialize(
@@ -132,15 +151,17 @@ OrderItem _orderItemDeserialize(
     productName: reader.readStringOrNull(offsets[2]) ?? '',
     productSku: reader.readStringOrNull(offsets[3]) ?? '',
     qty: reader.readDoubleOrNull(offsets[5]) ?? 1,
-    totalPrice: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
+    serials: reader.readStringList(offsets[6]) ?? const [],
+    totalPrice: reader.readDoubleOrNull(offsets[7]) ?? 0.0,
     unit:
-        _OrderItemunitValueEnumMap[reader.readStringOrNull(offsets[7])] ??
+        _OrderItemunitValueEnumMap[reader.readStringOrNull(offsets[8])] ??
         QuantityUnit.piece,
-    unitPrice: reader.readDoubleOrNull(offsets[8]) ?? 0.0,
-    variantCombinationKey: reader.readStringOrNull(offsets[9]) ?? '',
-    variantDisplayLabel: reader.readStringOrNull(offsets[10]) ?? '',
-    variantName: reader.readStringOrNull(offsets[11]) ?? '',
-    variantValue: reader.readStringOrNull(offsets[12]) ?? '',
+    unitPrice: reader.readDoubleOrNull(offsets[9]) ?? 0.0,
+    variantCombinationKey: reader.readStringOrNull(offsets[10]) ?? '',
+    variantDisplayLabel: reader.readStringOrNull(offsets[11]) ?? '',
+    variantName: reader.readStringOrNull(offsets[12]) ?? '',
+    variantValue: reader.readStringOrNull(offsets[13]) ?? '',
+    warrantyMonths: reader.readLongOrNull(offsets[14]) ?? 0,
   );
   object.legacyQty = reader.readLong(offsets[4]);
   return object;
@@ -166,21 +187,25 @@ P _orderItemDeserializeProp<P>(
     case 5:
       return (reader.readDoubleOrNull(offset) ?? 1) as P;
     case 6:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 7:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 8:
       return (_OrderItemunitValueEnumMap[reader.readStringOrNull(offset)] ??
               QuantityUnit.piece)
           as P;
-    case 8:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 9:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 10:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 11:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 12:
       return (reader.readStringOrNull(offset) ?? '') as P;
+    case 13:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 14:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -764,6 +789,199 @@ extension OrderItemQueryFilter
 
           epsilon: epsilon,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'serials',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'serials',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'serials',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'serials', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'serials', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> serialsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'serials', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  serialsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'serials',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
       );
     });
   }
@@ -1642,6 +1860,61 @@ extension OrderItemQueryFilter
       );
     });
   }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  warrantyMonthsEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'warrantyMonths', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  warrantyMonthsGreaterThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'warrantyMonths',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  warrantyMonthsLessThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'warrantyMonths',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  warrantyMonthsBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'warrantyMonths',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
 }
 
 extension OrderItemQueryObject
@@ -1670,6 +1943,10 @@ OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => OrderItem(
   variantValue: json['variantValue'] as String? ?? '',
   variantCombinationKey: json['variantCombinationKey'] as String? ?? '',
   variantDisplayLabel: json['variantDisplayLabel'] as String? ?? '',
+  serials:
+      (json['serials'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  warrantyMonths: (json['warrantyMonths'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
@@ -1685,6 +1962,8 @@ Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
   'variantValue': instance.variantValue,
   'variantCombinationKey': instance.variantCombinationKey,
   'variantDisplayLabel': instance.variantDisplayLabel,
+  'serials': instance.serials,
+  'warrantyMonths': instance.warrantyMonths,
 };
 
 const _$QuantityUnitEnumMap = {

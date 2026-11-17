@@ -4,12 +4,14 @@ import '../../../core/utils/quantity.dart';
 import '../../../data/models/order.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/product_serial.dart';
 import '../../../data/models/stock_movement.dart';
 import '../../../data/models/trash_entry.dart';
 import '../../../data/repositories/product_repository.dart';
 import '../../../data/services/db_worker.dart';
 import '../../../data/services/isar_reload.dart';
 import '../../../data/services/isar_service.dart';
+import '../../../data/services/serial_service.dart';
 import '../../../data/services/trash_service.dart';
 
 part 'product_provider.g.dart';
@@ -46,21 +48,44 @@ class ProductNotifier extends _$ProductNotifier {
   @override
   FutureOr<void> build() {}
 
-  Future<void> addProduct(Product product) async {
+  /// Saves a new product. For one that tracks serial numbers, [serials]
+  /// are its units in stock, written in the same transaction (its stock is
+  /// their count). Throws a `DuplicateSerialException` (nothing saved) for a
+  /// serial typed twice.
+  Future<void> addProduct(Product product, {List<String> serials = const []}) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       final now = DateTime.now();
       final p = product.copyWith(createdAt: now, updatedAt: now);
-      await isar.writeTxn(() async => isar.products.put(p));
+      await isar.writeTxn(() async {
+        final id = await isar.products.put(p);
+        if (p.usesSerials) await SerialService.add(isar, id, serials, at: now);
+      });
     });
+    if (state.hasError) throw state.error!;
   }
 
-  Future<void> updateProduct(Product product) async {
+  /// Saves an edited product. For one that tracks serial numbers,
+  /// [addedSerials] go into stock and [removedSerials] (in stock) are taken
+  /// out, in the same transaction; its stock is then its serials in stock.
+  Future<void> updateProduct(
+    Product product, {
+    List<String> addedSerials = const [],
+    List<String> removedSerials = const [],
+  }) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       final p = product.copyWith(updatedAt: DateTime.now());
-      await isar.writeTxn(() async => isar.products.put(p));
+      await isar.writeTxn(() async {
+        await isar.products.put(p);
+        if (p.usesSerials) {
+          await SerialService.takeOut(isar, p.id, removedSerials, productName: p.name);
+          await SerialService.add(isar, p.id, addedSerials);
+          await SerialService.syncStock(isar, {p.id});
+        }
+      });
     });
+    if (state.hasError) throw state.error!;
   }
 
   Future<int?> deleteProduct(int id) async {
@@ -102,6 +127,7 @@ class ProductNotifier extends _$ProductNotifier {
             .filter()
             .productIdEqualTo(id)
             .findAll();
+        final serials = await SerialService.ofProduct(isar, id);
 
         trashId = await trash.capture(
           kind: TrashKind.product,
@@ -110,6 +136,7 @@ class ProductNotifier extends _$ProductNotifier {
           sidecar: {
             'softDeleted': false,
             'stockMovements': movements.map((m) => m.toJson()).toList(),
+            if (serials.isNotEmpty) 'productSerials': serials.map((s) => s.toJson()).toList(),
           },
           label: product.name,
           sublabel: product.sku,
@@ -117,6 +144,7 @@ class ProductNotifier extends _$ProductNotifier {
 
         await isar.stockMovements
             .deleteAll(movements.map((m) => m.id).toList());
+        await isar.productSerials.deleteAll([for (final s in serials) s.id]);
         await isar.products.delete(id);
       });
     });
@@ -128,12 +156,42 @@ class ProductNotifier extends _$ProductNotifier {
       {String combinationKey = '',
       String supplierName = '',
       int supplierId = 0,
-      DateTime? at}) async {
+      DateTime? at,
+      List<String> serials = const []}) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
       await isar.writeTxn(() async {
         final product = await isar.products.get(productId);
         if (product == null) return;
+
+        // A serial-tracked product moves by serial: a restock adds [serials],
+        // a sale or damage takes those in stock out. The count is the delta.
+        if (product.usesSerials) {
+          if (serials.isEmpty) throw SerialsMissingException(product.name);
+          final incoming = type == StockMovementType.restock;
+          if (incoming) {
+            await SerialService.add(isar, productId, serials, at: at);
+          } else {
+            await SerialService.takeOut(isar, productId, serials,
+                status: type == StockMovementType.sale ? SerialStatus.sold : SerialStatus.removed,
+                at: at,
+                productName: product.name);
+          }
+          String fullReason = [
+            if (supplierName.isNotEmpty) 'From: $supplierName',
+            if (reason.isNotEmpty) reason,
+          ].join(' — ');
+          await isar.stockMovements.put(StockMovement(
+            productId: productId,
+            productName: product.name,
+            type: type,
+            qty: (incoming ? 1 : -1) * serials.length.toDouble(),
+            reason: [fullReason, serials.join(', ')].where((t) => t.isNotEmpty).join(' · '),
+            supplierId: supplierId,
+            createdAt: at ?? DateTime.now(),
+          ));
+          return;
+        }
 
         var updated = product.copyWith(
           stockQty: clampStock(product.stockQty + delta),

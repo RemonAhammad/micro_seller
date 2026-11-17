@@ -8,6 +8,7 @@ import '../../../data/models/order_item.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/stock_movement.dart';
+import '../../../data/services/serial_service.dart';
 import '../../../data/services/db_worker.dart';
 import '../../../data/services/dues_service.dart';
 import '../../../data/services/isar_reload.dart';
@@ -131,8 +132,20 @@ class OrderNotifier extends _$OrderNotifier {
     required StockMovementType type,
     required String reason,
     DateTime? at,
+    int serialOrderId = 0,
+    DateTime? serialSoldAt,
   }) async {
     if (items.isEmpty) return;
+    // Serial-tracked lines: a sale marks their serials sold on the order (and
+    // refuses one no longer in stock); a move back puts them in stock. The
+    // service then sets those products' stock to their serials in stock.
+    if (serialOrderId > 0) {
+      if (sign < 0) {
+        await SerialService.sell(isar, items, orderId: serialOrderId, soldAt: serialSoldAt ?? at);
+      } else {
+        await SerialService.release(isar, items, orderId: serialOrderId);
+      }
+    }
     final ids = {for (final item in items) item.productId}.toList();
     final products = <int, Product>{};
     for (final p in await isar.products.getAll(ids)) {
@@ -163,6 +176,7 @@ class OrderNotifier extends _$OrderNotifier {
     if (changed.isEmpty) return;
     await isar.products.putAll([for (final id in changed) products[id]!]);
     await isar.stockMovements.putAll(movements);
+    if (serialOrderId > 0) await SerialService.syncStock(isar, changed);
   }
 
   Future<String> generateOrderNumber() async {
@@ -191,7 +205,8 @@ class OrderNotifier extends _$OrderNotifier {
               sign: -1,
               type: StockMovementType.sale,
               reason: 'Order ${order.orderNumber}',
-              at: order.createdAt);
+              at: order.createdAt,
+              serialOrderId: newId);
         }
 
         if (order.customerId > 0) {
@@ -227,6 +242,7 @@ class OrderNotifier extends _$OrderNotifier {
           if (from != null && to != null && from != to) {
             await _moveOrderDate(isar, stored, from, to);
           }
+          await _syncEditedSerials(isar, stored, order);
           if (stored.orderStatus != order.orderStatus) {
             updated = await _changeStatus(isar, order,
                 from: stored.orderStatus, to: order.orderStatus);
@@ -239,6 +255,61 @@ class OrderNotifier extends _$OrderNotifier {
       state = AsyncValue.error(e, st);
       rethrow;
     }
+  }
+
+  /// An edit of an order whose stock was taken: serials dropped from it go
+  /// back in stock, and (while it stays a sale) serials added to it are sold,
+  /// with a movement for each serial-tracked product whose count changed.
+  /// Other lines keep the old behaviour (an item edit doesn't move stock).
+  /// A status change in the same edit is applied after this by
+  /// `_changeStatus`, on the edited items.
+  Future<void> _syncEditedSerials(Isar isar, Order stored, Order edited) async {
+    bool deducts(OrderStatus s) => s != OrderStatus.pending && s != OrderStatus.cancelled;
+    if (stored.isReturn || !deducts(stored.orderStatus)) return;
+    Map<int, Set<String>> keys(Order o) {
+      final m = <int, Set<String>>{};
+      for (final i in o.items) {
+        for (final s in i.serials) {
+          (m[i.productId] ??= {}).add(s.trim().toLowerCase());
+        }
+      }
+      return m;
+    }
+
+    final before = keys(stored);
+    final after = keys(edited);
+    final dropped = [
+      for (final i in stored.items)
+        if (i.serials.isNotEmpty)
+          i.copyWith(serials: [
+            for (final s in i.serials)
+              if (!(after[i.productId]?.contains(s.trim().toLowerCase()) ?? false)) s,
+          ]),
+    ];
+    await SerialService.release(isar, dropped, orderId: stored.id);
+
+    if (deducts(edited.orderStatus)) {
+      // Sell the edited lines; serials already sold on this order pass.
+      await SerialService.sell(isar, edited.items, orderId: stored.id, soldAt: edited.createdAt);
+    }
+
+    final products = {...before.keys, ...after.keys};
+    final movements = <StockMovement>[];
+    for (final productId in products) {
+      final delta = (before[productId]?.length ?? 0) - (after[productId]?.length ?? 0);
+      if (delta == 0 || !deducts(edited.orderStatus)) continue;
+      final name = edited.items.followedBy(stored.items).firstWhere((i) => i.productId == productId).productName;
+      movements.add(StockMovement(
+        productId: productId,
+        productName: name,
+        type: StockMovementType.adjustment,
+        qty: delta.toDouble(),
+        reason: 'Edited ${stored.orderNumber}',
+        createdAt: DateTime.now(),
+      ));
+    }
+    await isar.stockMovements.putAll(movements);
+    await SerialService.syncStock(isar, products);
   }
 
   Future<void> _moveOrderDate(
@@ -314,14 +385,17 @@ class OrderNotifier extends _$OrderNotifier {
       await _moveStock(isar, order.items,
           sign: 1,
           type: StockMovementType.adjustment,
-          reason: 'Rollback ${order.orderNumber} → ${to.name}');
+          reason: 'Rollback ${order.orderNumber} → ${to.name}',
+          serialOrderId: order.id);
     }
 
     if (!wasStockDeducted && shouldDeductStock) {
       await _moveStock(isar, order.items,
           sign: -1,
           type: StockMovementType.sale,
-          reason: 'Order ${order.orderNumber}');
+          reason: 'Order ${order.orderNumber}',
+          serialOrderId: order.id,
+          serialSoldAt: order.createdAt);
     }
 
     var cancelledOrder = order;
@@ -556,7 +630,8 @@ class OrderNotifier extends _$OrderNotifier {
         await _moveStock(isar, returnOrder.items,
             sign: 1,
             type: StockMovementType.restock,
-            reason: 'Return ${returnOrder.orderNumber}');
+            reason: 'Return ${returnOrder.orderNumber}',
+            serialOrderId: returnOrder.originalOrderId);
 
         if (returnOrder.originalOrderId > 0) {
           final original =
@@ -718,6 +793,12 @@ class OrderNotifier extends _$OrderNotifier {
           orderStatus: OrderStatus.pending,
           paymentStatus: PaymentStatus.unpaid,
           amountPaid: 0,
+          // A serial is one physical unit: the copy can't sell the same
+          // ones again, so its lines start without serials (picked when
+          // the seller edits and confirms it).
+          items: [
+            for (final i in order.items) i.serials.isEmpty ? i : i.copyWith(serials: const []),
+          ],
           createdAt: now,
           updatedAt: now,
           nextRecurringDate:
@@ -766,7 +847,8 @@ class OrderNotifier extends _$OrderNotifier {
           await _moveStock(isar, order.items,
               sign: 1,
               type: StockMovementType.adjustment,
-              reason: 'Deleted order ${order.orderNumber}');
+              reason: 'Deleted order ${order.orderNumber}',
+              serialOrderId: order.id);
         }
 
         if (order.customerId > 0) {

@@ -7,6 +7,7 @@ import '../models/customer.dart';
 import '../models/expense.dart';
 import '../models/order.dart';
 import '../models/product.dart';
+import '../models/product_serial.dart';
 import '../models/stock_movement.dart';
 import '../models/trash_entry.dart';
 
@@ -120,6 +121,13 @@ class TrashService {
             .map((e) => StockMovement.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
+    }
+
+    final serials = (sidecar['productSerials'] as List?) ?? const [];
+    if (serials.isNotEmpty) {
+      await _isar.productSerials.putAll([
+        for (final e in serials) ProductSerial.fromJson(e as Map<String, dynamic>),
+      ]);
     }
   }
 

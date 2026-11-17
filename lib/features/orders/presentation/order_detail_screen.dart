@@ -328,6 +328,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                     children: order.items.asMap().entries.map((e) {
                       return OrderItemRow(
                         item: e.value,
+                        saleDate: order.isReturn ? null : order.createdAt,
                         showDivider: e.key < order.items.length - 1,
                       );
                     }).toList(),

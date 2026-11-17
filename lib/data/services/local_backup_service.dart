@@ -17,6 +17,7 @@ import '../models/category.dart';
 import '../models/supplier.dart';
 import '../models/purchase.dart';
 import '../models/cash_register.dart';
+import '../models/product_serial.dart';
 import '../models/sales_target.dart';
 import '../models/trash_entry.dart';
 import 'backup_format.dart';
@@ -38,6 +39,7 @@ Uint8List encodeBackupBytesSync(Isar db, {Map<String, dynamic>? settings}) {
         cashRegisters: db.cashRegisters.where().findAllSync(),
         payments: db.payments.where().findAllSync(),
         salesTargets: db.salesTargets.where().findAllSync(),
+        productSerials: db.productSerials.where().findAllSync(),
         settings: settings,
       ));
   final bytes = JsonUtf8Encoder().convert(map);
@@ -91,6 +93,7 @@ void clearAllCollectionsInTxnSync(Isar db) {
   db.cashRegisters.clearSync();
   db.payments.clearSync();
   db.salesTargets.clearSync();
+  db.productSerials.clearSync();
 
   db.trashEntries.clearSync();
 }
@@ -115,6 +118,7 @@ Map<String, dynamic>? restoreBackupSync(Isar db, Map<String, dynamic> data) {
   final cashRegisters = rows('cashRegisters', CashRegister.fromJson);
   final payments = rows('payments', Payment.fromJson);
   final salesTargets = rows('salesTargets', SalesTarget.fromJson);
+  final productSerials = rows('productSerials', ProductSerial.fromJson);
 
   db.writeTxnSync(() {
     clearAllCollectionsInTxnSync(db);
@@ -129,6 +133,7 @@ Map<String, dynamic>? restoreBackupSync(Isar db, Map<String, dynamic> data) {
     db.cashRegisters.putAllSync(cashRegisters);
     db.payments.putAllSync(payments);
     db.salesTargets.putAllSync(salesTargets);
+    db.productSerials.putAllSync(productSerials);
 
     recalculateOutstandingBalancesInTxnSync(db);
   });
@@ -157,6 +162,7 @@ class LocalBackupService {
       cashRegisters: await isar.cashRegisters.where().findAll(),
       payments: await isar.payments.where().findAll(),
       salesTargets: await isar.salesTargets.where().findAll(),
+      productSerials: await isar.productSerials.where().findAll(),
       settings: settings,
     ));
   }

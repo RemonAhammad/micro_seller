@@ -10,6 +10,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../data/models/order.dart';
+import '../../../data/services/serial_service.dart';
+import '../../../shared/widgets/serial_sheet.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/variant_combination.dart';
@@ -270,7 +272,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
     if (hit == null || !mounted) return;
     final labelQty = hit.qty;
-    if (labelQty != null) {
+    if (hit.serial != null) {
+      await _pickSerialsFor(isar, hit.product, add: hit.serial);
+    } else if (labelQty != null) {
       _addLabelQty(hit.product, labelQty, combination: hit.combination);
     } else {
       await _addOneOf(isar, hit.product, combination: hit.combination);
@@ -348,6 +352,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       return;
     }
 
+    if (product.usesSerials) {
+      await _pickSerialsFor(isar, product);
+      return;
+    }
+
     final s = AppStrings.of(context);
     final key = combination?.combinationKey ?? '';
     final name = _lineName(product, combination);
@@ -412,7 +421,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   /// A new cart line, priced and labelled as the picker does for a
   /// [combination]: its price adjustment, its own SKU when it has one.
-  static OrderItem _newItem(Product product, double qty, {VariantCombination? combination}) {
+  static OrderItem _newItem(Product product, double qty,
+      {VariantCombination? combination, List<String> serials = const []}) {
     final price = product.sellingPrice + (combination?.priceAdjustment ?? 0);
     final comboSku = combination?.sku ?? '';
     return OrderItem(
@@ -426,7 +436,52 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       totalPrice: lineTotal(price, qty),
       variantCombinationKey: combination?.combinationKey ?? '',
       variantDisplayLabel: combination?.displayLabel ?? '',
+      serials: serials,
+      warrantyMonths: product.warrantyMonths,
     );
+  }
+
+  /// A serial-tracked product's line: which units go. Offers its serials in
+  /// stock plus those already on the line (sold on this order when editing);
+  /// [add] (a scanned serial) starts picked. The line's quantity is the
+  /// number picked; none removes it.
+  Future<void> _pickSerialsFor(Isar isar, Product product, {String? add}) async {
+    final idx = _items.indexWhere((i) => i.productId == product.id);
+    final current = idx >= 0 ? _items[idx].serials : const <String>[];
+    final inStock = [for (final u in await SerialService.inStock(isar, product.id)) u.serial];
+    final lower = {for (final x in inStock) x.toLowerCase()};
+    final available = [
+      for (final x in current)
+        if (!lower.contains(x.toLowerCase())) x,
+      ...inStock,
+    ];
+    final preselected = [
+      ...current,
+      if (add != null && !current.any((c) => c.toLowerCase() == add.toLowerCase())) add,
+    ];
+    if (!mounted) return;
+    final picked = await showSerialPickerSheet(
+      context,
+      productName: product.name,
+      available: available,
+      selected: preselected,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      final at = _items.indexWhere((i) => i.productId == product.id);
+      if (picked.isEmpty) {
+        if (at >= 0) _items.removeAt(at);
+      } else if (at >= 0) {
+        final line = _items[at];
+        _items[at] = line.copyWith(
+          qty: picked.length.toDouble(),
+          serials: picked,
+          totalPrice: lineTotal(line.unitPrice, picked.length.toDouble()),
+        );
+      } else {
+        _items.add(_newItem(product, picked.length.toDouble(), serials: picked));
+      }
+    });
   }
 
   /// The stock a cart line may take: its combination's or the product's, as
@@ -462,6 +517,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   Future<void> _updateQty(int index, int delta) async {
     final item = _items[index];
+    // A serial-tracked line changes by picking serials, not by ±1.
+    final isar = await ref.read(isarProvider.future);
+    final product = await isar.products.get(item.productId);
+    if (product != null && product.usesSerials) {
+      if (mounted) await _pickSerialsFor(isar, product);
+      return;
+    }
     final newQty = roundQty(item.qty + delta);
     if (newQty <= 0) {
       setState(() => _items.removeAt(index));
@@ -632,9 +694,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).errorOccurred), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(serialErrorMessage(context, e) ?? AppStrings.of(context).errorOccurred),
+            backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -1227,6 +1289,15 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       children: [
         Text(item.displayName, style: nameStyle),
         Text(unitPrice, style: unitPriceStyle),
+        if (item.hasSerials)
+          InkWell(
+            onTap: () => _updateQty(index, 0),
+            child: Text(
+              'S/N: ${item.serials.join(', ')}',
+              textDirection: TextDirection.ltr,
+              style: unitPriceStyle.copyWith(color: cs.primary),
+            ),
+          ),
       ],
     );
 
@@ -1772,6 +1843,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     String? skuOverride,
     required double availableStock,
   }) {
+    // A serial-tracked product: its + / − / Add pick which units go.
+    if (product.usesSerials) {
+      _askSerials(product);
+      return;
+    }
     qty = roundQty(qty);
     if (qtyExceeds(qty, availableStock)) qty = availableStock;
     setState(() {
@@ -1794,8 +1870,53 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             totalPrice: lineTotal(unitPrice, qty),
             variantCombinationKey: combinationKey,
             variantDisplayLabel: displayLabel,
+            warrantyMonths: product.warrantyMonths,
           ),
         );
+      }
+    });
+    widget.onChanged(_items);
+  }
+
+  /// A serial-tracked product's line, from this picker: the serial picker
+  /// over it, with the line's serials picked. Quantity = serials picked.
+  Future<void> _askSerials(Product product) async {
+    final idx = _items.indexWhere((i) => i.productId == product.id);
+    final current = idx >= 0 ? _items[idx].serials : const <String>[];
+    final inStock = [for (final u in await SerialService.inStock(widget.isar, product.id)) u.serial];
+    final lower = {for (final x in inStock) x.toLowerCase()};
+    if (!mounted) return;
+    final picked = await showSerialPickerSheet(
+      context,
+      productName: product.name,
+      available: [
+        for (final x in current)
+          if (!lower.contains(x.toLowerCase())) x,
+        ...inStock,
+      ],
+      selected: current,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      final at = _items.indexWhere((i) => i.productId == product.id);
+      final qty = picked.length.toDouble();
+      if (picked.isEmpty) {
+        if (at >= 0) _items.removeAt(at);
+      } else if (at >= 0) {
+        _items[at] = _items[at].copyWith(qty: qty, serials: picked, totalPrice: lineTotal(_items[at].unitPrice, qty));
+      } else {
+        _items.add(OrderItem(
+          productId: product.id,
+          productName: product.name,
+          productSku: product.sku,
+          qty: qty,
+          unit: product.unit,
+          unitPrice: product.sellingPrice,
+          costPrice: product.costPrice,
+          totalPrice: lineTotal(product.sellingPrice, qty),
+          serials: picked,
+          warrantyMonths: product.warrantyMonths,
+        ));
       }
     });
     widget.onChanged(_items);
@@ -2642,7 +2763,8 @@ class _InvoiceActionTileState extends State<_InvoiceActionTile> {
 
 /// What the order form's scanner found: the product, the combination whose
 /// own SKU was scanned (if any), and a scale label's quantity (if any).
-typedef _ScanHit = ({Product product, VariantCombination? combination, double? qty});
+/// [serial]: the code scanned was this unit's serial number (IMEI).
+typedef _ScanHit = ({Product product, VariantCombination? combination, double? qty, String? serial});
 
 class _ScannerSheet extends ConsumerStatefulWidget {
   final Isar isar;
@@ -2690,10 +2812,27 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
     if (value == null) return;
     _scanned = true;
 
-    _scale.then((scale) => ProductRepository(widget.isar).findByScan(value, scale)).then((hit) {
+    _scale.then((scale) => ProductRepository(widget.isar).findByScan(value, scale)).then((hit) async {
       if (!mounted) return;
       final product = hit?.product;
       if (product == null) {
+        // Not a product's code: maybe one unit's serial number.
+        final units = await SerialService.find(widget.isar, value);
+        if (!mounted) return;
+        final unit = units.where((u) => u.isInStock).firstOrNull;
+        final owner = unit == null ? null : await widget.isar.products.get(unit.productId);
+        if (!mounted) return;
+        if (unit != null && owner != null && owner.isActive && owner.usesSerials) {
+          Navigator.of(context).pop((product: owner, combination: null, qty: null, serial: unit.serial));
+          return;
+        }
+        if (units.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.of(context).serialNotInStock(units.first.serial))),
+          );
+          _scanned = false;
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppStrings.of(context).noProductMatched)),
         );
@@ -2730,6 +2869,7 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
         product: product,
         combination: combination,
         qty: hit.label?.qtyFor(product, combination: combination),
+        serial: null,
       ));
     });
   }

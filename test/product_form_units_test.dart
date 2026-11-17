@@ -5,7 +5,9 @@ import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:micro_seller/data/models/product.dart';
+import 'package:micro_seller/data/models/product_serial.dart';
 import 'package:micro_seller/data/models/quantity_unit.dart';
+import 'package:micro_seller/data/services/serial_service.dart';
 import 'package:micro_seller/features/products/presentation/product_form_screen.dart';
 
 import 'support/isar_core.dart';
@@ -149,6 +151,88 @@ void main() {
       await tester.tap(find.text('Metre (m)').last);
       await tester.pumpAndSettle();
       expect(find.descendant(of: soldBy, matching: find.text('Metre (m)')), findsOneWidget, reason: 'the field shows the pick');
+    });
+
+    testWidgets('serial numbers and warranty: only for Piece; saved with the product', (tester) async {
+      late Isar isar;
+      await tester.runAsync(() async => isar = await openTestIsar('form_serials'));
+      await pumpScreen(tester, isar: isar, screen: const ProductFormScreen());
+
+      final serialSwitch = find.byKey(const ValueKey('trackSerialsSwitch'));
+      await reveal(tester, soldBy);
+      expect(serialSwitch, findsOneWidget, reason: 'Piece is the default');
+      expect(field('Warranty (months)'), findsOneWidget);
+
+      await pickUnit(tester, 'Kilogram (kg)');
+      expect(serialSwitch, findsNothing, reason: 'not for weighed goods');
+      expect(field('Warranty (months)'), findsNothing);
+      await pickUnit(tester, 'Piece');
+
+      await type(tester, 'Product Name', 'Phone X');
+      await type(tester, 'Category', 'Phones');
+      await type(tester, 'SKU', 'PX');
+      await type(tester, 'Selling Price', '20000');
+      await type(tester, 'Warranty (months)', '12');
+      await reveal(tester, serialSwitch);
+      await tester.tap(serialSwitch);
+      await tester.pumpAndSettle();
+      final variantsNote = find.text('Variants can\'t be used while serial numbers are tracked.');
+      await reveal(tester, variantsNote);
+      expect(variantsNote, findsOneWidget, reason: 'the variants editor gives way');
+
+      // Two serials, pasted at once; a repeat is refused in the sheet.
+      final addSerials = find.byKey(const ValueKey('addSerialsButton'));
+      await reveal(tester, addSerials);
+      await tester.tap(addSerials);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('serialEntryField')), 'IMEI-1\nIMEI-2\nimei-1');
+      await tester.tap(find.byKey(const ValueKey('serialEntryAdd')));
+      await tester.pumpAndSettle();
+      expect(find.text('imei-1 is already added'), findsOneWidget);
+      await tester.tap(find.text('Done (2)'));
+      await tester.pumpAndSettle();
+
+      expect(await textOf(tester, 'Stock Quantity'), '2', reason: 'stock is the serial count');
+      expect(tester.widget<TextField>(field('Stock Quantity').first).readOnly, isTrue);
+      await reveal(tester, find.text('IMEI-2'));
+      expect(find.text('IMEI-2'), findsOneWidget);
+
+      await save(tester, 'Add Product');
+      expect(find.text(kBelowScreen), findsOneWidget, reason: 'saved and closed');
+      final saved = (await tester.runAsync(() => isar.products.where().findFirst()))!;
+      expect((saved.trackSerials, saved.warrantyMonths, saved.stockQty), (true, 12, 2.0));
+      final units = (await tester.runAsync(() => SerialService.ofProduct(isar, saved.id)))!;
+      expect(units.map((u) => u.serial), ['IMEI-1', 'IMEI-2']);
+    });
+
+    testWidgets('editing a tracked product: remove one serial, the stock follows', (tester) async {
+      late Isar isar;
+      late Product phone;
+      await tester.runAsync(() async {
+        isar = await openTestIsar('form_serials_edit');
+        await isar.writeTxn(() async {
+          final id = await isar.products.put(Product(
+              name: 'Phone X', sku: 'PX', category: 'Phones', sellingPrice: 20000, trackSerials: true, warrantyMonths: 6));
+          await SerialService.add(isar, id, ['A1', 'A2', 'A3']);
+          phone = (await isar.products.get(id))!;
+        });
+      });
+      await pumpScreen(tester, isar: isar, screen: ProductFormScreen(product: phone));
+
+      expect(await textOf(tester, 'Stock Quantity'), '3');
+      expect(await textOf(tester, 'Warranty (months)'), '6');
+      await reveal(tester, find.text('A2'));
+      final removeA2 = find.descendant(
+          of: find.ancestor(of: find.text('A2'), matching: find.byType(Row)).first, matching: find.byType(IconButton));
+      await tester.tap(removeA2);
+      await tester.pump();
+      expect(await textOf(tester, 'Stock Quantity'), '2');
+
+      await save(tester, 'Update Product');
+      final units = (await tester.runAsync(() => SerialService.ofProduct(isar, phone.id)))!;
+      expect({for (final u in units) u.serial: u.status},
+          {'A1': SerialStatus.inStock, 'A2': SerialStatus.removed, 'A3': SerialStatus.inStock});
+      expect((await tester.runAsync(() => isar.products.get(phone.id)))!.stockQty, 2);
     });
 
     testWidgets('a piece product keeps whole numbers: the point is refused', (tester) async {
