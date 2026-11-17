@@ -86,6 +86,8 @@ void main() {
 
       expect(find.text('Select Combination'), findsOneWidget);
       expect(find.text('Size: L'), findsOneWidget);
+      // Base stock is hidden when the product has active combinations.
+      expect(find.textContaining('Base stock'), findsNothing);
       expect(find.text(hint), findsNothing);
     });
 

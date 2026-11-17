@@ -195,6 +195,13 @@ class _StockAdjustmentScreenState
               _usesSerials = product.usesSerials;
               _productName = product.name;
               if (_usesSerials && _type == StockMovementType.adjustment) _type = StockMovementType.restock;
+              // A variant product adjusts a combination, never base stock, so
+              // start on the first active combination instead of base.
+              if (product.hasVariants && _selectedCombinationKey.isEmpty) {
+                final active =
+                    product.variantCombinations.where((c) => c.isActive).toList();
+                if (active.isNotEmpty) _selectedCombinationKey = active.first.combinationKey;
+              }
             }
             if (product != null && !_supplierAutoLoaded) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -283,22 +290,28 @@ class _StockAdjustmentScreenState
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          ChoiceChip(
-                            label: Text('${s.baseStock} (${s.qty(product.stockQty, product.unit)})'),
-                            selected: _selectedCombinationKey.isEmpty,
-                            onSelected: (_) =>
-                                setState(() => _selectedCombinationKey = ''),
-                            selectedColor: cs.primary.withValues(alpha: 0.15),
-                            labelStyle: TextStyle(
-                              fontSize: 12,
-                              color: _selectedCombinationKey.isEmpty
-                                  ? cs.primary
-                                  : cs.onSurface,
-                              fontWeight: _selectedCombinationKey.isEmpty
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
+                          // Base stock is only selectable when the product has
+                          // no active combinations to adjust; otherwise stock
+                          // lives in the combinations and base is hidden.
+                          if (product.variantCombinations
+                              .where((c) => c.isActive)
+                              .isEmpty)
+                            ChoiceChip(
+                              label: Text('${s.baseStock} (${s.qty(product.stockQty, product.unit)})'),
+                              selected: _selectedCombinationKey.isEmpty,
+                              onSelected: (_) =>
+                                  setState(() => _selectedCombinationKey = ''),
+                              selectedColor: cs.primary.withValues(alpha: 0.15),
+                              labelStyle: TextStyle(
+                                fontSize: 12,
+                                color: _selectedCombinationKey.isEmpty
+                                    ? cs.primary
+                                    : cs.onSurface,
+                                fontWeight: _selectedCombinationKey.isEmpty
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
                             ),
-                          ),
                           ...product.variantCombinations
                               .where((c) => c.isActive)
                               .map((c) {
