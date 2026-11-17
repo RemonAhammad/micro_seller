@@ -326,6 +326,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
             unitPrice: item.unitPrice,
             available: max,
             initial: value > 0 ? value : null,
+            allowZero: true,
           );
           if (qty == null || !mounted) return;
           setState(() => _returnQtys[idx] = qty);

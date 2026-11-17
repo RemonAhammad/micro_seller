@@ -20,6 +20,11 @@ import 'bottom_sheet_handle.dart';
 /// [available] caps it (the stock left for this line); pass null for no cap
 /// (a purchase adds stock). [unitPrice] is per one [unit]; at 0 the
 /// "By amount" mode is off.
+///
+/// [allowZero] lets the sheet confirm 0 (an empty field counts as 0), so a
+/// caller that offers "remove this line" — e.g. the Create Return screen —
+/// can set a weighed item back to 0. Off by default, so adding a sale or
+/// purchase line still requires a positive quantity.
 Future<double?> showQuantitySheet(
   BuildContext context, {
   required String productName,
@@ -27,6 +32,7 @@ Future<double?> showQuantitySheet(
   required double unitPrice,
   double? available,
   double? initial,
+  bool allowZero = false,
 }) {
   return AppBottomSheet.show<double>(
     context,
@@ -36,6 +42,7 @@ Future<double?> showQuantitySheet(
       unitPrice: unitPrice,
       available: available,
       initial: initial,
+      allowZero: allowZero,
     ),
   );
 }
@@ -47,12 +54,17 @@ class QuantitySheet extends StatefulWidget {
     required this.unitPrice,
     this.available,
     this.initial,
+    this.allowZero = false,
   });
 
   final QuantityUnit unit;
   final double unitPrice;
   final double? available;
   final double? initial;
+
+  /// When true, 0 is a valid result (an empty field counts as 0), so the line
+  /// can be removed. See [showQuantitySheet].
+  final bool allowZero;
 
   /// Quick picks, in the product's unit: ¼ kg, ½ kg, 1, 2, 5.
   static const quickQuantities = [0.25, 0.5, 1.0, 2.0, 5.0];
@@ -92,6 +104,17 @@ class _QuantitySheetState extends State<QuantitySheet> {
     return parseQty(_ctrl.text, widget.unit);
   }
 
+  /// The value the confirm button would return. With [QuantitySheet.allowZero],
+  /// an empty field counts as 0 (remove the line); otherwise 0/empty is invalid.
+  double? get _effectiveQty => widget.allowZero ? (_qty ?? 0) : _qty;
+
+  /// Whether the current field can be confirmed.
+  bool get _canConfirm {
+    final qty = _effectiveQty;
+    if (qty == null || _tooMuch(qty)) return false;
+    return widget.allowZero ? qty >= 0 : qty > 0;
+  }
+
   bool _tooMuch(double qty) {
     final cap = widget.available;
     return cap != null && qtyExceeds(qty, cap);
@@ -122,9 +145,8 @@ class _QuantitySheetState extends State<QuantitySheet> {
   }
 
   void _confirm() {
-    final qty = _qty;
-    if (qty == null || qty <= 0 || _tooMuch(qty)) return;
-    Navigator.of(context).pop(qty);
+    if (!_canConfirm) return;
+    Navigator.of(context).pop(_effectiveQty);
   }
 
   @override
@@ -203,14 +225,15 @@ class _QuantitySheetState extends State<QuantitySheet> {
         ),
         const SizedBox(height: 16),
         AppButton(
-          label: widget.initial != null && widget.initial! > 0 ? s.updateQty : s.addQty,
+          label: widget.allowZero && (_effectiveQty ?? 0) <= 0
+              ? s.remove
+              : widget.initial != null && widget.initial! > 0
+                  ? s.updateQty
+                  : s.addQty,
           icon: tabler.Check.new,
           isFullWidth: true,
           height: 50,
-          onPressed: () {
-            final qty = _qty;
-            return qty != null && qty > 0 && !_tooMuch(qty) ? _confirm : null;
-          }(),
+          onPressed: _canConfirm ? _confirm : null,
         ),
       ],
     );

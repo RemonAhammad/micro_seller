@@ -1,6 +1,6 @@
 {
   "nodeCount": 6467,
-  "edgeCount": 1653,
+  "edgeCount": 1652,
   "languages": [
     "c",
     "cpp",
@@ -14,6 +14,6 @@
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-17T09:35:04.789Z",
-  "lastFile": "serial_sheet.dart"
+  "syncedAt": "2026-11-17T10:05:33.587Z",
+  "lastFile": "units_widgets_test.dart"
 }

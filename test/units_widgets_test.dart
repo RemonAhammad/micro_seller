@@ -37,6 +37,7 @@ void main() {
     double unitPrice = 600,
     double? available = 5,
     double? initial,
+    bool allowZero = false,
   }) async {
     final results = <double?>[];
     await tester.pumpWidget(app((context) => TextButton(
@@ -47,6 +48,7 @@ void main() {
             unitPrice: unitPrice,
             available: available,
             initial: initial,
+            allowZero: allowZero,
           )),
           child: const Text('open'),
         )));
@@ -152,6 +154,50 @@ void main() {
       await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();
       expect(results, [null]);
+    });
+
+    testWidgets('allowZero off: an empty field cannot be confirmed', (tester) async {
+      await openSheet(tester, initial: 2);
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
+      // Still "Update" (initial > 0), and disabled with nothing to confirm.
+      expect(addEnabled(tester, 'Update'), isFalse);
+      expect(find.text('Remove'), findsNothing);
+    });
+
+    testWidgets('allowZero: clearing the field confirms 0 via Remove', (tester) async {
+      final results = await openSheet(tester, initial: 2, allowZero: true);
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, '2');
+
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
+      // Empty field in return context means "remove the line".
+      expect(find.text('Remove'), findsWidgets);
+      expect(addEnabled(tester, 'Remove'), isTrue);
+
+      await tester.tap(find.text('Remove').last);
+      await tester.pumpAndSettle();
+      expect(results, [0.0]);
+    });
+
+    testWidgets('allowZero: typing 0 confirms 0', (tester) async {
+      final results = await openSheet(tester, initial: 2, allowZero: true);
+      await tester.enterText(find.byType(TextField), '0');
+      await tester.pump();
+      expect(addEnabled(tester, 'Remove'), isTrue);
+      await tester.tap(find.text('Remove').last);
+      await tester.pumpAndSettle();
+      expect(results, [0.0]);
+    });
+
+    testWidgets('allowZero: a positive value still returns it', (tester) async {
+      final results = await openSheet(tester, initial: 2, allowZero: true);
+      await tester.enterText(find.byType(TextField), '1.5');
+      await tester.pump();
+      expect(find.text('Remove'), findsNothing, reason: 'positive qty is Update, not Remove');
+      await tester.tap(find.text('Update').last);
+      await tester.pumpAndSettle();
+      expect(results, [1.5]);
     });
   });
 
