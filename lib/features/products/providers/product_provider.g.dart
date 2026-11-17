@@ -132,7 +132,7 @@ final class LowStockProductsProvider
   }
 }
 
-String _$lowStockProductsHash() => r'14bfced71e35d5003813c6712b706e0cc86d8ec6';
+String _$lowStockProductsHash() => r'aae4232439bf8e9121001f8770f2fc0876169889';
 
 @ProviderFor(ProductNotifier)
 final productProvider = ProductNotifierProvider._();

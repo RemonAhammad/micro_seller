@@ -25,7 +25,7 @@ class ProductRepository {
         .isActiveEqualTo(true)
         .watch(fireImmediately: true)
         .map((products) => products
-            .where((p) => p.isLowStock || p.isOutOfStock)
+            .where((p) => p.needsStockAttention)
             .toList());
   }
 

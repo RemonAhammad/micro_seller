@@ -30,14 +30,27 @@ class NotificationService {
   static Future<void> showLowStockAlert(List<Product> products) async {
     if (products.isEmpty) return;
 
-    final names = products.take(3).map((p) => p.name).join(', ');
-    final extra =
-        products.length > 3 ? ' and ${products.length - 3} more' : '';
+    // Name the specific low / out-of-stock variations, so a variant product
+    // reads as "T-Shirt (Size: L)" instead of just "T-Shirt".
+    final labels = <String>[];
+    for (final p in products) {
+      if (p.hasVariants) {
+        for (final c in [...p.outOfStockCombinations, ...p.lowStockCombinations]) {
+          labels.add(c.displayLabel.isEmpty ? p.name : '${p.name} (${c.displayLabel})');
+        }
+      } else {
+        labels.add(p.name);
+      }
+    }
+    if (labels.isEmpty) return;
+
+    final names = labels.take(3).join(', ');
+    final extra = labels.length > 3 ? ' and ${labels.length - 3} more' : '';
 
     await _plugin.show(
       id: 1,
       title: 'Low Stock Alert',
-      body: '$names$extra ${products.length == 1 ? "is" : "are"} running low',
+      body: '$names$extra ${labels.length == 1 ? "is" : "are"} running low',
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'low_stock',
@@ -128,7 +141,7 @@ class NotificationService {
 
     final lowStockProducts = lowStock ??
         (await isar.products.filter().isActiveEqualTo(true).findAll())
-            .where((p) => p.isLowStock || p.isOutOfStock)
+            .where((p) => p.needsStockAttention)
             .toList();
     if (lowStockProducts.isNotEmpty) {
       await showLowStockAlert(lowStockProducts);

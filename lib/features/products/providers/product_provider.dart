@@ -40,7 +40,7 @@ Stream<List<Product>> lowStockProducts(Ref ref) async* {
       .filter()
       .isActiveEqualTo(true)
       .watch(fireImmediately: true)
-      .map((list) => list.where((p) => p.isLowStock || p.isOutOfStock).toList());
+      .map((list) => list.where((p) => p.needsStockAttention).toList());
 }
 
 @Riverpod(keepAlive: true)

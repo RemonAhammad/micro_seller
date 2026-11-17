@@ -171,7 +171,7 @@ DashboardStats _dashboardStats(Isar db, DateTime rangeStart, DateTime rangeEnd) 
       .countSync();
 
   final lowStockProducts = products
-      .where((p) => p.isActive && (p.isLowStock || p.isOutOfStock))
+      .where((p) => p.isActive && p.needsStockAttention)
       .toList();
 
   final nearExpiryProducts = products

@@ -129,6 +129,31 @@ class Product {
   @ignore
   bool get hasVariants => variantCombinations.isNotEmpty;
 
+  /// The active combinations running low (0 < stock <= threshold). Empty for a
+  /// product without variants. Used to show *which* variation is low.
+  @ignore
+  List<VariantCombination> get lowStockCombinations => hasVariants
+      ? variantCombinations
+          .where((c) => c.isActive && c.stockQty > 0 && c.stockQty <= lowStockThreshold)
+          .toList()
+      : const [];
+
+  /// The active combinations that are out of stock (<= 0). Empty for a product
+  /// without variants. A single out-of-stock variation surfaces through this
+  /// even when other variations are healthy.
+  @ignore
+  List<VariantCombination> get outOfStockCombinations => hasVariants
+      ? variantCombinations.where((c) => c.isActive && c.stockQty <= 0).toList()
+      : const [];
+
+  /// Whether this product should appear in the low-stock list / alerts. Unlike
+  /// [isOutOfStock] (all variations out) this also surfaces a variant product
+  /// with any single low or out-of-stock variation.
+  @ignore
+  bool get needsStockAttention => hasVariants
+      ? lowStockCombinations.isNotEmpty || outOfStockCombinations.isNotEmpty
+      : isLowStock || isOutOfStock;
+
   @ignore
   double get totalStock => hasVariants
       ? roundQty(variantCombinations.where((c) => c.isActive).fold(0.0, (s, c) => s + c.stockQty))
