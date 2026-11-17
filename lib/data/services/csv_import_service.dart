@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import '../../core/utils/quantity.dart';
 import '../models/product.dart';
 import '../models/quantity_unit.dart';
@@ -41,8 +42,15 @@ class CsvImportService {
     if (picked == null) return null;
 
     final csvString = utf8.decode(await picked.readAsBytes());
-    final rows = csv.decode(csvString);
+    return parseProductCsv(csvString);
+  }
 
+  /// The products in [csvString] (a header row, then Name, SKU, Category,
+  /// Selling Price, Cost Price, Stock, Threshold and an optional Unit), and
+  /// a message for each row left out.
+  @visibleForTesting
+  static CsvImportResult parseProductCsv(String csvString) {
+    final rows = csv.decode(csvString);
     if (rows.isEmpty) {
       return CsvImportResult(products: [], errors: ['CSV file is empty']);
     }

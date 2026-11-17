@@ -1,6 +1,6 @@
 {
-  "nodeCount": 6173,
-  "edgeCount": 1545,
+  "nodeCount": 6186,
+  "edgeCount": 1559,
   "languages": [
     "c",
     "cpp",
@@ -9,11 +9,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 6173,
+  "totalCount": 6186,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-16T15:22:02.393Z",
-  "lastFile": "product_repository.dart"
+  "syncedAt": "2026-11-17T06:14:12.013Z",
+  "lastFile": "product_form_units_test.dart"
 }
