@@ -1064,6 +1064,7 @@ const translationsAr = <String, String>{
   'privacyPolicy': 'سياسة الخصوصية',
   'couldNotOpenLink': 'تعذر فتح الرابط',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'الأرقام التسلسلية والضمان',
   'trackSerials': 'تتبع الأرقام التسلسلية',
   'trackSerialsHint': 'لكل وحدة رقم تسلسلي أو IMEI خاص بها. المخزون هو عدد الأرقام التسلسلية المتوفرة، وفي كل عملية بيع تختار الوحدات التي بيعت.',
   'trackSerialsNoVariants': 'غير متاح للمنتج الذي له متغيرات.',

@@ -1065,6 +1065,7 @@ const translationsMs = <String, String>{
   'privacyPolicy': 'Dasar Privasi',
   'couldNotOpenLink': 'Tidak dapat membuka pautan',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'Nombor siri & waranti',
   'trackSerials': 'Jejak nombor siri',
   'trackSerialsHint': 'Setiap unit mempunyai nombor siri atau IMEI sendiri. Stok ialah bilangan nombor siri yang ada, dan setiap jualan memilih yang mana keluar.',
   'trackSerialsNoVariants': 'Tidak tersedia untuk produk yang mempunyai varian.',

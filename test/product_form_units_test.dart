@@ -159,8 +159,14 @@ void main() {
       await pumpScreen(tester, isar: isar, screen: const ProductFormScreen());
 
       final serialSwitch = find.byKey(const ValueKey('trackSerialsSwitch'));
-      await reveal(tester, soldBy);
+      await reveal(tester, serialSwitch);
       expect(serialSwitch, findsOneWidget, reason: 'Piece is the default');
+      // At the very end: after the variants, just above the save button.
+      final heading = find.text('Serial numbers & warranty');
+      final button = find.ancestor(of: find.text('Add Product'), matching: find.byWidgetPredicate((w) => w is ButtonStyleButton));
+      await reveal(tester, button);
+      expect(tester.getTopLeft(heading).dy, greaterThan(tester.getTopLeft(find.text('Variant Attributes')).dy));
+      expect(tester.getTopLeft(heading).dy, lessThan(tester.getTopLeft(button).dy));
       expect(field('Warranty (months)'), findsOneWidget);
 
       await pickUnit(tester, 'Kilogram (kg)');

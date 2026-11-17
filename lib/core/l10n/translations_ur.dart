@@ -1065,6 +1065,7 @@ const translationsUr = <String, String>{
   'privacyPolicy': 'پرائیویسی پالیسی',
   'couldNotOpenLink': 'لنک نہیں کھل سکا',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'سیریل نمبر اور وارنٹی',
   'trackSerials': 'سیریل نمبر ٹریک کریں',
   'trackSerialsHint': 'ہر یونٹ کا اپنا سیریل نمبر یا IMEI ہوتا ہے۔ اسٹاک وہ سیریل ہیں جو موجود ہیں، اور ہر فروخت میں آپ چنتے ہیں کون سے گئے۔',
   'trackSerialsNoVariants': 'ویریئنٹس والی پروڈکٹ کے لیے دستیاب نہیں۔',

@@ -40,6 +40,7 @@ import '../../suppliers/presentation/supplier_form_screen.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
+
 class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? product;
   final int? productId;
@@ -96,10 +97,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   /// The saved serials still in stock and not removed, then the new ones.
   List<String> get _serialsInStock => [
-        for (final x in _savedSerials)
-          if (x.isInStock && !_removedSerials.contains(x.serial.toLowerCase())) x.serial,
-        ..._addedSerials,
-      ];
+    for (final x in _savedSerials)
+      if (x.isInStock && !_removedSerials.contains(x.serial.toLowerCase()))
+        x.serial,
+    ..._addedSerials,
+  ];
 
   /// With serials tracked, the stock field shows their count.
   void _syncSerialStock() {
@@ -110,7 +112,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final s = AppStrings.of(context);
     final result = await showSerialEntrySheet(
       context,
-      productName: _nameCtrl.text.trim().isEmpty ? s.serialNumbers : _nameCtrl.text.trim(),
+      productName: _nameCtrl.text.trim().isEmpty
+          ? s.serialNumbers
+          : _nameCtrl.text.trim(),
       initial: _addedSerials,
       taken: [for (final x in _savedSerials) x.serial],
     );
@@ -125,7 +129,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   void _removeSerial(String serial) {
     setState(() {
-      if (!_addedSerials.remove(serial)) _removedSerials.add(serial.toLowerCase());
+      if (!_addedSerials.remove(serial))
+        _removedSerials.add(serial.toLowerCase());
       _syncSerialStock();
     });
   }
@@ -160,7 +165,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _populateForm(product);
       }
     } else {
-
       if (widget.initialQrCode != null && widget.initialQrCode!.isNotEmpty) {
         _qrCtrl.text = widget.initialQrCode!;
       }
@@ -174,14 +178,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _nameCtrl.text = product.name;
     _skuCtrl.text = product.sku;
     _descCtrl.text = product.description;
-    _sellingPriceCtrl.text =
-        product.sellingPrice > 0 ? product.sellingPrice.toString() : '';
-    _costPriceCtrl.text =
-        product.costPrice > 0 ? product.costPrice.toString() : '';
+    _sellingPriceCtrl.text = product.sellingPrice > 0
+        ? product.sellingPrice.toString()
+        : '';
+    _costPriceCtrl.text = product.costPrice > 0
+        ? product.costPrice.toString()
+        : '';
     _unit = product.unit;
     _stockCtrl.text = qtyFieldText(product.stockQty);
     _trackSerials = product.trackSerials;
-    _warrantyCtrl.text = product.warrantyMonths > 0 ? '${product.warrantyMonths}' : '';
+    _warrantyCtrl.text = product.warrantyMonths > 0
+        ? '${product.warrantyMonths}'
+        : '';
     if (product.trackSerials) {
       final isar = await ref.read(isarProvider.future);
       final saved = await SerialService.ofProduct(isar, product.id);
@@ -192,8 +200,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         });
       }
     }
-    _thresholdCtrl.text =
-        product.lowStockThreshold > 0 ? qtyFieldText(product.lowStockThreshold) : '';
+    _thresholdCtrl.text = product.lowStockThreshold > 0
+        ? qtyFieldText(product.lowStockThreshold)
+        : '';
     _categoryCtrl.text = product.category;
     _qrCtrl.text = product.qrCode;
     _expiryDate = product.expiryDate;
@@ -221,10 +230,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       }
 
       for (final attr in product.variantAttributes) {
-        _attributes.add(_AttributeEntry(
-          name: attr.name,
-          options: List<String>.from(attr.options),
-        ));
+        _attributes.add(
+          _AttributeEntry(
+            name: attr.name,
+            options: List<String>.from(attr.options),
+          ),
+        );
       }
 
       _combinations = product.variantCombinations
@@ -297,16 +308,20 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _regenPending = false;
 
     final attrs = _attributes
-        .where((a) =>
-            a.nameCtrl.text.trim().isNotEmpty &&
-            a.options.any((o) => o.trim().isNotEmpty))
-        .map((a) => VariantAttribute(
-              name: a.nameCtrl.text.trim(),
-              options: a.options
-                  .where((o) => o.trim().isNotEmpty)
-                  .map((o) => o.trim())
-                  .toList(),
-            ))
+        .where(
+          (a) =>
+              a.nameCtrl.text.trim().isNotEmpty &&
+              a.options.any((o) => o.trim().isNotEmpty),
+        )
+        .map(
+          (a) => VariantAttribute(
+            name: a.nameCtrl.text.trim(),
+            options: a.options
+                .where((o) => o.trim().isNotEmpty)
+                .map((o) => o.trim())
+                .toList(),
+          ),
+        )
         .toList();
 
     final generated = generateCombinations(
@@ -327,7 +342,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (pool != null && pool.isNotEmpty) {
         next.add(pool.removeAt(0)..displayLabel = combo.displayLabel);
       } else if (previous != null) {
-
         next.add(_CombinationEntry.copyOf(previous, combo.displayLabel));
       } else {
         next.add(_CombinationEntry.fromCombination(combo));
@@ -350,12 +364,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final s = AppStrings.of(context);
     final XFile? picked;
     try {
-
-      picked = await ref.read(imagePickerProvider).pickImage(
-            source: source,
-            maxWidth: 1600,
-            maxHeight: 1600,
-          );
+      picked = await ref
+          .read(imagePickerProvider)
+          .pickImage(source: source, maxWidth: 1600, maxHeight: 1600);
     } on PlatformException catch (e) {
       await _pickFailed(e.code);
       return;
@@ -383,12 +394,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       );
 
       if (compressed != null && mounted) {
-
         ProductImageStore.documentsDirectory ??= dir.path;
         setState(() => _imagePath = storedProductImagePath(compressed.path));
       }
     } catch (_) {
-
       if (mounted) context.showErrorSnackBar(s.error);
     } finally {
       if (mounted) setState(() => _isCompressing = false);
@@ -402,7 +411,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<void> _pickFailed(String code) async {
-
     if (!mounted) return;
     final s = AppStrings.of(context);
     switch (code) {
@@ -462,10 +470,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
             if (_imagePath != null)
               ListTile(
-                leading: const ThinIcon(tabler.Trash.new,
-                    color: Colors.red),
-                title: Text(s.removePhoto,
-                    style: const TextStyle(color: Colors.red)),
+                leading: const ThinIcon(tabler.Trash.new, color: Colors.red),
+                title: Text(
+                  s.removePhoto,
+                  style: const TextStyle(color: Colors.red),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() => _imagePath = null);
@@ -511,22 +520,23 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<void> _scanQr() async {
-    final result = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
-    );
+    final result = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => const QrScannerScreen()));
     if (result != null && mounted) {
       setState(() => _qrCtrl.text = result);
     }
   }
 
   Future<void> _submit() async {
-
     if (_regenPending) _regenerateCombinations();
 
     if (!_formKey.currentState!.validate()) {
-
-      _scrollCtrl.animateTo(0,
-          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      _scrollCtrl.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
       return;
     }
 
@@ -535,34 +545,40 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     try {
       final categoryName = _categoryCtrl.text.trim();
 
-      await ref
-          .read(categoryProvider.notifier)
-          .ensureExists(categoryName);
+      await ref.read(categoryProvider.notifier).ensureExists(categoryName);
 
       final isEdit = _existingProduct != null || widget.product != null;
       final existing = _existingProduct ?? widget.product;
 
       final variantAttributes = _attributes
-          .where((a) =>
-              a.nameCtrl.text.trim().isNotEmpty &&
-              a.options.any((o) => o.trim().isNotEmpty))
-          .map((a) => VariantAttribute(
-                name: a.nameCtrl.text.trim(),
-                options: a.options
-                    .where((o) => o.trim().isNotEmpty)
-                    .map((o) => o.trim())
-                    .toList(),
-              ))
+          .where(
+            (a) =>
+                a.nameCtrl.text.trim().isNotEmpty &&
+                a.options.any((o) => o.trim().isNotEmpty),
+          )
+          .map(
+            (a) => VariantAttribute(
+              name: a.nameCtrl.text.trim(),
+              options: a.options
+                  .where((o) => o.trim().isNotEmpty)
+                  .map((o) => o.trim())
+                  .toList(),
+            ),
+          )
           .toList();
 
-      final variantCombinations = _combinations.map((c) => VariantCombination(
-        combinationKey: c.key,
-        displayLabel: c.displayLabel,
-        stockQty: parseQty(c.stockCtrl.text, _unit) ?? 0,
-        priceAdjustment: NumberInput.parseDecimal(c.priceCtrl.text) ?? 0,
-        sku: c.skuCtrl.text.trim(),
-        isActive: c.isActive,
-      )).toList();
+      final variantCombinations = _combinations
+          .map(
+            (c) => VariantCombination(
+              combinationKey: c.key,
+              displayLabel: c.displayLabel,
+              stockQty: parseQty(c.stockCtrl.text, _unit) ?? 0,
+              priceAdjustment: NumberInput.parseDecimal(c.priceCtrl.text) ?? 0,
+              sku: c.skuCtrl.text.trim(),
+              isActive: c.isActive,
+            ),
+          )
+          .toList();
 
       final product = Product(
         id: existing?.id ?? Isar.autoIncrement,
@@ -586,24 +602,33 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         // Serials and warranty only for a product sold by the piece; picking
         // another unit saves them off.
         trackSerials: _usesSerials,
-        warrantyMonths: _unit == QuantityUnit.piece ? (NumberInput.parseInteger(_warrantyCtrl.text) ?? 0) : 0,
+        warrantyMonths: _unit == QuantityUnit.piece
+            ? (NumberInput.parseInteger(_warrantyCtrl.text) ?? 0)
+            : 0,
         expiryDate: _expiryDate,
         createdAt: existing?.createdAt,
       );
 
       final removed = [
         for (final x in _savedSerials)
-          if (x.isInStock && _removedSerials.contains(x.serial.toLowerCase())) x.serial,
+          if (x.isInStock && _removedSerials.contains(x.serial.toLowerCase()))
+            x.serial,
       ];
       if (isEdit) {
-        await ref.read(productProvider.notifier).updateProduct(
+        await ref
+            .read(productProvider.notifier)
+            .updateProduct(
               product,
               addedSerials: _usesSerials ? _addedSerials : const [],
               removedSerials: _usesSerials ? removed : const [],
             );
       } else {
-        await ref.read(productProvider.notifier).addProduct(product,
-            serials: _usesSerials ? _addedSerials : const []);
+        await ref
+            .read(productProvider.notifier)
+            .addProduct(
+              product,
+              serials: _usesSerials ? _addedSerials : const [],
+            );
       }
 
       if (!mounted) return;
@@ -616,8 +641,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         SnackBar(content: Text(successMsg), backgroundColor: Colors.green),
       );
     } catch (e, st) {
-
-      developer.log('Product save failed', name: 'ProductForm', error: e, stackTrace: st);
+      developer.log(
+        'Product save failed',
+        name: 'ProductForm',
+        error: e,
+        stackTrace: st,
+      );
       if (kDebugMode) {
         debugPrint('[ProductForm] save failed: $e');
         debugPrintStack(stackTrace: st, label: 'ProductForm._submit');
@@ -625,10 +654,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(serialErrorMessage(context, e) ??
-                (kDebugMode
-                    ? 'Save failed: $e'
-                    : AppStrings.of(context).failedToSaveProduct)),
+            content: Text(
+              serialErrorMessage(context, e) ??
+                  (kDebugMode
+                      ? 'Save failed: $e'
+                      : AppStrings.of(context).failedToSaveProduct),
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 6),
           ),
@@ -653,14 +684,20 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   /// coordinates, so it lands under the finger at any Display size.
   Future<void> _pickUnit(BuildContext fieldContext) async {
     final s = AppStrings.of(context);
-    final overlay = Navigator.of(fieldContext).overlay!.context.findRenderObject()! as RenderBox;
+    final overlay =
+        Navigator.of(fieldContext).overlay!.context.findRenderObject()!
+            as RenderBox;
     final field = fieldContext.findRenderObject()! as RenderBox;
-    final global = _unitTapPosition ?? field.localToGlobal(field.size.center(Offset.zero));
+    final global =
+        _unitTapPosition ?? field.localToGlobal(field.size.center(Offset.zero));
     _unitTapPosition = null;
     final local = overlay.globalToLocal(global);
     final picked = await showMenu<QuantityUnit>(
       context: context,
-      position: RelativeRect.fromRect(local & Size.zero, Offset.zero & overlay.size),
+      position: RelativeRect.fromRect(
+        local & Size.zero,
+        Offset.zero & overlay.size,
+      ),
       initialValue: _unit,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       items: [
@@ -670,10 +707,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(child: Text(s.unitName(u), overflow: TextOverflow.ellipsis)),
+                Flexible(
+                  child: Text(s.unitName(u), overflow: TextOverflow.ellipsis),
+                ),
                 if (u == _unit) ...[
                   const SizedBox(width: 12),
-                  ThinIcon(tabler.Check.new, size: 18, color: Theme.of(context).colorScheme.primary),
+                  ThinIcon(
+                    tabler.Check.new,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ],
               ],
             ),
@@ -693,9 +736,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final photo = resolveProductImagePath(_imagePath);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? s.editProduct : s.addProduct),
-      ),
+      appBar: AppBar(title: Text(isEdit ? s.editProduct : s.addProduct)),
 
       body: Form(
         key: _formKey,
@@ -708,7 +749,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Center(
                       child: GestureDetector(
                         onTap: _isCompressing ? null : _showImageSourceSheet,
@@ -753,7 +793,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                       'Add Photo',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: cs.primary.withValues(alpha: 0.6),
+                                        color: cs.primary.withValues(
+                                          alpha: 0.6,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -790,52 +832,75 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       onTap: _pickSupplier,
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.surface,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: cs.outline.withValues(alpha: 0.4)),
+                            color: cs.outline.withValues(alpha: 0.4),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            ThinIcon(tabler.TruckDelivery.new,
-                                color: cs.onSurface.withValues(alpha: 0.5),
-                                size: 20),
+                            ThinIcon(
+                              tabler.TruckDelivery.new,
+                              color: cs.onSurface.withValues(alpha: 0.5),
+                              size: 20,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _selectedSupplier != null
                                   ? Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(s.suppliers,
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: cs.onSurface
-                                                    .withValues(alpha: 0.5))),
-                                        Text(_selectedSupplier!.name,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 14)),
+                                        Text(
+                                          s.suppliers,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: cs.onSurface.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          _selectedSupplier!.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
                                       ],
                                     )
-                                  : Text(s.supplierOptional,
+                                  : Text(
+                                      s.supplierOptional,
                                       style: TextStyle(
-                                          color: cs.onSurface.withValues(alpha: 0.5),
-                                          fontSize: 14)),
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                        fontSize: 14,
+                                      ),
+                                    ),
                             ),
                             if (_selectedSupplier != null)
                               GestureDetector(
                                 onTap: () =>
                                     setState(() => _selectedSupplier = null),
-                                child: ThinIcon(tabler.X.new,
-                                    size: 18,
-                                    color: cs.onSurface.withValues(alpha: 0.5)),
+                                child: ThinIcon(
+                                  tabler.X.new,
+                                  size: 18,
+                                  color: cs.onSurface.withValues(alpha: 0.5),
+                                ),
                               )
                             else
-                              ThinIcon(tabler.ChevronRight.new,
-                                  size: 14,
-                                  color: cs.onSurface.withValues(alpha: 0.4)),
+                              ThinIcon(
+                                tabler.ChevronRight.new,
+                                size: 14,
+                                color: cs.onSurface.withValues(alpha: 0.4),
+                              ),
                           ],
                         ),
                       ),
@@ -888,41 +953,23 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             labelText: s.unit,
                             helperText: s.unitHint,
                             helperMaxLines: 3,
-                            prefixIcon: const ThinIcon(tabler.Ruler2.new, size: 20),
-                            suffixIcon: const ThinIcon(tabler.ChevronDown.new, size: 20),
+                            prefixIcon: const ThinIcon(
+                              tabler.Ruler2.new,
+                              size: 20,
+                            ),
+                            suffixIcon: const ThinIcon(
+                              tabler.ChevronDown.new,
+                              size: 20,
+                            ),
                           ),
-                          child: Text(s.unitName(_unit), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            s.unitName(_unit),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                     ),
-                    if (_unit == QuantityUnit.piece) ...[
-                      const SizedBox(height: 4),
-                      SwitchListTile(
-                        key: const ValueKey('trackSerialsSwitch'),
-                        contentPadding: EdgeInsets.zero,
-                        value: _usesSerials,
-                        title: Text(s.trackSerials),
-                        subtitle: Text(
-                          _hasVariants ? s.trackSerialsNoVariants : s.trackSerialsHint,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        onChanged: _hasVariants
-                            ? null
-                            : (v) => setState(() {
-                                  _trackSerials = v;
-                                  _syncSerialStock();
-                                }),
-                      ),
-                      AppTextField(
-                        label: s.warrantyMonths,
-                        controller: _warrantyCtrl,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [IntegerInputFormatter(), LengthLimitingTextInputFormatter(3)],
-                        helperText: s.warrantyHint,
-                        prefixIcon: const ThinIcon(tabler.ShieldCheck.new, size: 20),
-                        textInputAction: TextInputAction.next,
-                      ),
-                    ],
                     const SizedBox(height: 12),
                     _FieldRow(
                       chrome: _kAppFieldChrome,
@@ -932,9 +979,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           label: s.pricePerUnit(s.sellingPrice, _unit),
                           isRequired: true,
                           controller: _sellingPriceCtrl,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: const [DecimalInputFormatter.money()],
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: const [
+                            DecimalInputFormatter.money(),
+                          ],
                           validator: (v) =>
                               Validators.positiveNumber(v, 'Selling price'),
                           textInputAction: TextInputAction.next,
@@ -942,11 +992,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         AppTextField(
                           label: s.pricePerUnit(s.costPrice, _unit),
                           controller: _costPriceCtrl,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: const [DecimalInputFormatter.money()],
-                          validator: (v) => Validators.costPriceNotExceedingSelling(
-                              v, _sellingPriceCtrl.text),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: const [
+                            DecimalInputFormatter.money(),
+                          ],
+                          validator: (v) =>
+                              Validators.costPriceNotExceedingSelling(
+                                v,
+                                _sellingPriceCtrl.text,
+                              ),
                           textInputAction: TextInputAction.next,
                         ),
                       ],
@@ -968,8 +1024,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           keyboardType: qtyKeyboard(_unit),
                           inputFormatters: qtyFormatters(_unit),
                           suffix: _unitSuffix(s.unitSymbol(_unit)),
-                          validator: (v) => Validators.nonNegativeQty(v,
-                              decimal: _unit.allowsDecimal, fieldName: 'Stock quantity'),
+                          validator: (v) => Validators.nonNegativeQty(
+                            v,
+                            decimal: _unit.allowsDecimal,
+                            fieldName: 'Stock quantity',
+                          ),
                           textInputAction: TextInputAction.next,
                         ),
                         AppTextField(
@@ -982,57 +1041,54 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ],
                     ),
-                    if (_usesSerials) ...[
-                      const SizedBox(height: 12),
-                      _SerialList(
-                        serials: _serialsInStock,
-                        onAdd: _editSerials,
-                        onRemove: _removeSerial,
-                      ),
-                    ],
                     const SizedBox(height: 12),
                     InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () async {
-                            final now = DateTime.now();
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: _expiryDate ?? now,
-                              firstDate: now,
-                              lastDate: DateTime(now.year + 5),
-                            );
-                            if (picked != null) {
-                              setState(() => _expiryDate = picked);
-                            }
-                          },
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: s.tr('expiryDate'),
-                              prefixIcon: const Padding(
-                                padding: EdgeInsets.only(left: 12, right: 8),
-                                child: ThinIcon(tabler.Calendar.new, size: 20),
-                              ),
-                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                              suffixIcon: _expiryDate != null
-                                  ? IconButton(
-                                      icon: const ThinIcon(tabler.X.new, size: 16),
-                                      onPressed: () => setState(() => _expiryDate = null),
-                                      tooltip: s.tr('clear'),
-                                    )
-                                  : null,
-                            ),
-                            child: Text(
-                              _expiryDate != null
-                                  ? DateFormat.yMMMd().format(_expiryDate!)
-                                  : s.tr('noExpiryDate'),
-                              style: TextStyle(
-                                color: _expiryDate != null
-                                    ? null
-                                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                              ),
-                            ),
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () async {
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _expiryDate ?? now,
+                          firstDate: now,
+                          lastDate: DateTime(now.year + 5),
+                        );
+                        if (picked != null) {
+                          setState(() => _expiryDate = picked);
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: s.tr('expiryDate'),
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.only(left: 12, right: 8),
+                            child: ThinIcon(tabler.Calendar.new, size: 20),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 0,
+                            minHeight: 0,
+                          ),
+                          suffixIcon: _expiryDate != null
+                              ? IconButton(
+                                  icon: const ThinIcon(tabler.X.new, size: 16),
+                                  onPressed: () =>
+                                      setState(() => _expiryDate = null),
+                                  tooltip: s.tr('clear'),
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          _expiryDate != null
+                              ? DateFormat.yMMMd().format(_expiryDate!)
+                              : s.tr('noExpiryDate'),
+                          style: TextStyle(
+                            color: _expiryDate != null
+                                ? null
+                                : Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
                           ),
                         ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
                     SizedBox(
@@ -1046,7 +1102,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             TextButton.icon(
                               onPressed: _addAttribute,
                               icon: const ThinIcon(tabler.Plus.new, size: 16),
-                              label: Text(s.add, style: const TextStyle(fontSize: 12)),
+                              label: Text(
+                                s.add,
+                                style: const TextStyle(fontSize: 12),
+                              ),
                             ),
                         ],
                       ),
@@ -1055,7 +1114,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
-                          _usesSerials ? s.serialsNoVariants : s.tr('noVariantsHint'),
+                          _usesSerials
+                              ? s.serialsNoVariants
+                              : s.tr('noVariantsHint'),
                           style: TextStyle(
                             fontSize: 12,
                             color: cs.onSurface.withValues(alpha: 0.5),
@@ -1088,30 +1149,40 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                         isDense: true,
                                       ),
                                       controller: attr.nameCtrl,
-                                      autofocus: i == _attributes.length - 1 && attr.nameCtrl.text.isEmpty,
+                                      autofocus:
+                                          i == _attributes.length - 1 &&
+                                          attr.nameCtrl.text.isEmpty,
                                       onChanged: (_) => _scheduleRegeneration(),
                                     ),
                                   ),
                                   IconButton(
                                     tooltip: AppStrings.of(context).remove,
-                                    icon: ThinIcon(tabler.X.new,
-                                        size: 18, color: cs.error),
+                                    icon: ThinIcon(
+                                      tabler.X.new,
+                                      size: 18,
+                                      color: cs.error,
+                                    ),
                                     onPressed: () => _removeAttribute(i),
                                     visualDensity: VisualDensity.compact,
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text(s.tr('option'),
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: cs.onSurface.withValues(alpha: 0.5))),
+                              Text(
+                                s.tr('option'),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: cs.onSurface.withValues(alpha: 0.5),
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Wrap(
                                 spacing: 6,
                                 runSpacing: 6,
                                 children: [
-                                  ...attr.options.asMap().entries.map((optEntry) {
+                                  ...attr.options.asMap().entries.map((
+                                    optEntry,
+                                  ) {
                                     final oi = optEntry.key;
                                     return SizedBox(
                                       width: 100,
@@ -1120,21 +1191,30 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                         decoration: InputDecoration(
                                           hintText: s.option,
                                           isDense: true,
-                                          contentPadding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 8),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 8,
+                                              ),
 
-                                          constraints:
-                                              const BoxConstraints(minHeight: 36),
+                                          constraints: const BoxConstraints(
+                                            minHeight: 36,
+                                          ),
                                           suffixIcon: GestureDetector(
                                             onTap: () => _removeOption(i, oi),
-                                            child: ThinIcon(tabler.X.new,
-                                                size: 14,
-                                                color: cs.onSurface
-                                                    .withValues(alpha: 0.4)),
+                                            child: ThinIcon(
+                                              tabler.X.new,
+                                              size: 14,
+                                              color: cs.onSurface.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                            ),
                                           ),
                                           suffixIconConstraints:
                                               const BoxConstraints(
-                                                  maxWidth: 24, maxHeight: 24),
+                                                maxWidth: 24,
+                                                maxHeight: 24,
+                                              ),
                                         ),
                                         style: const TextStyle(fontSize: 13),
                                         onChanged: (val) {
@@ -1148,12 +1228,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     height: 36,
                                     child: TextButton.icon(
                                       onPressed: () => _addOption(i),
-                                      icon: const ThinIcon(tabler.Plus.new, size: 14),
-                                      label: Text(s.add,
-                                          style: const TextStyle(fontSize: 11)),
+                                      icon: const ThinIcon(
+                                        tabler.Plus.new,
+                                        size: 14,
+                                      ),
+                                      label: Text(
+                                        s.add,
+                                        style: const TextStyle(fontSize: 11),
+                                      ),
                                       style: TextButton.styleFrom(
-                                        padding:
-                                            const EdgeInsets.symmetric(horizontal: 8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
                                         visualDensity: VisualDensity.compact,
                                       ),
                                     ),
@@ -1175,11 +1261,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             _SectionLabel(
-                                '${s.combinations} (${combinations.length})'),
+                              '${s.combinations} (${combinations.length})',
+                            ),
                             TextButton(
                               onPressed: _regenerateCombinations,
-                              child: Text(s.regenerate,
-                                  style: const TextStyle(fontSize: 11)),
+                              child: Text(
+                                s.regenerate,
+                                style: const TextStyle(fontSize: 11),
+                              ),
                             ),
                           ],
                         ),
@@ -1209,13 +1298,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: _BulkSetField(
                               label: s.setAllPrice,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                  decimal: true, signed: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                               inputFormatters: const [
                                 DecimalInputFormatter.money(signed: true),
                               ],
                               onApply: (val) {
-
                                 if (NumberInput.parseDecimal(val) == null) {
                                   return false;
                                 }
@@ -1245,14 +1336,71 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
                   findChildIndexCallback: (key) {
                     if (key is! ObjectKey) return null;
-                    final i = combinations
-                        .indexWhere((c) => identical(c, key.value));
+                    final i = combinations.indexWhere(
+                      (c) => identical(c, key.value),
+                    );
                     return i < 0 ? null : i;
                   },
                   itemBuilder: (context, i) => _CombinationRow(
                     key: ObjectKey(combinations[i]),
                     entry: combinations[i],
                     unit: _unit,
+                  ),
+                ),
+              ),
+
+            // Serial numbers and warranty: last, since few products need
+            // them, and only for a product sold by the piece.
+            if (_unit == QuantityUnit.piece)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _SectionLabel(s.serialsAndWarranty),
+                      SwitchListTile(
+                        key: const ValueKey('trackSerialsSwitch'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _usesSerials,
+                        title: Text(s.trackSerials),
+                        subtitle: Text(
+                          _hasVariants
+                              ? s.trackSerialsNoVariants
+                              : s.trackSerialsHint,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        onChanged: _hasVariants
+                            ? null
+                            : (v) => setState(() {
+                                _trackSerials = v;
+                                _syncSerialStock();
+                              }),
+                      ),
+                      AppTextField(
+                        label: s.warrantyMonths,
+                        controller: _warrantyCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          IntegerInputFormatter(),
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        helperText: s.warrantyHint,
+                        prefixIcon: const ThinIcon(
+                          tabler.ShieldCheck.new,
+                          size: 20,
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      if (_usesSerials) ...[
+                        const SizedBox(height: 12),
+                        _SerialList(
+                          serials: _serialsInStock,
+                          onAdd: _editSerials,
+                          onRemove: _removeSerial,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
@@ -1350,7 +1498,9 @@ class _CombinationRowState extends State<_CombinationRow> {
                     decoration: InputDecoration(
                       labelText: s.stock,
                       isDense: true,
-                      suffixText: s.unitSymbol(widget.unit).isEmpty ? null : s.unitSymbol(widget.unit),
+                      suffixText: s.unitSymbol(widget.unit).isEmpty
+                          ? null
+                          : s.unitSymbol(widget.unit),
                     ),
                     keyboardType: qtyKeyboard(widget.unit),
                     inputFormatters: qtyFormatters(widget.unit),
@@ -1362,7 +1512,9 @@ class _CombinationRowState extends State<_CombinationRow> {
                       isDense: true,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true, signed: true),
+                      decimal: true,
+                      signed: true,
+                    ),
                     inputFormatters: const [
                       DecimalInputFormatter.money(signed: true),
                     ],
@@ -1399,8 +1551,9 @@ class _CategoryChips extends ConsumerWidget {
         data: (cats) {
           final query = value.text.trim().toLowerCase();
           final filtered = cats
-              .where((c) =>
-                  query.isEmpty || c.name.toLowerCase().contains(query))
+              .where(
+                (c) => query.isEmpty || c.name.toLowerCase().contains(query),
+              )
               .toList();
           if (filtered.isEmpty) return const SizedBox.shrink();
           return Padding(
@@ -1409,12 +1562,13 @@ class _CategoryChips extends ConsumerWidget {
               spacing: 8,
               runSpacing: 4,
               children: filtered
-                  .map((c) => ActionChip(
-                        label: Text(c.name,
-                            style: const TextStyle(fontSize: 12)),
-                        onPressed: () => controller.text = c.name,
-                        visualDensity: VisualDensity.compact,
-                      ))
+                  .map(
+                    (c) => ActionChip(
+                      label: Text(c.name, style: const TextStyle(fontSize: 12)),
+                      onPressed: () => controller.text = c.name,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  )
                   .toList(),
             ),
           );
@@ -1445,40 +1599,46 @@ class _FieldRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final minWidth = chrome + MediaQuery.textScalerOf(context).scale(48);
-    return LayoutBuilder(builder: (context, constraints) {
-      double widthFor(int perRow) =>
-          (constraints.maxWidth - spacing * (perRow - 1)) / perRow;
-      var perRow = children.length;
-      while (perRow > 1 && widthFor(perRow) < minWidth) {
-        perRow--;
-      }
-      if (perRow == children.length) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < children.length; i++) ...[
-              if (i > 0) SizedBox(width: spacing),
-              Expanded(child: children[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double widthFor(int perRow) =>
+            (constraints.maxWidth - spacing * (perRow - 1)) / perRow;
+        var perRow = children.length;
+        while (perRow > 1 && widthFor(perRow) < minWidth) {
+          perRow--;
+        }
+        if (perRow == children.length) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) SizedBox(width: spacing),
+                Expanded(child: children[i]),
+              ],
             ],
+          );
+        }
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final child in children)
+              SizedBox(width: widthFor(perRow), child: child),
           ],
         );
-      }
-      return Wrap(
-        spacing: spacing,
-        runSpacing: spacing,
-        children: [
-          for (final child in children)
-            SizedBox(width: widthFor(perRow), child: child),
-        ],
-      );
-    });
+      },
+    );
   }
 }
 
 /// The serial numbers in stock in the product form: count, list, remove,
 /// and Add serials (typed, pasted or scanned).
 class _SerialList extends StatelessWidget {
-  const _SerialList({required this.serials, required this.onAdd, required this.onRemove});
+  const _SerialList({
+    required this.serials,
+    required this.onAdd,
+    required this.onRemove,
+  });
 
   final List<String> serials;
   final VoidCallback onAdd;
@@ -1500,8 +1660,10 @@ class _SerialList extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('${s.serialNumbers} (${serials.length})',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(
+                  '${s.serialNumbers} (${serials.length})',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
               TextButton.icon(
                 key: const ValueKey('addSerialsButton'),
@@ -1514,7 +1676,10 @@ class _SerialList extends StatelessWidget {
           if (serials.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(s.noSerialsYet, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+              child: Text(
+                s.noSerialsYet,
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+              ),
             ),
           for (final serial in serials)
             Row(
@@ -1572,7 +1737,6 @@ class _BulkSetField extends StatefulWidget {
 }
 
 class _BulkSetFieldState extends State<_BulkSetField> {
-
   final _ctrl = TextEditingController();
 
   @override
@@ -1594,8 +1758,10 @@ class _BulkSetFieldState extends State<_BulkSetField> {
             decoration: InputDecoration(
               hintText: label,
               isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 8,
+              ),
             ),
             style: const TextStyle(fontSize: 12),
             keyboardType: widget.keyboardType,
@@ -1607,8 +1773,11 @@ class _BulkSetFieldState extends State<_BulkSetField> {
           onTap: () {
             if (onApply(ctrl.text)) ctrl.clear();
           },
-          child: ThinIcon(tabler.CircleCheck.new,
-              size: 20, color: Theme.of(context).colorScheme.primary),
+          child: ThinIcon(
+            tabler.CircleCheck.new,
+            size: 20,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
       ],
     );
@@ -1621,11 +1790,11 @@ class _AttributeEntry {
   final List<TextEditingController> optionCtrls;
 
   _AttributeEntry({String name = '', List<String>? options})
-      : nameCtrl = TextEditingController(text: name),
-        options = options ?? [''],
-        optionCtrls = (options ?? [''])
-            .map((o) => TextEditingController(text: o))
-            .toList();
+    : nameCtrl = TextEditingController(text: name),
+      options = options ?? [''],
+      optionCtrls = (options ?? [''])
+          .map((o) => TextEditingController(text: o))
+          .toList();
 
   void dispose() {
     nameCtrl.dispose();
@@ -1657,26 +1826,31 @@ class _CombinationEntry {
         key: combo.combinationKey,
         displayLabel: combo.displayLabel,
         stockCtrl: TextEditingController(
-            text: combo.stockQty > 0 ? qtyFieldText(combo.stockQty) : ''),
+          text: combo.stockQty > 0 ? qtyFieldText(combo.stockQty) : '',
+        ),
         priceCtrl: TextEditingController(
-            text: combo.priceAdjustment != 0
-                ? combo.priceAdjustment.toString()
-                : ''),
+          text: combo.priceAdjustment != 0
+              ? combo.priceAdjustment.toString()
+              : '',
+        ),
         skuCtrl: TextEditingController(text: combo.sku),
         isActive: combo.isActive,
       );
 
   factory _CombinationEntry.copyOf(
-          _CombinationEntry other, String displayLabel) =>
-      _CombinationEntry.fromCombination(VariantCombination(
-        combinationKey: other.key,
-        displayLabel: displayLabel,
-        // Decimal-tolerant: the field's formatter already kept it to the unit.
-        stockQty: roundQty(NumberInput.parseDecimal(other.stockCtrl.text) ?? 0),
-        priceAdjustment: NumberInput.parseDecimal(other.priceCtrl.text) ?? 0,
-        sku: other.skuCtrl.text,
-        isActive: other.isActive,
-      ));
+    _CombinationEntry other,
+    String displayLabel,
+  ) => _CombinationEntry.fromCombination(
+    VariantCombination(
+      combinationKey: other.key,
+      displayLabel: displayLabel,
+      // Decimal-tolerant: the field's formatter already kept it to the unit.
+      stockQty: roundQty(NumberInput.parseDecimal(other.stockCtrl.text) ?? 0),
+      priceAdjustment: NumberInput.parseDecimal(other.priceCtrl.text) ?? 0,
+      sku: other.skuCtrl.text,
+      isActive: other.isActive,
+    ),
+  );
 
   void dispose() {
     stockCtrl.dispose();
@@ -1718,11 +1892,13 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
     final filtered = _query.isEmpty
         ? widget.suppliers
         : widget.suppliers
-            .where((sup) =>
-                sup.name.toLowerCase().contains(_query) ||
-                sup.company.toLowerCase().contains(_query) ||
-                NumberInput.phoneMatches(sup.phone, _query))
-            .toList();
+              .where(
+                (sup) =>
+                    sup.name.toLowerCase().contains(_query) ||
+                    sup.company.toLowerCase().contains(_query) ||
+                    NumberInput.phoneMatches(sup.phone, _query),
+              )
+              .toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
@@ -1742,9 +1918,12 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(s.tr('selectSupplier'),
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            child: Text(
+              s.tr('selectSupplier'),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -1768,28 +1947,33 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
               borderRadius: BorderRadius.circular(10),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: cs.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: cs.primary.withValues(alpha: 0.2)),
+                  border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
-                    ThinIcon(tabler.Plus.new,
-                        size: 20, color: cs.primary),
+                    ThinIcon(tabler.Plus.new, size: 20, color: cs.primary),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(s.addSupplier,
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: cs.primary)),
+                      child: Text(
+                        s.addSupplier,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: cs.primary,
+                        ),
+                      ),
                     ),
-                    ThinIcon(tabler.ChevronRight.new,
-                        size: 14,
-                        color: cs.primary.withValues(alpha: 0.6)),
+                    ThinIcon(
+                      tabler.ChevronRight.new,
+                      size: 14,
+                      color: cs.primary.withValues(alpha: 0.6),
+                    ),
                   ],
                 ),
               ),
@@ -1802,13 +1986,18 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ThinIcon(tabler.TruckDelivery.new,
-                            size: 48,
-                            color: cs.onSurface.withValues(alpha: 0.3)),
+                        ThinIcon(
+                          tabler.TruckDelivery.new,
+                          size: 48,
+                          color: cs.onSurface.withValues(alpha: 0.3),
+                        ),
                         const SizedBox(height: 8),
-                        Text(s.tr('noSuppliersFound'),
-                            style: TextStyle(
-                                color: cs.onSurface.withValues(alpha: 0.4))),
+                        Text(
+                          s.tr('noSuppliersFound'),
+                          style: TextStyle(
+                            color: cs.onSurface.withValues(alpha: 0.4),
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -1817,7 +2006,9 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtered.length,
                     separatorBuilder: (_, _) => Divider(
-                        height: 1, color: cs.outline.withValues(alpha: 0.1)),
+                      height: 1,
+                      color: cs.outline.withValues(alpha: 0.1),
+                    ),
                     itemBuilder: (_, i) {
                       final sup = filtered[i];
                       return ListTile(
@@ -1825,27 +2016,33 @@ class _SupplierPickerSheetState extends State<_SupplierPickerSheet> {
                         onTap: () => Navigator.pop(ctx, sup),
                         leading: CircleAvatar(
                           radius: 18,
-                          backgroundColor:
-                              cs.primary.withValues(alpha: 0.1),
+                          backgroundColor: cs.primary.withValues(alpha: 0.1),
                           child: Text(
                             sup.name.isNotEmpty
                                 ? sup.name[0].toUpperCase()
                                 : '?',
                             style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: cs.primary,
-                                fontSize: 14),
+                              fontWeight: FontWeight.w600,
+                              color: cs.primary,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
-                        title: Text(sup.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500, fontSize: 14)),
+                        title: Text(
+                          sup.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
                         subtitle: sup.company.isNotEmpty
-                            ? Text(sup.company,
+                            ? Text(
+                                sup.company,
                                 style: TextStyle(
-                                    fontSize: 12,
-                                    color:
-                                        cs.onSurface.withValues(alpha: 0.5)))
+                                  fontSize: 12,
+                                  color: cs.onSurface.withValues(alpha: 0.5),
+                                ),
+                              )
                             : null,
                         dense: true,
                       );

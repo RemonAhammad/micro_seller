@@ -1065,6 +1065,7 @@ const translationsBn = <String, String>{
   'privacyPolicy': 'প্রাইভেসি পলিসি',
   'couldNotOpenLink': 'লিংকটি খোলা যায়নি',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'সিরিয়াল নম্বর ও ওয়ারেন্টি',
   'trackSerials': 'সিরিয়াল নম্বর ট্র্যাক করুন',
   'trackSerialsHint': 'প্রতিটি পণ্যের নিজস্ব সিরিয়াল বা IMEI থাকে। স্টক হলো স্টকে থাকা সিরিয়ালের সংখ্যা, আর প্রতিটি বিক্রিতে কোনগুলো গেল তা বেছে নিতে হয়।',
   'trackSerialsNoVariants': 'ভ্যারিয়েন্ট আছে এমন পণ্যের জন্য এটি পাওয়া যায় না।',

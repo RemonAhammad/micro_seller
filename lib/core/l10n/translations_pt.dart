@@ -1065,6 +1065,7 @@ const translationsPt = <String, String>{
   'privacyPolicy': 'Política de privacidade',
   'couldNotOpenLink': 'Não foi possível abrir o link',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'Números de série e garantia',
   'trackSerials': 'Controlar números de série',
   'trackSerialsHint': 'Cada unidade tem seu próprio número de série ou IMEI. O estoque é a quantidade de séries disponíveis, e em cada venda você escolhe quais saíram.',
   'trackSerialsNoVariants': 'Indisponível para produto com variantes.',

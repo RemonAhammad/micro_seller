@@ -1065,6 +1065,7 @@ const translationsId = <String, String>{
   'privacyPolicy': 'Kebijakan Privasi',
   'couldNotOpenLink': 'Tidak dapat membuka tautan',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'Nomor seri & garansi',
   'trackSerials': 'Lacak nomor seri',
   'trackSerialsHint': 'Setiap unit punya nomor seri atau IMEI sendiri. Stok adalah jumlah nomor seri yang tersedia, dan tiap penjualan memilih nomor mana yang keluar.',
   'trackSerialsNoVariants': 'Tidak tersedia untuk produk dengan varian.',

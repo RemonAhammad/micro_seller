@@ -1065,6 +1065,7 @@ const translationsTh = <String, String>{
   'privacyPolicy': 'นโยบายความเป็นส่วนตัว',
   'couldNotOpenLink': 'ไม่สามารถเปิดลิงก์ได้',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'หมายเลขซีเรียลและการรับประกัน',
   'trackSerials': 'ติดตามหมายเลขซีเรียล',
   'trackSerialsHint': 'สินค้าแต่ละชิ้นมีหมายเลขซีเรียลหรือ IMEI ของตัวเอง สต็อกคือจำนวนซีเรียลที่มีอยู่ และทุกครั้งที่ขายต้องเลือกว่าขายชิ้นไหนไป',
   'trackSerialsNoVariants': 'ใช้ไม่ได้กับสินค้าที่มีตัวเลือก',

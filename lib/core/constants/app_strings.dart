@@ -500,6 +500,7 @@ class _L10nStrings {
   String get unit => _l10n.tr('unit');
   String get unitHint => _l10n.tr('unitHint');
   // Serial numbers and warranty
+  String get serialsAndWarranty => _l10n.tr('serialsAndWarranty');
   String get trackSerials => _l10n.tr('trackSerials');
   String get trackSerialsHint => _l10n.tr('trackSerialsHint');
   String get trackSerialsNoVariants => _l10n.tr('trackSerialsNoVariants');

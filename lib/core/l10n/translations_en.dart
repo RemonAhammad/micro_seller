@@ -1066,6 +1066,7 @@ const translationsEn = <String, String>{
   'privacyPolicy': 'Privacy Policy',
   'couldNotOpenLink': 'Could not open the link',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'Serial numbers & warranty',
   'trackSerials': 'Track serial numbers',
   'trackSerialsHint': 'Each unit has its own serial or IMEI. Stock is the number of serials in stock, and each sale picks which ones went.',
   'trackSerialsNoVariants': 'Not available for a product with variants.',

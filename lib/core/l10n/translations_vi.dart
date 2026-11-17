@@ -1065,6 +1065,7 @@ const translationsVi = <String, String>{
   'privacyPolicy': 'Chính sách quyền riêng tư',
   'couldNotOpenLink': 'Không thể mở liên kết',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'Số sê-ri và bảo hành',
   'trackSerials': 'Theo dõi số sê-ri',
   'trackSerialsHint': 'Mỗi sản phẩm có số sê-ri hoặc IMEI riêng. Tồn kho là số sê-ri còn hàng, và mỗi lần bán bạn chọn những số nào đã bán.',
   'trackSerialsNoVariants': 'Không dùng được cho sản phẩm có biến thể.',

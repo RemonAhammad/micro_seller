@@ -1065,6 +1065,7 @@ const translationsTr = <String, String>{
   'privacyPolicy': 'Gizlilik Politikası',
   'couldNotOpenLink': 'Bağlantı açılamadı',
   // Serial numbers and warranty
+  'serialsAndWarranty': 'Seri numaraları ve garanti',
   'trackSerials': 'Seri numaralarını takip et',
   'trackSerialsHint': 'Her ürünün kendi seri numarası veya IMEI’si vardır. Stok, eldeki seri sayısıdır ve her satışta hangilerinin gittiğini seçersiniz.',
   'trackSerialsNoVariants': 'Varyantlı ürün için kullanılamaz.',
