@@ -370,6 +370,7 @@ class _L10nStrings {
   String get movements => _l10n.tr('movements');
   String get selectCombination => _l10n.tr('selectCombination');
   String get baseStock => _l10n.tr('baseStock');
+  String get variantsNotConfiguredHint => _l10n.tr('variantsNotConfiguredHint');
   String get adjustmentType => _l10n.tr('adjustmentType');
   String get restock => _l10n.tr('restock');
   String get adjust => _l10n.tr('adjust');

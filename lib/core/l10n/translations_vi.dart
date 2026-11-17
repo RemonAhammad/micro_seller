@@ -195,6 +195,8 @@ const translationsVi = <String, String>{
   'reason': 'Lý do',
   'selectCombination': 'Chọn tổ hợp',
   'baseStock': 'Kho cơ bản',
+  'variantsNotConfiguredHint':
+      'Sản phẩm này có các biến thể nhưng chưa thiết lập tổ hợp nào. Hãy cấu hình chúng để điều chỉnh kho cho từng biến thể.',
   'adjustmentType': 'Loại điều chỉnh',
   'restock': 'Nhập thêm',
   'adjust': 'Điều chỉnh',

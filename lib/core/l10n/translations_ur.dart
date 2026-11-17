@@ -195,6 +195,8 @@ const translationsUr = <String, String>{
   'reason': 'وجہ',
   'selectCombination': 'امتزاج منتخب کریں',
   'baseStock': 'بنیادی اسٹاک',
+  'variantsNotConfiguredHint':
+      'اس پروڈکٹ میں ویری ایشنز ہیں لیکن ابھی تک کوئی کمبی نیشن ترتیب نہیں دیا گیا۔ ہر ویری ایشن کا اسٹاک ایڈجسٹ کرنے کے لیے انہیں کنفیگر کریں۔',
   'adjustmentType': 'ایڈجسٹمنٹ کی قسم',
   'restock': 'دوبارہ اسٹاک',
   'adjust': 'ایڈجسٹ',

@@ -195,6 +195,8 @@ const translationsAr = <String, String>{
   'reason': 'السبب',
   'selectCombination': 'اختر التركيبة',
   'baseStock': 'المخزون الأساسي',
+  'variantsNotConfiguredHint':
+      'يحتوي هذا المنتج على تنويعات لكن لم يتم إعداد أي تركيبات بعد. قم بتهيئتها لتعديل المخزون لكل تنويعة.',
   'adjustmentType': 'نوع التعديل',
   'restock': 'إعادة تخزين',
   'adjust': 'تعديل',

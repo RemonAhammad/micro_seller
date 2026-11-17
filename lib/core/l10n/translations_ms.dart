@@ -195,6 +195,8 @@ const translationsMs = <String, String>{
   'reason': 'Sebab',
   'selectCombination': 'Pilih Kombinasi',
   'baseStock': 'Stok asas',
+  'variantsNotConfiguredHint':
+      'Produk ini mempunyai variasi tetapi belum ada kombinasi disediakan. Konfigurasikan ia untuk melaraskan stok bagi setiap variasi.',
   'adjustmentType': 'Jenis Pelarasan',
   'restock': 'Isi Semula',
   'adjust': 'Laraskan',

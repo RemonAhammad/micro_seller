@@ -336,6 +336,42 @@ class _StockAdjustmentScreenState
                     ],
 
                     const SizedBox(height: 24),
+                  ] else if (product!.variantAttributes.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: cs.outlineVariant),
+                        color: cs.primary.withValues(alpha: 0.06),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ThinIcon(tabler.InfoCircle.new,
+                                  size: 20, color: cs.primary),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(s.variantsNotConfiguredHint,
+                                    style: const TextStyle(fontSize: 13)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          AppButton(
+                            label: s.edit,
+                            icon: tabler.Pencil.new,
+                            variant: AppButtonVariant.outlined,
+                            onPressed: () => context
+                                .push('/products/${widget.productId}/edit'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
 
                   Text(s.adjustmentType,

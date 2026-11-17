@@ -195,6 +195,8 @@ const translationsTr = <String, String>{
   'reason': 'Neden',
   'selectCombination': 'Kombinasyon Seç',
   'baseStock': 'Temel stok',
+  'variantsNotConfiguredHint':
+      'Bu üründe varyasyonlar var ancak henüz hiçbir kombinasyon tanımlanmadı. Her varyasyonun stoğunu ayarlamak için bunları yapılandırın.',
   'adjustmentType': 'Düzeltme Türü',
   'restock': 'Yeniden Stokla',
   'adjust': 'Düzelt',

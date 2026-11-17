@@ -195,6 +195,8 @@ const translationsBn = <String, String>{
   'reason': 'কারণ',
   'selectCombination': 'কম্বিনেশন নির্বাচন করুন',
   'baseStock': 'বেস স্টক',
+  'variantsNotConfiguredHint':
+      'এই পণ্যের ভ্যারিয়েশন আছে কিন্তু এখনও কোনো কম্বিনেশন সেট করা হয়নি। প্রতিটি ভ্যারিয়েশনের স্টক সমন্বয় করতে সেগুলো কনফিগার করুন।',
   'adjustmentType': 'সমন্বয়ের ধরন',
   'restock': 'রিস্টক',
   'adjust': 'সমন্বয়',

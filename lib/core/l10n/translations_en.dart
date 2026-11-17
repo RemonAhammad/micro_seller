@@ -195,6 +195,8 @@ const translationsEn = <String, String>{
   'reason': 'Reason',
   'selectCombination': 'Select Combination',
   'baseStock': 'Base stock',
+  'variantsNotConfiguredHint':
+      'This product has variations but no combinations are set up yet. Configure them to adjust stock for each variation.',
   'adjustmentType': 'Adjustment Type',
   'restock': 'Restock',
   'adjust': 'Adjust',

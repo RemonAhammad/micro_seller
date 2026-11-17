@@ -195,6 +195,8 @@ const translationsTh = <String, String>{
   'reason': 'เหตุผล',
   'selectCombination': 'เลือกชุดรวม',
   'baseStock': 'สต็อกพื้นฐาน',
+  'variantsNotConfiguredHint':
+      'สินค้านี้มีตัวเลือกย่อยแต่ยังไม่ได้ตั้งค่าชุดตัวเลือก กรุณาตั้งค่าเพื่อปรับสต็อกของแต่ละตัวเลือก',
   'adjustmentType': 'ประเภทการปรับ',
   'restock': 'เติมสต็อก',
   'adjust': 'ปรับ',

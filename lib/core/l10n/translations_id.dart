@@ -195,6 +195,8 @@ const translationsId = <String, String>{
   'reason': 'Alasan',
   'selectCombination': 'Pilih Kombinasi',
   'baseStock': 'Stok dasar',
+  'variantsNotConfiguredHint':
+      'Produk ini memiliki variasi tetapi belum ada kombinasi yang diatur. Atur kombinasi untuk menyesuaikan stok setiap variasi.',
   'adjustmentType': 'Jenis Penyesuaian',
   'restock': 'Isi Ulang',
   'adjust': 'Sesuaikan',
