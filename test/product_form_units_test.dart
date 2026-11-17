@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,15 @@ import 'support/screen_harness.dart';
 /// decimals for kg / litre / metre only, and the unit and decimals are saved.
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  // Real Roboto, so the menu is as wide as on a phone (the test font draws
+  // every letter as a wide square).
+  setUpAll(() async {
+    final loader = FontLoader('Roboto');
+    for (final w in ['Regular', 'Medium', 'Bold']) {
+      loader.addFont(rootBundle.load('assets/fonts/roboto/Roboto-$w.ttf'));
+    }
+    await loader.load();
+  });
   tearDown(closeTestIsars);
 
   /// The text field whose label starts with [label] (required fields draw
@@ -52,11 +62,26 @@ void main() {
     return tester.widget<TextField>(field(label).first).controller!.text;
   }
 
-  Future<void> pickUnit(WidgetTester tester, String name) async {
-    final dropdown = find.byType(DropdownButtonFormField<QuantityUnit>);
-    await reveal(tester, dropdown);
-    await tester.tap(dropdown);
+  final soldBy = find.byKey(const ValueKey('soldByField'));
+
+  /// Touches the "Sold by" field at [fraction] of its width and returns the
+  /// touch point and the open menu's rect.
+  Future<(Offset, Rect)> openUnitMenu(WidgetTester tester, double fraction) async {
+    await reveal(tester, soldBy);
+    final fieldRect = tester.getRect(soldBy);
+    final touch = Offset(fieldRect.left + fieldRect.width * fraction, fieldRect.top + 20);
+    await tester.tapAt(touch);
     await tester.pumpAndSettle();
+    final menu = find.ancestor(of: find.byType(PopupMenuItem<QuantityUnit>).first, matching: find.byType(Material)).first;
+    return (touch, tester.getRect(menu));
+  }
+
+  Future<void> pickUnit(WidgetTester tester, String name) async {
+    // A touch in the left half: the menu starts at the finger, sized to its
+    // names, not field-wide from the field's edge.
+    final (touch, menu) = await openUnitMenu(tester, 0.3);
+    expect(menu.left, moreOrLessEquals(touch.dx, epsilon: 1), reason: 'opens at the finger');
+    expect(menu.width, lessThan(tester.getSize(soldBy).width), reason: 'the menu is not field-wide');
     await tester.tap(find.text(name).last);
     await tester.pumpAndSettle();
   }
@@ -100,6 +125,30 @@ void main() {
       expect(saved.lowStockThreshold, 0.75);
       expect(saved.sellingPrice, 600);
       expect(saved.category, 'Fish');
+    });
+
+    testWidgets('the Sold by menu opens where the field is touched, on either side', (tester) async {
+      late Isar isar;
+      await tester.runAsync(() async => isar = await openTestIsar('form_unit_menu'));
+      await pumpScreen(tester, isar: isar, screen: const ProductFormScreen());
+
+      // Left half: the menu starts at the finger.
+      var (touch, menu) = await openUnitMenu(tester, 0.2);
+      expect(menu.left, moreOrLessEquals(touch.dx, epsilon: 1));
+      expect(menu.top, moreOrLessEquals(touch.dy, epsilon: 1), reason: 'the current unit at the finger');
+      expect(find.byType(PopupMenuItem<QuantityUnit>), findsNWidgets(QuantityUnit.values.length));
+      await tester.tapAt(const Offset(5, 5)); // dismiss
+      await tester.pumpAndSettle();
+      expect(find.byType(PopupMenuItem<QuantityUnit>), findsNothing);
+
+      // Right half: it ends at the finger, so it stays on screen.
+      (touch, menu) = await openUnitMenu(tester, 0.8);
+      expect(menu.right, moreOrLessEquals(touch.dx, epsilon: 1));
+      expect(menu.width, lessThan(tester.getSize(soldBy).width));
+
+      await tester.tap(find.text('Metre (m)').last);
+      await tester.pumpAndSettle();
+      expect(find.descendant(of: soldBy, matching: find.text('Metre (m)')), findsOneWidget, reason: 'the field shows the pick');
     });
 
     testWidgets('a piece product keeps whole numbers: the point is refused', (tester) async {

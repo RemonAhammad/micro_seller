@@ -37,7 +37,6 @@ import '../../suppliers/presentation/supplier_form_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:tabler_icons_next/tabler_icons_next.dart' as tabler;
 import '../../../core/constants/app_icons.dart';
-
 class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? product;
   final int? productId;
@@ -564,6 +563,45 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     return symbol.isEmpty ? null : Text(symbol);
   }
 
+  /// Where the finger touched the "Sold by" field (global), for its menu.
+  Offset? _unitTapPosition;
+
+  /// Opens the "Sold by" menu at the touch point, sized to its names (a
+  /// popup menu fits its items). Without a touch (keyboard, screen reader) it
+  /// opens at the field's centre. The point is converted into the overlay's
+  /// coordinates, so it lands under the finger at any Display size.
+  Future<void> _pickUnit(BuildContext fieldContext) async {
+    final s = AppStrings.of(context);
+    final overlay = Navigator.of(fieldContext).overlay!.context.findRenderObject()! as RenderBox;
+    final field = fieldContext.findRenderObject()! as RenderBox;
+    final global = _unitTapPosition ?? field.localToGlobal(field.size.center(Offset.zero));
+    _unitTapPosition = null;
+    final local = overlay.globalToLocal(global);
+    final picked = await showMenu<QuantityUnit>(
+      context: context,
+      position: RelativeRect.fromRect(local & Size.zero, Offset.zero & overlay.size),
+      initialValue: _unit,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: [
+        for (final u in QuantityUnit.values)
+          PopupMenuItem(
+            value: u,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text(s.unitName(u), overflow: TextOverflow.ellipsis)),
+                if (u == _unit) ...[
+                  const SizedBox(width: 12),
+                  ThinIcon(tabler.Check.new, size: 18, color: Theme.of(context).colorScheme.primary),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+    if (picked != null && mounted) setState(() => _unit = picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
@@ -755,25 +793,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
                     const _SectionLabel('Pricing'),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<QuantityUnit>(
-                      initialValue: _unit,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: s.unit,
-                        helperText: s.unitHint,
-                        helperMaxLines: 3,
-                        prefixIcon: const ThinIcon(tabler.Ruler2.new, size: 20),
-                      ),
-                      items: [
-                        for (final u in QuantityUnit.values)
-                          DropdownMenuItem(
-                            value: u,
-                            child: Text(s.unitName(u), overflow: TextOverflow.ellipsis),
+                    // Not a dropdown: a dropdown's menu always opens from the
+                    // field's edge, as wide as the field. This opens a popup
+                    // menu, sized to the names, where the finger touched.
+                    Builder(
+                      builder: (fieldContext) => InkWell(
+                        key: const ValueKey('soldByField'),
+                        borderRadius: BorderRadius.circular(12),
+                        onTapDown: (d) => _unitTapPosition = d.globalPosition,
+                        onTap: () => _pickUnit(fieldContext),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: s.unit,
+                            helperText: s.unitHint,
+                            helperMaxLines: 3,
+                            prefixIcon: const ThinIcon(tabler.Ruler2.new, size: 20),
+                            suffixIcon: const ThinIcon(tabler.ChevronDown.new, size: 20),
                           ),
-                      ],
-                      onChanged: (u) {
-                        if (u != null) setState(() => _unit = u);
-                      },
+                          child: Text(s.unitName(_unit), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _FieldRow(
