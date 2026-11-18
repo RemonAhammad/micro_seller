@@ -156,7 +156,7 @@ class OrderNotifier extends _$OrderNotifier {
     for (final item in items) {
       final product = products[item.productId];
       if (product == null) continue;
-      final delta = roundQty(sign * item.qty);
+      final delta = roundQty(sign * item.baseQty);
       var updated = product.copyWith(
         stockQty: roundQty(product.stockQty + delta),
         updatedAt: DateTime.now(),

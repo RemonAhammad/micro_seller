@@ -91,15 +91,19 @@ class CsvImportService {
             ? qtyOf(double.tryParse(row[6].toString().trim()) ?? 10)
             : 10.0;
 
+        // Dozen is no longer a product unit: a row in dozens is stocked in
+        // pieces, and sold by the dozen on the order.
+        final dozens = unit == QuantityUnit.dozen;
+        final k = dozens ? kDozen : 1.0;
         products.add(Product(
           name: name,
           sku: sku,
           category: category,
-          sellingPrice: sellingPrice,
-          costPrice: costPrice,
-          stockQty: stockQty,
-          lowStockThreshold: threshold,
-          unit: unit,
+          sellingPrice: sellingPrice / k,
+          costPrice: costPrice / k,
+          stockQty: roundQty(stockQty * k),
+          lowStockThreshold: roundQty(threshold * k),
+          unit: dozens ? QuantityUnit.piece : unit,
           isActive: true,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),

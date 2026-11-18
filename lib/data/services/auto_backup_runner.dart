@@ -179,6 +179,7 @@ Future<bool> _runBackgroundBackup() async {
     // one-time migrations may not have run: back up today's quantities,
     // not zeros (migrateDecimalQuantitiesV1 is a no-op once done).
     await migrateDecimalQuantitiesV1(isar);
+    await migrateDozenToPieceV1(isar);
 
     final drive = DriveService();
 

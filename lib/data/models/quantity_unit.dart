@@ -14,6 +14,13 @@ enum QuantityUnit {
   dozen,
   pack;
 
+  /// The units a product can be stocked in. [dozen] stays in the enum for
+  /// older data, but is now only a way to sell a piece product: an order line
+  /// in dozens (`OrderItem.unitFactor` 12).
+  static const productUnits = [
+    piece, kg, g, litre, ml, metre, cm, pack, //
+  ];
+
   /// Weighed or measured goods: a quantity may have decimals (1.25 kg).
   /// The small units (g, ml, cm) and counted ones stay whole.
   bool get allowsDecimal =>

@@ -164,8 +164,10 @@ SalesReport buildSalesReport({
   required DateTime end,
 }) {
   double costOf(OrderItem i) {
-    final c = i.costPrice > 0 ? i.costPrice : (productsById[i.productId]?.costPrice ?? 0);
-    return c * i.qty;
+    // A line's own cost is per its unit (a dozen line: per dozen); the
+    // product's fallback cost is per piece, so it takes the line's factor.
+    if (i.costPrice > 0) return i.costPrice * i.qty;
+    return (productsById[i.productId]?.costPrice ?? 0) * i.qty * i.factor;
   }
 
   final byMonth = end.difference(start).inDays > 62;
@@ -233,7 +235,7 @@ SalesReport buildSalesReport({
       cost += costOf(i);
       final value = i.totalPrice * factor;
       productRev[i.productName] = (productRev[i.productName] ?? 0) + value;
-      productQty[i.productName] = (productQty[i.productName] ?? 0) + i.qty;
+      productQty[i.productName] = (productQty[i.productName] ?? 0) + i.baseQty;
       final cat = productsById[i.productId]?.category ?? '';
       category[cat] = (category[cat] ?? 0) + value;
     }
@@ -486,7 +488,7 @@ InventoryReport buildInventoryReport({
     if (!_inRange(o.createdAt, start, end)) continue;
     for (final i in o.items) {
       soldIds.add(i.productId);
-      soldQty[i.productName] = roundQty((soldQty[i.productName] ?? 0) + i.qty);
+      soldQty[i.productName] = roundQty((soldQty[i.productName] ?? 0) + i.baseQty);
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:isar_community/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import '../../core/utils/quantity.dart';
 import 'quantity_unit.dart';
 
 part 'order_item.g.dart';
@@ -23,6 +24,7 @@ class OrderItem {
     this.variantDisplayLabel = '',
     this.serials = const [],
     this.warrantyMonths = 0,
+    this.unitFactor,
   });
 
   int productId;
@@ -63,6 +65,23 @@ class OrderItem {
   /// The product's warranty when it was sold, in months; 0 = none.
   int warrantyMonths;
 
+  /// Product-stock units in one of this line's [unit]s: 12 for a dozen line
+  /// of a piece product. Null on ordinary lines and older items; read [factor].
+  double? unitFactor;
+
+  @ignore
+  double get factor {
+    final f = unitFactor;
+    return f == null || f.isNaN || f <= 0 ? 1 : f;
+  }
+
+  /// [qty] in the product's own unit: what this line takes from stock.
+  @ignore
+  double get baseQty => roundQty(qty * factor);
+
+  @ignore
+  bool get isDozenLine => factor != 1;
+
   @ignore
   bool get hasSerials => serials.isNotEmpty;
 
@@ -102,8 +121,10 @@ class OrderItem {
     String? variantDisplayLabel,
     List<String>? serials,
     int? warrantyMonths,
+    double? unitFactor,
   }) =>
       OrderItem(
+        unitFactor: unitFactor ?? this.unitFactor,
         productId: productId ?? this.productId,
         productName: productName ?? this.productName,
         productSku: productSku ?? this.productSku,

@@ -138,7 +138,7 @@ void main() {
       var (touch, menu) = await openUnitMenu(tester, 0.2);
       expect(menu.left, moreOrLessEquals(touch.dx, epsilon: 1));
       expect(menu.top, moreOrLessEquals(touch.dy, epsilon: 1), reason: 'the current unit at the finger');
-      expect(find.byType(PopupMenuItem<QuantityUnit>), findsNWidgets(QuantityUnit.values.length));
+      expect(find.byType(PopupMenuItem<QuantityUnit>), findsNWidgets(QuantityUnit.productUnits.length));
       await tester.tapAt(const Offset(5, 5)); // dismiss
       await tester.pumpAndSettle();
       expect(find.byType(PopupMenuItem<QuantityUnit>), findsNothing);

@@ -53,7 +53,7 @@ class OrderRepository {
         final product = await _isar.products.get(item.productId);
         if (product != null && order.orderStatus == OrderStatus.confirmed) {
           final updated = product.copyWith(
-            stockQty: roundQty(product.stockQty - item.qty),
+            stockQty: roundQty(product.stockQty - item.baseQty),
             updatedAt: DateTime.now(),
           );
           await _isar.products.put(updated);
@@ -61,7 +61,7 @@ class OrderRepository {
             productId: item.productId,
             productName: item.productName,
             type: StockMovementType.sale,
-            qty: -item.qty,
+            qty: -item.baseQty,
             reason: 'Order ${order.orderNumber}',
             createdAt: DateTime.now(),
           ));

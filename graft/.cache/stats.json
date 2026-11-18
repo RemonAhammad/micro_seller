@@ -1,6 +1,6 @@
 {
-  "nodeCount": 6475,
-  "edgeCount": 1655,
+  "nodeCount": 6500,
+  "edgeCount": 1694,
   "languages": [
     "c",
     "cpp",
@@ -9,11 +9,11 @@
     "kotlin",
     "swift"
   ],
-  "totalCount": 6475,
+  "totalCount": 6500,
   "readyCount": 0,
   "staleCount": 0,
   "dirty": false,
   "syncing": false,
-  "syncedAt": "2026-11-17T12:42:55.754Z",
-  "lastFile": "stock_adjustment_variant_test.dart"
+  "syncedAt": "2026-11-18T09:56:12.191Z",
+  "lastFile": "order_form_test.dart"
 }

@@ -321,7 +321,7 @@ void main() {
       await c.read(orderProvider.notifier).createOrder(orderOf([line(p, ['A'])]));
       final bytes = encodeBackupBytesSync(isar);
       final map = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
-      expect(map['version'], 7);
+      expect(map['version'], greaterThanOrEqualTo(7));
       expect((map['productSerials'] as List).length, 2);
 
       final other = await openTestIsar('serial_backup_2');

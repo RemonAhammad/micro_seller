@@ -701,7 +701,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       initialValue: _unit,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       items: [
-        for (final u in QuantityUnit.values)
+        for (final u in QuantityUnit.productUnits)
           PopupMenuItem(
             value: u,
             child: Row(

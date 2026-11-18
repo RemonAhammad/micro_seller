@@ -480,7 +480,7 @@ class _StockTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: LayoutBuilder(builder: (context, beside) {
-                    final stock = AppStrings.of(context).qty(product.totalStock, product.unit);
+                    final stock = AppStrings.of(context).stockQty(product.totalStock, product.unit);
                     final caption = 'of ${formatQtyNumber(product.lowStockThreshold)} threshold';
                     final nameStyle = theme.textTheme.bodyMedium
                         ?.copyWith(fontWeight: FontWeight.w600);
@@ -589,7 +589,7 @@ class _StockTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      AppStrings.of(context).qty(c.stockQty, product.unit),
+                      AppStrings.of(context).stockQty(c.stockQty, product.unit),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,

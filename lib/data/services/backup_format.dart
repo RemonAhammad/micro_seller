@@ -11,13 +11,16 @@ import '../models/stock_movement.dart';
 import '../models/sales_target.dart';
 import '../models/supplier.dart';
 
+/// 8: order items carry `unitFactor` (12 on a line sold in dozens). Products
+/// are no longer stocked in dozens: an older file's dozen products are
+/// converted to pieces on restore (`convertDozenProducts`).
 /// 7: `productSerials` (serial numbers of products that track them), and
 /// products, order and purchase items carry `trackSerials` /
 /// `warrantyMonths` / `serials`. Older files restore with none.
 /// 6: quantities may have decimals (`stockQty`, `qty`, `lowStockThreshold`
 /// as doubles) and products and items carry a `unit`. Older files restore
 /// unchanged: their whole numbers read as doubles, a missing unit as piece.
-const kBackupVersion = 7;
+const kBackupVersion = 8;
 
 Map<String, Object?> buildBackupMap({
   required List<Product> products,

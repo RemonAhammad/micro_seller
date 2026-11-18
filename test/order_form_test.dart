@@ -362,4 +362,81 @@ void main() {
       expect(find.text('Edit Order'), findsWidgets, reason: 'title and save button');
     });
   });
+
+  testWidgets('a piece line switched to Dozen sells 12 pieces at 12 × the price', (tester) async {
+    await openDb(tester, 'form_dozen');
+    final eggs = (await tester.runAsync(() async {
+      late int id;
+      await isar.writeTxn(() async {
+        id = await isar.products.put(Product(name: 'Eggs', sellingPrice: 13, costPrice: 10, stockQty: 30));
+      });
+      return isar.products.get(id);
+    }))!;
+    await pumpForm(tester, quick: [eggs]);
+
+    await tapText(tester, 'Eggs');
+    expect(find.text('Dozen'), findsOneWidget, reason: 'a piece line offers Dozen');
+    await tapText(tester, 'Dozen');
+    // A second quick add is a new piece line beside the dozen one.
+    await tapText(tester, 'Eggs');
+    await tapText(tester, 'Paid in full');
+
+    final saved = (await orders(tester)).single;
+    final dozen = saved.items.firstWhere((i) => i.isDozenLine);
+    final piece = saved.items.firstWhere((i) => !i.isDozenLine);
+    expect(dozen.unit, QuantityUnit.dozen);
+    expect(dozen.qty, 1);
+    expect(dozen.unitPrice, 156);
+    expect(dozen.costPrice, 120);
+    expect(piece.qty, 1);
+    expect(saved.totalAmount, 169);
+    expect((await reload(tester, eggs)).stockQty, 17);
+  });
+
+  testWidgets('the picker sheet adds a dozen line from its Pcs | Dozen switch', (tester) async {
+    await openDb(tester, 'form_picker_dozen');
+    final eggs = (await tester.runAsync(() async {
+      late int id;
+      await isar.writeTxn(() async {
+        id = await isar.products.put(Product(
+          name: 'Eggs',
+          sellingPrice: 13,
+          costPrice: 10,
+          stockQty: 30,
+          variantCombinations: [
+            VariantCombination(combinationKey: 'Color:Brown', displayLabel: 'Color: Brown', stockQty: 30, isActive: true),
+          ],
+        ));
+      });
+      return isar.products.get(id);
+    }))!;
+    await pumpForm(tester, quick: [eggs]);
+
+    await tapText(tester, 'Eggs'); // a variant product: opens the picker on it
+    await tapText(tester, '1 combination');
+    expect(find.text('Dozen'), findsOneWidget);
+    await tapText(tester, 'Dozen');
+    await tester.tap(find.widgetWithText(FilledButton, 'Add').last);
+    await settle(tester);
+    expect(find.text('1 dozen'), findsWidgets);
+    await tapText(tester, 'Done');
+    await tapText(tester, 'Paid in full');
+
+    final line = (await orders(tester)).single.items.single;
+    expect(line.isDozenLine, isTrue);
+    expect(line.unitPrice, 156);
+    expect(line.variantCombinationKey, 'Color:Brown');
+    final after = await reload(tester, eggs);
+    expect(after.stockQty, 18);
+    expect(after.findCombination('Color:Brown')!.stockQty, 18);
+  });
+
+  testWidgets('Dozen is refused when stock is under 12', (tester) async {
+    await openDb(tester, 'form_dozen_short');
+    await pumpForm(tester);
+    await tapText(tester, 'Soap');
+    await tapText(tester, 'Dozen');
+    expect(find.text('Only 10 in stock for Soap'), findsOneWidget);
+    expect(find.textContaining('dozen'), findsNothing, reason: 'the line stays in pieces');
+  });
 }

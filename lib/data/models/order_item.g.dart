@@ -55,33 +55,38 @@ const OrderItemSchema = Schema(
       type: IsarType.string,
       enumMap: _OrderItemunitEnumValueMap,
     ),
-    r'unitPrice': PropertySchema(
+    r'unitFactor': PropertySchema(
       id: 9,
+      name: r'unitFactor',
+      type: IsarType.double,
+    ),
+    r'unitPrice': PropertySchema(
+      id: 10,
       name: r'unitPrice',
       type: IsarType.double,
     ),
     r'variantCombinationKey': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'variantCombinationKey',
       type: IsarType.string,
     ),
     r'variantDisplayLabel': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'variantDisplayLabel',
       type: IsarType.string,
     ),
     r'variantName': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'variantName',
       type: IsarType.string,
     ),
     r'variantValue': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'variantValue',
       type: IsarType.string,
     ),
     r'warrantyMonths': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'warrantyMonths',
       type: IsarType.long,
     ),
@@ -131,12 +136,13 @@ void _orderItemSerialize(
   writer.writeStringList(offsets[6], object.serials);
   writer.writeDouble(offsets[7], object.totalPrice);
   writer.writeString(offsets[8], object.unit.name);
-  writer.writeDouble(offsets[9], object.unitPrice);
-  writer.writeString(offsets[10], object.variantCombinationKey);
-  writer.writeString(offsets[11], object.variantDisplayLabel);
-  writer.writeString(offsets[12], object.variantName);
-  writer.writeString(offsets[13], object.variantValue);
-  writer.writeLong(offsets[14], object.warrantyMonths);
+  writer.writeDouble(offsets[9], object.unitFactor);
+  writer.writeDouble(offsets[10], object.unitPrice);
+  writer.writeString(offsets[11], object.variantCombinationKey);
+  writer.writeString(offsets[12], object.variantDisplayLabel);
+  writer.writeString(offsets[13], object.variantName);
+  writer.writeString(offsets[14], object.variantValue);
+  writer.writeLong(offsets[15], object.warrantyMonths);
 }
 
 OrderItem _orderItemDeserialize(
@@ -156,12 +162,13 @@ OrderItem _orderItemDeserialize(
     unit:
         _OrderItemunitValueEnumMap[reader.readStringOrNull(offsets[8])] ??
         QuantityUnit.piece,
-    unitPrice: reader.readDoubleOrNull(offsets[9]) ?? 0.0,
-    variantCombinationKey: reader.readStringOrNull(offsets[10]) ?? '',
-    variantDisplayLabel: reader.readStringOrNull(offsets[11]) ?? '',
-    variantName: reader.readStringOrNull(offsets[12]) ?? '',
-    variantValue: reader.readStringOrNull(offsets[13]) ?? '',
-    warrantyMonths: reader.readLongOrNull(offsets[14]) ?? 0,
+    unitFactor: reader.readDoubleOrNull(offsets[9]),
+    unitPrice: reader.readDoubleOrNull(offsets[10]) ?? 0.0,
+    variantCombinationKey: reader.readStringOrNull(offsets[11]) ?? '',
+    variantDisplayLabel: reader.readStringOrNull(offsets[12]) ?? '',
+    variantName: reader.readStringOrNull(offsets[13]) ?? '',
+    variantValue: reader.readStringOrNull(offsets[14]) ?? '',
+    warrantyMonths: reader.readLongOrNull(offsets[15]) ?? 0,
   );
   object.legacyQty = reader.readLong(offsets[4]);
   return object;
@@ -195,9 +202,9 @@ P _orderItemDeserializeProp<P>(
               QuantityUnit.piece)
           as P;
     case 9:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 10:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 11:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 12:
@@ -205,6 +212,8 @@ P _orderItemDeserializeProp<P>(
     case 13:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 14:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 15:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1207,6 +1216,98 @@ extension OrderItemQueryFilter
     });
   }
 
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitFactorIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'unitFactor'),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  unitFactorIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'unitFactor'),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitFactorEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'unitFactor',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition>
+  unitFactorGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'unitFactor',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitFactorLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'unitFactor',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitFactorBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'unitFactor',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
   QueryBuilder<OrderItem, OrderItem, QAfterFilterCondition> unitPriceEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -1947,6 +2048,7 @@ OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => OrderItem(
       (json['serials'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
   warrantyMonths: (json['warrantyMonths'] as num?)?.toInt() ?? 0,
+  unitFactor: (json['unitFactor'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
@@ -1964,6 +2066,7 @@ Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
   'variantDisplayLabel': instance.variantDisplayLabel,
   'serials': instance.serials,
   'warrantyMonths': instance.warrantyMonths,
+  'unitFactor': instance.unitFactor,
 };
 
 const _$QuantityUnitEnumMap = {

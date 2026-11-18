@@ -219,7 +219,7 @@ final class OrderNotifierProvider
   OrderNotifier create() => OrderNotifier();
 }
 
-String _$orderNotifierHash() => r'3aefcbd90db9c664e3da52e8938dd002dd7ee451';
+String _$orderNotifierHash() => r'ed7adb9c74cc2c196159907d15b9c4ce99742bc6';
 
 abstract class _$OrderNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

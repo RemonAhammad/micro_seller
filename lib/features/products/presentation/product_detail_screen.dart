@@ -181,7 +181,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         children: [
                           _InfoRow(
                             s.stock,
-                            AppStrings.of(context).qty(product.stockQty, product.unit),
+                            AppStrings.of(context).stockQty(product.stockQty, product.unit),
                             valueColor: product.isOutOfStock
                                 ? AppColors.statusCancelled
                                 : product.isLowStock
@@ -265,7 +265,7 @@ class ProductDetailScreen extends ConsumerWidget {
                                       spacing: 16,
                                       children: [
                                         Text(
-                                          '${s.stock}: ${s.qty(c.stockQty, product.unit)}',
+                                          '${s.stock}: ${s.stockQty(c.stockQty, product.unit)}',
                                           style: theme.textTheme.bodySmall?.copyWith(
                                             color: c.stockQty <= 0
                                                 ? AppColors.statusCancelled

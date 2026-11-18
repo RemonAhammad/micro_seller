@@ -6,6 +6,7 @@ import 'package:isar_community/isar.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/product.dart';
+import 'migration_service.dart';
 import '../models/order.dart';
 import '../models/payment.dart';
 import 'db_worker.dart';
@@ -119,6 +120,12 @@ Map<String, dynamic>? restoreBackupSync(Isar db, Map<String, dynamic> data) {
   final payments = rows('payments', Payment.fromJson);
   final salesTargets = rows('salesTargets', SalesTarget.fromJson);
   final productSerials = rows('productSerials', ProductSerial.fromJson);
+  convertDozenProducts(
+    products: products,
+    orders: orders,
+    purchases: purchases,
+    movements: stockMovements,
+  );
 
   db.writeTxnSync(() {
     clearAllCollectionsInTxnSync(db);

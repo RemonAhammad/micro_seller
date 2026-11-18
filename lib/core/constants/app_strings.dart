@@ -591,6 +591,20 @@ class _L10nStrings {
     return symbol.isEmpty ? number : '$number $symbol';
   }
 
+  /// A stock count with its dozens, for piece products that can be sold by
+  /// the dozen: "100 (8 dozen + 4)", "24 (2 dozen)"; under 12, [qty] alone.
+  String stockQty(num stock, QuantityUnit unit) {
+    final plain = qty(stock, unit);
+    if (unit != QuantityUnit.piece || stock < kDozen || !isWholeQty(stock)) {
+      return plain;
+    }
+    final whole = wholeQty(stock);
+    final dozens = whole ~/ kDozen.toInt();
+    final rest = whole % kDozen.toInt();
+    final dz = '${formatQtyNumber(dozens)} ${unitSymbol(QuantityUnit.dozen)}';
+    return '$plain (${rest == 0 ? dz : '$dz + ${formatQtyNumber(rest)}'})';
+  }
+
   /// A price per unit: "৳600 / kg"; a piece price is just the price.
   String pricePer(String price, QuantityUnit unit) {
     final symbol = unitSymbol(unit);

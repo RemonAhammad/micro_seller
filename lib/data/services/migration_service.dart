@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/utils/quantity.dart';
 import '../models/product.dart';
+import '../models/quantity_unit.dart';
 import '../models/order.dart';
 import '../models/purchase.dart';
 import '../models/stock_movement.dart';
@@ -169,4 +171,117 @@ Future<void> migrateDecimalQuantitiesInTxn(Isar isar) async {
   });
 
   debugPrint('[Migration] Decimal quantities V1 migration complete ($moved rows).');
+}
+
+const kDozenToPieceMigrationKey = 'dozenToPieceV1Migrated';
+
+/// Dozen is no longer a product unit: a product is stocked in pieces and an
+/// order line may be sold in dozens (`OrderItem.unitFactor` = [kDozen]).
+/// Turns every product still stocked in dozens into one stocked in pieces.
+Future<void> migrateDozenToPieceV1(Isar isar) async {
+  final prefs = await SharedPreferences.getInstance();
+  if (prefs.getBool(kDozenToPieceMigrationKey) == true) return;
+  await isar.writeTxn(() async {
+    final products = await isar.products.where().findAll();
+    if (!products.any((p) => p.unit == QuantityUnit.dozen)) return;
+    final orders = await isar.orders.where().findAll();
+    final purchases = await isar.purchases.where().findAll();
+    final movements = await isar.stockMovements.where().findAll();
+    final changed = convertDozenProducts(
+      products: products,
+      orders: orders,
+      purchases: purchases,
+      movements: movements,
+    );
+    await isar.products.putAll(changed.products);
+    await isar.orders.putAll(changed.orders);
+    await isar.purchases.putAll(changed.purchases);
+    await isar.stockMovements.putAll(changed.movements);
+    debugPrint('[Migration] Dozen → piece: ${changed.products.length} products.');
+  });
+  await prefs.setBool(kDozenToPieceMigrationKey, true);
+}
+
+/// Rewrites, in place, every product stocked in dozens as one stocked in
+/// pieces, with the rows that count its stock: stock, low-stock level and
+/// variant stock × 12, prices ÷ 12; its dozen order lines get factor 12 (so a
+/// cancel, delete or return still moves 12 pieces each); its purchase lines
+/// and stock movements move to pieces. Returns the rows it changed. Also used
+/// on a backup being restored, so an older backup arrives converted.
+/// Idempotent: a converted product is no longer in dozens.
+({
+  List<Product> products,
+  List<Order> orders,
+  List<Purchase> purchases,
+  List<StockMovement> movements,
+}) convertDozenProducts({
+  required List<Product> products,
+  required List<Order> orders,
+  required List<Purchase> purchases,
+  required List<StockMovement> movements,
+}) {
+  final ids = <int>{};
+  final changedProducts = <Product>[];
+  for (final p in products) {
+    if (p.unit != QuantityUnit.dozen) continue;
+    ids.add(p.id);
+    p
+      ..unit = QuantityUnit.piece
+      ..stockQty = roundQty(p.stockQty * kDozen)
+      ..lowStockThreshold = roundQty(p.lowStockThreshold * kDozen)
+      ..sellingPrice = p.sellingPrice / kDozen
+      ..costPrice = p.costPrice / kDozen;
+    for (final c in p.variantCombinations) {
+      c
+        ..stockQty = roundQty(c.stockQty * kDozen)
+        ..priceAdjustment = c.priceAdjustment / kDozen;
+    }
+    changedProducts.add(p);
+  }
+  if (ids.isEmpty) {
+    return (products: const [], orders: const [], purchases: const [], movements: const []);
+  }
+
+  final changedOrders = <Order>[];
+  for (final o in orders) {
+    var changed = false;
+    for (final item in o.items) {
+      if (ids.contains(item.productId) &&
+          item.unit == QuantityUnit.dozen &&
+          item.factor == 1) {
+        item.unitFactor = kDozen;
+        changed = true;
+      }
+    }
+    if (changed) changedOrders.add(o);
+  }
+
+  final changedPurchases = <Purchase>[];
+  for (final p in purchases) {
+    var changed = false;
+    for (final item in p.items) {
+      if (ids.contains(item.productId) && item.unit == QuantityUnit.dozen) {
+        item
+          ..unit = QuantityUnit.piece
+          ..qty = roundQty(item.qty * kDozen)
+          ..unitCost = item.unitCost / kDozen;
+        changed = true;
+      }
+    }
+    if (changed) changedPurchases.add(p);
+  }
+
+  final changedMovements = <StockMovement>[];
+  for (final m in movements) {
+    if (!ids.contains(m.productId)) continue;
+    m.qty = roundQty(m.qty * kDozen);
+    changedMovements.add(m);
+  }
+
+  return (
+    products: changedProducts,
+    orders: changedOrders,
+    purchases: changedPurchases,
+    movements: changedMovements,
+  );
 }

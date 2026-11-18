@@ -14,6 +14,7 @@ import '../../../data/services/serial_service.dart';
 import '../../../shared/widgets/serial_sheet.dart';
 import '../../../data/models/order_item.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/quantity_unit.dart';
 import '../../../data/models/variant_combination.dart';
 import '../../../data/models/customer.dart';
 import '../providers/order_form_defaults.dart';
@@ -370,9 +371,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       return;
     }
 
-    final idx = _items.indexWhere(
-      (i) => i.productId == product.id && i.variantCombinationKey == key,
-    );
+    final idx = _items.indexWhere((i) => _isPieceLine(i, product.id, key));
+
+    final room = roundQty(stock -
+        _items
+            .where((i) => i.productId == product.id && i.variantCombinationKey == key && i.isDozenLine)
+            .fold(0.0, (sum, i) => sum + i.baseQty));
 
     // Weighed / measured goods: ask how much (or for how much money).
     if (product.unit.allowsDecimal) {
@@ -396,9 +400,17 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       return;
     }
 
+    if (qtyAtLeast(idx >= 0 ? _items[idx].qty : 0, room)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.notEnoughStock(s.qty(stock, product.unit), name))),
+        );
+      }
+      return;
+    }
     if (idx >= 0) {
       final existing = _items[idx];
-      if (qtyAtLeast(existing.qty, stock)) {
+      if (qtyAtLeast(existing.qty, room)) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -531,11 +543,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     }
     if (delta > 0) {
       final found = await _stockFor(item);
-      if (found != null && qtyExceeds(newQty, found.stock)) {
+      if (found != null &&
+          qtyExceeds(roundQty(newQty * item.factor), found.stock - _baseUsedByOthers(_items, item))) {
         if (mounted) {
           final s = AppStrings.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(s.notEnoughStock(s.qty(found.stock, item.unit), item.displayName))),
+            SnackBar(content: Text(s.notEnoughStock(s.qty(found.stock, found.product.unit), item.displayName))),
           );
         }
         return;
@@ -548,6 +561,59 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   }
 
   void _removeItem(int index) => setState(() => _items.removeAt(index));
+
+  /// Pcs | Dozen on a piece product's line: re-prices it from the product
+  /// (a dozen is 12 × the piece price and cost) and converts its quantity
+  /// (24 pcs → 2 dozen, at least 1; 2 dozen → 24 pcs). A line of the other
+  /// unit already in the cart takes this one's quantity instead.
+  Future<void> _setDozen(int index, bool dozen) async {
+    final item = _items[index];
+    if (item.isDozenLine == dozen) return;
+    final found = await _stockFor(item);
+    if (found == null || !mounted || index >= _items.length) return;
+    final product = found.product;
+    final combination = item.variantCombinationKey.isEmpty
+        ? null
+        : product.findCombination(item.variantCombinationKey);
+    final factor = dozen ? kDozen : 1.0;
+    var qty = dozen
+        ? math.max(1.0, (item.qty / kDozen).floorToDouble())
+        : roundQty(item.qty * kDozen);
+    final other = _items.indexWhere((i) =>
+        !identical(i, item) &&
+        i.productId == item.productId &&
+        i.variantCombinationKey == item.variantCombinationKey &&
+        i.isDozenLine == dozen);
+    if (other >= 0) qty = roundQty(qty + _items[other].qty);
+    final room = found.stock -
+        _baseUsedByOthers(_items, item) +
+        (other >= 0 ? _items[other].baseQty : 0);
+    if (qtyExceeds(roundQty(qty * factor), room)) {
+      final s = AppStrings.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.notEnoughStock(s.qty(found.stock, product.unit), item.displayName))),
+      );
+      return;
+    }
+    final piecePrice = product.sellingPrice + (combination?.priceAdjustment ?? 0);
+    final unitPrice = dozen ? roundMoney(piecePrice * kDozen) : piecePrice;
+    final line = item.copyWith(
+      unit: dozen ? QuantityUnit.dozen : QuantityUnit.piece,
+      unitFactor: factor,
+      qty: qty,
+      unitPrice: unitPrice,
+      costPrice: product.costPrice * factor,
+      totalPrice: lineTotal(unitPrice, qty),
+    );
+    setState(() {
+      if (other >= 0) {
+        _items[other] = line;
+        _items.removeAt(index);
+      } else {
+        _items[index] = line;
+      }
+    });
+  }
 
   /// The footer's Paid in full: the whole total, paid now, saved.
   Future<void> _submitPaidInFull() async {
@@ -1289,6 +1355,19 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       children: [
         Text(item.displayName, style: nameStyle),
         Text(unitPrice, style: unitPriceStyle),
+        if (!item.hasSerials &&
+            (item.unit == QuantityUnit.piece || item.isDozenLine))
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: _DozenToggle(
+                dozen: item.isDozenLine,
+                onChanged: (dozen) => _setDozen(index, dozen),
+              ),
+            ),
+          ),
         if (item.hasSerials)
           InkWell(
             onTap: () => _updateQty(index, 0),
@@ -1829,9 +1908,54 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     super.dispose();
   }
 
-  double _qtyOf(int productId, {String combinationKey = ''}) {
-    final idx = _items.indexWhere((i) => i.productId == productId && i.variantCombinationKey == combinationKey);
+  /// Rows switched to Dozen, by [_rowKey]. A row starts on Dozen when the
+  /// cart already holds a dozen line of it and no piece line.
+  final _dozenRows = <String>{};
+
+  static String _rowKey(int productId, String combinationKey) => '$productId|$combinationKey';
+
+  bool _offersDozen(Product p) => p.unit == QuantityUnit.piece && !p.usesSerials;
+
+  bool _isDozenRow(int productId, String combinationKey) {
+    final key = _rowKey(productId, combinationKey);
+    if (_dozenRows.contains(key)) return true;
+    if (_pieceRows.contains(key)) return false;
+    bool has(bool dozen) => _items.any((i) =>
+        i.productId == productId && i.variantCombinationKey == combinationKey && i.isDozenLine == dozen);
+    return has(true) && !has(false);
+  }
+
+  void _setDozenRow(int productId, String combinationKey, bool dozen) => setState(() {
+        final key = _rowKey(productId, combinationKey);
+        // Explicit either way, so a row with only a dozen line, switched to
+        // pieces, doesn't fall back to Dozen through [_isDozenRow]'s default.
+        if (dozen) {
+          _dozenRows.add(key);
+          _pieceRows.remove(key);
+        } else {
+          _dozenRows.remove(key);
+          _pieceRows.add(key);
+        }
+      });
+
+  final _pieceRows = <String>{};
+
+  double _qtyOf(int productId, {String combinationKey = '', bool dozen = false}) {
+    final idx = _items.indexWhere((i) =>
+        i.productId == productId && i.variantCombinationKey == combinationKey && i.isDozenLine == dozen);
     return idx >= 0 ? _items[idx].qty : 0;
+  }
+
+  /// How many of the row's unit still fit: the stock minus the other unit's
+  /// line, in pieces or whole dozens.
+  double _roomFor(int productId, String combinationKey, double stock, bool dozen) {
+    final other = _items
+        .where((i) =>
+            i.productId == productId && i.variantCombinationKey == combinationKey && i.isDozenLine != dozen)
+        .fold(0.0, (sum, i) => sum + i.baseQty);
+    final room = roundQty(stock - other);
+    if (room <= 0) return 0;
+    return dozen ? (room / kDozen + kQtyEpsilon).floorToDouble() : room;
   }
 
   void _setQty(
@@ -1842,6 +1966,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     double? priceOverride,
     String? skuOverride,
     required double availableStock,
+    bool dozen = false,
   }) {
     // A serial-tracked product: its + / − / Add pick which units go.
     if (product.usesSerials) {
@@ -1849,10 +1974,14 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       return;
     }
     qty = roundQty(qty);
-    if (qtyExceeds(qty, availableStock)) qty = availableStock;
+    final room = _roomFor(product.id, combinationKey, availableStock, dozen);
+    if (qtyExceeds(qty, room)) qty = room;
+    final factor = dozen ? kDozen : 1.0;
     setState(() {
-      final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey == combinationKey);
-      final unitPrice = priceOverride ?? product.sellingPrice;
+      final idx = _items.indexWhere((i) =>
+          i.productId == product.id && i.variantCombinationKey == combinationKey && i.isDozenLine == dozen);
+      final piecePrice = priceOverride ?? product.sellingPrice;
+      final unitPrice = dozen ? roundMoney(piecePrice * kDozen) : piecePrice;
       if (qty <= 0) {
         if (idx >= 0) _items.removeAt(idx);
       } else if (idx >= 0) {
@@ -1864,9 +1993,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             productName: product.name,
             productSku: skuOverride ?? product.sku,
             qty: qty,
-            unit: product.unit,
+            unit: dozen ? QuantityUnit.dozen : product.unit,
+            unitFactor: dozen ? kDozen : null,
             unitPrice: unitPrice,
-            costPrice: product.costPrice,
+            costPrice: product.costPrice * factor,
             totalPrice: lineTotal(unitPrice, qty),
             variantCombinationKey: combinationKey,
             variantDisplayLabel: displayLabel,
@@ -2142,7 +2272,9 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 final comboPrice = p.sellingPrice + c.priceAdjustment;
                                 final comboSku = c.sku.isNotEmpty ? c.sku : p.sku;
                                 final outOfStock = c.stockQty <= 0;
-                                final qty = _qtyOf(p.id, combinationKey: c.combinationKey);
+                                final dozen = _offersDozen(p) && _isDozenRow(p.id, c.combinationKey);
+                                final qty = _qtyOf(p.id, combinationKey: c.combinationKey, dozen: dozen);
+                                final room = _roomFor(p.id, c.combinationKey, c.stockQty, dozen);
 
                                 return Padding(
                                   padding: const EdgeInsets.only(left: 16, bottom: 6),
@@ -2190,6 +2322,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                     ),
                                                   ],
                                                 ),
+                                                if (_offersDozen(p) && !outOfStock)
+                                                  _pickerDozenToggle(
+                                                    dozen,
+                                                    (v) => _setDozenRow(p.id, c.combinationKey, v),
+                                                  ),
                                               ],
                                             ),
                                           ),
@@ -2198,8 +2335,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                               p,
                                               qty,
                                               cs,
-                                              available: c.stockQty,
+                                              available: room,
+                                              unit: dozen ? QuantityUnit.dozen : p.unit,
                                               onStep: (q) => _setQty(
+                                                dozen: dozen,
                                                 p,
                                                 q,
                                                 combinationKey: c.combinationKey,
@@ -2220,7 +2359,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                           else
                                             _addButton(
                                               row.maxWidth,
-                                              outOfStock: outOfStock,
+                                              outOfStock: outOfStock || room <= 0,
                                               onAdd: () => p.unit.allowsDecimal
                                                   ? _askQty(
                                                       p,
@@ -2233,6 +2372,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                                   : _setQty(
                                                       p,
                                                       1,
+                                                      dozen: dozen,
                                                       combinationKey: c.combinationKey,
                                                       displayLabel: c.displayLabel,
                                                       priceOverride: comboPrice,
@@ -2250,8 +2390,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                         );
                       }
 
-                      final qty = _qtyOf(p.id);
+                      final dozen = _offersDozen(p) && _isDozenRow(p.id, '');
+                      final qty = _qtyOf(p.id, dozen: dozen);
                       final outOfStock = p.stockQty <= 0;
+                      final room = _roomFor(p.id, '', p.stockQty, dozen);
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2291,6 +2433,8 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                         ),
                                       ],
                                     ),
+                                    if (_offersDozen(p) && !outOfStock)
+                                      _pickerDozenToggle(dozen, (v) => _setDozenRow(p.id, '', v)),
                                   ],
                                 ),
                               ),
@@ -2299,17 +2443,18 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                   p,
                                   qty,
                                   cs,
-                                  available: p.stockQty,
-                                  onStep: (q) => _setQty(p, q, availableStock: p.stockQty),
+                                  available: room,
+                                  unit: dozen ? QuantityUnit.dozen : p.unit,
+                                  onStep: (q) => _setQty(p, q, availableStock: p.stockQty, dozen: dozen),
                                   onAsk: () => _askQty(p, availableStock: p.stockQty),
                                 )
                               else
                                 _addButton(
                                   row.maxWidth,
-                                  outOfStock: outOfStock,
+                                  outOfStock: outOfStock || room <= 0,
                                   onAdd: p.unit.allowsDecimal
                                       ? () => _askQty(p, availableStock: p.stockQty)
-                                      : () => _setQty(p, 1, availableStock: p.stockQty),
+                                      : () => _setQty(p, 1, availableStock: p.stockQty, dozen: dozen),
                                 ),
                             ],
                           ),
@@ -2322,6 +2467,15 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       ),
     );
   }
+
+  Widget _pickerDozenToggle(bool dozen, ValueChanged<bool> onChanged) => Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: _DozenToggle(dozen: dozen, onChanged: onChanged),
+        ),
+      );
 
   Widget _addButton(double rowWidth, {required bool outOfStock, required VoidCallback onAdd}) {
     final s = AppStrings.of(context);
@@ -2347,6 +2501,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     required double available,
     required ValueChanged<double> onStep,
     required VoidCallback onAsk,
+    QuantityUnit? unit,
   }) {
     final s = AppStrings.of(context);
     final decoration = BoxDecoration(
@@ -2354,7 +2509,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
     );
     final label = Text(
-      s.qty(qty, p.unit),
+      s.qty(qty, unit ?? p.unit),
       style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary),
     );
     if (p.unit.allowsDecimal) {
@@ -2961,4 +3116,75 @@ double _lineWidth(BuildContext context, String text, TextStyle? style) {
   final width = painter.width;
   painter.dispose();
   return width;
+}
+
+
+/// A piece line (not sold in dozens) of this product and combination.
+bool _isPieceLine(OrderItem i, int productId, String combinationKey) =>
+    i.productId == productId &&
+    i.variantCombinationKey == combinationKey &&
+    !i.isDozenLine;
+
+/// Product stock the cart's other lines of [line]'s product and combination
+/// take: its dozen line, when [line] is the piece one, and the other way.
+double _baseUsedByOthers(List<OrderItem> items, OrderItem line) => roundQty(items
+    .where((i) =>
+        !identical(i, line) &&
+        i.productId == line.productId &&
+        i.variantCombinationKey == line.variantCombinationKey)
+    .fold(0.0, (sum, i) => sum + i.baseQty));
+
+/// Pcs | Dozen on a cart line of a piece product.
+class _DozenToggle extends StatelessWidget {
+  const _DozenToggle({required this.dozen, required this.onChanged});
+
+  final bool dozen;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final cs = Theme.of(context).colorScheme;
+    Widget segment(String label, bool value) {
+      final selected = dozen == value;
+      return Semantics(
+        button: true,
+        selected: selected,
+        child: InkWell(
+          onTap: selected ? null : () => onChanged(value),
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: selected ? cs.primary : null,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          segment(s.unitName(QuantityUnit.piece), false),
+          segment(s.unitName(QuantityUnit.dozen), true),
+        ],
+      ),
+    );
+  }
 }

@@ -8,6 +8,9 @@ import '../../data/models/quantity_unit.dart';
 /// comparison against stock allows [kQtyEpsilon].
 const kQtyDecimals = 3;
 
+/// Pieces in a dozen: a dozen order line takes this many from piece stock.
+const kDozen = 12.0;
+
 /// Half the smallest step: two quantities closer than this are equal.
 const kQtyEpsilon = 0.0005;
 
