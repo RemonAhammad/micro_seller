@@ -402,6 +402,8 @@ const translationsVi = <String, String>{
   'no': 'Không',
   'add': 'Thêm',
   'quickQuantities': 'Số lượng nhanh',
+  'sellByDozen': 'Bán theo tá',
+  'sellByDozenHint': 'Đơn hàng có nút chọn Cái | Tá cho sản phẩm của nhóm này (1 tá = 12)',
   'search': 'Tìm kiếm',
   'filter': 'Lọc',
   'share': 'Chia sẻ',

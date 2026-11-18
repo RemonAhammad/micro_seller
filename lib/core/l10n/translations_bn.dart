@@ -402,6 +402,8 @@ const translationsBn = <String, String>{
   'no': 'না',
   'add': 'যোগ',
   'quickQuantities': 'দ্রুত পরিমাণ',
+  'sellByDozen': 'ডজন হিসেবে বিক্রি',
+  'sellByDozenHint': 'অর্ডারে এর পণ্যের জন্য পিস | ডজন সুইচ দেখাবে (১ ডজন = ১২)',
   'search': 'খুঁজুন',
   'filter': 'ফিল্টার',
   'share': 'শেয়ার',

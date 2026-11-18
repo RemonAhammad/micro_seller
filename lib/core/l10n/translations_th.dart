@@ -402,6 +402,8 @@ const translationsTh = <String, String>{
   'no': 'ไม่',
   'add': 'เพิ่ม',
   'quickQuantities': 'จำนวนด่วน',
+  'sellByDozen': 'ขายเป็นโหล',
+  'sellByDozenHint': 'คำสั่งซื้อจะมีตัวเลือก ชิ้น | โหล สำหรับสินค้าในหมวดนี้ (1 โหล = 12)',
   'search': 'ค้นหา',
   'filter': 'กรอง',
   'share': 'แชร์',

@@ -402,6 +402,8 @@ const translationsAr = <String, String>{
   'no': 'لا',
   'add': 'إضافة',
   'quickQuantities': 'كميات سريعة',
+  'sellByDozen': 'البيع بالدزينة',
+  'sellByDozenHint': 'تعرض الطلبات مفتاح قطعة | دزينة لمنتجاتها (الدزينة = 12)',
   'search': 'بحث',
   'filter': 'تصفية',
   'share': 'مشاركة',

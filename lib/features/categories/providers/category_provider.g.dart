@@ -48,6 +48,48 @@ final class CategoriesProvider
 
 String _$categoriesHash() => r'cead5e1f38e8f9b7c261f11ff15095f5b5d023f4';
 
+/// Products the order screen may sell by the dozen: those in a category
+/// with "Sell by the dozen" on. Live as categories and products change.
+
+@ProviderFor(dozenProductIds)
+final dozenProductIdsProvider = DozenProductIdsProvider._();
+
+/// Products the order screen may sell by the dozen: those in a category
+/// with "Sell by the dozen" on. Live as categories and products change.
+
+final class DozenProductIdsProvider
+    extends
+        $FunctionalProvider<AsyncValue<Set<int>>, Set<int>, Stream<Set<int>>>
+    with $FutureModifier<Set<int>>, $StreamProvider<Set<int>> {
+  /// Products the order screen may sell by the dozen: those in a category
+  /// with "Sell by the dozen" on. Live as categories and products change.
+  DozenProductIdsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dozenProductIdsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dozenProductIdsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Set<int>> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Set<int>> create(Ref ref) {
+    return dozenProductIds(ref);
+  }
+}
+
+String _$dozenProductIdsHash() => r'a263861bc032733e92bef0b721cde87c3bca2650';
+
 @ProviderFor(CategoryNotifier)
 final categoryProvider = CategoryNotifierProvider._();
 

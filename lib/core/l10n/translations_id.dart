@@ -402,6 +402,8 @@ const translationsId = <String, String>{
   'no': 'Tidak',
   'add': 'Tambah',
   'quickQuantities': 'Jumlah cepat',
+  'sellByDozen': 'Jual per lusin',
+  'sellByDozenHint': 'Pesanan menampilkan pilihan Pcs | Lusin untuk produknya (1 lusin = 12)',
   'search': 'Cari',
   'filter': 'Filter',
   'share': 'Bagikan',

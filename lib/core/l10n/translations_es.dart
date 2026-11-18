@@ -402,6 +402,8 @@ const translationsEs = <String, String>{
   'no': 'No',
   'add': 'Agregar',
   'quickQuantities': 'Cantidades rápidas',
+  'sellByDozen': 'Vender por docena',
+  'sellByDozenHint': 'Los pedidos muestran un selector Ud. | Docena para sus productos (1 docena = 12)',
   'search': 'Buscar',
   'filter': 'Filtrar',
   'share': 'Compartir',

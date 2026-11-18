@@ -7,6 +7,7 @@ import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:micro_seller/core/l10n/app_localizations.dart';
+import 'package:micro_seller/data/models/category.dart';
 import 'package:micro_seller/data/models/customer.dart';
 import 'package:micro_seller/data/models/order.dart';
 import 'package:micro_seller/data/models/order_item.dart';
@@ -66,6 +67,10 @@ void main() {
           ),
         ]);
         await isar.customers.put(Customer(name: 'Karim', phone: '01711000000'));
+        await isar.categories.putAll([
+          Category(name: 'Groceries', sellByDozen: true),
+          Category(name: 'Toiletries'),
+        ]);
         soap = (await isar.products.get(ids[0]))!;
         fish = (await isar.products.get(ids[1]))!;
         shirt = (await isar.products.get(ids[2]))!;
@@ -368,7 +373,7 @@ void main() {
     final eggs = (await tester.runAsync(() async {
       late int id;
       await isar.writeTxn(() async {
-        id = await isar.products.put(Product(name: 'Eggs', sellingPrice: 13, costPrice: 10, stockQty: 30));
+        id = await isar.products.put(Product(name: 'Eggs', category: 'Groceries', sellingPrice: 13, costPrice: 10, stockQty: 30));
       });
       return isar.products.get(id);
     }))!;
@@ -400,6 +405,7 @@ void main() {
       await isar.writeTxn(() async {
         id = await isar.products.put(Product(
           name: 'Eggs',
+          category: 'Groceries',
           sellingPrice: 13,
           costPrice: 10,
           stockQty: 30,
@@ -436,7 +442,7 @@ void main() {
     final eggs = (await tester.runAsync(() async {
       late int id;
       await isar.writeTxn(() async {
-        id = await isar.products.put(Product(name: 'Eggs', sellingPrice: 13, stockQty: 30));
+        id = await isar.products.put(Product(name: 'Eggs', category: 'Groceries', sellingPrice: 13, stockQty: 30));
       });
       return isar.products.get(id);
     }))!;
@@ -459,10 +465,34 @@ void main() {
 
   testWidgets('Dozen is refused when stock is under 12', (tester) async {
     await openDb(tester, 'form_dozen_short');
-    await pumpForm(tester);
+    final soapInGroceries = (await tester.runAsync(() async {
+      await isar.writeTxn(() => isar.products.put(soap..category = 'Groceries'));
+      return isar.products.get(soap.id);
+    }))!;
+    await pumpForm(tester, quick: [soapInGroceries]);
     await tapText(tester, 'Soap');
     await tapText(tester, 'Dozen');
     expect(find.text('Only 10 in stock for Soap'), findsOneWidget);
     expect(find.textContaining('dozen'), findsNothing, reason: 'the line stays in pieces');
+  });
+
+  testWidgets('no Pcs | Dozen switch outside a "Sell by the dozen" category', (tester) async {
+    await openDb(tester, 'form_dozen_off');
+    final inToiletries = (await tester.runAsync(() async {
+      await isar.writeTxn(() => isar.products.put(soap..category = 'Toiletries'));
+      return isar.products.get(soap.id);
+    }))!;
+    await pumpForm(tester, quick: [inToiletries]);
+    await tapText(tester, 'Soap');
+    expect(find.text('Dozen'), findsNothing);
+    expect(find.byTooltip('Quick quantities'), findsOneWidget, reason: 'quick quantities stay');
+
+    // Turning it on for the category shows the switch on the open order.
+    await tester.runAsync(() async {
+      final c = (await isar.categories.filter().nameEqualTo('Toiletries').findFirst())!;
+      await isar.writeTxn(() => isar.categories.put(c.copyWith(sellByDozen: true)));
+    });
+    await settle(tester);
+    expect(find.text('Dozen'), findsOneWidget);
   });
 }

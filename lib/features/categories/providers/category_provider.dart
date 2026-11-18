@@ -1,6 +1,8 @@
 import 'package:isar_community/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/product.dart';
+import '../../../data/services/isar_reload.dart';
 import '../../../data/models/trash_entry.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/trash_service.dart';
@@ -11,6 +13,28 @@ part 'category_provider.g.dart';
 Stream<List<Category>> categories(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
   yield* isar.categories.where().sortByName().watch(fireImmediately: true);
+}
+
+/// Products the order screen may sell by the dozen: those in a category
+/// with "Sell by the dozen" on. Live as categories and products change.
+@riverpod
+Stream<Set<int>> dozenProductIds(Ref ref) async* {
+  final isar = await ref.watch(isarProvider.future);
+  Future<Set<int>> load() async {
+    final names = await isar.categories.filter().sellByDozenEqualTo(true).nameProperty().findAll();
+    if (names.isEmpty) return const {};
+    final ids = await isar.products
+        .filter()
+        .anyOf(names, (q, name) => q.categoryEqualTo(name))
+        .idProperty()
+        .findAll();
+    return ids.toSet();
+  }
+
+  yield* reloadOn(
+    mergeChanges([isar.categories.watchLazy(), isar.products.watchLazy()]),
+    load,
+  );
 }
 
 @Riverpod(keepAlive: true)

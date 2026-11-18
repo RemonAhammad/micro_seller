@@ -17,6 +17,7 @@ import '../../../data/models/product.dart';
 import '../../../data/models/quantity_unit.dart';
 import '../../../data/models/variant_combination.dart';
 import '../../../data/models/customer.dart';
+import '../../categories/providers/category_provider.dart';
 import '../providers/order_form_defaults.dart';
 import '../providers/order_provider.dart';
 import '../providers/quick_add_provider.dart';
@@ -1112,8 +1113,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
+  /// Products whose category sells by the dozen; set by [build].
+  Set<int> _dozenIds = const {};
+
   @override
   Widget build(BuildContext context) {
+    _dozenIds = ref.watch(dozenProductIdsProvider).value ?? const {};
     final s = AppStrings.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
@@ -1577,6 +1582,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   static const double _minItemNameWidth = 48;
 
+  /// A line already in dozens, or a piece line whose product's category
+  /// sells by the dozen.
+  bool _canSwitchDozen(OrderItem item) =>
+      item.isDozenLine ||
+      (item.unit == QuantityUnit.piece &&
+          _dozenIds.contains(item.productId));
+
   /// The Pcs | Dozen switch (its labels, padding and frame) plus the → button
   /// and a little room for the numbers it opens.
   double _quickBarWidth(BuildContext context, {required bool withSwitch}) {
@@ -1613,7 +1625,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         Text(unitPrice, style: unitPriceStyle),
         if (!item.hasSerials && !item.unit.allowsDecimal)
           _QuickQtyBar(
-            leading: item.unit == QuantityUnit.piece || item.isDozenLine
+            leading: _canSwitchDozen(item)
                 ? _DozenToggle(
                     dozen: item.isDozenLine,
                     onChanged: (dozen) => _setDozen(index, dozen),
@@ -1708,7 +1720,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 ? _quickBarWidth(
                     context,
                     withSwitch:
-                        item.unit == QuantityUnit.piece || item.isDozenLine,
+                        _canSwitchDozen(item),
                   )
                 : 0.0;
             final needed = item.displayName
@@ -2261,7 +2273,7 @@ class _FormTotals {
   bool get overpaid => paid > total + 0.005;
 }
 
-class _ProductPickerSheet extends StatefulWidget {
+class _ProductPickerSheet extends ConsumerStatefulWidget {
   final Isar isar;
   final List<OrderItem> currentItems;
   final ValueChanged<List<OrderItem>> onChanged;
@@ -2275,10 +2287,10 @@ class _ProductPickerSheet extends StatefulWidget {
   });
 
   @override
-  State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
+  ConsumerState<_ProductPickerSheet> createState() => _ProductPickerSheetState();
 }
 
-class _ProductPickerSheetState extends State<_ProductPickerSheet> {
+class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
   late final List<OrderItem> _items;
 
   late final Stream<List<Product>> _productsStream;
@@ -2315,8 +2327,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   static String _rowKey(int productId, String combinationKey) =>
       '$productId|$combinationKey';
 
+  /// A piece product in a category that sells by the dozen.
   bool _offersDozen(Product p) =>
-      p.unit == QuantityUnit.piece && !p.usesSerials;
+      p.unit == QuantityUnit.piece &&
+      !p.usesSerials &&
+      _dozenIds.contains(p.id);
 
   bool _isDozenRow(int productId, String combinationKey) {
     final key = _rowKey(productId, combinationKey);
@@ -2549,8 +2564,12 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     return _filtered;
   }
 
+  /// Products whose category sells by the dozen; set by [build].
+  Set<int> _dozenIds = const {};
+
   @override
   Widget build(BuildContext context) {
+    _dozenIds = ref.watch(dozenProductIdsProvider).value ?? const {};
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 

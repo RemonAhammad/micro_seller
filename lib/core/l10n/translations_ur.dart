@@ -402,6 +402,8 @@ const translationsUr = <String, String>{
   'no': 'نہیں',
   'add': 'شامل کریں',
   'quickQuantities': 'فوری مقداریں',
+  'sellByDozen': 'درجن کے حساب سے فروخت',
+  'sellByDozenHint': 'آرڈر میں اس کی مصنوعات کے لیے عدد | درجن کا انتخاب دکھائی دے گا (1 درجن = 12)',
   'search': 'تلاش',
   'filter': 'فلٹر',
   'share': 'شیئر کریں',

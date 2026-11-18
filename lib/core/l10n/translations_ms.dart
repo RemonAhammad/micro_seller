@@ -402,6 +402,8 @@ const translationsMs = <String, String>{
   'no': 'Tidak',
   'add': 'Tambah',
   'quickQuantities': 'Kuantiti pantas',
+  'sellByDozen': 'Jual mengikut dozen',
+  'sellByDozenHint': 'Pesanan memaparkan pilihan Unit | Dozen untuk produknya (1 dozen = 12)',
   'search': 'Cari',
   'filter': 'Tapis',
   'share': 'Kongsi',

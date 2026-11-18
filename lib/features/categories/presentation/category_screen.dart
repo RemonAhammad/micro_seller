@@ -68,18 +68,28 @@ class CategoryScreen extends ConsumerWidget {
       {Category? existing}) {
     final s = AppStrings.of(context);
     final ctrl = TextEditingController(text: existing?.name ?? '');
+    final dozen = ValueNotifier(existing?.sellByDozen ?? false);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(existing == null ? s.addCategory : s.editCategory),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            labelText: s.categoryName,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: s.categoryName,
+                ),
+                onSubmitted: (_) => _save(ctx, ref, ctrl, existing, dozen.value),
+              ),
+              const SizedBox(height: 8),
+              _SellByDozenSwitch(value: dozen),
+            ],
           ),
-          onSubmitted: (_) => _save(ctx, ref, ctrl, existing),
         ),
         actions: [
           TextButton(
@@ -87,7 +97,7 @@ class CategoryScreen extends ConsumerWidget {
             child: Text(s.cancel),
           ),
           FilledButton(
-            onPressed: () => _save(ctx, ref, ctrl, existing),
+            onPressed: () => _save(ctx, ref, ctrl, existing, dozen.value),
             child: Text(existing == null ? s.add : s.save),
           ),
         ],
@@ -96,7 +106,7 @@ class CategoryScreen extends ConsumerWidget {
   }
 
   Future<void> _save(BuildContext ctx, WidgetRef ref,
-      TextEditingController ctrl, Category? existing) async {
+      TextEditingController ctrl, Category? existing, bool sellByDozen) async {
     final name = ctrl.text.trim();
     if (name.isEmpty) return;
     final s = AppStrings.of(ctx);
@@ -104,11 +114,11 @@ class CategoryScreen extends ConsumerWidget {
     if (existing == null) {
       await ref
           .read(categoryProvider.notifier)
-          .addCategory(Category(name: name));
+          .addCategory(Category(name: name, sellByDozen: sellByDozen));
     } else {
       await ref
           .read(categoryProvider.notifier)
-          .updateCategory(existing.copyWith(name: name));
+          .updateCategory(existing.copyWith(name: name, sellByDozen: sellByDozen));
     }
     if (ctx.mounted) Navigator.pop(ctx);
     final failed = ref.read(categoryProvider).hasError;
@@ -202,10 +212,21 @@ class _CategoryTile extends StatelessWidget {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                category.name,
-                style: theme.textTheme.bodyLarge
-                    ?.copyWith(fontWeight: FontWeight.w600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    category.name,
+                    style: theme.textTheme.bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  if (category.sellByDozen)
+                    Text(
+                      AppStrings.of(context).tr('sellByDozen'),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                ],
               ),
             ),
             IconButton(
@@ -222,40 +243,74 @@ class _CategoryTile extends StatelessWidget {
   void _showEditDialog(BuildContext context) {
     final s = AppStrings.of(context);
     final ctrl = TextEditingController(text: category.name);
+    final dozen = ValueNotifier(category.sellByDozen);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(s.editCategory),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: s.categoryName),
-          onSubmitted: (_) => _saveEdit(ctx, ctrl),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(labelText: s.categoryName),
+                onSubmitted: (_) => _saveEdit(ctx, ctrl, dozen.value),
+              ),
+              const SizedBox(height: 8),
+              _SellByDozenSwitch(value: dozen),
+            ],
+          ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(s.cancel)),
           FilledButton(
-              onPressed: () => _saveEdit(ctx, ctrl),
+              onPressed: () => _saveEdit(ctx, ctrl, dozen.value),
               child: Text(s.save)),
         ],
       ),
     );
   }
 
-  Future<void> _saveEdit(BuildContext ctx, TextEditingController ctrl) async {
+  Future<void> _saveEdit(BuildContext ctx, TextEditingController ctrl, bool sellByDozen) async {
     final name = ctrl.text.trim();
     if (name.isEmpty) return;
     final s = AppStrings.of(ctx);
     final messenger = ScaffoldMessenger.of(ctx);
     await ref
         .read(categoryProvider.notifier)
-        .updateCategory(category.copyWith(name: name));
+        .updateCategory(category.copyWith(name: name, sellByDozen: sellByDozen));
     if (ctx.mounted) Navigator.pop(ctx);
     final failed = ref.read(categoryProvider).hasError;
     showOutcome(messenger, failed ? s.errorOccurred : s.categoryUpdated,
         failed: failed);
+  }
+}
+
+
+/// "Sell by the dozen" in the category dialogs: whether this category's piece
+/// products get a Pcs | Dozen switch on the order screen.
+class _SellByDozenSwitch extends StatelessWidget {
+  const _SellByDozenSwitch({required this.value});
+
+  final ValueNotifier<bool> value;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    return ValueListenableBuilder<bool>(
+      valueListenable: value,
+      builder: (context, on, _) => SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: on,
+        onChanged: (v) => value.value = v,
+        title: Text(s.tr('sellByDozen')),
+        subtitle: Text(s.tr('sellByDozenHint')),
+      ),
+    );
   }
 }

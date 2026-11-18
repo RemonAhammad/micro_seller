@@ -402,6 +402,8 @@ const translationsTr = <String, String>{
   'no': 'Hayır',
   'add': 'Ekle',
   'quickQuantities': 'Hızlı miktarlar',
+  'sellByDozen': 'Düzine ile sat',
+  'sellByDozenHint': 'Siparişlerde ürünleri için Adet | Düzine seçeneği çıkar (1 düzine = 12)',
   'search': 'Ara',
   'filter': 'Filtrele',
   'share': 'Paylaş',

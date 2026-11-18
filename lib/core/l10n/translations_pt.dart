@@ -402,6 +402,8 @@ const translationsPt = <String, String>{
   'no': 'Não',
   'add': 'Adicionar',
   'quickQuantities': 'Quantidades rápidas',
+  'sellByDozen': 'Vender por dúzia',
+  'sellByDozenHint': 'Os pedidos mostram uma opção Unid. | Dúzia para os seus produtos (1 dúzia = 12)',
   'search': 'Pesquisar',
   'filter': 'Filtrar',
   'share': 'Compartilhar',

@@ -402,6 +402,8 @@ const translationsFr = <String, String>{
   'no': 'Non',
   'add': 'Ajouter',
   'quickQuantities': 'Quantités rapides',
+  'sellByDozen': 'Vendre à la douzaine',
+  'sellByDozenHint': 'Les commandes proposent un choix Pièce | Douzaine pour ses produits (1 douzaine = 12)',
   'search': 'Rechercher',
   'filter': 'Filtrer',
   'share': 'Partager',

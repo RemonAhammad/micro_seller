@@ -23,6 +23,11 @@ const CategorySchema = CollectionSchema(
       type: IsarType.dateTime,
     ),
     r'name': PropertySchema(id: 1, name: r'name', type: IsarType.string),
+    r'sellByDozen': PropertySchema(
+      id: 2,
+      name: r'sellByDozen',
+      type: IsarType.bool,
+    ),
   },
 
   estimateSize: _categoryEstimateSize,
@@ -58,6 +63,7 @@ void _categorySerialize(
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeString(offsets[1], object.name);
+  writer.writeBool(offsets[2], object.sellByDozen);
 }
 
 Category _categoryDeserialize(
@@ -70,6 +76,7 @@ Category _categoryDeserialize(
     createdAt: reader.readDateTimeOrNull(offsets[0]),
     id: id,
     name: reader.readString(offsets[1]),
+    sellByDozen: reader.readBoolOrNull(offsets[2]) ?? false,
   );
   return object;
 }
@@ -85,6 +92,8 @@ P _categoryDeserializeProp<P>(
       return (reader.readDateTimeOrNull(offset)) as P;
     case 1:
       return (reader.readString(offset)) as P;
+    case 2:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -459,6 +468,16 @@ extension CategoryQueryFilter
       );
     });
   }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> sellByDozenEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'sellByDozen', value: value),
+      );
+    });
+  }
 }
 
 extension CategoryQueryObject
@@ -489,6 +508,18 @@ extension CategoryQuerySortBy on QueryBuilder<Category, Category, QSortBy> {
   QueryBuilder<Category, Category, QAfterSortBy> sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySellByDozen() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sellByDozen', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySellByDozenDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sellByDozen', Sort.desc);
     });
   }
 }
@@ -530,6 +561,18 @@ extension CategoryQuerySortThenBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySellByDozen() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sellByDozen', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySellByDozenDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sellByDozen', Sort.desc);
+    });
+  }
 }
 
 extension CategoryQueryWhereDistinct
@@ -545,6 +588,12 @@ extension CategoryQueryWhereDistinct
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Category, Category, QDistinct> distinctBySellByDozen() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sellByDozen');
     });
   }
 }
@@ -568,6 +617,12 @@ extension CategoryQueryProperty
       return query.addPropertyName(r'name');
     });
   }
+
+  QueryBuilder<Category, bool, QQueryOperations> sellByDozenProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sellByDozen');
+    });
+  }
 }
 
 // **************************************************************************
@@ -580,10 +635,12 @@ Category _$CategoryFromJson(Map<String, dynamic> json) => Category(
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
+  sellByDozen: json['sellByDozen'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$CategoryToJson(Category instance) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
   'createdAt': instance.createdAt?.toIso8601String(),
+  'sellByDozen': instance.sellByDozen,
 };
