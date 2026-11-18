@@ -401,6 +401,7 @@ const translationsFr = <String, String>{
   'yes': 'Oui',
   'no': 'Non',
   'add': 'Ajouter',
+  'quickQuantities': 'Quantités rapides',
   'search': 'Rechercher',
   'filter': 'Filtrer',
   'share': 'Partager',

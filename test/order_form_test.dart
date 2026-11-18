@@ -431,6 +431,32 @@ void main() {
     expect(after.findCombination('Color:Brown')!.stockQty, 18);
   });
 
+  testWidgets('the ⋯ sets a quick quantity and closes; numbers past stock are off', (tester) async {
+    await openDb(tester, 'form_quick_qty');
+    final eggs = (await tester.runAsync(() async {
+      late int id;
+      await isar.writeTxn(() async {
+        id = await isar.products.put(Product(name: 'Eggs', sellingPrice: 13, stockQty: 30));
+      });
+      return isar.products.get(id);
+    }))!;
+    await pumpForm(tester, quick: [eggs]);
+
+    await tapText(tester, 'Eggs');
+    await tester.tap(find.byTooltip('Quick quantities'));
+    await settle(tester);
+    expect(tester.widget<ActionChip>(find.widgetWithText(ActionChip, '50')).onPressed, isNotNull,
+        reason: 'the cart checks stock itself and says so');
+    await tester.ensureVisible(find.widgetWithText(ActionChip, '20'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, '20'));
+    await settle(tester);
+    expect(find.widgetWithText(ActionChip, '20'), findsNothing, reason: 'the row closes');
+
+    await tapText(tester, 'Paid in full');
+    expect((await orders(tester)).single.items.single.qty, 20);
+  });
+
   testWidgets('Dozen is refused when stock is under 12', (tester) async {
     await openDb(tester, 'form_dozen_short');
     await pumpForm(tester);

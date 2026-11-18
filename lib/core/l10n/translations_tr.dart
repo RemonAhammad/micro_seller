@@ -401,6 +401,7 @@ const translationsTr = <String, String>{
   'yes': 'Evet',
   'no': 'Hayır',
   'add': 'Ekle',
+  'quickQuantities': 'Hızlı miktarlar',
   'search': 'Ara',
   'filter': 'Filtrele',
   'share': 'Paylaş',

@@ -401,6 +401,7 @@ const translationsTh = <String, String>{
   'yes': 'ใช่',
   'no': 'ไม่',
   'add': 'เพิ่ม',
+  'quickQuantities': 'จำนวนด่วน',
   'search': 'ค้นหา',
   'filter': 'กรอง',
   'share': 'แชร์',

@@ -401,6 +401,7 @@ const translationsVi = <String, String>{
   'yes': 'Có',
   'no': 'Không',
   'add': 'Thêm',
+  'quickQuantities': 'Số lượng nhanh',
   'search': 'Tìm kiếm',
   'filter': 'Lọc',
   'share': 'Chia sẻ',

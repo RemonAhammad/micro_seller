@@ -401,6 +401,7 @@ const translationsId = <String, String>{
   'yes': 'Ya',
   'no': 'Tidak',
   'add': 'Tambah',
+  'quickQuantities': 'Jumlah cepat',
   'search': 'Cari',
   'filter': 'Filter',
   'share': 'Bagikan',

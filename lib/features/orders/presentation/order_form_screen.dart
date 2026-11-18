@@ -70,7 +70,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   final _recurringDaysCtrl = TextEditingController(text: '30');
 
-  late final Listenable _moneyFields = Listenable.merge([_discountCtrl, _deliveryCtrl, _taxRateCtrl, _amountPaidCtrl]);
+  late final Listenable _moneyFields = Listenable.merge([
+    _discountCtrl,
+    _deliveryCtrl,
+    _taxRateCtrl,
+    _amountPaidCtrl,
+  ]);
 
   Customer? _selectedCustomer;
   final List<OrderItem> _items = [];
@@ -117,11 +122,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   }
 
   Future<void> _initForm() async {
-
     try {
       final settingsTaxRate = ref.read(settingsProvider.notifier).taxRate;
       if (settingsTaxRate > 0) {
-        _taxRateCtrl.text = settingsTaxRate.toStringAsFixed(settingsTaxRate == settingsTaxRate.roundToDouble() ? 0 : 2);
+        _taxRateCtrl.text = settingsTaxRate.toStringAsFixed(
+          settingsTaxRate == settingsTaxRate.roundToDouble() ? 0 : 2,
+        );
       }
     } catch (_) {}
 
@@ -145,11 +151,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   void _populateForm(Order order) {
     _existingOrder = order;
-    final walkIn = order.customerId <= 0 && order.customerName.isEmpty && order.customerPhone.isEmpty;
-    _selectedCustomer =
-        walkIn ? null : Customer(id: order.customerId, name: order.customerName, phone: order.customerPhone);
+    final walkIn =
+        order.customerId <= 0 &&
+        order.customerName.isEmpty &&
+        order.customerPhone.isEmpty;
+    _selectedCustomer = walkIn
+        ? null
+        : Customer(
+            id: order.customerId,
+            name: order.customerName,
+            phone: order.customerPhone,
+          );
     _creditMode = true;
-    _showMore = order.discountAmount > 0 ||
+    _showMore =
+        order.discountAmount > 0 ||
         order.deliveryFee > 0 ||
         order.notes.isNotEmpty ||
         order.deliveryAddress.isNotEmpty ||
@@ -160,16 +175,24 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       ..clear()
       ..addAll(order.items.map((i) => i.copyWith()));
 
-    _discountCtrl.text = order.discountAmount > 0 ? _amountText(order.discountAmount) : '0';
-    _deliveryCtrl.text = order.deliveryFee > 0 ? _amountText(order.deliveryFee) : '0';
-    _amountPaidCtrl.text = order.amountPaid > 0 ? _amountText(order.amountPaid) : '';
+    _discountCtrl.text = order.discountAmount > 0
+        ? _amountText(order.discountAmount)
+        : '0';
+    _deliveryCtrl.text = order.deliveryFee > 0
+        ? _amountText(order.deliveryFee)
+        : '0';
+    _amountPaidCtrl.text = order.amountPaid > 0
+        ? _amountText(order.amountPaid)
+        : '';
     _transactionIdCtrl.text = order.transactionId;
 
     if (order.taxAmount > 0) {
       final taxableAmount = order.subtotal - order.discountAmount;
       if (taxableAmount > 0) {
         final rate = order.taxAmount / taxableAmount * 100;
-        _taxRateCtrl.text = rate.toStringAsFixed(rate == rate.roundToDouble() ? 0 : 2);
+        _taxRateCtrl.text = rate.toStringAsFixed(
+          rate == rate.roundToDouble() ? 0 : 2,
+        );
       }
     }
     _notesCtrl.text = order.notes;
@@ -177,14 +200,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     _orderDate = order.createdAt;
     _estimatedDeliveryDate = order.estimatedDeliveryDate;
     _isRecurring = order.isRecurring;
-    _recurringDaysCtrl.text = '${order.recurringIntervalDays > 0 ? order.recurringIntervalDays : 30}';
+    _recurringDaysCtrl.text =
+        '${order.recurringIntervalDays > 0 ? order.recurringIntervalDays : 30}';
     _orderStatus = order.orderStatus;
     _paymentMethod = order.paymentMethod;
     setState(() {});
   }
 
-  static String _amountText(double amount) =>
-      amount.toStringAsFixed(amount == amount.roundToDouble() ? 0 : NumberInput.moneyDecimals);
+  static String _amountText(double amount) => amount.toStringAsFixed(
+    amount == amount.roundToDouble() ? 0 : NumberInput.moneyDecimals,
+  );
 
   @override
   void dispose() {
@@ -204,7 +229,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final discount = NumberInput.parseDecimal(_discountCtrl.text) ?? 0;
     final delivery = NumberInput.parseDecimal(_deliveryCtrl.text) ?? 0;
     final taxRate = NumberInput.parseDecimal(_taxRateCtrl.text) ?? 0;
-    final totals = orderTotals(subtotal: subtotal, discount: discount, taxRate: taxRate, delivery: delivery);
+    final totals = orderTotals(
+      subtotal: subtotal,
+      discount: discount,
+      taxRate: taxRate,
+      delivery: delivery,
+    );
     return _FormTotals(
       subtotal: subtotal,
       discount: discount,
@@ -229,7 +259,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final result = await showModalBottomSheet<Customer>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) => _CustomerPickerSheet(customers: customers, isar: isar),
     );
 
@@ -243,7 +275,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) => _ProductPickerSheet(
         isar: isar,
         currentItems: _items,
@@ -284,35 +318,50 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   /// A scale label: its weight (or the weight its price buys) goes straight
   /// into the cart. A second label of the same product adds to its line.
-  void _addLabelQty(Product product, double qty, {VariantCombination? combination}) {
+  void _addLabelQty(
+    Product product,
+    double qty, {
+    VariantCombination? combination,
+  }) {
     final s = AppStrings.of(context);
     final key = combination?.combinationKey ?? '';
     final name = _lineName(product, combination);
     final stock = combination?.stockQty ?? product.stockQty;
-    final idx = _items.indexWhere((i) => i.productId == product.id && i.variantCombinationKey == key);
+    final idx = _items.indexWhere(
+      (i) => i.productId == product.id && i.variantCombinationKey == key,
+    );
     final total = roundQty((idx >= 0 ? _items[idx].qty : 0) + qty);
     if (qtyExceeds(total, stock)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.notEnoughStock(s.qty(stock, product.unit), name))),
+        SnackBar(
+          content: Text(s.notEnoughStock(s.qty(stock, product.unit), name)),
+        ),
       );
       return;
     }
     setState(() {
       if (idx >= 0) {
         final existing = _items[idx];
-        _items[idx] = existing.copyWith(qty: total, totalPrice: lineTotal(existing.unitPrice, total));
+        _items[idx] = existing.copyWith(
+          qty: total,
+          totalPrice: lineTotal(existing.unitPrice, total),
+        );
       } else {
         _items.add(_newItem(product, qty, combination: combination));
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(s.scaleLabelAdded(s.qty(qty, product.unit), name))),
+      SnackBar(
+        content: Text(s.scaleLabelAdded(s.qty(qty, product.unit), name)),
+      ),
     );
   }
 
   /// "T-Shirt (Size: L)" for a combination, else the product's name.
   static String _lineName(Product product, VariantCombination? combination) =>
-      combination == null ? product.name : '${product.name} (${combination.displayLabel})';
+      combination == null
+      ? product.name
+      : '${product.name} (${combination.displayLabel})';
 
   /// A quick-add chip: the product as it is now (its stock may have moved
   /// since the chips were loaded), then the same path as a scan.
@@ -321,7 +370,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final product = await isar.products.get(chip.id);
     if (!mounted) return;
     if (product == null || !product.isActive) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).outOfStock)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+      );
       return;
     }
     await _addOneOf(isar, product);
@@ -331,7 +382,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   /// combination's SKU named it) to the cart: a variant product without one
   /// opens the picker on that product to choose it; otherwise 1 is added
   /// (or, for weighed goods, the quantity sheet asks), refused past stock.
-  Future<void> _addOneOf(Isar isar, Product product, {VariantCombination? combination}) async {
+  Future<void> _addOneOf(
+    Isar isar,
+    Product product, {
+    VariantCombination? combination,
+  }) async {
     if (product.hasVariants && combination == null) {
       await showModalBottomSheet(
         context: context,
@@ -364,19 +419,26 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final stock = combination?.stockQty ?? product.stockQty;
     if (stock <= 0) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(s.outOfStock)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(s.outOfStock)));
       }
       return;
     }
 
     final idx = _items.indexWhere((i) => _isPieceLine(i, product.id, key));
 
-    final room = roundQty(stock -
-        _items
-            .where((i) => i.productId == product.id && i.variantCombinationKey == key && i.isDozenLine)
-            .fold(0.0, (sum, i) => sum + i.baseQty));
+    final room = roundQty(
+      stock -
+          _items
+              .where(
+                (i) =>
+                    i.productId == product.id &&
+                    i.variantCombinationKey == key &&
+                    i.isDozenLine,
+              )
+              .fold(0.0, (sum, i) => sum + i.baseQty),
+    );
 
     // Weighed / measured goods: ask how much (or for how much money).
     if (product.unit.allowsDecimal) {
@@ -392,7 +454,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       setState(() {
         if (idx >= 0) {
           final existing = _items[idx];
-          _items[idx] = existing.copyWith(qty: qty, totalPrice: lineTotal(existing.unitPrice, qty));
+          _items[idx] = existing.copyWith(
+            qty: qty,
+            totalPrice: lineTotal(existing.unitPrice, qty),
+          );
         } else {
           _items.add(_newItem(product, qty, combination: combination));
         }
@@ -403,7 +468,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     if (qtyAtLeast(idx >= 0 ? _items[idx].qty : 0, room)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(s.notEnoughStock(s.qty(stock, product.unit), name))),
+          SnackBar(
+            content: Text(s.notEnoughStock(s.qty(stock, product.unit), name)),
+          ),
         );
       }
       return;
@@ -427,14 +494,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         );
       });
     } else {
-      setState(() => _items.add(_newItem(product, 1, combination: combination)));
+      setState(
+        () => _items.add(_newItem(product, 1, combination: combination)),
+      );
     }
   }
 
   /// A new cart line, priced and labelled as the picker does for a
   /// [combination]: its price adjustment, its own SKU when it has one.
-  static OrderItem _newItem(Product product, double qty,
-      {VariantCombination? combination, List<String> serials = const []}) {
+  static OrderItem _newItem(
+    Product product,
+    double qty, {
+    VariantCombination? combination,
+    List<String> serials = const [],
+  }) {
     final price = product.sellingPrice + (combination?.priceAdjustment ?? 0);
     final comboSku = combination?.sku ?? '';
     return OrderItem(
@@ -457,10 +530,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   /// stock plus those already on the line (sold on this order when editing);
   /// [add] (a scanned serial) starts picked. The line's quantity is the
   /// number picked; none removes it.
-  Future<void> _pickSerialsFor(Isar isar, Product product, {String? add}) async {
+  Future<void> _pickSerialsFor(
+    Isar isar,
+    Product product, {
+    String? add,
+  }) async {
     final idx = _items.indexWhere((i) => i.productId == product.id);
     final current = idx >= 0 ? _items[idx].serials : const <String>[];
-    final inStock = [for (final u in await SerialService.inStock(isar, product.id)) u.serial];
+    final inStock = [
+      for (final u in await SerialService.inStock(isar, product.id)) u.serial,
+    ];
     final lower = {for (final x in inStock) x.toLowerCase()};
     final available = [
       for (final x in current)
@@ -469,7 +548,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     ];
     final preselected = [
       ...current,
-      if (add != null && !current.any((c) => c.toLowerCase() == add.toLowerCase())) add,
+      if (add != null &&
+          !current.any((c) => c.toLowerCase() == add.toLowerCase()))
+        add,
     ];
     if (!mounted) return;
     final picked = await showSerialPickerSheet(
@@ -491,7 +572,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           totalPrice: lineTotal(line.unitPrice, picked.length.toDouble()),
         );
       } else {
-        _items.add(_newItem(product, picked.length.toDouble(), serials: picked));
+        _items.add(
+          _newItem(product, picked.length.toDouble(), serials: picked),
+        );
       }
     });
   }
@@ -523,7 +606,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
     if (qty == null || !mounted || index >= _items.length) return;
     setState(() {
-      _items[index] = item.copyWith(qty: qty, totalPrice: lineTotal(item.unitPrice, qty));
+      _items[index] = item.copyWith(
+        qty: qty,
+        totalPrice: lineTotal(item.unitPrice, qty),
+      );
     });
   }
 
@@ -544,11 +630,21 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     if (delta > 0) {
       final found = await _stockFor(item);
       if (found != null &&
-          qtyExceeds(roundQty(newQty * item.factor), found.stock - _baseUsedByOthers(_items, item))) {
+          qtyExceeds(
+            roundQty(newQty * item.factor),
+            found.stock - _baseUsedByOthers(_items, item),
+          )) {
         if (mounted) {
           final s = AppStrings.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(s.notEnoughStock(s.qty(found.stock, found.product.unit), item.displayName))),
+            SnackBar(
+              content: Text(
+                s.notEnoughStock(
+                  s.qty(found.stock, found.product.unit),
+                  item.displayName,
+                ),
+              ),
+            ),
           );
         }
         return;
@@ -556,7 +652,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     }
     if (!mounted || index >= _items.length) return;
     setState(() {
-      _items[index] = item.copyWith(qty: newQty, totalPrice: lineTotal(item.unitPrice, newQty));
+      _items[index] = item.copyWith(
+        qty: newQty,
+        totalPrice: lineTotal(item.unitPrice, newQty),
+      );
     });
   }
 
@@ -579,23 +678,34 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     var qty = dozen
         ? math.max(1.0, (item.qty / kDozen).floorToDouble())
         : roundQty(item.qty * kDozen);
-    final other = _items.indexWhere((i) =>
-        !identical(i, item) &&
-        i.productId == item.productId &&
-        i.variantCombinationKey == item.variantCombinationKey &&
-        i.isDozenLine == dozen);
+    final other = _items.indexWhere(
+      (i) =>
+          !identical(i, item) &&
+          i.productId == item.productId &&
+          i.variantCombinationKey == item.variantCombinationKey &&
+          i.isDozenLine == dozen,
+    );
     if (other >= 0) qty = roundQty(qty + _items[other].qty);
-    final room = found.stock -
+    final room =
+        found.stock -
         _baseUsedByOthers(_items, item) +
         (other >= 0 ? _items[other].baseQty : 0);
     if (qtyExceeds(roundQty(qty * factor), room)) {
       final s = AppStrings.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.notEnoughStock(s.qty(found.stock, product.unit), item.displayName))),
+        SnackBar(
+          content: Text(
+            s.notEnoughStock(
+              s.qty(found.stock, product.unit),
+              item.displayName,
+            ),
+          ),
+        ),
       );
       return;
     }
-    final piecePrice = product.sellingPrice + (combination?.priceAdjustment ?? 0);
+    final piecePrice =
+        product.sellingPrice + (combination?.priceAdjustment ?? 0);
     final unitPrice = dozen ? roundMoney(piecePrice * kDozen) : piecePrice;
     final line = item.copyWith(
       unit: dozen ? QuantityUnit.dozen : QuantityUnit.piece,
@@ -618,7 +728,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   /// The footer's Paid in full: the whole total, paid now, saved.
   Future<void> _submitPaidInFull() async {
     if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)),
+      );
       return;
     }
     _amountPaidCtrl.text = _amountText(_readTotals().total);
@@ -630,7 +742,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   Future<void> _startCredit() async {
     setState(() {
       _creditMode = true;
-      if (_amountPaidCtrl.text.isNotEmpty && (NumberInput.parseDecimal(_amountPaidCtrl.text) ?? 0) >= _readTotals().total) {
+      if (_amountPaidCtrl.text.isNotEmpty &&
+          (NumberInput.parseDecimal(_amountPaidCtrl.text) ?? 0) >=
+              _readTotals().total) {
         _amountPaidCtrl.clear();
       }
     });
@@ -639,20 +753,26 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
 
   Future<void> _submit() async {
     if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).addAtLeastOneProduct)),
+      );
       return;
     }
 
     final t = _readTotals();
     if (t.overpaid) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).amountPaidExceedsTotal)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).amountPaidExceedsTotal)),
+      );
       return;
     }
 
     // Only an order with money still owing needs a customer: the Due Book
     // lists dues per customer, and a walk-in due would be lost there.
     if (_selectedCustomer == null && t.due > 0.005) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.of(context).customerNeededForCredit)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).customerNeededForCredit)),
+      );
       await _pickCustomer();
       return;
     }
@@ -691,7 +811,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           estimatedDeliveryDate: _estimatedDeliveryDate,
           isRecurring: _isRecurring,
           recurringIntervalDays: _isRecurring ? recurringDays : 0,
-          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: recurringDays)) : null,
+          nextRecurringDate: _isRecurring
+              ? DateTime.now().add(Duration(days: recurringDays))
+              : null,
           createdAt: _orderDate,
           updatedAt: DateTime.now(),
         );
@@ -699,9 +821,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         await notifier.updateOrder(order);
 
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).orderUpdated), backgroundColor: Colors.green));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppStrings.of(context).orderUpdated),
+              backgroundColor: Colors.green,
+            ),
+          );
           context.pop();
         }
       } else {
@@ -728,14 +853,19 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           estimatedDeliveryDate: _estimatedDeliveryDate,
           isRecurring: _isRecurring,
           recurringIntervalDays: _isRecurring ? recurringDays : 0,
-          nextRecurringDate: _isRecurring ? DateTime.now().add(Duration(days: recurringDays)) : null,
+          nextRecurringDate: _isRecurring
+              ? DateTime.now().add(Duration(days: recurringDays))
+              : null,
           createdAt: _orderDate ?? DateTime.now(),
           updatedAt: DateTime.now(),
         );
 
         final newId = await notifier.createOrder(order);
         final saved = order.copyWith(id: newId);
-        await OrderFormDefaults.remember(paymentMethod: _paymentMethod, orderStatus: _orderStatus);
+        await OrderFormDefaults.remember(
+          paymentMethod: _paymentMethod,
+          orderStatus: _orderStatus,
+        );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -753,16 +883,26 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppStrings.of(context).orderDateTooLate(formatEntryDateTime(context, e.latest))),
+            content: Text(
+              AppStrings.of(
+                context,
+              ).orderDateTooLate(formatEntryDateTime(context, e.latest)),
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(serialErrorMessage(context, e) ?? AppStrings.of(context).errorOccurred),
-            backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              serialErrorMessage(context, e) ??
+                  AppStrings.of(context).errorOccurred,
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -805,7 +945,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
           _InvoiceActionTile(
             icon: tabler.FileTypePdf.new,
             label: s.sharePdf,
@@ -816,7 +955,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 final dir = await getTemporaryDirectory();
                 final file = File('${dir.path}/${order.orderNumber}.pdf');
                 await file.writeAsBytes(bytes);
-                final result = await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], sharePositionOrigin: origin));
+                final result = await SharePlus.instance.share(
+                  ShareParams(
+                    files: [XFile(file.path)],
+                    sharePositionOrigin: origin,
+                  ),
+                );
                 return result.status == ShareResultStatus.success;
               });
             },
@@ -827,7 +971,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.downloadPdf,
             color: Colors.blue,
             onTap: (origin) async {
-
               if (pdfDownloadAsksWhereToSave) {
                 final bytes = await runWithProgress(context, receiptBytes);
                 return savePdfWithSystemSheet(
@@ -840,15 +983,21 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               var downloadDir = settings.downloadDirectory;
               if (downloadDir.isEmpty) {
                 if (!mounted) return false;
-                final picked = await FilePicker.getDirectoryPath(dialogTitle: 'Choose download folder');
+                final picked = await FilePicker.getDirectoryPath(
+                  dialogTitle: 'Choose download folder',
+                );
                 if (picked == null) return false;
                 downloadDir = picked;
-                await ref.read(settingsProvider.notifier).updateDownloadDirectory(downloadDir);
+                await ref
+                    .read(settingsProvider.notifier)
+                    .updateDownloadDirectory(downloadDir);
               }
               if (!mounted) return false;
 
               final path = await runWithProgress(context, () async {
-                final file = File('$downloadDir/${order.orderNumber}_invoice.pdf');
+                final file = File(
+                  '$downloadDir/${order.orderNumber}_invoice.pdf',
+                );
                 await file.writeAsBytes(await receiptBytes());
                 return file.path;
               });
@@ -879,8 +1028,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             label: s.shareViaWhatsApp,
             color: Colors.green,
             onTap: (origin) async {
-              final text = pdfService.generateWhatsAppText(order, currencySymbol: currencySymbol);
-              final result = await SharePlus.instance.share(ShareParams(text: text, sharePositionOrigin: origin));
+              final text = pdfService.generateWhatsAppText(
+                order,
+                currencySymbol: currencySymbol,
+              );
+              final result = await SharePlus.instance.share(
+                ShareParams(text: text, sharePositionOrigin: origin),
+              );
               return result.status == ShareResultStatus.success;
             },
           ),
@@ -938,7 +1092,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(ok ? s.tr('posPrintSuccess') : s.tr('posPrintFailed')),
+                    content: Text(
+                      ok ? s.tr('posPrintSuccess') : s.tr('posPrintFailed'),
+                    ),
                     backgroundColor: ok ? Colors.green : Colors.red,
                   ),
                 );
@@ -947,7 +1103,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             },
           ),
           const SizedBox(height: 16),
-          OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: Text(s.done)),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s.done),
+          ),
         ],
       ),
     );
@@ -967,14 +1126,16 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-
                 _buildCustomerSection(theme, cs),
                 const SizedBox(height: 16),
 
                 _buildItemsSection(theme, cs),
                 const SizedBox(height: 16),
 
-                if (_creditMode) _buildPaymentSection(theme, cs) else _buildPaymentMethodSection(theme, cs),
+                if (_creditMode)
+                  _buildPaymentSection(theme, cs)
+                else
+                  _buildPaymentMethodSection(theme, cs),
                 const SizedBox(height: 16),
 
                 _buildMoreOptionsHeader(theme, cs),
@@ -996,17 +1157,27 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   Widget _buildMoreOptionsHeader(ThemeData theme, ColorScheme cs) {
     final s = AppStrings.of(context);
     return ListenableBuilder(
-      listenable: Listenable.merge([_moneyFields, _notesCtrl, _deliveryAddressCtrl]),
+      listenable: Listenable.merge([
+        _moneyFields,
+        _notesCtrl,
+        _deliveryAddressCtrl,
+      ]),
       builder: (context, _) {
         final t = _readTotals();
         final set = <String>[
-          if (t.discount > 0) '${s.discount} ${CurrencyFormatter.format(t.discount)}',
-          if (t.delivery > 0) '${s.deliveryFee} ${CurrencyFormatter.format(t.delivery)}',
-          if (t.taxRate > 0) '${s.tax} ${t.taxRate.toStringAsFixed(t.taxRate == t.taxRate.roundToDouble() ? 0 : 1)}%',
-          if (!_isEditing && _orderDate != null) formatEntryDateTime(context, _orderDate!),
+          if (t.discount > 0)
+            '${s.discount} ${CurrencyFormatter.format(t.discount)}',
+          if (t.delivery > 0)
+            '${s.deliveryFee} ${CurrencyFormatter.format(t.delivery)}',
+          if (t.taxRate > 0)
+            '${s.tax} ${t.taxRate.toStringAsFixed(t.taxRate == t.taxRate.roundToDouble() ? 0 : 1)}%',
+          if (!_isEditing && _orderDate != null)
+            formatEntryDateTime(context, _orderDate!),
           orderStatusLabel(context, _orderStatus),
           if (_notesCtrl.text.trim().isNotEmpty) s.notes,
-          if (_deliveryAddressCtrl.text.trim().isNotEmpty || _estimatedDeliveryDate != null) s.delivery,
+          if (_deliveryAddressCtrl.text.trim().isNotEmpty ||
+              _estimatedDeliveryDate != null)
+            s.delivery,
           if (_isRecurring) s.recurringOrder,
         ];
         return Material(
@@ -1028,16 +1199,25 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(s.moreOptions, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          s.moreOptions,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         if (!_showMore)
                           Text(
                             set.join(' · '),
-                            style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
                       ],
                     ),
                   ),
-                  ThinIcon(_showMore ? tabler.ChevronUp.new : tabler.ChevronDown.new, size: 20, color: cs.outline),
+                  ThinIcon(
+                    _showMore ? tabler.ChevronUp.new : tabler.ChevronDown.new,
+                    size: 20,
+                    color: cs.outline,
+                  ),
                 ],
               ),
             ),
@@ -1050,131 +1230,149 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   List<Widget> _buildMoreOptions(ThemeData theme, ColorScheme cs) {
     final s = AppStrings.of(context);
     return [
-                const SizedBox(height: 16),
-                _buildPricingSection(theme, cs),
-                const SizedBox(height: 16),
+      const SizedBox(height: 16),
+      _buildPricingSection(theme, cs),
+      const SizedBox(height: 16),
 
-                if (_canSetOrderDate) ...[
-                  EntryDateField(
-                    label: s.orderDate,
-                    value: _orderDate,
-                    first: _firstOrderDate,
-                    hint: s.entryDateHint,
-                    onChanged: (d) => setState(() => _orderDate = d),
-                    onReset: _isEditing ? null : () => setState(() => _orderDate = null),
+      if (_canSetOrderDate) ...[
+        EntryDateField(
+          label: s.orderDate,
+          value: _orderDate,
+          first: _firstOrderDate,
+          hint: s.entryDateHint,
+          onChanged: (d) => setState(() => _orderDate = d),
+          onReset: _isEditing ? null : () => setState(() => _orderDate = null),
+        ),
+        const SizedBox(height: 16),
+      ],
+
+      _buildStatusSection(theme, cs),
+      const SizedBox(height: 16),
+
+      AppTextField(
+        label: s.notes,
+        controller: _notesCtrl,
+        maxLines: 2,
+        textCapitalization: TextCapitalization.sentences,
+        hint: s.tr('anySpecialInstructions'),
+      ),
+
+      const SizedBox(height: 16),
+      Text(
+        s.delivery,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: cs.primary,
+        ),
+      ),
+      const SizedBox(height: 8),
+      AppTextField(
+        label: s.deliveryAddress,
+        controller: _deliveryAddressCtrl,
+        maxLines: 2,
+        textCapitalization: TextCapitalization.sentences,
+        prefixIcon: const ThinIcon(tabler.TruckDelivery.new),
+      ),
+      const SizedBox(height: 8),
+      GestureDetector(
+        onTap: () async {
+          final now = DateTime.now();
+          final from = _orderDate != null && _orderDate!.isBefore(now)
+              ? _orderDate!
+              : now;
+          final first = DateTime(from.year, from.month, from.day);
+          final last = now.add(const Duration(days: 365));
+          var initial =
+              _estimatedDeliveryDate ?? now.add(const Duration(days: 3));
+          if (initial.isBefore(first)) initial = first;
+          if (initial.isAfter(last)) initial = last;
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: initial,
+            firstDate: first,
+            lastDate: last,
+          );
+          if (picked != null) setState(() => _estimatedDeliveryDate = picked);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              ThinIcon(tabler.Calendar.new, size: 18, color: cs.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _estimatedDeliveryDate != null
+                      ? '${s.estimatedDelivery}: ${DateFormatter.format(_estimatedDeliveryDate)}'
+                      : s.estimatedDelivery,
+                  style: TextStyle(
+                    color: _estimatedDeliveryDate != null
+                        ? cs.onSurface
+                        : cs.onSurface.withValues(alpha: 0.5),
                   ),
-                  const SizedBox(height: 16),
-                ],
-
-                _buildStatusSection(theme, cs),
-                const SizedBox(height: 16),
-
-                AppTextField(
-                  label: s.notes,
-                  controller: _notesCtrl,
-                  maxLines: 2,
-                  textCapitalization: TextCapitalization.sentences,
-                  hint: s.tr('anySpecialInstructions'),
                 ),
-
-                const SizedBox(height: 16),
-                Text(
-                  s.delivery,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.primary),
-                ),
-                const SizedBox(height: 8),
-                AppTextField(
-                  label: s.deliveryAddress,
-                  controller: _deliveryAddressCtrl,
-                  maxLines: 2,
-                  textCapitalization: TextCapitalization.sentences,
-                  prefixIcon: const ThinIcon(tabler.TruckDelivery.new),
-                ),
-                const SizedBox(height: 8),
+              ),
+              if (_estimatedDeliveryDate != null) ...[
+                const SizedBox(width: 8),
                 GestureDetector(
-                  onTap: () async {
-                    final now = DateTime.now();
-                    final from = _orderDate != null && _orderDate!.isBefore(now) ? _orderDate! : now;
-                    final first = DateTime(from.year, from.month, from.day);
-                    final last = now.add(const Duration(days: 365));
-                    var initial = _estimatedDeliveryDate ?? now.add(const Duration(days: 3));
-                    if (initial.isBefore(first)) initial = first;
-                    if (initial.isAfter(last)) initial = last;
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: initial,
-                      firstDate: first,
-                      lastDate: last,
-                    );
-                    if (picked != null) setState(() => _estimatedDeliveryDate = picked);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        ThinIcon(tabler.Calendar.new, size: 18, color: cs.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _estimatedDeliveryDate != null
-                                ? '${s.estimatedDelivery}: ${DateFormatter.format(_estimatedDeliveryDate)}'
-                                : s.estimatedDelivery,
-                            style: TextStyle(
-                              color: _estimatedDeliveryDate != null ? cs.onSurface : cs.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                        if (_estimatedDeliveryDate != null) ...[
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => setState(() => _estimatedDeliveryDate = null),
-                            child: const ThinIcon(tabler.X.new, size: 18),
-                          ),
-                        ],
-                      ],
+                  onTap: () => setState(() => _estimatedDeliveryDate = null),
+                  child: const ThinIcon(tabler.X.new, size: 18),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 12),
+      SwitchListTile(
+        title: Text(s.recurringOrder),
+        subtitle: Text(s.autoCreateOrder),
+        value: _isRecurring,
+        onChanged: (v) => setState(() => _isRecurring = v),
+        contentPadding: EdgeInsets.zero,
+      ),
+      if (_isRecurring)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(
+            children: [
+              Flexible(child: Text(s.repeatEvery)),
+              const SizedBox(width: 8),
+
+              SizedBox(
+                width: math.max(
+                  60.0,
+                  60 * MediaQuery.textScalerOf(context).scale(16) / 16,
+                ),
+                child: TextField(
+                  keyboardType: TextInputType.number,
+
+                  inputFormatters: [
+                    const IntegerInputFormatter(),
+                    LengthLimitingTextInputFormatter(3),
+                  ],
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 14,
                     ),
                   ),
+                  controller: _recurringDaysCtrl,
                 ),
-
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  title: Text(s.recurringOrder),
-                  subtitle: Text(s.autoCreateOrder),
-                  value: _isRecurring,
-                  onChanged: (v) => setState(() => _isRecurring = v),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                if (_isRecurring)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Row(
-                      children: [
-                        Flexible(child: Text(s.repeatEvery)),
-                        const SizedBox(width: 8),
-
-                        SizedBox(
-                          width: math.max(60.0, 60 * MediaQuery.textScalerOf(context).scale(16) / 16),
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-
-                            inputFormatters: [const IntegerInputFormatter(), LengthLimitingTextInputFormatter(3)],
-                            textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-                            ),
-                            controller: _recurringDaysCtrl,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(s.days),
-                      ],
-                    ),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Text(s.days),
+            ],
+          ),
+        ),
     ];
   }
 
@@ -1196,21 +1394,31 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_selectedCustomer!.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          _selectedCustomer!.name,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         if (_selectedCustomer!.phone.isNotEmpty)
                           Text(
                             _selectedCustomer!.phone,
-                            style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
                       ],
                     )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(AppStrings.of(context).walkInCustomer, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          AppStrings.of(context).walkInCustomer,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         Text(
                           AppStrings.of(context).selectCustomer,
-                          style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.6),
+                          ),
                         ),
                       ],
                     ),
@@ -1236,7 +1444,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           children: [
             Text(
               AppStrings.of(context).items,
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (_items.isNotEmpty) ...[
               const SizedBox(width: 6),
@@ -1248,7 +1458,11 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 ),
                 child: Text(
                   '${cartItemCount(_items)}',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: cs.primary,
+                  ),
                 ),
               ),
             ],
@@ -1278,11 +1492,18 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               ),
               child: Column(
                 children: [
-                  ThinIcon(tabler.ShoppingCartPlus.new, size: 28, color: cs.onSurface.withValues(alpha: 0.3)),
+                  ThinIcon(
+                    tabler.ShoppingCartPlus.new,
+                    size: 28,
+                    color: cs.onSurface.withValues(alpha: 0.3),
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     AppStrings.of(context).tapToAddProducts,
-                    style: TextStyle(color: cs.onSurface.withValues(alpha: 0.4), fontSize: 13),
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -1297,7 +1518,13 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             child: Column(
               children: [
                 for (int i = 0; i < _items.length; i++) ...[
-                  if (i > 0) Divider(height: 1, indent: 12, endIndent: 12, color: cs.outline.withValues(alpha: 0.1)),
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      indent: 12,
+                      endIndent: 12,
+                      color: cs.outline.withValues(alpha: 0.1),
+                    ),
                   _buildItemTile(i, theme, cs),
                 ],
               ],
@@ -1310,7 +1537,8 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   /// One-tap chips of the products sold most often lately. Nothing shows
   /// until there are sales to learn from, or while they load.
   Widget _buildQuickAdd(ColorScheme cs) {
-    final products = ref.watch(quickAddProductsProvider).value ?? const <Product>[];
+    final products =
+        ref.watch(quickAddProductsProvider).value ?? const <Product>[];
     if (products.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1322,10 +1550,18 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               Padding(
                 padding: const EdgeInsetsDirectional.only(end: 8),
                 child: ActionChip(
-                  avatar: ThinIcon(tabler.Plus.new, size: 16, color: cs.primary),
+                  avatar: ThinIcon(
+                    tabler.Plus.new,
+                    size: 16,
+                    color: cs.primary,
+                  ),
                   label: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 160),
-                    child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    child: Text(
+                      p.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   tooltip: AppStrings.of(context).quickAdd,
                   onPressed: () => _quickAdd(p),
@@ -1337,15 +1573,35 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  static const double _itemControlsWidth =2 + 28 + 20 + 28 + 12 + 70 + 4 + 16;
+  static const double _itemControlsWidth = 2 + 28 + 20 + 28 + 12 + 4 + 16;
 
   static const double _minItemNameWidth = 48;
+
+  /// The Pcs | Dozen switch (its labels, padding and frame) plus the → button
+  /// and a little room for the numbers it opens.
+  double _quickBarWidth(BuildContext context, {required bool withSwitch}) {
+    const label = TextStyle(fontSize: 12, fontWeight: FontWeight.w600);
+    final s = AppStrings.of(context);
+    final toggle = withSwitch
+        ? _lineWidth(context, s.unitName(QuantityUnit.piece), label) +
+              _lineWidth(context, s.unitName(QuantityUnit.dozen), label) +
+              4 * 6 +
+              2 * 2
+        : 0.0;
+    return toggle + 32 + 8;
+  }
 
   Widget _buildItemTile(int index, ThemeData theme, ColorScheme cs) {
     final item = _items[index];
     final s = AppStrings.of(context);
-    final unitPrice = s.pricePer(CurrencyFormatter.format(item.unitPrice), item.unit);
-    final unitPriceStyle = TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5));
+    final unitPrice = s.pricePer(
+      CurrencyFormatter.format(item.unitPrice),
+      item.unit,
+    );
+    final unitPriceStyle = TextStyle(
+      fontSize: 12,
+      color: cs.onSurface.withValues(alpha: 0.5),
+    );
     const nameStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 13);
     const qtyStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14);
     final qtyText = s.qty(item.qty, item.unit);
@@ -1355,18 +1611,14 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       children: [
         Text(item.displayName, style: nameStyle),
         Text(unitPrice, style: unitPriceStyle),
-        if (!item.hasSerials &&
-            (item.unit == QuantityUnit.piece || item.isDozenLine))
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: _DozenToggle(
-                dozen: item.isDozenLine,
-                onChanged: (dozen) => _setDozen(index, dozen),
-              ),
-            ),
+        if (!item.hasSerials && !item.unit.allowsDecimal)
+          _QuickQtyBar(
+            leading: item.unit == QuantityUnit.piece || item.isDozenLine
+                ? _DozenToggle(
+                    dozen: item.isDozenLine,
+                    onChanged: (dozen) => _setDozen(index, dozen),
+                  )
+                : null,
           ),
         if (item.hasSerials)
           InkWell(
@@ -1418,69 +1670,100 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             ),
           );
 
+    final totalText = CurrencyFormatter.format(item.totalPrice);
+    final totalStyle = TextStyle(
+      fontWeight: FontWeight.w700,
+      fontSize: 13,
+      color: cs.primary,
+    );
     final total = Text(
-      CurrencyFormatter.format(item.totalPrice),
+      totalText,
       textAlign: TextAlign.right,
-      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: cs.primary),
+      style: totalStyle,
       maxLines: 1,
     );
 
     final remove = GestureDetector(
       onTap: () => _removeItem(index),
-      child: ThinIcon(tabler.X.new, size: 16, color: cs.error.withValues(alpha: 0.6)),
+      child: ThinIcon(
+        tabler.X.new,
+        size: 16,
+        color: cs.error.withValues(alpha: 0.6),
+      ),
     );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
 
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final nameRoom = constraints.maxWidth - _itemControlsWidth - _lineWidth(context, qtyText, qtyStyle);
-          final needed = item.displayName.split(' ').fold(
-            math.max(
-              MediaQuery.textScalerOf(context).scale(_minItemNameWidth),
-              _lineWidth(context, unitPrice, unitPriceStyle),
-            ),
-            (widest, word) => math.max(widest, _lineWidth(context, word, nameStyle)),
-          );
-          if (nameRoom >= needed) {
-            return Row(
-              children: [
-                Expanded(child: info),
-                qty,
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 70,
-                  child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: total),
-                ),
-                const SizedBox(width: 4),
-                remove,
-              ],
-            );
-          }
-          return Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: _QuickQty(
+        onPick: (q) => _updateQty(index, (q - item.qty).round()),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final nameRoom =
+                constraints.maxWidth -
+                _itemControlsWidth -
+                _lineWidth(context, totalText, totalStyle) -
+                _lineWidth(context, qtyText, qtyStyle);
+            final barWidth = !item.hasSerials && !item.unit.allowsDecimal
+                ? _quickBarWidth(
+                    context,
+                    withSwitch:
+                        item.unit == QuantityUnit.piece || item.isDozenLine,
+                  )
+                : 0.0;
+            final needed = item.displayName
+                .split(' ')
+                .fold(
+                  math.max(
+                    MediaQuery.textScalerOf(context).scale(_minItemNameWidth),
+                    math.max(
+                      _lineWidth(context, unitPrice, unitPriceStyle),
+                      barWidth,
+                    ),
+                  ),
+                  (widest, word) =>
+                      math.max(widest, _lineWidth(context, word, nameStyle)),
+                );
+            if (nameRoom >= needed) {
+              return Row(
                 children: [
                   Expanded(child: info),
-                  const SizedBox(width: 8),
-                  remove,
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
                   qty,
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: total),
-                  ),
+                  total,
+                  const SizedBox(width: 4),
+                  remove,
                 ],
-              ),
-            ],
-          );
-        },
+              );
+            }
+            return Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: info),
+                    const SizedBox(width: 8),
+                    remove,
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    qty,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: total,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -1507,7 +1790,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               child: AppTextField(
                 label: s.discount,
                 controller: _discountCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: const [DecimalInputFormatter.money()],
               ),
             ),
@@ -1516,7 +1801,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               child: AppTextField(
                 label: s.deliveryFee,
                 controller: _deliveryCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: const [DecimalInputFormatter.money()],
               ),
             ),
@@ -1531,10 +1818,14 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             return AppTextField(
               label: s.taxVat,
               controller: _taxRateCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: const [DecimalInputFormatter.percent()],
               prefixIcon: const ThinIcon(tabler.Percentage.new, size: 18),
-              helperText: tax > 0 ? 'Tax: ${CurrencyFormatter.format(tax)}' : null,
+              helperText: tax > 0
+                  ? 'Tax: ${CurrencyFormatter.format(tax)}'
+                  : null,
             );
           },
         ),
@@ -1549,7 +1840,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       children: [
         Text(
           AppStrings.of(context).tr('status'),
-          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -1579,14 +1872,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ThinIcon(tabler.InfoCircle.new, size: 16, color: cs.onSurface.withValues(alpha: 0.6)),
+              ThinIcon(
+                tabler.InfoCircle.new,
+                size: 16,
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   _orderStatus == OrderStatus.pending
                       ? AppStrings.of(context).statusPendingHint
                       : AppStrings.of(context).statusConfirmedHint,
-                  style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
             ],
@@ -1610,7 +1909,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(s.payment, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          s.payment,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1620,7 +1924,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 label: s.amountPaid,
                 hint: s.payLaterHint,
                 controller: _amountPaidCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: const [DecimalInputFormatter.money()],
               ),
             ),
@@ -1632,7 +1938,6 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
                 builder: (context, child) {
                   final total = _readTotals().total;
                   return TextButton(
-
                     onPressed: total > 0
                         ? () => _amountPaidCtrl.text = _amountText(total)
                         : null,
@@ -1650,8 +1955,18 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           builder: (context, _) {
             final t = _readTotals();
             if (t.total <= 0) return const SizedBox.shrink();
-            if (t.overpaid) return _paymentStatusLine(tabler.AlertCircle.new, s.amountPaidExceedsTotal, cs.error);
-            if (t.due <= 0.005) return _paymentStatusLine(tabler.CircleCheck.new, s.paidInFull, AppColors.paymentPaid);
+            if (t.overpaid)
+              return _paymentStatusLine(
+                tabler.AlertCircle.new,
+                s.amountPaidExceedsTotal,
+                cs.error,
+              );
+            if (t.due <= 0.005)
+              return _paymentStatusLine(
+                tabler.CircleCheck.new,
+                s.paidInFull,
+                AppColors.paymentPaid,
+              );
             return _paymentStatusLine(
               tabler.Notebook.new,
               s.goesToDueBook(CurrencyFormatter.format(t.due)),
@@ -1660,11 +1975,20 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           },
         ),
         const SizedBox(height: 12),
-        Text(s.paymentMethod, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          s.paymentMethod,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 6),
         _paymentMethodChips(cs, methods, labels),
         const SizedBox(height: 12),
-        AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
+        AppTextField(
+          label: s.transactionId,
+          hint: s.transactionIdHint,
+          controller: _transactionIdCtrl,
+        ),
       ],
     );
   }
@@ -1683,18 +2007,31 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(s.paymentMethod, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          s.paymentMethod,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 8),
         _paymentMethodChips(cs, PaymentMethod.values, labels),
         if (_paymentMethod != PaymentMethod.cash) ...[
           const SizedBox(height: 12),
-          AppTextField(label: s.transactionId, hint: s.transactionIdHint, controller: _transactionIdCtrl),
+          AppTextField(
+            label: s.transactionId,
+            hint: s.transactionIdHint,
+            controller: _transactionIdCtrl,
+          ),
         ],
       ],
     );
   }
 
-  Widget _paymentMethodChips(ColorScheme cs, List<PaymentMethod> methods, Map<PaymentMethod, String> labels) {
+  Widget _paymentMethodChips(
+    ColorScheme cs,
+    List<PaymentMethod> methods,
+    Map<PaymentMethod, String> labels,
+  ) {
     return Wrap(
       spacing: 8,
       runSpacing: 4,
@@ -1730,7 +2067,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
           ThinIcon(icon, size: 18, color: color),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+            child: Text(
+              text,
+              style: TextStyle(color: color, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -1743,12 +2083,17 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       decoration: BoxDecoration(
         color: cs.surface,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, -2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           ListenableBuilder(
             listenable: _moneyFields,
             builder: (context, _) {
@@ -1756,35 +2101,70 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _summaryRow(s.subtotal, CurrencyFormatter.format(t.subtotal), theme),
+                  _summaryRow(
+                    s.subtotal,
+                    CurrencyFormatter.format(t.subtotal),
+                    theme,
+                  ),
                   if (t.discount > 0)
-                    _summaryRow(s.discount, '- ${CurrencyFormatter.format(t.discount)}', theme, valueColor: Colors.green),
+                    _summaryRow(
+                      s.discount,
+                      '- ${CurrencyFormatter.format(t.discount)}',
+                      theme,
+                      valueColor: Colors.green,
+                    ),
                   if (t.taxRate > 0)
                     _summaryRow(
                       '${s.tax} (${t.taxRate.toStringAsFixed(t.taxRate == t.taxRate.roundToDouble() ? 0 : 1)}%)',
                       CurrencyFormatter.format(t.tax),
                       theme,
                     ),
-                  if (t.delivery > 0) _summaryRow(s.delivery, CurrencyFormatter.format(t.delivery), theme),
+                  if (t.delivery > 0)
+                    _summaryRow(
+                      s.delivery,
+                      CurrencyFormatter.format(t.delivery),
+                      theme,
+                    ),
                   const Divider(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(s.total, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        s.total,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      Flexible(child: _fitAmount(Text(
-                        CurrencyFormatter.format(t.total),
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: cs.primary),
-                        maxLines: 1,
-                      ))),
+                      Flexible(
+                        child: _fitAmount(
+                          Text(
+                            CurrencyFormatter.format(t.total),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18,
+                              color: cs.primary,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   if (_creditMode && t.total > 0 && t.paid > 0)
-                    _summaryRow(s.amountPaid, CurrencyFormatter.format(t.paid), theme,
-                        valueColor: AppColors.paymentPaid),
+                    _summaryRow(
+                      s.amountPaid,
+                      CurrencyFormatter.format(t.paid),
+                      theme,
+                      valueColor: AppColors.paymentPaid,
+                    ),
                   if (_creditMode && t.total > 0 && t.due > 0.005)
-                    _summaryRow(s.due, CurrencyFormatter.format(t.due), theme,
-                        valueColor: AppColors.paymentPartial),
+                    _summaryRow(
+                      s.due,
+                      CurrencyFormatter.format(t.due),
+                      theme,
+                      valueColor: AppColors.paymentPartial,
+                    ),
                 ],
               );
             },
@@ -1821,7 +2201,12 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     );
   }
 
-  Widget _summaryRow(String label, String value, ThemeData theme, {Color? valueColor}) {
+  Widget _summaryRow(
+    String label,
+    String value,
+    ThemeData theme, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -1829,18 +2214,28 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
         children: [
           Text(label, style: theme.textTheme.bodySmall),
           const SizedBox(width: 8),
-          Flexible(child: _fitAmount(Text(
-            value,
-            style: theme.textTheme.bodySmall?.copyWith(color: valueColor, fontWeight: FontWeight.w500),
-            maxLines: 1,
-          ))),
+          Flexible(
+            child: _fitAmount(
+              Text(
+                value,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: valueColor,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _fitAmount(Widget amount) =>
-      FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: amount);
+  Widget _fitAmount(Widget amount) => FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: AlignmentDirectional.centerEnd,
+    child: amount,
+  );
 }
 
 class _FormTotals {
@@ -1872,7 +2267,12 @@ class _ProductPickerSheet extends StatefulWidget {
   final ValueChanged<List<OrderItem>> onChanged;
   final int? filterProductId;
 
-  const _ProductPickerSheet({required this.isar, required this.currentItems, required this.onChanged, this.filterProductId});
+  const _ProductPickerSheet({
+    required this.isar,
+    required this.currentItems,
+    required this.onChanged,
+    this.filterProductId,
+  });
 
   @override
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
@@ -1912,20 +2312,27 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   /// cart already holds a dozen line of it and no piece line.
   final _dozenRows = <String>{};
 
-  static String _rowKey(int productId, String combinationKey) => '$productId|$combinationKey';
+  static String _rowKey(int productId, String combinationKey) =>
+      '$productId|$combinationKey';
 
-  bool _offersDozen(Product p) => p.unit == QuantityUnit.piece && !p.usesSerials;
+  bool _offersDozen(Product p) =>
+      p.unit == QuantityUnit.piece && !p.usesSerials;
 
   bool _isDozenRow(int productId, String combinationKey) {
     final key = _rowKey(productId, combinationKey);
     if (_dozenRows.contains(key)) return true;
     if (_pieceRows.contains(key)) return false;
-    bool has(bool dozen) => _items.any((i) =>
-        i.productId == productId && i.variantCombinationKey == combinationKey && i.isDozenLine == dozen);
+    bool has(bool dozen) => _items.any(
+      (i) =>
+          i.productId == productId &&
+          i.variantCombinationKey == combinationKey &&
+          i.isDozenLine == dozen,
+    );
     return has(true) && !has(false);
   }
 
-  void _setDozenRow(int productId, String combinationKey, bool dozen) => setState(() {
+  void _setDozenRow(int productId, String combinationKey, bool dozen) =>
+      setState(() {
         final key = _rowKey(productId, combinationKey);
         // Explicit either way, so a row with only a dozen line, switched to
         // pieces, doesn't fall back to Dozen through [_isDozenRow]'s default.
@@ -1940,18 +2347,35 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 
   final _pieceRows = <String>{};
 
-  double _qtyOf(int productId, {String combinationKey = '', bool dozen = false}) {
-    final idx = _items.indexWhere((i) =>
-        i.productId == productId && i.variantCombinationKey == combinationKey && i.isDozenLine == dozen);
+  double _qtyOf(
+    int productId, {
+    String combinationKey = '',
+    bool dozen = false,
+  }) {
+    final idx = _items.indexWhere(
+      (i) =>
+          i.productId == productId &&
+          i.variantCombinationKey == combinationKey &&
+          i.isDozenLine == dozen,
+    );
     return idx >= 0 ? _items[idx].qty : 0;
   }
 
   /// How many of the row's unit still fit: the stock minus the other unit's
   /// line, in pieces or whole dozens.
-  double _roomFor(int productId, String combinationKey, double stock, bool dozen) {
+  double _roomFor(
+    int productId,
+    String combinationKey,
+    double stock,
+    bool dozen,
+  ) {
     final other = _items
-        .where((i) =>
-            i.productId == productId && i.variantCombinationKey == combinationKey && i.isDozenLine != dozen)
+        .where(
+          (i) =>
+              i.productId == productId &&
+              i.variantCombinationKey == combinationKey &&
+              i.isDozenLine != dozen,
+        )
         .fold(0.0, (sum, i) => sum + i.baseQty);
     final room = roundQty(stock - other);
     if (room <= 0) return 0;
@@ -1978,14 +2402,21 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     if (qtyExceeds(qty, room)) qty = room;
     final factor = dozen ? kDozen : 1.0;
     setState(() {
-      final idx = _items.indexWhere((i) =>
-          i.productId == product.id && i.variantCombinationKey == combinationKey && i.isDozenLine == dozen);
+      final idx = _items.indexWhere(
+        (i) =>
+            i.productId == product.id &&
+            i.variantCombinationKey == combinationKey &&
+            i.isDozenLine == dozen,
+      );
       final piecePrice = priceOverride ?? product.sellingPrice;
       final unitPrice = dozen ? roundMoney(piecePrice * kDozen) : piecePrice;
       if (qty <= 0) {
         if (idx >= 0) _items.removeAt(idx);
       } else if (idx >= 0) {
-        _items[idx] = _items[idx].copyWith(qty: qty, totalPrice: lineTotal(_items[idx].unitPrice, qty));
+        _items[idx] = _items[idx].copyWith(
+          qty: qty,
+          totalPrice: lineTotal(_items[idx].unitPrice, qty),
+        );
       } else {
         _items.add(
           OrderItem(
@@ -2013,7 +2444,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   Future<void> _askSerials(Product product) async {
     final idx = _items.indexWhere((i) => i.productId == product.id);
     final current = idx >= 0 ? _items[idx].serials : const <String>[];
-    final inStock = [for (final u in await SerialService.inStock(widget.isar, product.id)) u.serial];
+    final inStock = [
+      for (final u in await SerialService.inStock(widget.isar, product.id))
+        u.serial,
+    ];
     final lower = {for (final x in inStock) x.toLowerCase()};
     if (!mounted) return;
     final picked = await showSerialPickerSheet(
@@ -2033,20 +2467,26 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       if (picked.isEmpty) {
         if (at >= 0) _items.removeAt(at);
       } else if (at >= 0) {
-        _items[at] = _items[at].copyWith(qty: qty, serials: picked, totalPrice: lineTotal(_items[at].unitPrice, qty));
-      } else {
-        _items.add(OrderItem(
-          productId: product.id,
-          productName: product.name,
-          productSku: product.sku,
+        _items[at] = _items[at].copyWith(
           qty: qty,
-          unit: product.unit,
-          unitPrice: product.sellingPrice,
-          costPrice: product.costPrice,
-          totalPrice: lineTotal(product.sellingPrice, qty),
           serials: picked,
-          warrantyMonths: product.warrantyMonths,
-        ));
+          totalPrice: lineTotal(_items[at].unitPrice, qty),
+        );
+      } else {
+        _items.add(
+          OrderItem(
+            productId: product.id,
+            productName: product.name,
+            productSku: product.sku,
+            qty: qty,
+            unit: product.unit,
+            unitPrice: product.sellingPrice,
+            costPrice: product.costPrice,
+            totalPrice: lineTotal(product.sellingPrice, qty),
+            serials: picked,
+            warrantyMonths: product.warrantyMonths,
+          ),
+        );
       }
     });
     widget.onChanged(_items);
@@ -2065,7 +2505,9 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     final current = _qtyOf(product.id, combinationKey: combinationKey);
     final qty = await showQuantitySheet(
       context,
-      productName: displayLabel.isEmpty ? product.name : '${product.name} ($displayLabel)',
+      productName: displayLabel.isEmpty
+          ? product.name
+          : '${product.name} ($displayLabel)',
       unit: product.unit,
       unitPrice: priceOverride ?? product.sellingPrice,
       available: availableStock,
@@ -2094,10 +2536,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       if (_query.isEmpty) {
         _filtered = all;
       } else {
-        final keys = _searchKeys ??= [for (final p in all) (p.name.toLowerCase(), p.sku.toLowerCase())];
+        final keys = _searchKeys ??= [
+          for (final p in all) (p.name.toLowerCase(), p.sku.toLowerCase()),
+        ];
         _filtered = [
           for (var i = 0; i < all.length; i++)
-            if (keys[i].$1.contains(_query) || keys[i].$2.contains(_query)) all[i],
+            if (keys[i].$1.contains(_query) || keys[i].$2.contains(_query))
+              all[i],
         ];
       }
     }
@@ -2112,15 +2557,26 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     return StreamBuilder<List<Product>>(
       stream: _productsStream,
       builder: (context, snapshot) {
-
         final loading = !snapshot.hasData && !snapshot.hasError;
-        return _buildSheet(context, theme, cs, loading ? null : snapshot.data ?? const []);
+        return _buildSheet(
+          context,
+          theme,
+          cs,
+          loading ? null : snapshot.data ?? const [],
+        );
       },
     );
   }
 
-  Widget _buildSheet(BuildContext context, ThemeData theme, ColorScheme cs, List<Product>? allProducts) {
-    final filtered = allProducts == null ? const <Product>[] : _filterProducts(allProducts);
+  Widget _buildSheet(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme cs,
+    List<Product>? allProducts,
+  ) {
+    final filtered = allProducts == null
+        ? const <Product>[]
+        : _filterProducts(allProducts);
 
     final totalItems = cartItemCount(_items);
 
@@ -2131,19 +2587,20 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
       expand: false,
       builder: (ctx, ctrl) => Column(
         children: [
-
           Container(
             width: 36,
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: cs.outline.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-
                 Expanded(
                   child: Wrap(
                     spacing: 8,
@@ -2152,24 +2609,36 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                     children: [
                       Text(
                         AppStrings.of(context).addItems,
-                        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       if (totalItems > 0)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: cs.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '$totalItems item${totalItems == 1 ? '' : 's'}',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: cs.primary,
+                            ),
                           ),
                         ),
                     ],
                   ),
                 ),
-                TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.of(context).done)),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(AppStrings.of(context).done),
+                ),
               ],
             ),
           ),
@@ -2206,30 +2675,38 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                 ? Center(
                     child: Text(
                       AppStrings.of(context).noProductsFound,
-                      style: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
+                      style: TextStyle(
+                        color: cs.onSurface.withValues(alpha: 0.4),
+                      ),
                     ),
                   )
                 : ListView.separated(
                     controller: ctrl,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      color: cs.outline.withValues(alpha: 0.1),
+                    ),
                     itemBuilder: (_, i) {
                       final p = filtered[i];
 
                       if (p.hasVariants) {
-
                         final activeCombos = p.variantCombinations
-                            .where((c) => c.isActive && (c.stockQty > 0 || c.priceAdjustment != 0 || c.sku.isNotEmpty))
+                            .where(
+                              (c) =>
+                                  c.isActive &&
+                                  (c.stockQty > 0 ||
+                                      c.priceAdjustment != 0 ||
+                                      c.sku.isNotEmpty),
+                            )
                             .toList();
                         if (activeCombos.isEmpty) {
-
                           return const SizedBox.shrink();
                         }
                         final isExpanded = _expandedProducts.contains(p.id);
                         return Column(
                           children: [
-
                             InkWell(
                               onTap: () => setState(() {
                                 if (isExpanded) {
@@ -2239,28 +2716,43 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                                 }
                               }),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
                                 child: Row(
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             p.name,
-                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
                                           ),
                                           Text(
                                             '${activeCombos.length} combination${activeCombos.length == 1 ? '' : 's'}',
-                                            style: TextStyle(fontSize: 11, color: cs.onSurface.withValues(alpha: 0.5)),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: cs.onSurface.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
                                     ThinIcon(
-                                      isExpanded ? tabler.ChevronUp.new : tabler.ChevronDown.new,
+                                      isExpanded
+                                          ? tabler.ChevronUp.new
+                                          : tabler.ChevronDown.new,
                                       size: 20,
-                                      color: cs.onSurface.withValues(alpha: 0.5),
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -2269,116 +2761,213 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 
                             if (isExpanded)
                               ...activeCombos.map((c) {
-                                final comboPrice = p.sellingPrice + c.priceAdjustment;
-                                final comboSku = c.sku.isNotEmpty ? c.sku : p.sku;
+                                final comboPrice =
+                                    p.sellingPrice + c.priceAdjustment;
+                                final comboSku = c.sku.isNotEmpty
+                                    ? c.sku
+                                    : p.sku;
                                 final outOfStock = c.stockQty <= 0;
-                                final dozen = _offersDozen(p) && _isDozenRow(p.id, c.combinationKey);
-                                final qty = _qtyOf(p.id, combinationKey: c.combinationKey, dozen: dozen);
-                                final room = _roomFor(p.id, c.combinationKey, c.stockQty, dozen);
+                                final dozen =
+                                    _offersDozen(p) &&
+                                    _isDozenRow(p.id, c.combinationKey);
+                                final qty = _qtyOf(
+                                  p.id,
+                                  combinationKey: c.combinationKey,
+                                  dozen: dozen,
+                                );
+                                final room = _roomFor(
+                                  p.id,
+                                  c.combinationKey,
+                                  c.stockQty,
+                                  dozen,
+                                );
 
                                 return Padding(
-                                  padding: const EdgeInsets.only(left: 16, bottom: 6),
+                                  padding: const EdgeInsets.only(
+                                    left: 16,
+                                    bottom: 6,
+                                  ),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: cs.primary.withValues(alpha: 0.03),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: LayoutBuilder(
-                                      builder: (context, row) => Row(
+                                    child: _QuickQty(
+                                      max: room,
+                                      onPick: (q) => _setQty(
+                                        p,
+                                        q,
+                                        dozen: dozen,
+                                        combinationKey: c.combinationKey,
+                                        displayLabel: c.displayLabel,
+                                        priceOverride: comboPrice,
+                                        skuOverride: comboSku,
+                                        availableStock: c.stockQty,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                          LayoutBuilder(
+                                            builder: (context, row) => Row(
                                               children: [
-                                                Text(
-                                                  c.displayLabel,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: 13,
-                                                    color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        c.displayLabel,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 13,
+                                                          color: outOfStock
+                                                              ? cs.onSurface
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.4,
+                                                                    )
+                                                              : null,
+                                                        ),
+                                                      ),
+
+                                                      Wrap(
+                                                        crossAxisAlignment:
+                                                            WrapCrossAlignment
+                                                                .center,
+                                                        children: [
+                                                          FittedBox(
+                                                            fit: BoxFit
+                                                                .scaleDown,
+                                                            child: Text(
+                                                              AppStrings.of(
+                                                                context,
+                                                              ).pricePer(
+                                                                CurrencyFormatter.format(
+                                                                  comboPrice,
+                                                                ),
+                                                                p.unit,
+                                                              ),
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    cs.primary,
+                                                              ),
+                                                              maxLines: 1,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            '  ·  ${AppStrings.of(context).qty(c.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
+                                                            style: TextStyle(
+                                                              fontSize: 11,
+                                                              color: outOfStock
+                                                                  ? cs.error
+                                                                  : cs.onSurface
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.5,
+                                                                        ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-
-                                                Wrap(
-                                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                                  children: [
-                                                    FittedBox(
-                                                      fit: BoxFit.scaleDown,
-                                                      child: Text(
-                                                        AppStrings.of(context).pricePer(CurrencyFormatter.format(comboPrice), p.unit),
-                                                        style: TextStyle(fontSize: 12, color: cs.primary),
-                                                        maxLines: 1,
-                                                      ),
+                                                if (qty > 0)
+                                                  _qtyControl(
+                                                    p,
+                                                    qty,
+                                                    cs,
+                                                    available: room,
+                                                    unit: dozen
+                                                        ? QuantityUnit.dozen
+                                                        : p.unit,
+                                                    onStep: (q) => _setQty(
+                                                      dozen: dozen,
+                                                      p,
+                                                      q,
+                                                      combinationKey:
+                                                          c.combinationKey,
+                                                      displayLabel:
+                                                          c.displayLabel,
+                                                      priceOverride: comboPrice,
+                                                      skuOverride: comboSku,
+                                                      availableStock:
+                                                          c.stockQty,
                                                     ),
-                                                    Text(
-                                                      '  ·  ${AppStrings.of(context).qty(c.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        color: outOfStock
-                                                            ? cs.error
-                                                            : cs.onSurface.withValues(alpha: 0.5),
-                                                      ),
+                                                    onAsk: () => _askQty(
+                                                      p,
+                                                      combinationKey:
+                                                          c.combinationKey,
+                                                      displayLabel:
+                                                          c.displayLabel,
+                                                      priceOverride: comboPrice,
+                                                      skuOverride: comboSku,
+                                                      availableStock:
+                                                          c.stockQty,
                                                     ),
-                                                  ],
-                                                ),
-                                                if (_offersDozen(p) && !outOfStock)
-                                                  _pickerDozenToggle(
-                                                    dozen,
-                                                    (v) => _setDozenRow(p.id, c.combinationKey, v),
+                                                  )
+                                                else
+                                                  _addButton(
+                                                    row.maxWidth,
+                                                    outOfStock:
+                                                        outOfStock || room <= 0,
+                                                    onAdd: () =>
+                                                        p.unit.allowsDecimal
+                                                        ? _askQty(
+                                                            p,
+                                                            combinationKey: c
+                                                                .combinationKey,
+                                                            displayLabel:
+                                                                c.displayLabel,
+                                                            priceOverride:
+                                                                comboPrice,
+                                                            skuOverride:
+                                                                comboSku,
+                                                            availableStock:
+                                                                c.stockQty,
+                                                          )
+                                                        : _setQty(
+                                                            p,
+                                                            1,
+                                                            dozen: dozen,
+                                                            combinationKey: c
+                                                                .combinationKey,
+                                                            displayLabel:
+                                                                c.displayLabel,
+                                                            priceOverride:
+                                                                comboPrice,
+                                                            skuOverride:
+                                                                comboSku,
+                                                            availableStock:
+                                                                c.stockQty,
+                                                          ),
                                                   ),
                                               ],
                                             ),
                                           ),
-                                          if (qty > 0)
-                                            _qtyControl(
-                                              p,
-                                              qty,
-                                              cs,
-                                              available: room,
-                                              unit: dozen ? QuantityUnit.dozen : p.unit,
-                                              onStep: (q) => _setQty(
-                                                dozen: dozen,
-                                                p,
-                                                q,
-                                                combinationKey: c.combinationKey,
-                                                displayLabel: c.displayLabel,
-                                                priceOverride: comboPrice,
-                                                skuOverride: comboSku,
-                                                availableStock: c.stockQty,
-                                              ),
-                                              onAsk: () => _askQty(
-                                                p,
-                                                combinationKey: c.combinationKey,
-                                                displayLabel: c.displayLabel,
-                                                priceOverride: comboPrice,
-                                                skuOverride: comboSku,
-                                                availableStock: c.stockQty,
-                                              ),
-                                            )
-                                          else
-                                            _addButton(
-                                              row.maxWidth,
-                                              outOfStock: outOfStock || room <= 0,
-                                              onAdd: () => p.unit.allowsDecimal
-                                                  ? _askQty(
-                                                      p,
-                                                      combinationKey: c.combinationKey,
-                                                      displayLabel: c.displayLabel,
-                                                      priceOverride: comboPrice,
-                                                      skuOverride: comboSku,
-                                                      availableStock: c.stockQty,
-                                                    )
-                                                  : _setQty(
-                                                      p,
-                                                      1,
+                                          if (!outOfStock &&
+                                              !p.usesSerials &&
+                                              !p.unit.allowsDecimal)
+                                            _QuickQtyBar(
+                                              leading: _offersDozen(p)
+                                                  ? _DozenToggle(
                                                       dozen: dozen,
-                                                      combinationKey: c.combinationKey,
-                                                      displayLabel: c.displayLabel,
-                                                      priceOverride: comboPrice,
-                                                      skuOverride: comboSku,
-                                                      availableStock: c.stockQty,
-                                                    ),
+                                                      onChanged: (v) =>
+                                                          _setDozenRow(
+                                                            p.id,
+                                                            c.combinationKey,
+                                                            v,
+                                                          ),
+                                                    )
+                                                  : null,
                                             ),
                                         ],
                                       ),
@@ -2397,64 +2986,126 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: LayoutBuilder(
-                          builder: (context, row) => Row(
+                        child: _QuickQty(
+                          max: room,
+                          onPick: (q) => _setQty(
+                            p,
+                            q,
+                            availableStock: p.stockQty,
+                            dozen: dozen,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              LayoutBuilder(
+                                builder: (context, row) => Row(
                                   children: [
-                                    Text(
-                                      p.name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                        color: outOfStock ? cs.onSurface.withValues(alpha: 0.4) : null,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            p.name,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                              color: outOfStock
+                                                  ? cs.onSurface.withValues(
+                                                      alpha: 0.4,
+                                                    )
+                                                  : null,
+                                            ),
+                                          ),
+
+                                          Wrap(
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  AppStrings.of(
+                                                    context,
+                                                  ).pricePer(
+                                                    CurrencyFormatter.format(
+                                                      p.sellingPrice,
+                                                    ),
+                                                    p.unit,
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: cs.primary,
+                                                  ),
+                                                  maxLines: 1,
+                                                ),
+                                              ),
+                                              Text(
+                                                '  ·  ${AppStrings.of(context).qty(p.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: outOfStock
+                                                      ? cs.error
+                                                      : cs.onSurface.withValues(
+                                                          alpha: 0.5,
+                                                        ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
-
-                                    Wrap(
-                                      crossAxisAlignment: WrapCrossAlignment.center,
-                                      children: [
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            AppStrings.of(context).pricePer(CurrencyFormatter.format(p.sellingPrice), p.unit),
-                                            style: TextStyle(fontSize: 12, color: cs.primary),
-                                            maxLines: 1,
-                                          ),
+                                    if (qty > 0)
+                                      _qtyControl(
+                                        p,
+                                        qty,
+                                        cs,
+                                        available: room,
+                                        unit: dozen
+                                            ? QuantityUnit.dozen
+                                            : p.unit,
+                                        onStep: (q) => _setQty(
+                                          p,
+                                          q,
+                                          availableStock: p.stockQty,
+                                          dozen: dozen,
                                         ),
-                                        Text(
-                                          '  ·  ${AppStrings.of(context).qty(p.stockQty, p.unit)} ${AppStrings.of(context).tr('inStockLabel')}',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: outOfStock ? cs.error : cs.onSurface.withValues(alpha: 0.5),
-                                          ),
+                                        onAsk: () => _askQty(
+                                          p,
+                                          availableStock: p.stockQty,
                                         ),
-                                      ],
-                                    ),
-                                    if (_offersDozen(p) && !outOfStock)
-                                      _pickerDozenToggle(dozen, (v) => _setDozenRow(p.id, '', v)),
+                                      )
+                                    else
+                                      _addButton(
+                                        row.maxWidth,
+                                        outOfStock: outOfStock || room <= 0,
+                                        onAdd: p.unit.allowsDecimal
+                                            ? () => _askQty(
+                                                p,
+                                                availableStock: p.stockQty,
+                                              )
+                                            : () => _setQty(
+                                                p,
+                                                1,
+                                                availableStock: p.stockQty,
+                                                dozen: dozen,
+                                              ),
+                                      ),
                                   ],
                                 ),
                               ),
-                              if (qty > 0)
-                                _qtyControl(
-                                  p,
-                                  qty,
-                                  cs,
-                                  available: room,
-                                  unit: dozen ? QuantityUnit.dozen : p.unit,
-                                  onStep: (q) => _setQty(p, q, availableStock: p.stockQty, dozen: dozen),
-                                  onAsk: () => _askQty(p, availableStock: p.stockQty),
-                                )
-                              else
-                                _addButton(
-                                  row.maxWidth,
-                                  outOfStock: outOfStock || room <= 0,
-                                  onAdd: p.unit.allowsDecimal
-                                      ? () => _askQty(p, availableStock: p.stockQty)
-                                      : () => _setQty(p, 1, availableStock: p.stockQty, dozen: dozen),
+                              if (!outOfStock &&
+                                  !p.usesSerials &&
+                                  !p.unit.allowsDecimal)
+                                _QuickQtyBar(
+                                  leading: _offersDozen(p)
+                                      ? _DozenToggle(
+                                          dozen: dozen,
+                                          onChanged: (v) =>
+                                              _setDozenRow(p.id, '', v),
+                                        )
+                                      : null,
                                 ),
                             ],
                           ),
@@ -2468,16 +3119,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     );
   }
 
-  Widget _pickerDozenToggle(bool dozen, ValueChanged<bool> onChanged) => Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: AlignmentDirectional.centerStart,
-          child: _DozenToggle(dozen: dozen, onChanged: onChanged),
-        ),
-      );
-
-  Widget _addButton(double rowWidth, {required bool outOfStock, required VoidCallback onAdd}) {
+  Widget _addButton(
+    double rowWidth, {
+    required bool outOfStock,
+    required VoidCallback onAdd,
+  }) {
     final s = AppStrings.of(context);
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: rowWidth * 0.55),
@@ -2485,8 +3131,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
         height: 34,
         child: FilledButton.tonal(
           onPressed: outOfStock ? null : onAdd,
-          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
-          child: FittedBox(fit: BoxFit.scaleDown, child: Text(outOfStock ? s.outOfStock : s.add)),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(outOfStock ? s.outOfStock : s.add),
+          ),
         ),
       ),
     );
@@ -2521,7 +3172,11 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [label, const SizedBox(width: 6), ThinIcon(tabler.Pencil.new, size: 16, color: cs.primary)],
+            children: [
+              label,
+              const SizedBox(width: 6),
+              ThinIcon(tabler.Pencil.new, size: 16, color: cs.primary),
+            ],
           ),
         ),
       );
@@ -2532,20 +3187,37 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _sheetQtyBtn(tabler.Minus.new, () => onStep(qty - 1), cs),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: label),
-          _sheetQtyBtn(tabler.Plus.new, qtyAtLeast(qty, available) ? null : () => onStep(qty + 1), cs),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: label,
+          ),
+          _sheetQtyBtn(
+            tabler.Plus.new,
+            qtyAtLeast(qty, available) ? null : () => onStep(qty + 1),
+            cs,
+          ),
         ],
       ),
     );
   }
 
-  Widget _sheetQtyBtn(ThinIconBuilder icon, VoidCallback? onTap, ColorScheme cs) {
+  Widget _sheetQtyBtn(
+    ThinIconBuilder icon,
+    VoidCallback? onTap,
+    ColorScheme cs,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: ThinIcon(icon, size: 16, color: onTap != null ? cs.primary : cs.onSurface.withValues(alpha: 0.25)),
+        child: ThinIcon(
+          icon,
+          size: 16,
+          color: onTap != null
+              ? cs.primary
+              : cs.onSurface.withValues(alpha: 0.25),
+        ),
       ),
     );
   }
@@ -2581,7 +3253,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   }
 
   late List<Customer> _filtered = widget.customers;
-  late final List<String> _lowerNames = [for (final c in widget.customers) c.name.toLowerCase()];
+  late final List<String> _lowerNames = [
+    for (final c in widget.customers) c.name.toLowerCase(),
+  ];
 
   void _setQuery(String query) {
     setState(() {
@@ -2591,14 +3265,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
           ? customers
           : [
               for (var i = 0; i < customers.length; i++)
-
-                if (_lowerNames[i].contains(query) || NumberInput.phoneMatches(customers[i].phone, query)) customers[i],
+                if (_lowerNames[i].contains(query) ||
+                    NumberInput.phoneMatches(customers[i].phone, query))
+                  customers[i],
             ];
     });
   }
 
   void _openForm() {
-
     final q = _searchCtrl.text.trim();
     final digits = NumberInput.toAsciiDigits(q);
     final isPhone = RegExp(r'^[0-9]{3,}$').hasMatch(digits);
@@ -2630,14 +3304,16 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
         createdAt: DateTime.now(),
       );
 
-      await widget.isar.writeTxn(() async => widget.isar.customers.put(customer));
+      await widget.isar.writeTxn(
+        () async => widget.isar.customers.put(customer),
+      );
       final saved = await widget.isar.customers.get(customer.id);
       if (mounted) Navigator.pop(context, saved ?? customer);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(AppStrings.of(context).failedToSaveCustomer)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.of(context).failedToSaveCustomer)),
+        );
         setState(() => _saving = false);
       }
     }
@@ -2656,12 +3332,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
       expand: false,
       builder: (ctx, ctrl) => Column(
         children: [
-
           Container(
             width: 36,
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(color: cs.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: cs.outline.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
 
           Padding(
@@ -2673,13 +3351,19 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     onTap: () => setState(() => _showForm = false),
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: ThinIcon(tabler.ArrowLeft.new, size: 20, color: cs.onSurface),
+                      child: ThinIcon(
+                        tabler.ArrowLeft.new,
+                        size: 20,
+                        color: cs.onSurface,
+                      ),
                     ),
                   ),
                 Flexible(
                   child: Text(
                     _showForm ? s.createNewCustomer : s.selectCustomer,
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -2689,7 +3373,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
           const SizedBox(height: 8),
 
           if (_showForm)
-
             Expanded(
               child: ListView(
                 controller: ctrl,
@@ -2744,13 +3427,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                           )
                         : const ThinIcon(tabler.Check.new, size: 18),
                     label: Text(_saving ? s.tr('loading') : s.addAndSelect),
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(46),
+                    ),
                   ),
                 ],
               ),
             )
           else ...[
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
@@ -2783,23 +3467,40 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                 onTap: _openForm,
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.primary.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: cs.primary.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      ThinIcon(tabler.UserPlus.new, size: 20, color: cs.primary),
+                      ThinIcon(
+                        tabler.UserPlus.new,
+                        size: 20,
+                        color: cs.primary,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           s.createNewCustomer,
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: cs.primary),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: cs.primary,
+                          ),
                         ),
                       ),
-                      ThinIcon(tabler.ChevronRight.new, size: 14, color: cs.primary.withValues(alpha: 0.6)),
+                      ThinIcon(
+                        tabler.ChevronRight.new,
+                        size: 14,
+                        color: cs.primary.withValues(alpha: 0.6),
+                      ),
                     ],
                   ),
                 ),
@@ -2811,13 +3512,21 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             Expanded(
               child: _filtered.isEmpty
                   ? Center(
-                      child: Text(s.noCustomersFound, style: TextStyle(color: cs.onSurface.withValues(alpha: 0.4))),
+                      child: Text(
+                        s.noCustomersFound,
+                        style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ),
                     )
                   : ListView.separated(
                       controller: ctrl,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _filtered.length,
-                      separatorBuilder: (_, __) => Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        color: cs.outline.withValues(alpha: 0.1),
+                      ),
                       itemBuilder: (_, i) {
                         final c = _filtered[i];
                         return ListTile(
@@ -2828,14 +3537,27 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                             backgroundColor: cs.primary.withValues(alpha: 0.1),
                             child: Text(
                               c.name[0].toUpperCase(),
-                              style: TextStyle(fontWeight: FontWeight.w600, color: cs.primary, fontSize: 14),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: cs.primary,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
-                          title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                          title: Text(
+                            c.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
                           subtitle: c.phone.isNotEmpty
                               ? Text(
                                   c.phone,
-                                  style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5)),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: cs.onSurface.withValues(alpha: 0.5),
+                                  ),
                                 )
                               : null,
                           dense: true,
@@ -2857,7 +3579,12 @@ class _InvoiceActionTile extends StatefulWidget {
 
   final Future<bool> Function(Rect? origin) onTap;
 
-  const _InvoiceActionTile({required this.icon, required this.label, required this.color, required this.onTap});
+  const _InvoiceActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   State<_InvoiceActionTile> createState() => _InvoiceActionTileState();
@@ -2885,12 +3612,19 @@ class _InvoiceActionTileState extends State<_InvoiceActionTile> {
 
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final style = theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600);
+              final style = theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              );
               final longestWord = label
                   .split(' ')
-                  .fold(0.0, (widest, word) => math.max(widest, _lineWidth(context, word, style)));
+                  .fold(
+                    0.0,
+                    (widest, word) =>
+                        math.max(widest, _lineWidth(context, word, style)),
+                  );
               final chevronWidth = IconTheme.of(context).size ?? 24;
-              final showChevron = constraints.maxWidth - 40 - 14 - chevronWidth >= longestWord;
+              final showChevron =
+                  constraints.maxWidth - 40 - 14 - chevronWidth >= longestWord;
               return Row(
                 children: [
                   Container(
@@ -2900,12 +3634,19 @@ class _InvoiceActionTileState extends State<_InvoiceActionTile> {
                       color: color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: ThinIcon(_done ? tabler.CircleCheck.new : widget.icon, color: color, size: 20),
+                    child: ThinIcon(
+                      _done ? tabler.CircleCheck.new : widget.icon,
+                      color: color,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(child: Text(label, style: style)),
                   if (showChevron)
-                    ThinIcon(tabler.ChevronRight.new, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+                    ThinIcon(
+                      tabler.ChevronRight.new,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
                 ],
               );
             },
@@ -2919,7 +3660,12 @@ class _InvoiceActionTileState extends State<_InvoiceActionTile> {
 /// What the order form's scanner found: the product, the combination whose
 /// own SKU was scanned (if any), and a scale label's quantity (if any).
 /// [serial]: the code scanned was this unit's serial number (IMEI).
-typedef _ScanHit = ({Product product, VariantCombination? combination, double? qty, String? serial});
+typedef _ScanHit = ({
+  Product product,
+  VariantCombination? combination,
+  double? qty,
+  String? serial,
+});
 
 class _ScannerSheet extends ConsumerStatefulWidget {
   final Isar isar;
@@ -2967,66 +3713,84 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
     if (value == null) return;
     _scanned = true;
 
-    _scale.then((scale) => ProductRepository(widget.isar).findByScan(value, scale)).then((hit) async {
-      if (!mounted) return;
-      final product = hit?.product;
-      if (product == null) {
-        // Not a product's code: maybe one unit's serial number.
-        final units = await SerialService.find(widget.isar, value);
-        if (!mounted) return;
-        final unit = units.where((u) => u.isInStock).firstOrNull;
-        final owner = unit == null ? null : await widget.isar.products.get(unit.productId);
-        if (!mounted) return;
-        if (unit != null && owner != null && owner.isActive && owner.usesSerials) {
-          Navigator.of(context).pop((product: owner, combination: null, qty: null, serial: unit.serial));
-          return;
-        }
-        if (units.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppStrings.of(context).serialNotInStock(units.first.serial))),
-          );
-          _scanned = false;
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).noProductMatched)),
-        );
-        _scanned = false;
-        return;
-      }
+    _scale
+        .then(
+          (scale) => ProductRepository(widget.isar).findByScan(value, scale),
+        )
+        .then((hit) async {
+          if (!mounted) return;
+          final product = hit?.product;
+          if (product == null) {
+            // Not a product's code: maybe one unit's serial number.
+            final units = await SerialService.find(widget.isar, value);
+            if (!mounted) return;
+            final unit = units.where((u) => u.isInStock).firstOrNull;
+            final owner = unit == null
+                ? null
+                : await widget.isar.products.get(unit.productId);
+            if (!mounted) return;
+            if (unit != null &&
+                owner != null &&
+                owner.isActive &&
+                owner.usesSerials) {
+              Navigator.of(context).pop((
+                product: owner,
+                combination: null,
+                qty: null,
+                serial: unit.serial,
+              ));
+              return;
+            }
+            if (units.isNotEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    AppStrings.of(context).serialNotInStock(units.first.serial),
+                  ),
+                ),
+              );
+              _scanned = false;
+              return;
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppStrings.of(context).noProductMatched)),
+            );
+            _scanned = false;
+            return;
+          }
 
-      final combination = hit!.combination;
-      final noStock = combination != null
-          ? combination.stockQty <= 0
-          : !product.hasVariants && product.stockQty <= 0;
-      if (noStock) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).outOfStock)),
-        );
-        _scanned = false;
-        return;
-      }
+          final combination = hit!.combination;
+          final noStock = combination != null
+              ? combination.stockQty <= 0
+              : !product.hasVariants && product.stockQty <= 0;
+          if (noStock) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+            );
+            _scanned = false;
+            return;
+          }
 
-      if (product.hasVariants) {
-        final hasStock = product.variantCombinations.any(
-          (c) => c.isActive && c.stockQty > 0,
-        );
-        if (!hasStock) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppStrings.of(context).outOfStock)),
-          );
-          _scanned = false;
-          return;
-        }
-      }
+          if (product.hasVariants) {
+            final hasStock = product.variantCombinations.any(
+              (c) => c.isActive && c.stockQty > 0,
+            );
+            if (!hasStock) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppStrings.of(context).outOfStock)),
+              );
+              _scanned = false;
+              return;
+            }
+          }
 
-      Navigator.of(context).pop((
-        product: product,
-        combination: combination,
-        qty: hit.label?.qtyFor(product, combination: combination),
-        serial: null,
-      ));
-    });
+          Navigator.of(context).pop((
+            product: product,
+            combination: combination,
+            qty: hit.label?.qtyFor(product, combination: combination),
+            serial: null,
+          ));
+        });
   }
 
   @override
@@ -3046,7 +3810,9 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
               children: [
                 Text(
                   AppStrings.of(context).scanQrBarcode,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 TorchButton(controller: _controller),
@@ -3118,7 +3884,6 @@ double _lineWidth(BuildContext context, String text, TextStyle? style) {
   return width;
 }
 
-
 /// A piece line (not sold in dozens) of this product and combination.
 bool _isPieceLine(OrderItem i, int productId, String combinationKey) =>
     i.productId == productId &&
@@ -3127,12 +3892,16 @@ bool _isPieceLine(OrderItem i, int productId, String combinationKey) =>
 
 /// Product stock the cart's other lines of [line]'s product and combination
 /// take: its dozen line, when [line] is the piece one, and the other way.
-double _baseUsedByOthers(List<OrderItem> items, OrderItem line) => roundQty(items
-    .where((i) =>
-        !identical(i, line) &&
-        i.productId == line.productId &&
-        i.variantCombinationKey == line.variantCombinationKey)
-    .fold(0.0, (sum, i) => sum + i.baseQty));
+double _baseUsedByOthers(List<OrderItem> items, OrderItem line) => roundQty(
+  items
+      .where(
+        (i) =>
+            !identical(i, line) &&
+            i.productId == line.productId &&
+            i.variantCombinationKey == line.variantCombinationKey,
+      )
+      .fold(0.0, (sum, i) => sum + i.baseQty),
+);
 
 /// Pcs | Dozen on a cart line of a piece product.
 class _DozenToggle extends StatelessWidget {
@@ -3154,7 +3923,7 @@ class _DozenToggle extends StatelessWidget {
           onTap: selected ? null : () => onChanged(value),
           borderRadius: BorderRadius.circular(6),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
               color: selected ? cs.primary : null,
               borderRadius: BorderRadius.circular(6),
@@ -3164,7 +3933,9 @@ class _DozenToggle extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selected ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.6),
+                color: selected
+                    ? cs.onPrimary
+                    : cs.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -3183,6 +3954,182 @@ class _DozenToggle extends StatelessWidget {
         children: [
           segment(s.unitName(QuantityUnit.piece), false),
           segment(s.unitName(QuantityUnit.dozen), true),
+        ],
+      ),
+    );
+  }
+}
+
+/// Quantities offered by a stepper's ⋯, so a big order isn't tap after tap.
+const kQuickQuantities = [5, 10, 20, 50, 100];
+
+/// Gives a row's [_QuickQtyBar] what a quick quantity does: [onPick] sets
+/// the row's quantity (checking stock); numbers above [max] are disabled.
+class _QuickQty extends StatefulWidget {
+  const _QuickQty({required this.child, required this.onPick, this.max});
+
+  final Widget child;
+  final ValueChanged<double> onPick;
+  final double? max;
+
+  @override
+  State<_QuickQty> createState() => _QuickQtyState();
+}
+
+const _quickQtyDuration = Duration(milliseconds: 220);
+
+class _QuickQtyState extends State<_QuickQty> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) => _QuickQtyScope(
+    open: _open,
+    max: widget.max,
+    toggle: () => setState(() => _open = !_open),
+    pick: (q) {
+      setState(() => _open = false);
+      widget.onPick(q);
+    },
+    child: widget.child,
+  );
+}
+
+class _QuickQtyScope extends InheritedWidget {
+  const _QuickQtyScope({
+    required this.open,
+    required this.max,
+    required this.toggle,
+    required this.pick,
+    required super.child,
+  });
+
+  final bool open;
+  final double? max;
+  final VoidCallback toggle;
+  final ValueChanged<double> pick;
+
+  @override
+  bool updateShouldNotify(_QuickQtyScope old) => true;
+}
+
+/// [leading] (the Pcs | Dozen switch, if any), then a → button; open, the
+/// [kQuickQuantities] slide in after it and fill the rest of the line,
+/// scrolling sideways when they don't fit. Needs a [_QuickQty] above.
+class _QuickQtyBar extends StatelessWidget {
+  const _QuickQtyBar({this.leading});
+
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_QuickQtyScope>();
+    if (scope == null) return leading ?? const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          // The switch folds away while the numbers show, and comes back
+          // when they close, so the numbers get the whole line.
+          if (leading != null)
+            AnimatedSwitcher(
+              duration: _quickQtyDuration,
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SizeTransition(
+                  sizeFactor: animation,
+                  axis: Axis.horizontal,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: child,
+                ),
+              ),
+              child: scope.open
+                  ? const SizedBox.shrink(key: ValueKey('hidden'))
+                  : KeyedSubtree(
+                      key: const ValueKey('switch'),
+                      child: leading!,
+                    ),
+            ),
+          Tooltip(
+            message: AppStrings.of(context).tr('quickQuantities'),
+            child: Semantics(
+              button: true,
+              selected: scope.open,
+              child: InkResponse(
+                onTap: scope.toggle,
+                radius: 18,
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Center(
+                    child: AnimatedRotation(
+                      // → closed, ← open (mirrored in right-to-left languages).
+                      turns: scope.open ? 0.5 : 0,
+                      duration: _quickQtyDuration,
+                      curve: Curves.easeOutCubic,
+                      child: ThinIcon(
+                        rtl ? tabler.ChevronLeft.new : tabler.ChevronRight.new,
+                        size: 18,
+                        color: scope.open ? cs.primary : cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: _quickQtyDuration,
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              layoutBuilder: (current, previous) => Stack(
+                alignment: AlignmentDirectional.centerStart,
+                children: [...previous, ?current],
+              ),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SizeTransition(
+                  sizeFactor: animation,
+                  axis: Axis.horizontal,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: child,
+                ),
+              ),
+              child: scope.open
+                  ? SingleChildScrollView(
+                      key: const ValueKey('quick'),
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final q in kQuickQuantities)
+                            Padding(
+                              padding: const EdgeInsetsDirectional.only(end: 6),
+                              child: ActionChip(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                label: Text(formatQtyNumber(q)),
+                                visualDensity: VisualDensity.compact,
+                                onPressed:
+                                    scope.max != null &&
+                                        qtyExceeds(q, scope.max!)
+                                    ? null
+                                    : () => scope.pick(q.toDouble()),
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('closed')),
+            ),
+          ),
         ],
       ),
     );

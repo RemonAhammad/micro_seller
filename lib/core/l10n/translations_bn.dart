@@ -401,6 +401,7 @@ const translationsBn = <String, String>{
   'yes': 'হ্যাঁ',
   'no': 'না',
   'add': 'যোগ',
+  'quickQuantities': 'দ্রুত পরিমাণ',
   'search': 'খুঁজুন',
   'filter': 'ফিল্টার',
   'share': 'শেয়ার',

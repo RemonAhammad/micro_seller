@@ -401,6 +401,7 @@ const translationsAr = <String, String>{
   'yes': 'نعم',
   'no': 'لا',
   'add': 'إضافة',
+  'quickQuantities': 'كميات سريعة',
   'search': 'بحث',
   'filter': 'تصفية',
   'share': 'مشاركة',

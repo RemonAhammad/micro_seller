@@ -401,6 +401,7 @@ const translationsUr = <String, String>{
   'yes': 'ہاں',
   'no': 'نہیں',
   'add': 'شامل کریں',
+  'quickQuantities': 'فوری مقداریں',
   'search': 'تلاش',
   'filter': 'فلٹر',
   'share': 'شیئر کریں',

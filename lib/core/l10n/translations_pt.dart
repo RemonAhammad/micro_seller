@@ -401,6 +401,7 @@ const translationsPt = <String, String>{
   'yes': 'Sim',
   'no': 'Não',
   'add': 'Adicionar',
+  'quickQuantities': 'Quantidades rápidas',
   'search': 'Pesquisar',
   'filter': 'Filtrar',
   'share': 'Compartilhar',

@@ -401,6 +401,7 @@ const translationsMs = <String, String>{
   'yes': 'Ya',
   'no': 'Tidak',
   'add': 'Tambah',
+  'quickQuantities': 'Kuantiti pantas',
   'search': 'Cari',
   'filter': 'Tapis',
   'share': 'Kongsi',
