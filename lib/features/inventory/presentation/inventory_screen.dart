@@ -26,6 +26,11 @@ class InventoryScreen extends ConsumerStatefulWidget {
   ConsumerState<InventoryScreen> createState() => _InventoryScreenState();
 }
 
+/// The "All categories" menu value. PopupMenuButton treats a null result as
+/// the menu closed without a choice (onCanceled, never onSelected), so the
+/// reset needs a non-null value.
+const _kAllCategories = '\u0000all';
+
 class _InventoryScreenState extends ConsumerState<InventoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
@@ -212,9 +217,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
   Widget _categoryFilterButton(List<String> categoryNames, ColorScheme cs) {
     final s = AppStrings.of(context);
-    return PopupMenuButton<String?>(
-      initialValue: _categoryFilter,
-      onSelected: (v) => setState(() => _categoryFilter = v),
+    return PopupMenuButton<String>(
+      initialValue: _categoryFilter ?? _kAllCategories,
+      onSelected: (v) => setState(
+          () => _categoryFilter = v == _kAllCategories ? null : v),
       tooltip: s.filter,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -261,8 +267,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
         ),
       ),
       itemBuilder: (_) => [
-        PopupMenuItem<String?>(
-          value: null,
+        PopupMenuItem<String>(
+          value: _kAllCategories,
           child: Row(
             children: [
               ThinIcon(tabler.ClearAll.new,
@@ -288,7 +294,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             ],
           ),
         ),
-        ...categoryNames.map((name) => PopupMenuItem<String?>(
+        ...categoryNames.map((name) => PopupMenuItem<String>(
               value: name,
               child: Row(
                 children: [
