@@ -42,6 +42,25 @@ Stream<Order?> orderById(Ref ref, int id) async* {
   yield* isar.orders.watchObject(id);
 }
 
+/// Value of an order's received or refunded returns: what comes off its
+/// balance due, as in the Due Book.
+@riverpod
+Stream<double> orderReturnedValue(Ref ref, int orderId) async* {
+  final isar = await ref.watch(isarProvider.future);
+  yield* reloadOn(isar.orders.watchLazy(), () => _returnedValueOf(isar, orderId));
+}
+
+Future<double> _returnedValueOf(Isar isar, int orderId) async {
+  final returns = await isar.orders
+      .filter()
+      .isReturnEqualTo(true)
+      .originalOrderIdEqualTo(orderId)
+      .findAll();
+  return returns
+      .where((r) => r.isCompletedReturn)
+      .fold<double>(0, (s, r) => s + r.totalAmount);
+}
+
 @riverpod
 Stream<List<Order>> pendingOrders(Ref ref) async* {
   final isar = await ref.watch(isarProvider.future);
@@ -441,9 +460,10 @@ class OrderNotifier extends _$OrderNotifier {
         if (order == null) return;
 
         final newAmountPaid = order.amountPaid + paymentAmount;
-        final paymentStatus = newAmountPaid >= order.totalAmount
-            ? PaymentStatus.paid
-            : PaymentStatus.partial;
+        final paymentStatus = paymentStatusFor(
+            total: order.totalAmount,
+            paid: newAmountPaid,
+            returned: await _returnedValueOf(isar, order.id));
 
         await isar.orders.put(order.copyWith(
           amountPaid: newAmountPaid,
@@ -507,7 +527,8 @@ class OrderNotifier extends _$OrderNotifier {
           paidOrders.add(d.order.copyWith(
             amountPaid: newPaid,
 
-            paymentStatus: newPaid >= d.order.totalAmount - kDueEpsilon
+            // d.due already counts the order's returns.
+            paymentStatus: part >= d.due - kDueEpsilon
                 ? PaymentStatus.paid
                 : PaymentStatus.partial,
             paymentMethod: method,
@@ -614,6 +635,18 @@ class OrderNotifier extends _$OrderNotifier {
     });
   }
 
+  /// What the customer owes, from their orders as written in this txn. The
+  /// counter is floored at 0, so adding and subtracting return values would
+  /// lose a credit (a paid order's return) and count a refund twice.
+  Future<double> _netDueOf(Isar isar, int customerId) async {
+    final orders = await isar.orders
+        .where()
+        .customerIdEqualTo(customerId)
+        .findAll()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    return computeNetDue(orders);
+  }
+
   Future<void> approveReturn(int returnOrderId) async {
     state = await AsyncValue.guard(() async {
       final isar = await ref.read(isarProvider.future);
@@ -639,7 +672,25 @@ class OrderNotifier extends _$OrderNotifier {
           if (original != null) {
             await isar.orders.put(original.copyWith(
               returnStatus: ReturnStatus.received,
+              paymentStatus: paymentStatusFor(
+                  total: original.totalAmount,
+                  paid: original.amountPaid,
+                  returned: await _returnedValueOf(isar, original.id)),
               updatedAt: DateTime.now(),
+            ));
+          }
+        }
+
+        // The goods are back: their value comes off what the customer owes
+        // now, refund or not (issue #11).
+        if (returnOrder.customerId > 0) {
+          final customer = await isar.customers.get(returnOrder.customerId);
+          if (customer != null) {
+            await isar.customers.put(customer.copyWith(
+              totalSpent: (customer.totalSpent - returnOrder.totalAmount)
+                  .clamp(0, double.infinity),
+              outstandingBalance:
+                  await _netDueOf(isar, returnOrder.customerId),
             ));
           }
         }
@@ -653,6 +704,8 @@ class OrderNotifier extends _$OrderNotifier {
       await isar.writeTxn(() async {
         final returnOrder = await isar.orders.get(returnOrderId);
         if (returnOrder == null || !returnOrder.isReturn) return;
+        // Once received, the goods are restocked and the due credited.
+        if (returnOrder.returnStatus != ReturnStatus.requested) return;
 
         await isar.orders.put(returnOrder.copyWith(
           returnStatus: ReturnStatus.rejected,
@@ -690,7 +743,11 @@ class OrderNotifier extends _$OrderNotifier {
             ? await isar.orders.get(returnOrder.originalOrderId)
             : null;
 
-        final maxRefundable = original?.amountPaid ?? returnOrder.refundAmount;
+        // The return pays off the order's due first; only what's left of
+        // its value goes back as cash (issue #11).
+        final maxRefundable = original == null
+            ? returnOrder.refundAmount
+            : await _cashRefundableFor(isar, original);
         final actualRefund =
             returnOrder.refundAmount.clamp(0.0, maxRefundable);
 
@@ -711,11 +768,10 @@ class OrderNotifier extends _$OrderNotifier {
         if (original != null) {
           final newAmountPaid =
               (original.amountPaid - actualRefund).clamp(0.0, double.infinity);
-          final newPaymentStatus = newAmountPaid >= original.totalAmount
-              ? PaymentStatus.paid
-              : newAmountPaid > 0
-                  ? PaymentStatus.partial
-                  : PaymentStatus.unpaid;
+          final newPaymentStatus = paymentStatusFor(
+              total: original.totalAmount,
+              paid: newAmountPaid,
+              returned: await _returnedValueOf(isar, original.id));
           updatedOrders.add(original.copyWith(
             amountPaid: newAmountPaid,
             paymentStatus: newPaymentStatus,
@@ -734,22 +790,27 @@ class OrderNotifier extends _$OrderNotifier {
               note: 'refund ${returnOrder.orderNumber}');
         }
 
+        // approveReturn already credited the goods and totalSpent.
         if (returnOrder.customerId > 0) {
           final customer =
               await isar.customers.get(returnOrder.customerId);
           if (customer != null) {
-            final balanceChange = returnOrder.totalAmount - actualRefund;
             await isar.customers.put(customer.copyWith(
-              totalSpent: (customer.totalSpent - returnOrder.totalAmount)
-                  .clamp(0, double.infinity),
               outstandingBalance:
-                  (customer.outstandingBalance - balanceChange)
-                      .clamp(0, double.infinity),
+                  await _netDueOf(isar, returnOrder.customerId),
             ));
           }
         }
       });
     });
+  }
+
+  /// Cash that may go back for an order's received returns: the credit left
+  /// after its due is paid off, never more than was paid.
+  Future<double> _cashRefundableFor(Isar isar, Order original) async {
+    final credit =
+        await _returnedValueOf(isar, original.id) - original.balanceDue;
+    return credit.clamp(0.0, original.amountPaid);
   }
 
   Future<void> processRecurringOrders() async {

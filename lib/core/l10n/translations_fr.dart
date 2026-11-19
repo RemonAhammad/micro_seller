@@ -352,6 +352,7 @@ const translationsFr = <String, String>{
   'failedToCreateReturn': 'Échec de la création du retour',
   'maxRefundable': 'Maximum remboursable',
   'amountPaidOnOriginal': 'montant payé sur la commande originale',
+  'refundAfterDue': "ce qui reste une fois le dû de la commande soldé",
   'refundRange': 'Le montant du remboursement doit être compris entre 0 et {amount}',
   'noReturns': 'Aucun retour',
   'returnOrdersAppearHere': 'Les retours apparaîtront ici',

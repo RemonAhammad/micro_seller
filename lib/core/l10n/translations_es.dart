@@ -352,6 +352,7 @@ const translationsEs = <String, String>{
   'failedToCreateReturn': 'Error al crear la devolución',
   'maxRefundable': 'Máximo reembolsable',
   'amountPaidOnOriginal': 'monto pagado en el pedido original',
+  'refundAfterDue': "lo que queda tras saldar lo pendiente del pedido",
   'refundRange': 'El monto del reembolso debe estar entre 0 y {amount}',
   'noReturns': 'Sin devoluciones',
   'returnOrdersAppearHere': 'Las devoluciones aparecerán aquí',

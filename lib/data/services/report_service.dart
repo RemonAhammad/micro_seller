@@ -46,10 +46,7 @@ double _deduction(double v) => v == 0 ? 0 : -v;
 
 DateTime? returnDate(Order r) => r.updatedAt ?? r.createdAt;
 
-bool isCompletedReturn(Order o) =>
-    o.isReturn &&
-    (o.returnStatus == ReturnStatus.received ||
-        o.returnStatus == ReturnStatus.refunded);
+bool isCompletedReturn(Order o) => o.isCompletedReturn;
 
 Map<K, double> _topN<K>(Map<K, double> m, int n) {
   final e = m.entries.toList()..sort((a, b) => b.value.compareTo(a.value));

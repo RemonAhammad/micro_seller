@@ -352,6 +352,7 @@ const translationsEn = <String, String>{
   'failedToCreateReturn': 'Failed to create return',
   'maxRefundable': 'Max refundable',
   'amountPaidOnOriginal': 'amount paid on original order',
+  'refundAfterDue': "what's left after the order's due is paid off",
   'refundRange': 'Refund must be between 0 and {amount}',
   'noReturns': 'No returns',
   'returnOrdersAppearHere': 'Return orders will appear here',

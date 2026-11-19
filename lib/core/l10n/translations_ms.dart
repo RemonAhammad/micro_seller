@@ -352,6 +352,7 @@ const translationsMs = <String, String>{
   'failedToCreateReturn': 'Gagal mencipta pemulangan',
   'maxRefundable': 'Maksimum boleh dipulangkan',
   'amountPaidOnOriginal': 'jumlah dibayar pada pesanan asal',
+  'refundAfterDue': "baki selepas hutang pesanan dijelaskan",
   'refundRange': 'Jumlah bayaran balik mesti antara 0 dan {amount}',
   'noReturns': 'Tiada pemulangan',
   'returnOrdersAppearHere': 'Pesanan pemulangan akan muncul di sini',

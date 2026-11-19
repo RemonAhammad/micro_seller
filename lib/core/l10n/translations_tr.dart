@@ -352,6 +352,7 @@ const translationsTr = <String, String>{
   'failedToCreateReturn': 'İade oluşturulamadı',
   'maxRefundable': 'Maksimum iade edilebilir',
   'amountPaidOnOriginal': 'orijinal siparişte ödenen tutar',
+  'refundAfterDue': "siparişin borcu kapandıktan sonra kalan",
   'refundRange': 'Geri ödeme tutarı 0 ile {amount} arasında olmalı',
   'noReturns': 'İade yok',
   'returnOrdersAppearHere': 'İade siparişleri burada görünecek',

@@ -352,6 +352,7 @@ const translationsId = <String, String>{
   'failedToCreateReturn': 'Gagal membuat pengembalian',
   'maxRefundable': 'Maksimum dapat dikembalikan',
   'amountPaidOnOriginal': 'jumlah dibayar pada pesanan asli',
+  'refundAfterDue': "sisa setelah tagihan pesanan lunas",
   'refundRange': 'Jumlah pengembalian dana harus antara 0 dan {amount}',
   'noReturns': 'Tidak ada pengembalian',
   'returnOrdersAppearHere': 'Pesanan pengembalian akan muncul di sini',

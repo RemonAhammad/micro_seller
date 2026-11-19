@@ -352,6 +352,7 @@ const translationsAr = <String, String>{
   'failedToCreateReturn': 'فشل في إنشاء المرتجع',
   'maxRefundable': 'الحد الأقصى للاسترداد',
   'amountPaidOnOriginal': 'المبلغ المدفوع على الطلب الأصلي',
+  'refundAfterDue': "ما يتبقى بعد سداد المستحق على الطلب",
   'refundRange': 'يجب أن يكون مبلغ الاسترداد بين 0 و{amount}',
   'noReturns': 'لا توجد مرتجعات',
   'returnOrdersAppearHere': 'ستظهر طلبات الإرجاع هنا',

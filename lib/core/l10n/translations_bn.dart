@@ -352,6 +352,7 @@ const translationsBn = <String, String>{
   'failedToCreateReturn': 'রিটার্ন তৈরি করতে ব্যর্থ',
   'maxRefundable': 'সর্বোচ্চ রিফান্ডযোগ্য',
   'amountPaidOnOriginal': 'মূল অর্ডারে প্রদত্ত পরিমাণ',
+  'refundAfterDue': "অর্ডারের বাকি শোধ হওয়ার পর যা থাকে",
   'refundRange': 'রিফান্ডের পরিমাণ ০ থেকে {amount} এর মধ্যে হতে হবে',
   'noReturns': 'কোনো রিটার্ন নেই',
   'returnOrdersAppearHere': 'রিটার্ন অর্ডার এখানে দেখাবে',

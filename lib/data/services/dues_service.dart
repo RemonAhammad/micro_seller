@@ -27,9 +27,7 @@ double computeNetDue(Iterable<Order> orders) {
 List<OrderDue> _effectiveDues(Iterable<Order> orders) {
   final returnedValue = <int, double>{};
   for (final o in orders) {
-    if (o.isReturn &&
-        o.returnStatus == ReturnStatus.refunded &&
-        o.originalOrderId > 0) {
+    if (o.isCompletedReturn && o.originalOrderId > 0) {
       returnedValue[o.originalOrderId] =
           (returnedValue[o.originalOrderId] ?? 0) + o.totalAmount;
     }
@@ -46,6 +44,14 @@ List<OrderDue> _effectiveDues(Iterable<Order> orders) {
     return byDate != 0 ? byDate : a.order.id.compareTo(b.order.id);
   });
   return dues;
+}
+
+/// Paid / partial / unpaid once returns are counted: an order whose kept
+/// goods are paid for is paid, whatever its original total.
+PaymentStatus paymentStatusFor(
+    {required double total, required double paid, double returned = 0}) {
+  if (total - paid - returned <= kDueEpsilon) return PaymentStatus.paid;
+  return paid > kDueEpsilon ? PaymentStatus.partial : PaymentStatus.unpaid;
 }
 
 List<OrderDue> duesOpenAt(List<OrderDue> dues, DateTime? at) => at == null

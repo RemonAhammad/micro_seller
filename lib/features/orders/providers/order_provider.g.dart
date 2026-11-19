@@ -156,6 +156,90 @@ final class OrderByIdFamily extends $Family
   String toString() => r'orderByIdProvider';
 }
 
+/// Value of an order's received or refunded returns: what comes off its
+/// balance due, as in the Due Book.
+
+@ProviderFor(orderReturnedValue)
+final orderReturnedValueProvider = OrderReturnedValueFamily._();
+
+/// Value of an order's received or refunded returns: what comes off its
+/// balance due, as in the Due Book.
+
+final class OrderReturnedValueProvider
+    extends $FunctionalProvider<AsyncValue<double>, double, Stream<double>>
+    with $FutureModifier<double>, $StreamProvider<double> {
+  /// Value of an order's received or refunded returns: what comes off its
+  /// balance due, as in the Due Book.
+  OrderReturnedValueProvider._({
+    required OrderReturnedValueFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'orderReturnedValueProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$orderReturnedValueHash();
+
+  @override
+  String toString() {
+    return r'orderReturnedValueProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<double> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<double> create(Ref ref) {
+    final argument = this.argument as int;
+    return orderReturnedValue(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OrderReturnedValueProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$orderReturnedValueHash() =>
+    r'aff635e1e534eb79e5b759c7fb6c032990e59fdf';
+
+/// Value of an order's received or refunded returns: what comes off its
+/// balance due, as in the Due Book.
+
+final class OrderReturnedValueFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<double>, int> {
+  OrderReturnedValueFamily._()
+    : super(
+        retry: null,
+        name: r'orderReturnedValueProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Value of an order's received or refunded returns: what comes off its
+  /// balance due, as in the Due Book.
+
+  OrderReturnedValueProvider call(int orderId) =>
+      OrderReturnedValueProvider._(argument: orderId, from: this);
+
+  @override
+  String toString() => r'orderReturnedValueProvider';
+}
+
 @ProviderFor(pendingOrders)
 final pendingOrdersProvider = PendingOrdersProvider._();
 
@@ -219,7 +303,7 @@ final class OrderNotifierProvider
   OrderNotifier create() => OrderNotifier();
 }
 
-String _$orderNotifierHash() => r'ed7adb9c74cc2c196159907d15b9c4ce99742bc6';
+String _$orderNotifierHash() => r'354ba4662d2d28a95fea49282b1e48cfdd0393c3';
 
 abstract class _$OrderNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

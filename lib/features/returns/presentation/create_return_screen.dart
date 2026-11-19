@@ -62,7 +62,10 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
   double get _returnTotal =>
       returnValueFor(widget.originalOrder, _returnItems).total;
 
-  double get _maxRefundable => widget.originalOrder.amountPaid;
+  /// The return pays off what's still owed on the order first; only the
+  /// rest can go back as cash (never more than was paid).
+  double get _maxRefundable => (_returnTotal - widget.originalOrder.balanceDue)
+      .clamp(0.0, widget.originalOrder.amountPaid);
 
   double _suggestedRefund = 0;
 
@@ -251,7 +254,7 @@ class _CreateReturnScreenState extends ConsumerState<CreateReturnScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '${s.tr("maxRefundable")}: ${CurrencyFormatter.format(_maxRefundable)} (${s.tr("amountPaidOnOriginal")})',
+            '${s.tr("maxRefundable")}: ${CurrencyFormatter.format(_maxRefundable)} (${s.tr("refundAfterDue")})',
             style:
                 theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),

@@ -18,15 +18,20 @@ class PaymentMethodChips extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onChanged,
+    this.runSpacing = 0,
   });
 
   final PaymentMethod selected;
   final ValueChanged<PaymentMethod> onChanged;
 
+  /// Vertical gap between wrapped rows of chips.
+  final double runSpacing;
+
   @override
   Widget build(BuildContext context) {
     return Wrap(
       spacing: 6,
+      runSpacing: runSpacing,
       children: PaymentMethod.values
           .map((m) => ChoiceChip(
                 label: Text(paymentMethodLabel(context, m)),

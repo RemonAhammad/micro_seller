@@ -116,6 +116,14 @@ class Order {
   @ignore
   bool get isRefunded => returnStatus == ReturnStatus.refunded;
 
+  /// A return whose goods are back (received or refunded): it counts in
+  /// reports and credits the original order's due from then on.
+  @ignore
+  bool get isCompletedReturn =>
+      isReturn &&
+      (returnStatus == ReturnStatus.received ||
+          returnStatus == ReturnStatus.refunded);
+
   @ignore
   double get goodsTotal => items.fold(0.0, (sum, item) => sum + item.totalPrice);
 

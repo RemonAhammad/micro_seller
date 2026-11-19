@@ -78,7 +78,7 @@ class StatementService {
       if (o.isReturn) {
         final original = byId[o.originalOrderId];
 
-        if (o.returnStatus == ReturnStatus.refunded &&
+        if (o.isCompletedReturn &&
             original != null &&
             original.orderStatus != OrderStatus.cancelled) {
           entries.add((

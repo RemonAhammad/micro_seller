@@ -352,6 +352,7 @@ const translationsTh = <String, String>{
   'failedToCreateReturn': 'สร้างการคืนสินค้าไม่สำเร็จ',
   'maxRefundable': 'จำนวนเงินคืนสูงสุด',
   'amountPaidOnOriginal': 'จำนวนที่ชำระในคำสั่งซื้อเดิม',
+  'refundAfterDue': "ส่วนที่เหลือหลังหักยอดค้างของคำสั่งซื้อ",
   'refundRange': 'จำนวนเงินคืนต้องอยู่ระหว่าง 0 ถึง {amount}',
   'noReturns': 'ไม่มีการคืนสินค้า',
   'returnOrdersAppearHere': 'คำสั่งซื้อคืนจะปรากฏที่นี่',

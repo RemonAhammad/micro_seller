@@ -352,6 +352,7 @@ const translationsUr = <String, String>{
   'failedToCreateReturn': 'واپسی بنانے میں ناکامی',
   'maxRefundable': 'زیادہ سے زیادہ واپسی قابل',
   'amountPaidOnOriginal': 'اصل آرڈر پر ادا شدہ رقم',
+  'refundAfterDue': "آرڈر کا بقایا ادا ہونے کے بعد باقی رقم",
   'refundRange': 'واپسی کی رقم 0 اور {amount} کے درمیان ہونی چاہیے',
   'noReturns': 'کوئی واپسی نہیں',
   'returnOrdersAppearHere': 'واپسی آرڈرز یہاں ظاہر ہوں گے',

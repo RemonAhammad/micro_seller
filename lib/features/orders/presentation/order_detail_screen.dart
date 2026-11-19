@@ -12,6 +12,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../../shared/widgets/pdf_saved_sheet.dart';
 import '../../../data/models/order.dart';
 import '../providers/order_provider.dart';
+import '../../../data/services/dues_service.dart';
 import '../../../data/services/isar_service.dart';
 import '../../../data/services/pdf_service.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -106,6 +107,9 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final orderAsync = ref.watch(orderByIdProvider(widget.orderId));
+    // Received returns come off this order's balance, as in the Due Book.
+    final returned =
+        ref.watch(orderReturnedValueProvider(widget.orderId)).value ?? 0;
     final theme = Theme.of(context);
 
     return orderAsync.when(
@@ -116,6 +120,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
             body: Center(child: Text(s.orderNotFound)),
           );
         }
+        final due = order.isReturn ? 0.0 : order.balanceDue - returned;
 
         return Scaffold(
           appBar: AppBar(
@@ -368,10 +373,15 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                   _InfoRow(
                       label: s.paymentMethod,
                       value: _paymentMethodLabel(context, order.paymentMethod)),
-                  if (order.balanceDue > 0)
+                  if (returned > kDueEpsilon)
+                    _InfoRow(
+                      label: s.tr('returnedValue'),
+                      value: '-${CurrencyFormatter.format(returned)}',
+                    ),
+                  if (due > kDueEpsilon && !order.isReturn)
                     _InfoRow(
                       label: s.balanceDue,
-                      value: CurrencyFormatter.format(order.balanceDue),
+                      value: CurrencyFormatter.format(due),
                       isBold: true,
                       valueColor: AppColors.paymentUnpaid,
                     ),
@@ -390,15 +400,15 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
 
                 const SizedBox(height: 20),
 
-                _StatusActions(order: order),
+                if (!order.isReturn) _StatusActions(order: order),
 
                 const SizedBox(height: 12),
 
-                if (order.paymentStatus != PaymentStatus.paid)
+                if (due > kDueEpsilon && !order.isReturn)
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () => _showPaymentDialog(context, ref, order),
+                      onPressed: () => _showPaymentDialog(context, ref, order, due),
                       icon: const ThinIcon(tabler.CreditCard.new),
                       label: Text(s.recordPayment),
                     ),
@@ -631,7 +641,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
   }
 
   void _showPaymentDialog(
-      BuildContext context, WidgetRef ref, Order order) {
+      BuildContext context, WidgetRef ref, Order order, double due) {
     final s = AppStrings.of(context);
     final amountCtrl = TextEditingController();
     final txnCtrl = TextEditingController();
@@ -650,7 +660,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                    '${s.balanceDue}: ${CurrencyFormatter.format(order.balanceDue)}'),
+                    '${s.balanceDue}: ${CurrencyFormatter.format(due)}'),
                 const SizedBox(height: 12),
                 TextField(
                   controller: amountCtrl,
@@ -667,6 +677,7 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                 PaymentMethodChips(
                   selected: method,
                   onChanged: (m) => setLocal(() => method = m),
+                  runSpacing: 8,
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -693,8 +704,10 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                 onPressed: () => Navigator.pop(ctx), child: Text(s.cancel)),
             FilledButton(
               onPressed: () async {
-                final amount = NumberInput.parseDecimal(amountCtrl.text) ?? 0;
-                if (amount <= 0) return;
+                final typed = NumberInput.parseDecimal(amountCtrl.text) ?? 0;
+                if (typed <= 0) return;
+                // Never more than what's still owed after returns.
+                final amount = typed > due ? due : typed;
                 final messenger = ScaffoldMessenger.of(context);
                 await ref.read(orderProvider.notifier).recordPayment(
                       order.id,
@@ -1269,6 +1282,7 @@ class _ReturnFlowCard extends StatelessWidget {
                 PaymentMethodChips(
                   selected: method,
                   onChanged: (m) => setLocal(() => method = m),
+                  runSpacing: 8,
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -1472,12 +1486,16 @@ class _ReturnFlowCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () async {
-                  final result = await _showRefundDialog(context, order);
-                  if (result == null) return;
+                  // Nothing goes back in cash (the return paid off the due):
+                  // no method or transaction to ask for.
+                  final noCash = order.refundAmount <= kDueEpsilon;
+                  final result =
+                      noCash ? null : await _showRefundDialog(context, order);
+                  if (!noCash && result == null) return;
                   await ref.read(orderProvider.notifier).processRefund(
                         order.id,
-                        refundMethod: result.method,
-                        refundTransactionId: result.transactionId,
+                        refundMethod: result?.method,
+                        refundTransactionId: result?.transactionId ?? '',
                       );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

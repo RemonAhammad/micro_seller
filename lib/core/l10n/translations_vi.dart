@@ -352,6 +352,7 @@ const translationsVi = <String, String>{
   'failedToCreateReturn': 'Tạo trả hàng thất bại',
   'maxRefundable': 'Hoàn tiền tối đa',
   'amountPaidOnOriginal': 'số tiền đã trả trên đơn gốc',
+  'refundAfterDue': "phần còn lại sau khi trừ nợ của đơn",
   'refundRange': 'Số tiền hoàn phải nằm trong khoảng từ 0 đến {amount}',
   'noReturns': 'Không có trả hàng',
   'returnOrdersAppearHere': 'Đơn trả hàng sẽ hiển thị tại đây',
