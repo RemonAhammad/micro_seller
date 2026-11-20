@@ -730,6 +730,7 @@ const translationsEs = <String, String>{
   'potentialProfit': 'Ganancia potencial en stock',
   'activeProducts': 'Productos activos',
   'returnedValue': 'Valor devuelto',
+  'returnsForThisOrder': 'Devoluciones de este pedido',
   'type': 'Tipo',
   'quantity': 'Cantidad',
   'bestSellers': 'Más vendidos',

@@ -731,6 +731,7 @@ const translationsTh = <String, String>{
   'potentialProfit': 'กำไรที่คาดว่าจะได้จากสต็อก',
   'activeProducts': 'สินค้าที่ใช้งานอยู่',
   'returnedValue': 'มูลค่าที่คืน',
+  'returnsForThisOrder': 'การคืนสินค้าของคำสั่งซื้อนี้',
   'type': 'ประเภท',
   'quantity': 'จำนวน',
   'bestSellers': 'ขายดี',

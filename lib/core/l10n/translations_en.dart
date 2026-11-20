@@ -731,6 +731,7 @@ const translationsEn = <String, String>{
   'potentialProfit': 'Potential profit in stock',
   'activeProducts': 'Active products',
   'returnedValue': 'Returned value',
+  'returnsForThisOrder': 'Returns against this order',
   'type': 'Type',
   'quantity': 'Quantity',
   'bestSellers': 'Best sellers',

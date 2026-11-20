@@ -731,6 +731,7 @@ const translationsUr = <String, String>{
   'potentialProfit': 'اسٹاک میں ممکنہ منافع',
   'activeProducts': 'فعال مصنوعات',
   'returnedValue': 'واپس شدہ قدر',
+  'returnsForThisOrder': 'اس آرڈر کی واپسیاں',
   'type': 'قسم',
   'quantity': 'مقدار',
   'bestSellers': 'سب سے زیادہ فروخت',

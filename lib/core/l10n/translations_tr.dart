@@ -731,6 +731,7 @@ const translationsTr = <String, String>{
   'potentialProfit': 'Stoktaki Potansiyel Kâr',
   'activeProducts': 'Aktif Ürünler',
   'returnedValue': 'İade Edilen Değer',
+  'returnsForThisOrder': 'Bu siparişin iadeleri',
   'type': 'Tür',
   'quantity': 'Miktar',
   'bestSellers': 'En Çok Satanlar',

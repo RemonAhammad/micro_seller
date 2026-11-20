@@ -731,6 +731,7 @@ const translationsId = <String, String>{
   'potentialProfit': 'Potensi Laba di Stok',
   'activeProducts': 'Produk Aktif',
   'returnedValue': 'Nilai Dikembalikan',
+  'returnsForThisOrder': 'Pengembalian untuk pesanan ini',
   'type': 'Jenis',
   'quantity': 'Jumlah',
   'bestSellers': 'Terlaris',

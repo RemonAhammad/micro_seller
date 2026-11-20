@@ -240,6 +240,100 @@ final class OrderReturnedValueFamily extends $Family
   String toString() => r'orderReturnedValueProvider';
 }
 
+/// The returns created against [originalOrderId], newest first — the reference
+/// list shown on the original order's detail screen. Same filter as
+/// [_returnedValueOf], so the list and the returned-value row can't disagree.
+
+@ProviderFor(returnsForOrder)
+final returnsForOrderProvider = ReturnsForOrderFamily._();
+
+/// The returns created against [originalOrderId], newest first — the reference
+/// list shown on the original order's detail screen. Same filter as
+/// [_returnedValueOf], so the list and the returned-value row can't disagree.
+
+final class ReturnsForOrderProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Order>>,
+          List<Order>,
+          Stream<List<Order>>
+        >
+    with $FutureModifier<List<Order>>, $StreamProvider<List<Order>> {
+  /// The returns created against [originalOrderId], newest first — the reference
+  /// list shown on the original order's detail screen. Same filter as
+  /// [_returnedValueOf], so the list and the returned-value row can't disagree.
+  ReturnsForOrderProvider._({
+    required ReturnsForOrderFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'returnsForOrderProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$returnsForOrderHash();
+
+  @override
+  String toString() {
+    return r'returnsForOrderProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Order>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Order>> create(Ref ref) {
+    final argument = this.argument as int;
+    return returnsForOrder(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ReturnsForOrderProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$returnsForOrderHash() => r'52e5c051f3971f55513d31be981d72d9ec0c5cf8';
+
+/// The returns created against [originalOrderId], newest first — the reference
+/// list shown on the original order's detail screen. Same filter as
+/// [_returnedValueOf], so the list and the returned-value row can't disagree.
+
+final class ReturnsForOrderFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Order>>, int> {
+  ReturnsForOrderFamily._()
+    : super(
+        retry: null,
+        name: r'returnsForOrderProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The returns created against [originalOrderId], newest first — the reference
+  /// list shown on the original order's detail screen. Same filter as
+  /// [_returnedValueOf], so the list and the returned-value row can't disagree.
+
+  ReturnsForOrderProvider call(int originalOrderId) =>
+      ReturnsForOrderProvider._(argument: originalOrderId, from: this);
+
+  @override
+  String toString() => r'returnsForOrderProvider';
+}
+
 @ProviderFor(pendingOrders)
 final pendingOrdersProvider = PendingOrdersProvider._();
 

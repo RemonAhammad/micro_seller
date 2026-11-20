@@ -388,6 +388,29 @@ class _OrderDetailBodyState extends ConsumerState<_OrderDetailBody> {
                 ]),
                 const SizedBox(height: 12),
 
+                if (!order.isReturn)
+                  Builder(builder: (context) {
+                    final returns =
+                        ref.watch(returnsForOrderProvider(order.id)).value ??
+                            const <Order>[];
+                    if (returns.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionLabel(s.returnsForThisOrder),
+                        const SizedBox(height: 8),
+                        _InfoCard(children: [
+                          for (var i = 0; i < returns.length; i++)
+                            _ReturnRefRow(
+                              order: returns[i],
+                              showDivider: i < returns.length - 1,
+                            ),
+                        ]),
+                        const SizedBox(height: 12),
+                      ],
+                    );
+                  }),
+
                 if (order.notes.isNotEmpty)
                   _InfoCard(children: [
                     Text(s.notes,
@@ -827,6 +850,66 @@ class _InfoRow extends StatelessWidget {
               )),
         ],
       ),
+    );
+  }
+}
+
+class _ReturnRefRow extends StatelessWidget {
+  final Order order;
+  final bool showDivider;
+
+  const _ReturnRefRow({required this.order, required this.showDivider});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = returnStatusColor(order.returnStatus);
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => context.push('/orders/${order.id}'),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration:
+                      BoxDecoration(color: color, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(order.orderNumber,
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      Text(returnStatusLabel(context, order.returnStatus),
+                          style:
+                              theme.textTheme.bodySmall?.copyWith(color: color)),
+                    ],
+                  ),
+                ),
+                if (order.refundAmount > 0) ...[
+                  const SizedBox(width: 8),
+                  Text('-${CurrencyFormatter.format(order.refundAmount)}',
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600)),
+                ],
+                const SizedBox(width: 4),
+                ThinIcon(tabler.ChevronRight.new,
+                    size: 18,
+                    color: theme.colorScheme.onSurface.withOpacity(0.4)),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider) const Divider(height: 1),
+      ],
     );
   }
 }
@@ -1312,25 +1395,11 @@ class _ReturnFlowCard extends StatelessWidget {
     );
   }
 
-  Map<ReturnStatus, String> _statusLabels(BuildContext context) {
-    final s = AppStrings.of(context);
-    return {
-      ReturnStatus.requested: s.tr('requested'),
-      ReturnStatus.approved: s.tr('approved'),
-      ReturnStatus.received: s.tr('itemsReceived'),
-      ReturnStatus.refunded: s.tr('refunded'),
-      ReturnStatus.rejected: s.tr('rejected'),
-    };
-  }
-
-  Color _statusColor(ReturnStatus s) => switch (s) {
-        ReturnStatus.requested => Colors.orange,
-        ReturnStatus.approved => Colors.blue,
-        ReturnStatus.received => Colors.blue,
-        ReturnStatus.refunded => Colors.green,
-        ReturnStatus.rejected => Colors.red,
-        _ => Colors.grey,
+  Map<ReturnStatus, String> _statusLabels(BuildContext context) => {
+        for (final v in ReturnStatus.values) v: returnStatusLabel(context, v),
       };
+
+  Color _statusColor(ReturnStatus s) => returnStatusColor(s);
 
   @override
   Widget build(BuildContext context) {

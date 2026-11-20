@@ -731,6 +731,7 @@ const translationsMs = <String, String>{
   'potentialProfit': 'Potensi Keuntungan dalam Stok',
   'activeProducts': 'Produk Aktif',
   'returnedValue': 'Nilai Dipulangkan',
+  'returnsForThisOrder': 'Pemulangan untuk pesanan ini',
   'type': 'Jenis',
   'quantity': 'Kuantiti',
   'bestSellers': 'Paling Laris',

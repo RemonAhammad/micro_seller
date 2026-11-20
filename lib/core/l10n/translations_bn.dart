@@ -731,6 +731,7 @@ const translationsBn = <String, String>{
   'potentialProfit': 'স্টকে সম্ভাব্য লাভ',
   'activeProducts': 'সক্রিয় পণ্য',
   'returnedValue': 'রিটার্নের মূল্য',
+  'returnsForThisOrder': 'এই অর্ডারের রিটার্ন',
   'type': 'ধরন',
   'quantity': 'পরিমাণ',
   'bestSellers': 'সবচেয়ে বেশি বিক্রি হওয়া',

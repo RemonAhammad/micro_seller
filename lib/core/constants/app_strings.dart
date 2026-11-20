@@ -286,6 +286,7 @@ class _L10nStrings {
 
   String get suppliers => _l10n.tr('suppliers');
   String get returns => _l10n.tr('returns');
+  String get returnsForThisOrder => _l10n.tr('returnsForThisOrder');
   String get cashRegister => _l10n.tr('cashRegister');
   String get purchases => _l10n.tr('purchases');
   String get monthExpenses => _l10n.tr('monthExpenses');

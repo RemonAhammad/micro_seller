@@ -50,6 +50,20 @@ Stream<double> orderReturnedValue(Ref ref, int orderId) async* {
   yield* reloadOn(isar.orders.watchLazy(), () => _returnedValueOf(isar, orderId));
 }
 
+/// The returns created against [originalOrderId], newest first — the reference
+/// list shown on the original order's detail screen. Same filter as
+/// [_returnedValueOf], so the list and the returned-value row can't disagree.
+@riverpod
+Stream<List<Order>> returnsForOrder(Ref ref, int originalOrderId) async* {
+  final isar = await ref.watch(isarProvider.future);
+  final query = isar.orders
+      .filter()
+      .isReturnEqualTo(true)
+      .originalOrderIdEqualTo(originalOrderId)
+      .sortByCreatedAtDesc();
+  yield* reloadOn(isar.orders.watchLazy(), query.findAll);
+}
+
 Future<double> _returnedValueOf(Isar isar, int orderId) async {
   final returns = await isar.orders
       .filter()

@@ -731,6 +731,7 @@ const translationsFr = <String, String>{
   'potentialProfit': 'Profit potentiel en stock',
   'activeProducts': 'Produits actifs',
   'returnedValue': 'Valeur retournée',
+  'returnsForThisOrder': 'Retours de cette commande',
   'type': 'Type',
   'quantity': 'Quantité',
   'bestSellers': 'Meilleures ventes',

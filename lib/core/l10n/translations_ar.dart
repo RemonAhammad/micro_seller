@@ -730,6 +730,7 @@ const translationsAr = <String, String>{
   'potentialProfit': 'الربح المحتمل في المخزون',
   'activeProducts': 'المنتجات النشطة',
   'returnedValue': 'قيمة المرتجعات',
+  'returnsForThisOrder': 'المرتجعات لهذا الطلب',
   'type': 'النوع',
   'quantity': 'الكمية',
   'bestSellers': 'الأكثر مبيعًا',

@@ -731,6 +731,7 @@ const translationsPt = <String, String>{
   'potentialProfit': 'Lucro potencial em estoque',
   'activeProducts': 'Produtos ativos',
   'returnedValue': 'Valor devolvido',
+  'returnsForThisOrder': 'Devoluções deste pedido',
   'type': 'Tipo',
   'quantity': 'Quantidade',
   'bestSellers': 'Mais vendidos',

@@ -731,6 +731,7 @@ const translationsVi = <String, String>{
   'potentialProfit': 'Lợi nhuận tiềm năng trong kho',
   'activeProducts': 'Sản phẩm đang bán',
   'returnedValue': 'Giá trị trả hàng',
+  'returnsForThisOrder': 'Trả hàng của đơn hàng này',
   'type': 'Loại',
   'quantity': 'Số lượng',
   'bestSellers': 'Bán chạy nhất',
